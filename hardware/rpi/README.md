@@ -1,9 +1,9 @@
 # Software
 
-The basic code is going to read data from the ADC on the SPI port, 
+The basic code is going to read data from the TART data on the SPI port, 
 and writes it to a folder.
 
-## Working Remotely with the Weighbridge
+## Working Remotely with the TART
 
 After login, you can kill the running process with
 
@@ -26,7 +26,7 @@ To exit the screen
 
 
 
-## Reading weighbridge Data
+## Reading TART Data
 
 Data is read into a circular buffer, 
 which is saved to a central server at regular intervals.
@@ -36,7 +36,7 @@ which is saved to a central server at regular intervals.
 Currently data is stored as pickled measurement objects in files using a directory structure that 
 consists of yyyy/mm/dd/h_m_s.pkl. See the measurement object for more details
 
-## Connecting to weighbridge remotely
+## Connecting to TART remotely
 
 on the tags.elec.ac.nz machine, issue the following command to connect to the weighbridge
 
@@ -50,8 +50,8 @@ Update to latest firmware.
     sudo apt-get dist-upgrade 
     sudo aptitude install python-setuptools
 
-    git clone https://github.com/elec-otago/WoW.git
-    cd WoW/python
+    git clone https://github.com/tmolteno/TART.git
+    cd TART/python
     sudo python setup.py install
 
 ## Serial Port and SPI
@@ -75,7 +75,7 @@ Add the following to the Pi /etc/rc.local
 
     su pi -c 'autossh -N -f -M 29001 -R 2222:localhost:22 tim@tags.elec.ac.nz' &
 
-Confirm that the WoW is connecting to the remote host by 
+Confirm that the TART is connecting to the remote host by 
 
     ssh tim@tags.elec.ac.nz
 
@@ -143,8 +143,6 @@ Reboot the Pi:
 The Pi should now say "My IP address is xxx.xxx.xxx.xxx 192.168.1.100", where xxx.xxx.xxx.xxx = the IP address of the RJ45 ethernet, and 192.168.1.100 is the address assigned to the Pi by the Huawei.
 
 
-  
-
 
 ## Automatically run at startup
 
@@ -155,7 +153,7 @@ First log the user pi in at startup.
 
 To start up the weighbridge software create the following script  (startup.sh) in the home directory
 
-    cp /home/pi/WoW/rpi/software/startup.sh /home/pi/startup.sh
+    cp /home/pi/TART/rpi/software/startup.sh /home/pi/startup.sh
 
 Add the following to ~/.bashrc
 
@@ -168,19 +166,19 @@ Add the following to ~/.bashrc
 Add the following line to crontab:
 
     crontab -e
-    5 * * * * sh /home/pi/WoW/rpi/software/copy_data_remote.sh
+    5 * * * * sh /home/pi/TART/rpi/software/copy_data_remote.sh
   
 Add SSH credentials to electron (where the data will be sent),
 the password is the usual.
 
-    ssh-copy-id wow@electron.otago.ac.nz
+    ssh-copy-id tart@electron.otago.ac.nz
   
 Login to electron to check:
 
-    ssh wow@electron.otago.ac.nz
+    ssh tart@electron.otago.ac.nz
   
 Test the file saving script:
 
-    sh ~/WoW/rpi/software/copy_data_remote.sh
+    sh ~/TART/rpi/software/copy_data_remote.sh
   
 If it goes you are done.
