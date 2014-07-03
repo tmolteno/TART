@@ -110,11 +110,11 @@
 <hole x="25" y="5" drill="3.2"/>
 <hole x="5" y="63.5" drill="3.2"/>
 <hole x="5" y="5" drill="3.2"/>
-<wire x1="31.5" y1="0.5" x2="0" y2="0" width="0" layer="20"/>
+<wire x1="31.5" y1="0" x2="0" y2="0" width="0" layer="20"/>
 <wire x1="0" y1="68.5" x2="0" y2="0" width="0" layer="20"/>
 <hole x="25" y="63.5" drill="3.2"/>
-<wire x1="31.5" y1="69" x2="31.5" y2="0.5" width="0" layer="20"/>
-<wire x1="31.5" y1="69" x2="0" y2="68.5" width="0" layer="20"/>
+<wire x1="31.5" y1="68.5" x2="31.5" y2="0" width="0" layer="20"/>
+<wire x1="31.5" y1="68.5" x2="0" y2="68.5" width="0" layer="20"/>
 <wire x1="5.499996875" y1="12.857003125" x2="5.499996875" y2="13.111003125" width="0.1524" layer="121"/>
 <wire x1="5.499996875" y1="13.111003125" x2="6.642996875" y2="13.111003125" width="0.1524" layer="121"/>
 <wire x1="6.642996875" y1="13.111003125" x2="6.642996875" y2="13.746003125" width="0.1524" layer="121"/>
@@ -803,8 +803,8 @@ design rules under a new name.</description>
 <vertex x="0" y="68.5"/>
 </polygon>
 <polygon width="0.254" layer="1" isolate="0.254" rank="2">
-<vertex x="31.5" y="69"/>
-<vertex x="31.5" y="0.5"/>
+<vertex x="31.5" y="68.5"/>
+<vertex x="31.5" y="0"/>
 <vertex x="0" y="0"/>
 <vertex x="0" y="68.5"/>
 </polygon>
