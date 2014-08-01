@@ -1,7 +1,10 @@
-# Software
+# TART Operating Software
 
 The basic code is going to read data from the TART data on the SPI port, 
-and writes it to a folder.
+and writes it to a folder on the RPi.
+
+A separate cron job rsync's the data files to the remote host for processing.
+
 
 ## Working Remotely with the TART
 
@@ -24,13 +27,6 @@ To exit the screen
    CTRL-A CTRL-D
 
 
-
-
-## Reading TART Data
-
-Data is read into a circular buffer, 
-which is saved to a central server at regular intervals.
-
 ## Data storage formats
 
 Currently data is stored as pickled measurement objects in files using a directory structure that 
@@ -38,7 +34,11 @@ consists of yyyy/mm/dd/h_m_s.pkl. See the measurement object for more details
 
 ## Connecting to TART remotely
 
-on the tags.elec.ac.nz machine, issue the following command to connect to the weighbridge
+Each TART node uses autossh to forward a port on a remote server to ssh on the local machine.
+Each TART node forwards a DIFFERENT port.
+
+If a TART node were forwarding 2222, then after logging in to the remote machine (tart.elec.ac.nz)
+the following commands would connect back to the TART (wherever it was in the world)
 
     ssh -p 2222 localhost
 
@@ -64,20 +64,20 @@ Update to latest firmware.
 
 ## Network setup
 
-Maintain a tunnel between the pi and tags.elec.ac.nz. We will choose a port to map. 
+Maintain a tunnel between the pi and tart.elec.ac.nz. We will choose a port to map. 
 THIS PORT MUST BE UNIQUE. In this example we use 2222. You should choose another number.
-The tim@tags.elec.ac.nz is the usual one.
+The tim@tart.elec.ac.nz is the usual one.
 
     ssh-keygen
-    ssh-copy-id tim@tags.elec.ac.nz
+    ssh-copy-id tim@tart.elec.ac.nz
 
 Add the following to the Pi /etc/rc.local
 
-    su pi -c 'autossh -N -f -M 29001 -R 2222:localhost:22 tim@tags.elec.ac.nz' &
+    su pi -c 'autossh -N -f -M 29001 -R 2222:localhost:22 tim@tart.elec.ac.nz' &
 
 Confirm that the TART is connecting to the remote host by 
 
-    ssh tim@tags.elec.ac.nz
+    ssh tim@tart.elec.ac.nz
 
 and then issuing the following command
 
@@ -151,7 +151,7 @@ First log the user pi in at startup.
     sudo nano /etc/inittab
     1:2345:respawn:/bin/login -f pi tty1 </dev/tty1 >/dev/tty1 2>&1
 
-To start up the weighbridge software create the following script  (startup.sh) in the home directory
+To start up the TART software create the following script  (startup.sh) in the home directory
 
     cp /home/pi/TART/rpi/software/startup.sh /home/pi/startup.sh
 
