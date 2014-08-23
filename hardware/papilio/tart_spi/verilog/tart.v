@@ -76,8 +76,7 @@ module tart(
             .aq_read_en(aq_read_en),
             .aq_write_en(aq_write_en),
             .block_buffer_write_ptr(block_buffer_write_ptr),
-            .bb_filled(bb_filled),
-            .fpga_clk(fpga_clk)
+            .bb_filled(bb_filled)
             );
 
    assign led = bb_filled;
@@ -95,6 +94,9 @@ module tart(
                      .read_data(bb_rd_data),
                      .write_address(block_buffer_write_ptr),
                      .read_address(block_buffer_read_ptr));
+
+//
+
 
 //      SDRAM_Controller instance_name (
 //          .clk(bb_clk), 

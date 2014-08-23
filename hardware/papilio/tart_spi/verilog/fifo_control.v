@@ -11,8 +11,7 @@ module aq_fifo_ctl(
    input rst,
    input spi_start_aq,
    input write_clk,
-   input read_clk,
-   input fpga_clk
+   input read_clk
    );
 
    parameter BLOCKSIZE = 8'd32;
