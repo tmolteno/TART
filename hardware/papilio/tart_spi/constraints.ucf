@@ -1,5 +1,5 @@
-NET "aq_fifo_pp_0/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx*" TIG;
-NET "aq_fifo_pp_0/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx/*" TIG;
+NET "acquisition_fifo/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx*" TIG;
+NET "acquisition_fifo/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx/*" TIG;
 
 //NET "bb_clk" TNM_NET = bb_clk_network;
 NET "fpga_clk" TNM_NET = fpga_clk_network;

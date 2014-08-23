@@ -61,36 +61,25 @@ module tart(
    wire [23:0] aq_write_data;
    wire [23:0] aq_read_data;
    wire [7:0] aq_status_cnt;  // This is a count set in sync with the RD clk. it will never overstate the fullness of the fifo.
-   wire aq_empty, aq_full;
-
 
    ipcorefifo
-   aq_fifo_pp_0(
-            .wr_clk(rx_clk),                    // input wr_clk
-            .rd_clk(fpga_clk),                  // input rd_clk
-            .rd_data_count(aq_status_cnt),      // output [7 : 0] rd_data_count
-            .rst(rst),                          // input rst
-            .wr_en(aq_write_en),                // input wr_en
-            .rd_en(aq_read_en),                 // input rd_en
-            .din(antenna_data),                 // input [23 : 0] din
-            .dout(aq_read_data),                // output [23 : 0] dout
-            .full(aq_full),                     // output full
-            .empty(aq_empty)                    // output empty
-   );
+   acquisition_fifo(
+                     .wr_clk(rx_clk),                    // input wr_clk
+                     .rd_clk(fpga_clk),                  // input rd_clk
+                     .rd_data_count(aq_status_cnt),      // output [7 : 0] rd_data_count
+                     .rst(rst),                          // input rst
+                     .wr_en(aq_write_en),                // input wr_en
+                     .rd_en(aq_read_en),                 // input rd_en
+                     .din(antenna_data),                 // input [23 : 0] din
+                     .dout(aq_read_data),                // output [23 : 0] dout
+                     .full(aq_full),                     // output full
+                     .empty(aq_empty)                    // output empty
+                  );
 
 //
 //      STORAGE BLOCK
 //
-
-//   wire [23:0] bb_rd_data;
-//   block_buffer #( .BLOCK_BUFFER_DEPTH(BLOCK_BUFFER_DEPTH), .BLOCK_BUFFER_ADDR_WIDTH(BLOCK_BUFFER_ADDR_WIDTH) )
-//   bram(
-//                     .clk(fpga_clk),
-//                     .write_data(aq_read_data),
-//                     .read_data(bb_rd_data),
-//                     .write_address(block_buffer_write_ptr),
-//                     .read_address(block_buffer_read_ptr));
-//                     
+                    
   wire [4:0] tx_status_cnt;
                  
   wire [SDRAM_ADDRESS_WIDTH-2:0] cmd_address;
@@ -107,7 +96,6 @@ module tart(
 
             .bb_clk(fpga_clk),
 
-            //.tx_write_en(tx_write_en), 
             .tx_status_cnt(tx_status_cnt), 
             .tx_ready_for_first_read(tx_ready_for_first_read),
 
@@ -116,6 +104,7 @@ module tart(
             .cmd_ready(cmd_ready),
             .cmd_enable(cmd_enable), 
             .cmd_wr(cmd_wr),
+            
             .cmd_address(cmd_address),
 
             .spi_start_aq(spi_start_aq)
@@ -157,8 +146,6 @@ module tart(
           .SDRAM_BA(SDRAM_BA), 
           .SDRAM_DATA(SDRAM_DQ)
        );
-
-   //assign bb_rd_data = data_out[23:0];
    
 //
 //     TRANSMISSION BLOCK
@@ -191,7 +178,6 @@ module tart(
             .rst(rst),                             // input rst
             .wr_clk(fpga_clk),                     // input wr_clk
             .rd_clk(fpga_clk),                     // input rd_clk
-            //.din(bb_rd_data),                    // input [23 : 0] din
             .din(data_out[23:0]),                  // input [23 : 0] din
             .wr_en(data_out_ready),                // input wr_en
             .rd_en(tx_read_en),                    // input rd_en
