@@ -66,25 +66,9 @@ module tart(
             .empty(aq_empty)                    // output empty
    );
 
-   aq_fifo_ctl #(.BLOCK_BUFFER_ADDR_WIDTH(BLOCK_BUFFER_ADDR_WIDTH))
-   aq_fifo_c(
-            .rst(rst),
-            .status_cnt(aq_status_cnt),
-            .read_clk(bb_clk),
-            .write_clk(rx_clk),
-            .spi_start_aq(spi_start_aq),
-            .aq_read_en(aq_read_en),
-            .aq_write_en(aq_write_en),
-            .block_buffer_write_ptr(block_buffer_write_ptr),
-            .bb_filled(bb_filled)
-            );
-
-   assign led = bb_filled;
-
 //
 //      STORAGE BLOCK
 //
-   //initial $monitor("tx_read_data %b, %h, spi_buffer_read_complete %b", tx_read_data, tx_read_data, spi_buffer_read_complete);
 
    wire [23:0] bb_rd_data;
    block_buffer #( .BLOCK_BUFFER_DEPTH(BLOCK_BUFFER_DEPTH), .BLOCK_BUFFER_ADDR_WIDTH(BLOCK_BUFFER_ADDR_WIDTH) )
@@ -94,16 +78,46 @@ module tart(
                      .read_data(bb_rd_data),
                      .write_address(block_buffer_write_ptr),
                      .read_address(block_buffer_read_ptr));
+                     
+  wire [4:0] tx_status_cnt;
+                 
+                     
+  fifo_sdram_fifo_scheduler #(.BLOCK_BUFFER_ADDR_WIDTH(BLOCK_BUFFER_ADDR_WIDTH))
+   aq_fifo_c(
+            .rst(rst),
 
-//
+            .aq_write_en(aq_write_en),
+            .status_cnt(aq_status_cnt),
+            .write_clk(rx_clk),
+            .aq_read_en(aq_read_en),
+
+            .bb_clk(bb_clk),
+            .block_buffer_write_ptr(block_buffer_write_ptr),
+            .block_buffer_read_ptr(block_buffer_read_ptr),
+
+            .tx_write_en(tx_write_en), 
+            .tx_status_cnt(tx_status_cnt), 
+            .tx_ready_for_first_read(tx_ready_for_first_read),
+
+            .bb_filled(bb_filled),
+            
+            //.cmd_ready(cmd_ready),
+            //.cmd_enable(cmd_enable), 
+            //.cmd_wr(cmd_wr),
+
+            .spi_start_aq(spi_start_aq)
+            );
+
+
+   assign led = bb_filled;
 
 
 //      SDRAM_Controller instance_name (
 //          .clk(bb_clk), 
 //          .reset(rst), 
 //          .cmd_ready(cmd_ready), 
-//          .cmd_enable(cmd_enable), 
-//          .cmd_wr(~bb_filled),
+//          .cmd_enable(cmd_enable),
+//          .cmd_wr(cmd_wr),                     // ~bb_filled
 //          .cmd_address(cmd_address),     //assign cmd_address = bb_filled ? block_buffer_read_ptr : block_buffer_write_ptr;
 //          .cmd_byte_enable(4'b1111), 
 //          .cmd_data_in(aq_read_data), 
@@ -126,15 +140,15 @@ module tart(
 //     TRANSMISSION BLOCK
 //
 
-   wire tx_write_en;
+   //wire tx_write_en;
    wire [23:0] tx_read_data;
    wire tx_empty, tx_full;
-   wire [4:0] tx_status_cnt;
+   //wire tx_ready_for_first_read;
+
    wire [4:0] tx_debug_status_cnt;
    reg tx_read_en = 0;
    reg read_to_be_done = 0;
    reg startup = 1;
-   wire tx_ready_for_first_read;
 
    always @(posedge fpga_clk)
       begin
@@ -164,22 +178,9 @@ module tart(
             .wr_data_count(tx_status_cnt) // output [4 : 0] wr_data_count
           );
 
-   tx_fifo_ctl
-   #(.BLOCK_BUFFER_DEPTH(BLOCK_BUFFER_DEPTH),
-     .BLOCK_BUFFER_ADDR_WIDTH(BLOCK_BUFFER_ADDR_WIDTH))
-   tx_fifo_c ( .tx_status_cnt(tx_status_cnt),
-               .tx_rst(rst),
-               .tx_write_clk(bb_clk),
-               .tx_write_en(tx_write_en),
-               .tx_ready_for_first_read(tx_ready_for_first_read),
-               .block_buffer_write_ptr(block_buffer_write_ptr),
-               .block_buffer_read_ptr(block_buffer_read_ptr)
-               );
-
 //
 //     SPI SLAVE
 //
-  wire spi_reset;
 
    SPI_slave dut (.fpga_clk(fpga_clk),
                   .SCK(spi_sck), .MOSI(spi_mosi), .MISO(spi_miso), .SSEL(spi_ssel),
@@ -199,8 +200,10 @@ module test_tart_tb();
    reg [23:0] telescope_data = 0;				
    reg  telescope_clk = 0; always #30 telescope_clk = !telescope_clk; // ~16 MHz tart clock
    wire led;
-
-   tart tartwithspi(
+   parameter BLOCK_BUFFER_ADDR_WIDTH = 9;
+   
+   tart #(.BLOCK_BUFFER_ADDR_WIDTH(BLOCK_BUFFER_ADDR_WIDTH))
+          tartwithspi(
                      .fpga_clk_32(clk32), .rst(rst), .led(led),                        // Papilio    32 MHz onboard clock
                      .rx_clk_16(telescope_clk), .antenna(telescope_data),              // TELESCOPE  16.368 MHz receiver master clock
                      .spi_sck(sck), .spi_mosi(mosi), .spi_miso(miso), .spi_ssel(ssel)  // SPI 
@@ -270,7 +273,7 @@ module test_tart_tb();
          ssel_enable; spi_write(8'b0_00001_00); fullsclk; spi_write(8'b0); ssel_disable; #200;//LSB
       end
 
-   for (f=0; f < 1<<14; f = f + 1)
+   for (f=0; f < 1<<BLOCK_BUFFER_ADDR_WIDTH; f = f + 1)
       begin
         $display("block_buffer: %d %d %b", f,tartwithspi.tart_block_buffer.block_buffer[f],tartwithspi.tart_block_buffer.block_buffer[f]);
       end
