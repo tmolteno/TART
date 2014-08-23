@@ -78,9 +78,9 @@ module fake_tart_clk_tb ();
   reg         CLK_IN1     = 1;
 
   // The high bits of the sampling counters
-  wire [3:1]  COUNT;
+  wire [2:1]  COUNT;
   reg         COUNTER_RESET = 0;
-wire [3:1] CLK_OUT;
+wire [2:1] CLK_OUT;
 //Freq Check using the M & D values setting and actual Frequency generated 
 
   reg [13:0]  timeout_counter = 14'b00000000000000;

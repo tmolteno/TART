@@ -162,9 +162,9 @@ architecture Behavioral of SDRAM_Controller is
    signal iob_dq_hiz       : std_logic := '1';
 
    -- signals for when to read the data off of the bus
-   -- signal data_ready_delay : std_logic_vector( 4 downto 0);   
+   signal data_ready_delay : std_logic_vector( 4 downto 0);   -- CLK > 80 MHz
    
-   signal data_ready_delay : std_logic_vector( 3 downto 0);   
+   -- signal data_ready_delay : std_logic_vector( 3 downto 0); -- CLK < 60 MHz   
    
    -- bit indexes used when splitting the address into row/colum/bank.
    constant start_of_col  : natural := 0;

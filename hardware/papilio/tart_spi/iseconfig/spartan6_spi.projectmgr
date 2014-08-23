@@ -15,13 +15,13 @@
          <ClosedNode>/test_tart_tb C:|Users|User|Documents|GitHub|projects|TART|hardware|verilog|papilio|spi_interface|fifo_ctl.v/tartwithspi - test_tart/t - tart</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>tartwithspi - tart (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_with_spi/verilog/tart.v)</SelectedItem>
+         <SelectedItem>tartwithspi - tart (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/verilog/tart.v)</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000002020000000100000001000000640000019b000000020000000000000000000000000200000064ffffffff0000008100000003000000020000019b0000000100000003000000000000000100000003</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000202000000010000000100000064000001a7000000020000000000000000000000000200000064ffffffff000000810000000300000002000001a70000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
-      <CurrentItem>tartwithspi - tart (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_with_spi/verilog/tart.v)</CurrentItem>
+      <CurrentItem>tartwithspi - tart (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/verilog/tart.v)</CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="" guiview="Process" >
       <ClosedNodes>
@@ -70,13 +70,13 @@
          <ClosedNode>Implement Design/Translate</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>Generate Programming File</SelectedItem>
+         <SelectedItem>Design Summary/Reports</SelectedItem>
       </SelectedItems>
-      <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
+      <ScrollbarPosition orientation="vertical" >6</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000000000000000001bf000000010000000100000000000000000000000064ffffffff000000810000000000000001000001bf0000000100000000</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000000000000000000018a000000010000000100000000000000000000000064ffffffff0000008100000000000000010000018a0000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem>Generate Programming File</CurrentItem>
+      <CurrentItem>Design Summary/Reports</CurrentItem>
    </ItemView>
    <ItemView engineview="BehavioralSim" guiview="Source" compilemode="AutoCompile" >
       <ClosedNodes>
@@ -85,13 +85,13 @@
          <ClosedNode>/test_tart_tb C:|Users|User|Documents|GitHub|projects|TART|hardware|verilog|papilio|spi_interface|fifo_ctl.v</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>test_tart_tb (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_with_spi/verilog/tart.v)</SelectedItem>
+         <SelectedItem>test_tart_tb (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/verilog/tart.v)</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000002020000000100000001000000640000019b000000020000000000000000000000000200000064ffffffff0000008100000003000000020000019b0000000100000003000000000000000100000003</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000202000000010000000100000064000001a7000000020000000000000000000000000200000064ffffffff000000810000000300000002000001a70000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
-      <CurrentItem>test_tart_tb (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_with_spi/verilog/tart.v)</CurrentItem>
+      <CurrentItem>test_tart_tb (C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/verilog/tart.v)</CurrentItem>
    </ItemView>
    <ItemView engineview="BehavioralSim" sourcetype="" guiview="Process" >
       <ClosedNodes>
@@ -112,29 +112,29 @@
          <ClosedNodesVersion>1</ClosedNodesVersion>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>Simulate Behavioral Model</SelectedItem>
+         <SelectedItem></SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000000000000000001d0000000010000000100000000000000000000000064ffffffff000000810000000000000001000001d00000000100000000</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000000000000000000019b000000010000000100000000000000000000000064ffffffff0000008100000000000000010000019b0000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem>Simulate Behavioral Model</CurrentItem>
+      <CurrentItem></CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="DESUT_UCF" guiview="Process" >
       <ClosedNodes>
          <ClosedNodesVersion>1</ClosedNodesVersion>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem/>
+         <SelectedItem></SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000000000000000000024d000000010000000100000000000000000000000064ffffffff0000008100000000000000010000024d0000000100000000</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000000000000000001d0000000010000000100000000000000000000000064ffffffff000000810000000000000001000001d00000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem/>
+      <CurrentItem></CurrentItem>
    </ItemView>
    <SourceProcessView>000000ff0000000000000002000001cc0000012401000000050100000002</SourceProcessView>
-   <CurrentView>Implementation</CurrentView>
+   <CurrentView>Behavioral Simulation</CurrentView>
    <ItemView engineview="SynthesisOnly" sourcetype="DESUT_VHDL_ARCHITECTURE" guiview="Process" >
       <ClosedNodes>
          <ClosedNodesVersion>1</ClosedNodesVersion>
@@ -167,13 +167,13 @@
          <ClosedNodesVersion>1</ClosedNodesVersion>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem/>
+         <SelectedItem></SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000000000000000001d0000000010000000100000000000000000000000064ffffffff000000810000000000000001000001d00000000100000000</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000000000000000000019b000000010000000100000000000000000000000064ffffffff0000008100000000000000010000019b0000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem/>
+      <CurrentItem></CurrentItem>
    </ItemView>
    <ItemView engineview="PostMapSim" guiview="Source" compilemode="AutoCompile" >
       <ClosedNodes>

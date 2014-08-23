@@ -90,7 +90,7 @@ group clear 0 end
 
 group insert \
     {fake_tart_clk_tb.dut.clk[1]} \
-    {fake_tart_clk_tb.dut.clk[2]}  \     {fake_tart_clk_tb.dut.clk[3]} 
+    {fake_tart_clk_tb.dut.clk[2]} 
 group using {Counters}
 group set -overlay 0
 group set -comment {}
@@ -98,7 +98,7 @@ group clear 0 end
 
 group insert \
     {fake_tart_clk_tb.dut.counter[1]} \
-    {fake_tart_clk_tb.dut.counter[2]}  \     {fake_tart_clk_tb.dut.counter[3]} 
+    {fake_tart_clk_tb.dut.counter[2]} 
 
 set id [waveform add -signals [list {nc::fake_tart_clk_tb.COUNT} ]]
 

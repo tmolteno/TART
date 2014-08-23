@@ -55,9 +55,8 @@
 // "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
 // "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
 //----------------------------------------------------------------------------
-// CLK_OUT1___128.000______0.000______50.0______254.576____223.130
-// CLK_OUT2____16.410______0.000______50.0______413.990____223.130
-// CLK_OUT3___160.000______0.000______50.0______241.186____223.130
+// CLK_OUT1____96.000______0.000______50.0______271.986____217.243
+// CLK_OUT2____16.390______0.000______50.0______411.649____217.243
 //
 //----------------------------------------------------------------------------
 // "Input Clock   Freq (MHz)    Input Jitter (UI)"
@@ -66,14 +65,13 @@
 
 `timescale 1ps/1ps
 
-(* CORE_GENERATION_INFO = "fake_tart_clk,clk_wiz_v4_1,{component_name=fake_tart_clk,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=PLL_BASE,num_out_clk=3,clkin1_period=31.250,clkin2_period=31.250,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}" *)
+(* CORE_GENERATION_INFO = "fake_tart_clk,clk_wiz_v4_1,{component_name=fake_tart_clk,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=PLL_BASE,num_out_clk=2,clkin1_period=31.250,clkin2_period=31.250,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}" *)
 module fake_tart_clk
  (// Clock in ports
   input         CLK_IN1,
   // Clock out ports
   output        CLK_OUT1,
-  output        CLK_OUT2,
-  output        CLK_OUT3
+  output        CLK_OUT2
  );
 
   // Input buffering
@@ -93,6 +91,7 @@ module fake_tart_clk
   wire        locked_unused;
   wire        clkfbout;
   wire        clkfbout_buf;
+  wire        clkout2_unused;
   wire        clkout3_unused;
   wire        clkout4_unused;
   wire        clkout5_unused;
@@ -102,17 +101,14 @@ module fake_tart_clk
     .CLK_FEEDBACK           ("CLKFBOUT"),
     .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
     .DIVCLK_DIVIDE          (1),
-    .CLKFBOUT_MULT          (20),
+    .CLKFBOUT_MULT          (21),
     .CLKFBOUT_PHASE         (0.000),
-    .CLKOUT0_DIVIDE         (5),
+    .CLKOUT0_DIVIDE         (7),
     .CLKOUT0_PHASE          (0.000),
     .CLKOUT0_DUTY_CYCLE     (0.500),
-    .CLKOUT1_DIVIDE         (39),
+    .CLKOUT1_DIVIDE         (41),
     .CLKOUT1_PHASE          (0.000),
     .CLKOUT1_DUTY_CYCLE     (0.500),
-    .CLKOUT2_DIVIDE         (4),
-    .CLKOUT2_PHASE          (0.000),
-    .CLKOUT2_DUTY_CYCLE     (0.500),
     .CLKIN_PERIOD           (31.250),
     .REF_JITTER             (0.010))
   pll_base_inst
@@ -120,7 +116,7 @@ module fake_tart_clk
    (.CLKFBOUT              (clkfbout),
     .CLKOUT0               (clkout0),
     .CLKOUT1               (clkout1),
-    .CLKOUT2               (clkout2),
+    .CLKOUT2               (clkout2_unused),
     .CLKOUT3               (clkout3_unused),
     .CLKOUT4               (clkout4_unused),
     .CLKOUT5               (clkout5_unused),
@@ -145,10 +141,6 @@ module fake_tart_clk
   BUFG clkout2_buf
    (.O   (CLK_OUT2),
     .I   (clkout1));
-
-  BUFG clkout3_buf
-   (.O   (CLK_OUT3),
-    .I   (clkout2));
 
 
 

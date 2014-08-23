@@ -10,20 +10,26 @@ module fifo_sdram_fifo_scheduler(
   
    input bb_clk,
 
-   output reg [BLOCK_BUFFER_ADDR_WIDTH-1:0] block_buffer_write_ptr = 0,
    output reg bb_filled=0,
-   output reg [BLOCK_BUFFER_ADDR_WIDTH-1:0] block_buffer_read_ptr = 0,
+
+   input cmd_ready,
+   output reg cmd_enable = 0,     
+   output reg cmd_wr = 0,
+   output reg [SDRAM_ADDRESS_WIDTH-2:0] cmd_address  = 0,
    
-   output reg tx_write_en = 0,
+   //output reg tx_write_en = 0,
    output reg tx_ready_for_first_read=0,
    input [4:0] tx_status_cnt
 
+
    );
 
+   parameter SDRAM_ADDRESS_WIDTH = 22;
    parameter BLOCKSIZE = 8'd32;
-   parameter BLOCK_BUFFER_ADDR_WIDTH = 9;
-   parameter FILL_THRESHOLD = (1 << BLOCK_BUFFER_ADDR_WIDTH)-BLOCKSIZE;
+   parameter FILL_THRESHOLD = (1 << 9)-BLOCKSIZE;
 
+   reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_wr_ptr = 0;
+   reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_rd_ptr = 0;
 
    reg [1:0] Sync_start = 2'b0;
    wire spi_start_aq_int;
@@ -48,75 +54,100 @@ module fifo_sdram_fifo_scheduler(
    
    reg [2:0] tart_state = AQ_WAITING;
    
-   always @(tart_state)
-      begin
-         case (tart_state)
-            AQ_WAITING:       aq_read_en  <= 1'b0;
-            AQ_FIFO_TO_SDRAM: aq_read_en  <= 1'b1;
-            TX_WRITING:       tx_write_en <= 1'b1;
-            TX_IDLE:          tx_write_en <= 1'b0;
-            FINISHED:         tx_write_en <= 1'b0;
-            default:
-               begin
-                  aq_read_en  <= 1'b0;
-                  tx_write_en <= 1'b0;
-               end
-         endcase
-      end
+//   always @(tart_state)
+//      begin
+//         case (tart_state)
+//            AQ_WAITING:       aq_read_en  <= 1'b0;
+//            AQ_FIFO_TO_SDRAM: aq_read_en  <= 1'b1;
+//            TX_WRITING:       
+//            TX_IDLE:          //tx_write_en <= 1'b0;
+//            FINISHED:         //tx_write_en <= 1'b0;
+//            default:
+//               begin
+//                 aq_read_en  <= 1'b0;
+//                  tx_write_en <= 1'b0;
+//               end
+//         endcase
+//      end
 
    always @(posedge bb_clk or posedge rst)
       begin
          if (rst)
             begin
                read_delay <= 1'b0;
-               block_buffer_write_ptr <= 0;
-               block_buffer_read_ptr <= 0;
+               sdram_wr_ptr <= 0;
+               sdram_rd_ptr <= 0;
+               aq_read_en  <= 1'b0;
+               aq_read_en  <= 1'b0;
                tart_state <= AQ_WAITING;
             end
          else
             case (tart_state)
                AQ_WAITING:
                   begin
-                     if (block_buffer_write_ptr >= FILL_THRESHOLD) tart_state <= TX_WRITING;
-                     else if (status_cnt >=  BLOCKSIZE)            tart_state <= AQ_FIFO_TO_SDRAM;
+                     if (sdram_wr_ptr >= FILL_THRESHOLD)
+                        begin
+                           tart_state <= TX_WRITING;
+                           aq_read_en  <= 1'b0;
+                        end
+                     else if (status_cnt >=  BLOCKSIZE)
+                        begin
+                           tart_state <= AQ_FIFO_TO_SDRAM;
+                           aq_read_en  <= 1'b1;
+                        end
                   end
                AQ_FIFO_TO_SDRAM:
                   begin
                      if (read_delay == 1'b1)
                         begin
-                           block_buffer_write_ptr <= block_buffer_write_ptr + 1'b1;
-                           $display("READING FROM BUFFER  no.%d of %d : %d", rcnt, BLOCKSIZE, block_buffer_write_ptr);
                            if (rcnt == BLOCKSIZE-1)
                               begin
                                  rcnt <= 6'b0;
+                                 aq_read_en  <= 1'b0;
                                  tart_state <= AQ_WAITING;
                               end
-                           else rcnt <= rcnt + 1'b1;
+                           else  if (cmd_enable) cmd_enable <= 0;
+                                 else
+                                    begin
+                                       if (cmd_ready)
+                                          begin
+                                             cmd_wr <= 1;
+                                             cmd_enable <= 1;
+                                             cmd_address <= sdram_wr_ptr;
+                                             sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
+                                             $display("READING FROM BUFFER  no.%d of %d : %d", rcnt, BLOCKSIZE, sdram_wr_ptr);
+                                             rcnt <= rcnt + 1'b1;
+                                          end
+                                    end
                         end
                      else read_delay <= 1'b1;
                   end
                TX_WRITING:
                      begin
                         bb_filled <= 1;
-                        $display("FILLING TX BUFFER: bb_rd_ptr: %d", block_buffer_read_ptr);
                         if (tx_status_cnt > 5'd15)
                            begin 
-                              $display("WRITING2IDLE: TX BUFFER: bb_rd_ptr: %d", block_buffer_read_ptr);
+                              $display("WRITING2IDLE: TX BUFFER: bb_rd_ptr: %d", sdram_rd_ptr);
                               tart_state <= TX_IDLE;
                               tx_ready_for_first_read <= 1;
                            end
-                        else block_buffer_read_ptr <= block_buffer_read_ptr + 1'b1;
+                        else
+                           begin
+                              if (cmd_enable) cmd_enable <= 0;
+                              else if (cmd_ready)
+                                      begin
+                                         cmd_wr <= 0;
+                                         cmd_enable <= 1;
+                                         cmd_address <= sdram_rd_ptr;
+                                         sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
+                                      end
+                          end
                      end
                TX_IDLE:
                   begin
-                     if (block_buffer_read_ptr < FILL_THRESHOLD)
+                     if (sdram_rd_ptr < FILL_THRESHOLD)
                         begin 
-                           if (tx_status_cnt<5'd5)
-                              begin
-                                 $display("IDLE2WRITING: TX BUFFER: bb_rd_ptr: %d", block_buffer_read_ptr);
-                                 block_buffer_read_ptr <= block_buffer_read_ptr + 1'b1;
-                                 tart_state <= TX_WRITING;
-                              end
+                           if (tx_status_cnt<5'd5) tart_state <= TX_WRITING;
                         end
                      else tart_state <= FINISHED;
                   end
