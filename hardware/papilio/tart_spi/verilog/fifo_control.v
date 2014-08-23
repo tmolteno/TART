@@ -47,6 +47,7 @@ module fifo_sdram_fifo_scheduler(
    reg read_delay = 1'b0;
 
    parameter AQ_WAITING       = 3'd0;
+   parameter AQ_READ_ONE      = 3'd5;
    parameter AQ_FIFO_TO_SDRAM = 3'd1;
    parameter TX_WRITING       = 3'd2;
    parameter TX_IDLE          = 3'd3;
@@ -92,56 +93,58 @@ module fifo_sdram_fifo_scheduler(
                         end
                      else if (status_cnt >=  BLOCKSIZE)
                         begin
-                           tart_state <= AQ_FIFO_TO_SDRAM;
-                           aq_read_en  <= 1'b1;
+                           tart_state <= AQ_READ_ONE;
+                           aq_read_en <= 1'b1;
                         end
                   end
+               AQ_READ_ONE:
+                 if (read_delay == 1'b1)
+                     begin
+                        rcnt <= rcnt + 1'b1;
+                        aq_read_en <= 1'b0;
+                        tart_state <= AQ_FIFO_TO_SDRAM;
+                     end
+                  else read_delay <= 1'b1;
                AQ_FIFO_TO_SDRAM:
                   begin
-                     if (read_delay == 1'b1)
-                        begin
-                           if (rcnt == BLOCKSIZE-1)
-                              begin
-                                 rcnt <= 6'b0;
-                                 aq_read_en  <= 1'b0;
-                                 tart_state <= AQ_WAITING;
-                              end
-                           else  if (cmd_enable) cmd_enable <= 0;
-                                 else
-                                    begin
-                                       if (cmd_ready)
-                                          begin
-                                             cmd_wr <= 1;
-                                             cmd_enable <= 1;
-                                             cmd_address <= sdram_wr_ptr;
-                                             sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
-                                             $display("READING FROM BUFFER  no.%d of %d : %d", rcnt, BLOCKSIZE, sdram_wr_ptr);
-                                             rcnt <= rcnt + 1'b1;
-                                          end
-                                    end
-                        end
-                     else read_delay <= 1'b1;
+                     if (cmd_enable) cmd_enable <= 0;
+                     else if (cmd_ready)
+                                 begin
+                                    cmd_wr      <= 1'b1;
+                                    cmd_enable  <= 1'b1;
+                                    cmd_address <= sdram_wr_ptr;
+                                    sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
+                                    if (rcnt == BLOCKSIZE-1)
+                                       begin
+                                          rcnt <= 6'b0;
+                                          tart_state <= AQ_WAITING;
+                                       end
+                                   else
+                                       begin
+                                          aq_read_en  <= 1'b1;
+                                          tart_state <= AQ_READ_ONE;
+                                       end
+                                end
                   end
                TX_WRITING:
-                     begin
-                        bb_filled <= 1;
-                        if (tx_status_cnt > 5'd15)
-                           begin 
-                              $display("WRITING2IDLE: TX BUFFER: bb_rd_ptr: %d", sdram_rd_ptr);
-                              tart_state <= TX_IDLE;
-                              tx_ready_for_first_read <= 1;
-                           end
-                        else
-                           begin
-                              if (cmd_enable) cmd_enable <= 0;
-                              else if (cmd_ready)
-                                      begin
-                                         cmd_wr <= 0;
-                                         cmd_enable <= 1;
-                                         cmd_address <= sdram_rd_ptr;
-                                         sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
-                                      end
-                          end
+                  begin
+                     bb_filled <= 1;
+                     if (tx_status_cnt > 5'd15)
+                        begin
+                           tx_ready_for_first_read <= 1'b1;
+                           tart_state <= TX_IDLE;
+                        end
+                     else
+                        begin
+                           if (cmd_enable) cmd_enable <= 1'b0;
+                           else if (cmd_ready)
+                                   begin
+                                      cmd_wr       <= 1'b0;
+                                      cmd_enable   <= 1'b1;
+                                      cmd_address  <= sdram_rd_ptr;
+                                      sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
+                                   end
+                       end
                      end
                TX_IDLE:
                   begin
