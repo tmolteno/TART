@@ -23,7 +23,7 @@ module fifo_sdram_fifo_scheduler(
 
    parameter SDRAM_ADDRESS_WIDTH = 22;
    parameter BLOCKSIZE = 8'd32;
-   parameter FILL_THRESHOLD = (1 << 19)-BLOCKSIZE;
+   parameter FILL_THRESHOLD = (1 << 20)-BLOCKSIZE;
 
    reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_wr_ptr = 0;
    reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_rd_ptr = 0;
@@ -55,7 +55,6 @@ module fifo_sdram_fifo_scheduler(
       begin
          if (rst)
             begin
-               read_delay   <= 1'b0;
                sdram_wr_ptr <= 0;
                sdram_rd_ptr <= 0;
                aq_read_en   <= 1'b0;
