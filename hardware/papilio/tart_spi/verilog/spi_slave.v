@@ -108,7 +108,7 @@ module SPI_slave(
    always @(posedge fpga_clk) trigger_data <= byte_received;
    always @(posedge fpga_clk) trigger_spi <= trigger_data;
 
-   reg [9:0] byte_count=0;
+   reg [15:0] byte_count=0;
    always @(posedge fpga_clk)
       begin
          if (SSEL_endmessage) byte_count<=0;                   // zero the counter
