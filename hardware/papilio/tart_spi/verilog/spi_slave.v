@@ -84,9 +84,9 @@ module SPI_slave(
 // we handle SPI in 8-bits format, so we need a 3 bits counter to count the bits as they come in
    reg [2:0] bitcnt;
 
-   reg byte_received;  // high when a byte has been received
-   reg trigger_data; 
-   reg trigger_spi;
+   reg byte_received = 1'b0;  // high when a byte has been received
+   reg trigger_data = 1'b0; 
+   reg trigger_spi = 1'b0;
    reg spi_start_aq_int = 1'b0;
    reg [7:0] data_rx_buffer = 8'bx;
 
@@ -108,7 +108,7 @@ module SPI_slave(
    always @(posedge fpga_clk) trigger_data <= byte_received;
    always @(posedge fpga_clk) trigger_spi <= trigger_data;
 
-   reg [7:0] byte_count=0;
+   reg [9:0] byte_count=0;
    always @(posedge fpga_clk)
       begin
          if (SSEL_endmessage) byte_count<=0;                   // zero the counter
@@ -132,7 +132,7 @@ module SPI_slave(
    reg write_flag = 1'b0;
    reg [3:0] register_addr = 4'b0;
    reg [7:0] data_to_send = 8'bx;
-
+   reg trigger_new_data = 0;
    //initial $monitor("%t registers %h %h %h %h",	 $time,  antenna_data, register[ADDR_READ_DATA1] ,	  register[ADDR_READ_DATA2] ,	  register[ADDR_READ_DATA3] );
    //initial $monitor("%t data_to_send %b",	 $time,  data_to_send);
    //initial $monitor("register[ADDR_STARTAQ], spi_start_aq, %h %b", register[ADDR_STARTAQ], spi_start_aq);
@@ -140,7 +140,8 @@ module SPI_slave(
   
    always @(posedge fpga_clk) if (byte_received && register_addr == ADDR_STARTAQ) spi_start_aq <= 1'b1;
    //always @(posedge fpga_clk) if (trigger_spi) spi_buffer_read_complete <= (register_addr == ADDR_READ_DATA3+1) ? 1'b1: 1'b0;
-   always @(posedge fpga_clk) spi_buffer_read_complete <= (register_addr == ADDR_READ_DATA3+1 && trigger_spi) ? 1'b1: 1'b0;
+//   always @(posedge fpga_clk) spi_buffer_read_complete <= (register_addr == ADDR_READ_DATA3+1 && trigger_spi) ? 1'b1: 1'b0;
+   always @(posedge fpga_clk) spi_buffer_read_complete <= (trigger_new_data && trigger_spi) ? 1'b1: 1'b0;
   
    always @(posedge fpga_clk)
       begin
@@ -165,10 +166,21 @@ module SPI_slave(
                            register[register_addr] <= data_rx_buffer[7:0];
                         end
                      else /* write_flag == 0 */
-                        register_addr <= register_addr + 1'b1;
+                        begin
+                           register_addr <= register_addr + 1'b1;
+                        end
                   end
             end
-         else if (trigger_data) data_to_send <= register[register_addr];
+         else if (trigger_data)
+           begin
+             data_to_send <= register[register_addr];
+             if (register_addr==ADDR_READ_DATA3)
+               begin
+                 trigger_new_data <= 1'b1;
+                 register_addr <= ADDR_READ_DATA1-1'b1;
+               end
+             else trigger_new_data <= 1'b0;
+           end
       end
 
    // Handle sending data
