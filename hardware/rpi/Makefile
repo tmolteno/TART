@@ -1,16 +1,15 @@
-# Copyright (c) Tim Molteno, tim@elec.ac.nz. 2013.
+#!/bin/bash
+# needs spi library
+#
+# git clone https://github.com/lthiery/SPI-Py
+# sudo python setup.py install
 
-all: prepare
-	sudo python  interrupt_loop.py
+debug:
+	python spartan6_spi_acquire.py --speed 8 --bramexp 10 --fast --debug
 
-monitor: prepare
-	sudo python read_data.py --data-directory foo --monitor 1
+acquire:
+	python spartan6_spi_acquire.py --speed 8 --bramexp 20 --fast
 
-noise: prepare
-	sudo python read_data.py --data-directory foo --monitor 0
+fulldebug:
+	python spartan6_spi_acquire.py --speed 8 --bramexp 20 --fast --debug
 
-test:
-	python testbench.py
-
-prepare:
-	sudo modprobe spi_bcm2708

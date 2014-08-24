@@ -27,7 +27,7 @@ if __name__ == '__main__':
  
   print 'receiving 3x', num_bytes
   
-  blocksize = 80
+  blocksize = 1000
   if (args.fast):
     resp2 = []
     for i in range(0,int(num_bytes/blocksize)):
@@ -38,18 +38,24 @@ if __name__ == '__main__':
     for i in range(num_bytes):
       resp.append(spi.transfer((0b0000010,0x0,0x0,0x0))[1:])
   
-print 'got data..' 
+  print 'got data..' 
   
   
   if args.debug:
     
     if (args.fast):
+      print 'reshape data blocks'
       resp2 = np.array(resp2,dtype=int).reshape(-1,3)
+      print 'reshape data remainder'
       resp3 = np.array(resp3,dtype=int).reshape(-1,3)
+      print 'concatenate...'
       resp2 = np.concatenate((resp2,resp3))
-      resp_dec = np.array([ (j[0] << 16) + (j[1] << 8) + j[2] for j in resp2])
+      print 'generate 24bit integer'
+      resp_dec = (resp2[:,0] << 16) + (resp2[:,1] << 8) + resp2[:,2]
+      print 'done'
     else:
-      resp_dec = np.array([ (j[0] << 16) + (j[1] << 8) + j[2] for j in resp])
+      resp = np.array(resp)
+      resp_dec = (resp[:,0] << 16) + (resp[:,1] << 8) + resp[:,2]
     #resp_bin = np.array([[np.binary_repr(i,8) for i in j] for j in resp])
     #resp_hex = np.array([[hex(i) for i in j] for j in resp])
     #for i, ent in enumerate(resp_dec):
