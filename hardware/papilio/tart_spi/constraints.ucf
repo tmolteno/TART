@@ -1,10 +1,8 @@
-NET "acquisition_fifo/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx*" TIG;
-NET "acquisition_fifo/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx/*" TIG;
+//NET "acquisition_fifo/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx*" TIG;
+//NET "acquisition_fifo/U0/xst_fifo_generator/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gcx.clkx/*" TIG;
 
-//NET "bb_clk" TNM_NET = bb_clk_network;
 NET "fpga_clk" TNM_NET = fpga_clk_network;
 NET "fake_rx_clk" TNM_NET = rx_clk_network;
-//TIMESPEC TS_bb_rx = FROM "bb_clk_network" TO "rx_clk_network" 2 ns DATAPATHONLY;
 TIMESPEC TS_fpga_rx = FROM "fpga_clk_network" TO "rx_clk_network" 2 ns DATAPATHONLY;
 
 # UCF file for the Papilio Pro board

@@ -41,7 +41,6 @@ module fifo_sdram_fifo_scheduler(
       end
 
    reg [5:0] rcnt = 6'b0;
-   reg read_delay = 1'b0;
 
    parameter AQ_WAITING       = 3'd0;
    parameter AQ_READ_ONE      = 3'd5;
@@ -69,42 +68,38 @@ module fifo_sdram_fifo_scheduler(
                      if (sdram_wr_ptr >= FILL_THRESHOLD)
                         begin
                            tart_state <= TX_WRITING;
-                           aq_read_en <= 1'b0;
                         end
-                     else if (status_cnt >=  BLOCKSIZE)
+                     else if (status_cnt >= BLOCKSIZE)
                         begin
                            tart_state <= AQ_READ_ONE;
-                           aq_read_en <= 1'b1;
                         end
                   end
                AQ_READ_ONE:
-                 if (read_delay == 1'b1)
-                     begin
-                        rcnt <= rcnt + 1'b1;
-                        aq_read_en <= 1'b0;
-                        tart_state <= AQ_FIFO_TO_SDRAM;
-                     end
-                  else read_delay <= 1'b1;
+                  begin
+                     if (rcnt == BLOCKSIZE-1)
+                        begin
+                           rcnt <= 6'b0;
+                           tart_state <= AQ_WAITING;
+                        end
+                     else
+                        begin
+                           rcnt <= rcnt + 1'b1;
+                           aq_read_en <= 1'b1;
+                           tart_state <= AQ_FIFO_TO_SDRAM;
+                        end
+                  end
                AQ_FIFO_TO_SDRAM:
                   begin
+                     aq_read_en <= 1'b0;
                      if (cmd_enable) cmd_enable <= 0;
                      else if (cmd_ready)
-                           begin
-                              cmd_wr      <= 1'b1;
-                              cmd_enable  <= 1'b1;
-                              cmd_address <= sdram_wr_ptr;
-                              sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
-                              if (rcnt == BLOCKSIZE-1)
-                                 begin
-                                    rcnt <= 6'b0;
-                                    tart_state <= AQ_WAITING;
-                                 end
-                             else
-                                 begin
-                                    aq_read_en <= 1'b1;
-                                    tart_state <= AQ_READ_ONE;
-                                 end
-                          end
+                        begin
+                           cmd_wr       <= 1'b1;
+                           cmd_enable   <= 1'b1;
+                           cmd_address  <= sdram_wr_ptr;
+                           sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
+                           tart_state <= AQ_READ_ONE;
+                        end
                   end
                TX_WRITING:
                   begin
