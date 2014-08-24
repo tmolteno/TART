@@ -4,7 +4,7 @@
    
    The tart operation is controlled by these 8-bit registers.
 
-   Transfers over the SPI are 2x8-bit, using the following format
+   Transfers over the SPI are (usually) 2x8-bit, using the following format
 
    SSEL_LOW {r/w, reg[6:0]}{ data[7:0]} SSEL_HIGH 
    The MSB indicates whether the register is being written or read.
@@ -12,16 +12,18 @@
 ANTENNA_DATA
    Read-only register that contains a single byte of antenna data
 
-DATA_ADDRESS
    Register that contains the address of the current data in the antenna buffer
-   is auto-incremented whenever ADDR_READ_DATA3 is read
+   gets filled with new data after register[ADDR_READ_DATA3] is dumped in the output buffer.
 
    TYPICAL OPERATION
    1. The SPI master writes to the acquire register (The initiates a capture)
    2. The FPGA starts acquiring data until its full.
-   3. The SPI master reads the data from the antenna data register
+   3. Fills the output FIFO and presents the first 24 bit of antenna data in the three 8bit registers.
+   4. The SPI master reads the data from the antenna data register.
+    4.a) register address gets auto-incremented with each byte read.
+    4.b) on ADDR_READ_DATA3 the next address is set to ADDR_READ_DATA1-1 such that the next read will yield ADDR_READ_DATA1.
 
-   EXAMPLE 16 bit operation
+   EXAMPLE A) 2 byte operation
 
                    RPI         <-->         SLAVE
 
@@ -35,8 +37,12 @@ DATA_ADDRESS
    0_000_0011 , 0000_0000      <-->       status_data[7:0] , DATA[15:8]
    0_000_0100 , 0000_0000      <-->       status_data[7:0] , DATA[7:0]
    
-   OR: 32 bit operation
-   0_000_0010 , 0000_0000, 0000_0000, 0000_0000       <-->       status_data[7:0] , DATA[23:16], DATA[15:8], DATA[7:0] 
+   EXAMPLE B) 4 byte operation
+   0_000_0010 , 0000_0000, 0000_0000, 0000_0000       <-->  status_data[7:0] , DATA[23:16], DATA[15:8], DATA[7:0]
+   
+   EXAMPLE C) 4(+) byte operation
+   0_000_0010 , 0000_0000, 0000_0000, 0000_0000, ...  <-->  status_data[7:0] , DATA[23:16], DATA[15:8], DATA[7:0] , DATA[23:16], ...
+   
 
 */
 
@@ -108,14 +114,14 @@ module SPI_slave(
    always @(posedge fpga_clk) trigger_data <= byte_received;
    always @(posedge fpga_clk) trigger_spi <= trigger_data;
 
-   reg [15:0] byte_count=0;
+   reg start_byte=1;
    always @(posedge fpga_clk)
       begin
-         if (SSEL_endmessage) byte_count<=0;                   // zero the counter
-         else if (byte_received) byte_count<=byte_count+8'h1;  // count the bytes
+         if (SSEL_endmessage) start_byte<=1;                // zero the counter
+         else if (byte_received) start_byte<=0;             // count the bytes
       end
 
-// SPECIFIY POSSIBLE REGISTER ADDRESSES
+   // SPECIFIY POSSIBLE REGISTER ADDRESSES
    
    //                               Register    Function
    parameter          ADDR_STATUS = 4'b0000; // STATUS ADDR
@@ -133,14 +139,8 @@ module SPI_slave(
    reg [3:0] register_addr = 4'b0;
    reg [7:0] data_to_send = 8'bx;
    reg trigger_new_data = 0;
-   //initial $monitor("%t registers %h %h %h %h",	 $time,  antenna_data, register[ADDR_READ_DATA1] ,	  register[ADDR_READ_DATA2] ,	  register[ADDR_READ_DATA3] );
-   //initial $monitor("%t data_to_send %b",	 $time,  data_to_send);
-   //initial $monitor("register[ADDR_STARTAQ], spi_start_aq, %h %b", register[ADDR_STARTAQ], spi_start_aq);
-   //  initial $monitor("byte_count %d, register %b , address %b, %b", byte_count, register[ADDR_STARTAQ], register_addr, ADDR_STARTAQ);
   
    always @(posedge fpga_clk) if (byte_received && register_addr == ADDR_STARTAQ) spi_start_aq <= 1'b1;
-   //always @(posedge fpga_clk) if (trigger_spi) spi_buffer_read_complete <= (register_addr == ADDR_READ_DATA3+1) ? 1'b1: 1'b0;
-//   always @(posedge fpga_clk) spi_buffer_read_complete <= (register_addr == ADDR_READ_DATA3+1 && trigger_spi) ? 1'b1: 1'b0;
    always @(posedge fpga_clk) spi_buffer_read_complete <= (trigger_new_data && trigger_spi) ? 1'b1: 1'b0;
   
    always @(posedge fpga_clk)
@@ -153,13 +153,13 @@ module SPI_slave(
          if (byte_received)
             begin
                $display("MOSI: %b", data_rx_buffer);
-               if (byte_count == 0) /* COMMAND WORD */
+               if (start_byte) /* COMMAND WORD */
                   begin
                      write_flag <= data_rx_buffer[7];
                      register_addr <= data_rx_buffer[3:0];
                      //if (data_rx_buffer[3:0] == ADDR_STARTAQ) spi_start_aq <= 1'b1;
                   end
-               else if (byte_count >= 1) /* DATA WORD */
+               else if (start_byte == 0) /* DATA BYTE */
                   begin
                      if (write_flag == 1)
                         begin
