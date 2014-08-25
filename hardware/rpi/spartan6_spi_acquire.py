@@ -42,7 +42,7 @@ if __name__ == '__main__':
   
   
   if args.debug:
-    
+    ant_data = [] 
     if (args.fast):
       print 'reshape data blocks'
       resp2 = np.array(resp2,dtype=int).reshape(-1,3)
@@ -53,6 +53,20 @@ if __name__ == '__main__':
       print 'generate 24bit integer'
       resp_dec = (resp2[:,0] << 16) + (resp2[:,1] << 8) + resp2[:,2]
       print 'done'
+  
+      print 'shift into seperate antenna arrays' 
+      for i in range(8):
+         ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=int))
+
+      for i in range(8):
+         ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=int))
+      
+      for i in range(8):
+         ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=int))
+      
+      print 'antdata0', ant_data[0]
+      print 'antdata1', ant_data[1]
+
     else:
       resp = np.array(resp)
       resp_dec = (resp[:,0] << 16) + (resp[:,1] << 8) + resp[:,2]
