@@ -133,7 +133,7 @@ module SPI_slave(
 
    reg [7:0] register [15:0];
    integer i;
-   initial for (i=0; i <15; i = i + 1) register[i] = 8'b00000000;    //initialize all RAM cells to 0 at startup
+   initial for (i=0; i <16; i = i + 1) register[i] = 8'b0;    //initialize all RAM cells to 0 at startup
 
    reg write_flag = 1'b0;
    reg [3:0] register_addr = 4'b0;

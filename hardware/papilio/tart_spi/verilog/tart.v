@@ -7,8 +7,9 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 
 module tart(
-            output wire led,
-            
+            // PAPILIO
+            input fpga_clk_32, input rst, output wire led,
+            // SDRAM
             output wire SDRAM_CLK,
             output wire SDRAM_CKE,
             output wire SDRAM_CS,
@@ -19,44 +20,35 @@ module tart(
             output wire [12:0] SDRAM_ADDR,
             output wire [1:0] SDRAM_BA,
             inout  wire [15:0] SDRAM_DQ,
-
+            // SPI
             output wire spi_miso,
-            input spi_sck, input spi_mosi, input spi_ssel, /* SPI */
-            input fpga_clk_32, input rst,
-            input rx_clk_16, /* 16.368 MHz receiver master clock */
-            input [23:0] antenna /* Radio Data Interface */
+            input spi_sck, input spi_mosi, input spi_ssel,
+            // TELESCOPE
+            input rx_clk_16,     // 16.368 MHz receiver master clock
+            input [23:0] antenna // Radio Data Interface
            );
-
-   parameter IDLE = 2'd0, SENDING = 2'd1, RECEIVING = 2'd2, ERROR = 2'd3;
-   parameter DEBUG=1'b1;
 
    parameter SDRAM_ADDRESS_WIDTH = 22;
 	parameter SDRAM_COLUMN_BITS   = 8;
 	parameter SDRAM_STARTUP_CYCLES= 10100;
 	parameter CYCLES_PER_REFRESH  = (64000*100)/4196-1; 
 
-   //
    //     GENERATE DIFFERENT CLOCK DOMAINS
-   //
 
    fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk));
 
-   //
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
-   //
-  
+
    wire [23:0] fake_antenna;
    fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
 
-   wire rx_clk;
-   wire [23:0] antenna_data;
+   //     TRI STATE FOR CHOOSING REAL OR FAKE DATA
 
-   assign       rx_clk = (DEBUG) ? fake_rx_clk: rx_clk_16;
-   assign antenna_data = (DEBUG) ? fake_antenna : antenna;
+   reg DEBUG=1'b1;
+   wire rx_clk;              assign       rx_clk = (DEBUG) ? fake_rx_clk : rx_clk_16;
+   wire [23:0] antenna_data; assign antenna_data = (DEBUG) ? fake_antenna : antenna;
 
-   //
    //     AQUISITION BLOCK
-   //
 
    wire [23:0] aq_write_data;
    wire [23:0] aq_read_data;
@@ -76,9 +68,7 @@ module tart(
                      .empty(aq_empty)                    // output empty
                   );
 
-//
 //      STORAGE BLOCK
-//
                     
   wire [4:0] tx_status_cnt;
                  
@@ -147,9 +137,7 @@ module tart(
           .SDRAM_DATA(SDRAM_DQ)
        );
    
-//
 //     TRANSMISSION BLOCK
-//
 
    wire [23:0] tx_read_data;
    wire tx_empty, tx_full;
@@ -188,9 +176,7 @@ module tart(
             .wr_data_count(tx_status_cnt)          // output [4 : 0] wr_data_count
           );
 
-//
 //     SPI SLAVE
-//
 
    SPI_slave dut (.fpga_clk(fpga_clk),
                   .SCK(spi_sck), .MOSI(spi_mosi), .MISO(spi_miso), .SSEL(spi_ssel),
