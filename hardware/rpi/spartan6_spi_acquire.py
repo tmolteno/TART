@@ -7,43 +7,72 @@ import argparse
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
-  parser.add_argument('--bramexp', default=9, type=int, help='exponent of bram depth')
+  parser.add_argument('--bramexp', default=9, type=float, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='print debug output to screen')
   parser.add_argument('--fast', action='store_true', help='use faster transfer!')
- 
+  parser.add_argument('--fast2', action='store_true', help='use faster transfer!')
+  parser.add_argument('--reset', action='store_true', help='reset after transmission?')
+  
   args = parser.parse_args()
-  spi.openSPI(speed=args.speed*1000000)
-  time.sleep(0.1)
-  
-  # START AQUSITION BY SETTING REG[0001] to 1
-  print spi.transfer((0b10000001,0x1))
-  
-  time.sleep(0.3)
-  resp = []
   
   num_bytes = np.power(2,args.bramexp)
   if (args.bramexp>10):
     num_bytes = num_bytes-32
+  
+  spi.openSPI(speed=args.speed*1000000)
+  
+  if args.reset: 
+    print 'resetting device'
+    time.sleep(0.1)
+    spi.transfer((0b10001111,0b00000001))
+    time.sleep(0.1)
+  
+  print 'enter debug mode'
+  spi.transfer((0b10001000,0b00000001))
+  time.sleep(0.1)
+  
+  #time.sleep(2)
+  # START ACQUSITION BY SETTING REG[0001] to 1
+  print 'start Acquision'
+  print spi.transfer((0b10000001,0b00000001))
+  time.sleep(0.5)
+  
  
   print 'receiving 3x', num_bytes
-  
   blocksize = 1000
-  if (args.fast):
+  if (args.fast2):
+    import itertools
+    
+    ret_array = []
+    remainder = num_bytes%blocksize
+    for i in range(0,int(num_bytes/blocksize)):
+      ret_array.append(spi.transfer((0b00000010,) + (0,0,0,)*blocksize)[1:])
+    ret_array.append(spi.transfer((0b00000010,) + (0,0,0,)*remainder)[1:])
+    ret_array = list(itertools.chain.from_iterable(ret_array))
+    
+  elif (args.fast):
     resp2 = []
     for i in range(0,int(num_bytes/blocksize)):
       resp2.append(spi.transfer((0b00000010,) + (0,0,0,)*blocksize)[1:])
     resp3 = spi.transfer((0b00000010,) + (0,0,0,)*(num_bytes%blocksize))[1:]
   
   else:
+    resp = []
     for i in range(num_bytes):
       resp.append(spi.transfer((0b0000010,0x0,0x0,0x0))[1:])
   
   print 'got data..' 
   
-  
+    
   if args.debug:
     ant_data = [] 
-    if (args.fast):
+    if (args.fast2):
+      print 'generating numpy array'
+      ret_array = np.array(ret_array,dtype=int)
+      print 'generate 24bit integer'
+      resp_dec = (ret_array[0::3] << 16) + (ret_array[1::3] << 8) + ret_array[2::3]
+      
+    elif (args.fast):
       print 'reshape data blocks'
       resp2 = np.array(resp2,dtype=int).reshape(-1,3)
       print 'reshape data remainder'
@@ -53,19 +82,19 @@ if __name__ == '__main__':
       print 'generate 24bit integer'
       resp_dec = (resp2[:,0] << 16) + (resp2[:,1] << 8) + resp2[:,2]
       print 'done'
-  
-      print 'shift into seperate antenna arrays' 
-      for i in range(8):
-         ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=int))
-
-      for i in range(8):
-         ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=int))
       
-      for i in range(8):
-         ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=int))
-      
-      print 'antdata0', ant_data[0]
-      print 'antdata1', ant_data[1]
+      #print 'shift into seperate antenna arrays' 
+      #for i in range(8):
+      #   ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=int))
+      #
+      #for i in range(8):
+      #   ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=int))
+      # 
+      #for i in range(8):
+      #   ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=int))
+      #
+      #for i in range(24):
+      #  print 'antdata',i, ant_data[i]
 
     else:
       resp = np.array(resp)

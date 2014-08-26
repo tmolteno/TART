@@ -5,11 +5,11 @@
 # sudo python setup.py install
 
 debug:
-	python spartan6_spi_acquire.py --speed 8 --bramexp 10 --fast --debug
+	python spartan6_spi_acquire.py --speed 8 --bramexp 10 --fast --debug --reset
 
 acquire:
-	python spartan6_spi_acquire.py --speed 8 --bramexp 20 --fast
+	python spartan6_spi_acquire.py --speed 8 --bramexp 20.94 --fast --reset
 
 fulldebug:
-	python spartan6_spi_acquire.py --speed 8 --bramexp 20 --fast --debug
+	python spartan6_spi_acquire.py --speed 8 --bramexp 20.94 --fast --debug --reset
 
