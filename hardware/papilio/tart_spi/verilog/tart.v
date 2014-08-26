@@ -33,6 +33,13 @@ module tart(
 	parameter SDRAM_STARTUP_CYCLES= 10100;
 	parameter CYCLES_PER_REFRESH  = (64000*100)/4196-1; 
 
+
+   //     HOOK UP SPI RESET INTO RESET
+   
+   wire reset;
+   wire spi_reset;
+   assign reset = spi_reset | rst;
+
    //     GENERATE DIFFERENT CLOCK DOMAINS
 
    fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk));
@@ -40,26 +47,27 @@ module tart(
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
 
    wire [23:0] fake_antenna;
-   fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
+   //fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
+   fake_telescope fake_tart (.write_clk(rx_clk_16), .write_data(fake_antenna));
 
-   //     TRI STATE FOR CHOOSING REAL OR FAKE DATA
-
-   reg DEBUG=1'b1;
-   wire rx_clk;              assign       rx_clk = (DEBUG) ? fake_rx_clk : rx_clk_16;
-   wire [23:0] antenna_data; assign antenna_data = (DEBUG) ? fake_antenna : antenna;
+   //     TRI STATE FOR CHOOSING REAL DATA OR FAKE DATA
+   wire spi_debug;
+   wire rx_clk;              assign       rx_clk = rx_clk_16;
+   //wire rx_clk;            assign       rx_clk = (spi_debug) ? fake_rx_clk  : rx_clk_16;
+   wire [23:0] antenna_data; assign antenna_data = (spi_debug) ? fake_antenna : antenna;
 
    //     AQUISITION BLOCK
 
    wire [23:0] aq_write_data;
    wire [23:0] aq_read_data;
    wire [7:0] aq_status_cnt;  // This is a count set in sync with the RD clk. it will never overstate the fullness of the fifo.
-
+   
    ipcorefifo
    acquisition_fifo(
+                     .rst(reset),                        // input rst
                      .wr_clk(rx_clk),                    // input wr_clk
                      .rd_clk(fpga_clk),                  // input rd_clk
                      .rd_data_count(aq_status_cnt),      // output [7 : 0] rd_data_count
-                     .rst(rst),                          // input rst
                      .wr_en(aq_write_en),                // input wr_en
                      .rd_en(aq_read_en),                 // input rd_en
                      .din(antenna_data),                 // input [23 : 0] din
@@ -71,33 +79,27 @@ module tart(
 //      STORAGE BLOCK
                     
   wire [4:0] tx_status_cnt;
-                 
   wire [SDRAM_ADDRESS_WIDTH-2:0] cmd_address;
+  wire [2:0] tart_state;
   
   fifo_sdram_fifo_scheduler
   #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
   scheduler(
-            .rst(rst),
-
+            .rst(reset),
             .aq_write_en(aq_write_en),
             .status_cnt(aq_status_cnt),
             .write_clk(rx_clk),
             .aq_read_en(aq_read_en),
-
             .bb_clk(fpga_clk),
-
             .tx_status_cnt(tx_status_cnt), 
             .tx_ready_for_first_read(tx_ready_for_first_read),
-
             .bb_filled(bb_filled),
-            
             .cmd_ready(cmd_ready),
             .cmd_enable(cmd_enable), 
             .cmd_wr(cmd_wr),
-            
             .cmd_address(cmd_address),
-
-            .spi_start_aq(spi_start_aq)
+            .spi_start_aq(spi_start_aq),
+            .tart_state(tart_state)
             );
 
    assign led = bb_filled;
@@ -114,7 +116,7 @@ module tart(
                )
            hamster_sdram (
           .clk(fpga_clk), 
-          .reset(rst), 
+          .reset(reset), 
           .cmd_ready(cmd_ready), 
           .cmd_enable(cmd_enable),
           .cmd_wr(cmd_wr),               
@@ -148,7 +150,14 @@ module tart(
    reg startup = 1;
 
    // THIS IS A WORKAROUND FOR THE FIFO TO WORK...
-   always @(posedge fpga_clk)
+   always @(posedge fpga_clk or posedge reset)
+     if (reset)
+        begin
+           tx_read_en <= 0;
+           read_to_be_done <= 0;
+           startup <= 1;
+        end
+     else
       begin
          if (tx_empty) tx_read_en <= ~tx_read_en;
          else if (spi_buffer_read_complete) read_to_be_done <= 1;
@@ -163,7 +172,7 @@ module tart(
   
    tx_fifo_ipcore
    tx_fifo(
-            .rst(rst),                             // input rst
+            .rst(reset),                             // input rst
             .wr_clk(fpga_clk),                     // input wr_clk
             .rd_clk(fpga_clk),                     // input rd_clk
             .din(data_out[23:0]),                  // input [23 : 0] din
@@ -181,12 +190,12 @@ module tart(
    SPI_slave dut (.fpga_clk(fpga_clk),
                   .SCK(spi_sck), .MOSI(spi_mosi), .MISO(spi_miso), .SSEL(spi_ssel),
                   .antenna_data(tx_read_data),
-                  .spi_status(8'b11110000),   // for now let spi_status just be constant 11110000
+                  .spi_status({2'b10,spi_buffer_read_complete, spi_start_aq, spi_debug, tart_state[2:0]}),
                   .spi_buffer_read_complete(spi_buffer_read_complete),
                   .spi_reset(spi_reset),
-                  .spi_start_aq(spi_start_aq)
+                  .spi_start_aq(spi_start_aq),
+                  .spi_debug(spi_debug)
                   );
-
 endmodule
 
 

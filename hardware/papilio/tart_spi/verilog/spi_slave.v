@@ -78,8 +78,9 @@ module SPI_slave(
    input [7:0] spi_status,
 
    output reg spi_buffer_read_complete = 0,
-   output reg spi_reset = 0,
-   output reg spi_start_aq = 0
+   output wire spi_reset,
+   output wire spi_start_aq,
+   output wire spi_debug
    );
 
    clock_synchronizer sync(fpga_clk, SCK, MOSI, SSEL,
@@ -129,6 +130,7 @@ module SPI_slave(
    parameter      ADDR_READ_DATA1 = 4'b0010; // DATA MSB [23:16]
    parameter      ADDR_READ_DATA2 = 4'b0011; // DATA     [15:8]
    parameter      ADDR_READ_DATA3 = 4'b0100; // DATA LSB [7:0]
+   parameter           ADDR_DEBUG = 4'b1000; // DEBUG MODE 
    parameter           ADDR_RESET = 4'b1111; // RESET
 
    reg [7:0] register [15:0];
@@ -140,10 +142,20 @@ module SPI_slave(
    reg [7:0] data_to_send = 8'bx;
    reg trigger_new_data = 0;
   
-   always @(posedge fpga_clk) if (byte_received && register_addr == ADDR_STARTAQ) spi_start_aq <= 1'b1;
+   
+   assign spi_reset = (register[ADDR_RESET] == 8'b1);
+   assign spi_start_aq = (register[ADDR_STARTAQ] == 8'b1);
+   assign spi_debug = (register[ADDR_DEBUG] == 8'b1);
    always @(posedge fpga_clk) spi_buffer_read_complete <= (trigger_new_data && trigger_spi) ? 1'b1: 1'b0;
   
    always @(posedge fpga_clk)
+      if (spi_reset)
+        begin
+          register[ADDR_RESET]   <= 8'b0;
+          register[ADDR_STARTAQ] <= 8'b0;
+          register[ADDR_DEBUG]   <= 8'b0;
+        end
+      else
       begin
          register[ADDR_READ_DATA1] <= antenna_data[23:16];
          register[ADDR_READ_DATA2] <= antenna_data[15:8];

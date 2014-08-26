@@ -18,34 +18,38 @@ module fifo_sdram_fifo_scheduler(
    output reg [SDRAM_ADDRESS_WIDTH-2:0] cmd_address  = 0,
    
    output reg tx_ready_for_first_read=0,
-   input [4:0] tx_status_cnt
+   input [4:0] tx_status_cnt,
+   output reg [2:0] tart_state = AQ_WAITING
    );
 
    parameter SDRAM_ADDRESS_WIDTH = 22;
    parameter BLOCKSIZE = 8'd32;
-// parameter FILL_THRESHOLD = (1 << 20)-BLOCKSIZE;
-// parameter FILL_THRESHOLD = (1 << 21)-BLOCKSIZE;
-// parameter FILL_THRESHOLD = (21'b11111111 << 13); // didnt work
-// parameter FILL_THRESHOLD = (21'b1111111 << 14);  //  didnt work
    parameter FILL_THRESHOLD = (21'b111111 << 15);   //  2064384 DID WORK
    
-
    reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_wr_ptr = 0;
    reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_rd_ptr = 0;
 
-   reg [1:0] Sync_start = 2'b0;
-   wire spi_start_aq_int;
-   always @(posedge write_clk) Sync_start[0] <= spi_start_aq;   // notice that we use clkB
-   always @(posedge write_clk) Sync_start[1] <= Sync_start[0];   // notice that we use clkB
-   assign spi_start_aq_int = Sync_start[1];  // new signal synchronized to (=ready to be used in) clkB domain  
+   
+
+   reg [1:0] Sync_start = 2'b0;  
+   // new signal synchronized to (=ready to be used in) clkB domain
+   wire spi_start_aq_int; assign spi_start_aq_int = Sync_start[1]; 
    
    always @(posedge write_clk or posedge rst)
       begin
-         if (rst) aq_write_en <= 1'b0;
-         else if (spi_start_aq_int) aq_write_en <= 1'b1;
+         if (rst)
+            begin
+              Sync_start <= 2'b00;
+              aq_write_en <= 1'b0;
+            end
+         else
+           begin
+             Sync_start[0] <= spi_start_aq;
+             Sync_start[1] <= Sync_start[0];
+             if (spi_start_aq_int) aq_write_en <= 1'b1;
+           end
       end
-
-   reg [5:0] rcnt = 6'b0;
+   
 
    parameter AQ_WAITING       = 3'd0;
    parameter AQ_READ_ONE      = 3'd5;
@@ -54,16 +58,20 @@ module fifo_sdram_fifo_scheduler(
    parameter TX_IDLE          = 3'd3;
    parameter FINISHED         = 3'd4;
    
-   reg [2:0] tart_state = AQ_WAITING;
-   
+   reg [5:0] rcnt = 6'b0;
+
    always @(posedge bb_clk or posedge rst)
       begin
          if (rst)
             begin
-               sdram_wr_ptr <= 0;
-               sdram_rd_ptr <= 0;
+               sdram_wr_ptr <= 21'b0;
+               sdram_rd_ptr <= 21'b0;
                aq_read_en   <= 1'b0;
                tart_state   <= AQ_WAITING;
+               rcnt <= 6'b0;
+               cmd_enable <= 1'b0;
+               cmd_wr    <= 1'b0;
+               bb_filled <= 1'b0;
             end
          else
             case (tart_state)
@@ -107,7 +115,7 @@ module fifo_sdram_fifo_scheduler(
                   end
                TX_WRITING:
                   begin
-                     bb_filled <= 1;
+                     bb_filled <= 1'b1;
                      if (tx_status_cnt > 5'd15)
                         begin
                            tx_ready_for_first_read <= 1'b1;
