@@ -10,37 +10,87 @@ from tart.operation import settings
 
 # Antenna numbers are 1,2,3......
 
-def str2bits(st):
-  length = len(st)
-  ret = np.zeros(length, dtype='uint8')
-  for i, el in enumerate(st):
-    ret[i] = int(el)
-  return ret, length
-
-def bit2int(bits):
-  return np.array([int(bits2str(bits[i:i+8]),2) for i in range(0,len(bits),8)])
-
-def bits2str(arr):
-  ret = ''
-  for i in arr:
-    ret += str(int(i))
+def int2bit(array_ints):
+  ret = np.zeros(8*len(array_ints),dtype=np.uint8)
+  for i in range(8):
+    ret[i::8] = (array_ints << i)>0
   return ret
 
-def int2bin_str_with_n_leading_zeros(n, i):
-  return ('{0:0%db}'%(n)).format(i)
+def bit2int(array_bits):
+  # numpy array as input! dtype=np.uint8
+  arr_len = len(array_bits)
+  if (arr_len%8) != 0:
+    array_bits = array_bits[:-(arr_len%8)]
+    print 'length must be a multiple of 8. Input array got cropped'
 
-def int2bit(ints, length=0):
-  if length==0:
-    length = len(ints)*8
-  ret = np.zeros(length, dtype='uint8')
-  for i, el in enumerate(ints):
-    if i == len(ints)-1:
-      for j, val in enumerate(int2bin_str_with_n_leading_zeros(length-i*8, el)):
-        ret[i*8+j] = int(val)
-    else:
-      for j, val in enumerate('{0:08b}'.format(el)):
-        ret[i*8+j] = int(val)
-  return np.array(ret)
+  ret = (array_bits[0::8] << 7) + \
+        (array_bits[1::8] << 6) + \
+        (array_bits[2::8] << 5) + \
+        (array_bits[3::8] << 4) + \
+        (array_bits[4::8] << 3) + \
+        (array_bits[5::8] << 2) + \
+        (array_bits[6::8] << 1) + \
+        (array_bits[7::8])
+  ret = ret.astype(np.uint8)
+  return ret
+
+#TEST BENCH:
+
+# int_input = np.array([240,240,0,240], dtype=np.uint8)
+# bit_output = int2bit(int_input)
+# int_output = bit2int(bit_output)
+
+# print int_input
+# print bit_output
+# print int_output
+
+# print (int_input == int_output).all()
+
+# bit_input = np.array([1, 1, 1, 1, 0, 0, 0, 0], dtype=np.uint8)
+# int_output = bit2int(bit_input)
+# bit_output = int2bit(int_output)
+
+
+# print bit_input
+# print int_output
+# print bit_output
+
+# print (bit_input == bit_output).all()
+
+
+
+
+# def str2bits(st):
+#   length = len(st)
+#   ret = np.zeros(length, dtype='uint8')
+#   for i, el in enumerate(st):
+#     ret[i] = int(el)
+#   return ret, length
+
+# def bit2int(bits):
+#   return np.array([int(bits2str(bits[i:i+8]),2) for i in range(0,len(bits),8)])
+
+# def bits2str(arr):
+#   ret = ''
+#   for i in arr:
+#     ret += str(int(i))
+#   return ret
+
+# def int2bin_str_with_n_leading_zeros(n, i):
+#   return ('{0:0%db}'%(n)).format(i)
+
+# def int2bit(ints, length=0):
+#   if length==0:
+#     length = len(ints)*8
+#   ret = np.zeros(length, dtype='uint8')
+#   for i, el in enumerate(ints):
+#     if i == len(ints)-1:
+#       for j, val in enumerate(int2bin_str_with_n_leading_zeros(length-i*8, el)):
+#         ret[i*8+j] = int(val)
+#     else:
+#       for j, val in enumerate('{0:08b}'.format(el)):
+#         ret[i*8+j] = int(val)
+#   return np.array(ret)
 
 class Observation:
 
@@ -67,7 +117,7 @@ class Observation:
     d = {}
     d['config'] = configdict
     d['timestamp']= self.timestamp
-    d['len'] = len(self.data[0])
+    #d['len'] = len(self.data[0])
     t = []
     for i in self.data:
       t.append(np.array(bit2int((i+1.)/2.),dtype='uint8'))
@@ -107,7 +157,8 @@ def Observation_Load(filename):
     load_data.close()
     bipolar_data = []
     for i in d['data']:
-      bipolar_data.append(int2bit(i, d['len'])*2.-1)
+      #bipolar_data.append(int2bit(i, d['len'])*2.-1)
+      bipolar_data.append(int2bit(i)*2.-1)
     # this is an array of bipolar radio signals.
     ret = Observation(d['timestamp'], np.array(bipolar_data, dtype='float64'), settings.from_dict(d['config']))
     return ret
