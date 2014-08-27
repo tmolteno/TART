@@ -30,7 +30,7 @@ def bit2int(array_bits):
         (array_bits[4::8] << 3) + \
         (array_bits[5::8] << 2) + \
         (array_bits[6::8] << 1) + \
-        (array_bits[7::8])
+        array_bits[7::8]
   ret = ret.astype(np.uint8)
   return ret
 
@@ -96,10 +96,11 @@ class Observation:
 
   '''Antenna positions are going to be in meters from the array reference position.
   They will be in 3D ENU co-ordinates'''
-  def __init__(self, timestamp, data, config):
+  def __init__(self, timestamp, config, data=None, savedata=None):
     self.timestamp = timestamp
-    self.data = data # array of bipolar arrays [[-1,1...],[1,-1...],...] with each length 2**16-1
     self.config = config
+    self.data = data
+    self.savedata = savedata
 
   def save(self, filename):
 
@@ -117,12 +118,17 @@ class Observation:
     d = {}
     d['config'] = configdict
     d['timestamp']= self.timestamp
-    #d['len'] = len(self.data[0])
-    t = []
-    for i in self.data:
-      t.append(np.array(bit2int((i+1.)/2.),dtype='uint8'))
-    d['data'] = np.array(t, dtype='uint8')
+    
+    if (self.savedata is None):
+      self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
 
+    t = []
+    for i in self.savedata:
+      print 'next antenna'
+      t.append(bit2int(i))
+    
+    d['data'] = t
+    
     save_data = open(filename, 'wb')
     cPickle.dump(d, save_data, cPickle.HIGHEST_PROTOCOL)
     save_data.close()
@@ -157,8 +163,7 @@ def Observation_Load(filename):
     load_data.close()
     bipolar_data = []
     for i in d['data']:
-      #bipolar_data.append(int2bit(i, d['len'])*2.-1)
       bipolar_data.append(int2bit(i)*2.-1)
     # this is an array of bipolar radio signals.
-    ret = Observation(d['timestamp'], np.array(bipolar_data, dtype='float64'), settings.from_dict(d['config']))
+    ret = Observation(d['timestamp'], settings.from_dict(d['config']), data=bipolar_data)
     return ret

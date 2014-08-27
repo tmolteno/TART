@@ -73,18 +73,17 @@ if __name__ == '__main__':
   ant_data = []
   print 'shift into seperate antenna arrays'
   for i in range(8):
-    ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=int))
+    ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=np.uint8))
   for i in range(8):
-    ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=int))
+    ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=np.uint8))
   for i in range(8):
-    ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=int))
+    ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=np.uint8))
   for i in range(24):
     print 'antdata',i, ant_data[i]
 
-  bipolar_data = (np.array(ant_data,dtype=int) * 2) -1
   config = settings.Settings(args.config_file)
   filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.pkl'
 
-  obs = observation.Observation(t_stmp, bipolar_data, config)
+  obs = observation.Observation(t_stmp, config, savedata=ant_data)
   obs.save(filename)
   print 'saved to: ', filename
