@@ -1,0 +1,19 @@
+{
+    "name": "TART Site: Physics Roof",
+    "frequency": 1.57542e9,
+    "bandwidth": 2.0e6,
+    "lat" : -45.86391200,
+    "lon" : 170.51348452,
+    "alt" : 63.0,
+    "num_antenna": 5,
+    "orientation": -22.0,
+    "axes": ["East", "North", "Up"],
+    "locations" :
+      [
+        [0.572, -0.415, 0.0],
+        [0.0, 0.0, 0.0],
+        [-0.302, -0.233, 0.0],
+        [0.287, 0.392, 0.0],
+        [-0.64,  0.605, 0.0]
+      ]
+}
