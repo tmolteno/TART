@@ -7,6 +7,7 @@ import argparse
 from tart.operation import observation
 from tart.operation import settings
 
+
 def mkdir_p(path): # Emulate mkdir -p functionality in python
   try:
     os.makedirs(path)
@@ -29,13 +30,18 @@ if __name__ == '__main__':
   parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=20.94, type=float, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
+  parser.add_argument('--profile', action='store_true', help='Show profile information.')
   parser.add_argument('--data-directory', required=True, help="The filesystem path for the telescope data.")
   parser.add_argument('--config-file', default='telescope_config.json', help="The telescope configuration file.")
 
   args = parser.parse_args()
   base_path = args.data_directory
 
-  num_bytes = np.power(2,args.bramexp)
+  if (args.profile):
+    import cProfile, pstats, StringIO
+    num_bytes = np.power(2,args.bramexp)
+    pr = cProfile.Profile()
+    pr.enable()
 
   spi.openSPI(speed=args.speed*1000000)
 
@@ -62,9 +68,9 @@ if __name__ == '__main__':
   spi.transfer((0b10001111,0b00000001))
   time.sleep(0.1)
   print 'reshape data blocks'
-  resp2 = np.array(resp2,dtype=np.uint8).reshape(-1,3)
+  resp2 = np.ravel(np.uint8(resp2)).reshape(-1,3)
   print 'reshape data remainder'
-  resp3 = np.array(resp3,dtype=np.uint8).reshape(-1,3)
+  resp3 = np.ravel(np.uint8(resp3)).reshape(-1,3)
   print 'concatenate...'
   resp2 = np.concatenate((resp2,resp3))
   print 'shape antenna data'
@@ -87,3 +93,11 @@ if __name__ == '__main__':
   obs = observation.Observation(t_stmp, config, savedata=ant_data)
   obs.save(filename)
   print 'saved to: ', filename
+  
+  if (args.profile):
+    pr.disable()
+    s = StringIO.StringIO()
+    sortby = 'cumulative'
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print s.getvalue()
