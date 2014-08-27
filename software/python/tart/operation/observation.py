@@ -14,6 +14,7 @@ def int2bit(array_ints):
   ret = np.zeros(8*len(array_ints),dtype=np.uint8)
   for i in range(8):
     ret[i::8] = (array_ints << i)>0
+  print ret
   return ret
 
 def bit2int(array_bits):
@@ -30,8 +31,9 @@ def bit2int(array_bits):
         (array_bits[4::8] << 3) + \
         (array_bits[5::8] << 2) + \
         (array_bits[6::8] << 1) + \
-        array_bits[7::8]
+        (array_bits[7::8])
   ret = ret.astype(np.uint8)
+  print ret
   return ret
 
 #TEST BENCH:
@@ -56,41 +58,6 @@ def bit2int(array_bits):
 # print bit_output
 
 # print (bit_input == bit_output).all()
-
-
-
-
-# def str2bits(st):
-#   length = len(st)
-#   ret = np.zeros(length, dtype='uint8')
-#   for i, el in enumerate(st):
-#     ret[i] = int(el)
-#   return ret, length
-
-# def bit2int(bits):
-#   return np.array([int(bits2str(bits[i:i+8]),2) for i in range(0,len(bits),8)])
-
-# def bits2str(arr):
-#   ret = ''
-#   for i in arr:
-#     ret += str(int(i))
-#   return ret
-
-# def int2bin_str_with_n_leading_zeros(n, i):
-#   return ('{0:0%db}'%(n)).format(i)
-
-# def int2bit(ints, length=0):
-#   if length==0:
-#     length = len(ints)*8
-#   ret = np.zeros(length, dtype='uint8')
-#   for i, el in enumerate(ints):
-#     if i == len(ints)-1:
-#       for j, val in enumerate(int2bin_str_with_n_leading_zeros(length-i*8, el)):
-#         ret[i*8+j] = int(val)
-#     else:
-#       for j, val in enumerate('{0:08b}'.format(el)):
-#         ret[i*8+j] = int(val)
-#   return np.array(ret)
 
 class Observation:
 
@@ -123,15 +90,16 @@ class Observation:
       self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
 
     t = []
-    for i in self.savedata:
-      print 'next antenna'
-      t.append(bit2int(i))
+    for i,ant in enumerate(self.savedata):
+      ints = bit2int(ant)
+      print 'antenna', i, ints
+      t.append(ints)
     
     d['data'] = t
     
-    save_data = open(filename, 'wb')
-    cPickle.dump(d, save_data, cPickle.HIGHEST_PROTOCOL)
-    save_data.close()
+    save_ptr = open(filename, 'wb')
+    cPickle.dump(d, save_ptr, cPickle.HIGHEST_PROTOCOL)
+    save_ptr.close()
 
   def get_antenna_old(self, ant_num):
     if (ant_num > self.config.num_antennas):
