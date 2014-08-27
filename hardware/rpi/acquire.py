@@ -57,33 +57,33 @@ if __name__ == '__main__':
     resp2.append(spi.transfer((0b00000010,) + (0,0,0,)*blocksize)[1:])
   resp3 = spi.transfer((0b00000010,) + (0,0,0,)*(num_bytes%blocksize))[1:]
   print 'got data..'
-
   print 'resetting device'
   time.sleep(0.1)
   spi.transfer((0b10001111,0b00000001))
   time.sleep(0.1)
-
   print 'reshape data blocks'
-  resp2 = np.array(resp2,dtype=int).reshape(-1,3)
+  resp2 = np.array(resp2,dtype=np.uint8).reshape(-1,3)
   print 'reshape data remainder'
-  resp3 = np.array(resp3,dtype=int).reshape(-1,3)
+  resp3 = np.array(resp3,dtype=np.uint8).reshape(-1,3)
   print 'concatenate...'
   resp2 = np.concatenate((resp2,resp3))
-
-  ant_data = []
-  print 'shift into seperate antenna arrays'
-  for i in range(8):
-    ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=np.uint8))
-  for i in range(8):
-    ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=np.uint8))
-  for i in range(8):
-    ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=np.uint8))
-  for i in range(24):
-    print 'antdata',i, ant_data[i]
+  print 'shape antenna data'
+  ant_data = np.flipud(np.unpackbits(resp2).reshape(-1,24).T)
+  print ant_data
+  #ant_data = []
+  #print 'shift into seperate antenna arrays'
+  #for i in range(8):
+  #  ant_data.append(np.array((resp2[:,2] & 1<<(i))>0,dtype=np.uint8))
+  #for i in range(8):
+  #  ant_data.append(np.array((resp2[:,1] & 1<<(i))>0,dtype=np.uint8))
+  #for i in range(8):
+  #  ant_data.append(np.array((resp2[:,0] & 1<<(i))>0,dtype=np.uint8))
+  #for i in range(24):
+  #  print i, ant_data[i]
 
   config = settings.Settings(args.config_file)
   filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.pkl'
-
+  print 'create observation object'
   obs = observation.Observation(t_stmp, config, savedata=ant_data)
   obs.save(filename)
   print 'saved to: ', filename
