@@ -13,3 +13,5 @@ acquire:
 fulldebug:
 	python spartan6_spi_acquire.py --speed 8 --bramexp 20.94 --fast --debug --reset
 
+observation:
+	python acquire.py --debug --data-directory test/
