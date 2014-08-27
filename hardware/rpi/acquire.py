@@ -1,5 +1,6 @@
 import spi
-
+import datetime
+import os,errno
 import numpy as np
 import time
 import argparse
@@ -7,12 +8,12 @@ from tart.operation import observation
 from tart.operation import settings
 
 def mkdir_p(path): # Emulate mkdir -p functionality in python
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else: raise
+  try:
+    os.makedirs(path)
+  except OSError as exc:
+    if exc.errno == errno.EEXIST and os.path.isdir(path):
+      pass
+    else: raise
 
 def create_timestamp_and_path(base_path):
   ts = datetime.datetime.utcnow()   # Timestamp information for directory structure
@@ -80,7 +81,7 @@ if __name__ == '__main__':
   for i in range(24):
     print 'antdata',i, ant_data[i]
 
-  bipolar_data = (np.array(ant_data,dype=int) * 2) -1
+  bipolar_data = (np.array(ant_data,dtype=int) * 2) -1
   config = settings.Settings(args.config_file)
   filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.pkl'
 
