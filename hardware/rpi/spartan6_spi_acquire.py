@@ -1,4 +1,4 @@
-import spi
+import spinumpy as spi
 
 import numpy as np
 import time

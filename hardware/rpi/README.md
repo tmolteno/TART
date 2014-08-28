@@ -58,8 +58,8 @@ Update to latest firmware.
 
     sudo aptitude install python-dev autossh
 
-    git clone https://github.com/lthiery/SPI-Py.git
-    cd SPI-Py
+    git clone https://github.com/maxscheel/SPI-NumPy.git
+    cd SPI-NumPy
     sudo python setup.py install
 
 ## Network setup

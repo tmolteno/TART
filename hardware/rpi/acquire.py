@@ -1,4 +1,4 @@
-import spi
+import spinumpy as spi
 import datetime
 import os,errno
 import numpy as np
