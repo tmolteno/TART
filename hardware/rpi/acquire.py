@@ -36,11 +36,12 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
   base_path = args.data_directory
+  
+  num_bytes = np.power(2,args.bramexp)
 
   if (args.profile):
     import cProfile, pstats, StringIO
-    num_bytes = np.power(2,args.bramexp)
-    pr = cProfile.Profile()
+    pr = cProfile.Profile(builtins=True)
     pr.enable()
 
   spi.openSPI(speed=args.speed*1000000)
@@ -68,14 +69,15 @@ if __name__ == '__main__':
   spi.transfer((0b10001111,0b00000001))
   time.sleep(0.1)
   print 'reshape data blocks'
-  resp2 = np.ravel(np.uint8(resp2)).reshape(-1,3)
+  resp2 = np.concatenate(resp2).reshape(-1,3)
+  #resp2 = np.array(resp2).reshape(-1,3)
   print 'reshape data remainder'
-  resp3 = np.ravel(np.uint8(resp3)).reshape(-1,3)
+  resp3 = np.array(resp3).reshape(-1,3)
   print 'concatenate...'
   resp2 = np.concatenate((resp2,resp3))
   print 'shape antenna data'
   ant_data = np.flipud(np.unpackbits(resp2).reshape(-1,24).T)
-  print ant_data
+  print ant_data[:,:15]
   #ant_data = []
   #print 'shift into seperate antenna arrays'
   #for i in range(8):
@@ -87,6 +89,11 @@ if __name__ == '__main__':
   #for i in range(24):
   #  print i, ant_data[i]
 
+  if (args.debug):
+    print 'leaving debug mode'
+    spi.transfer((0b10001000,0b00000000))
+    time.sleep(0.1)
+  
   config = settings.Settings(args.config_file)
   filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.pkl'
   print 'create observation object'
@@ -97,7 +104,6 @@ if __name__ == '__main__':
   if (args.profile):
     pr.disable()
     s = StringIO.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
     ps.print_stats()
     print s.getvalue()

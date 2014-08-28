@@ -74,9 +74,9 @@ if __name__ == '__main__':
       
     elif (args.fast):
       print 'reshape data blocks'
-      resp2 = np.array(resp2,dtype=int).reshape(-1,3)
+      resp2 = np.concatenate(resp2).reshape(-1,3)
       print 'reshape data remainder'
-      resp3 = np.array(resp3,dtype=int).reshape(-1,3)
+      resp3 = resp3.reshape(-1,3)
       print 'concatenate...'
       resp2 = np.concatenate((resp2,resp3))
       print 'generate 24bit integer'
