@@ -6,13 +6,47 @@
  * TODO. Do some averaging of the 'delay' variable to remove sensitivity to noise.
  */
 `timescale 1ns/1ns
+module sync_antennas_to_clock(
+      input fast_clk,
+      input clk_in,
+      input [23:0] data_in,
+      output wire clk_out,
+      output wire [23:0] data_out
+      );
+      sync_data_to_clock ant0 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[0]), .data_out(data_out[0]), .clk_out(clk_out));
+      sync_data_to_clock ant1 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[1]), .data_out(data_out[1]));
+      sync_data_to_clock ant2 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[2]), .data_out(data_out[2]));
+      sync_data_to_clock ant3 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[3]), .data_out(data_out[3]));
+      sync_data_to_clock ant4 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[4]), .data_out(data_out[4]));
+      sync_data_to_clock ant5 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[5]), .data_out(data_out[5]));
+      sync_data_to_clock ant6 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[6]), .data_out(data_out[6]));
+      sync_data_to_clock ant7 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[7]), .data_out(data_out[7]));
+      sync_data_to_clock ant8 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[8]), .data_out(data_out[8]));
+      sync_data_to_clock ant9 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[9]), .data_out(data_out[9]));
+      sync_data_to_clock ant10 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[10]), .data_out(data_out[10]));
+      sync_data_to_clock ant11 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[11]), .data_out(data_out[11]));
+      sync_data_to_clock ant12 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[12]), .data_out(data_out[12]));
+      sync_data_to_clock ant13 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[13]), .data_out(data_out[13]));
+      sync_data_to_clock ant14 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[14]), .data_out(data_out[14]));
+      sync_data_to_clock ant15 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[15]), .data_out(data_out[15]));
+      sync_data_to_clock ant16 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[16]), .data_out(data_out[16]));
+      sync_data_to_clock ant17 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[17]), .data_out(data_out[17]));
+      sync_data_to_clock ant18 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[18]), .data_out(data_out[18]));
+      sync_data_to_clock ant19 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[19]), .data_out(data_out[19]));
+      sync_data_to_clock ant20 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[20]), .data_out(data_out[20]));
+      sync_data_to_clock ant21 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[21]), .data_out(data_out[21]));
+      sync_data_to_clock ant22 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[22]), .data_out(data_out[22]));
+      sync_data_to_clock ant23 (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in[23]), .data_out(data_out[23]));
+
+
+endmodule
+
 
 module sync_data_to_clock(
       input fast_clk,
       input clk_in,
       input data_in,
-
-      output reg clk_out,
+      output wire clk_out,
       output reg data_out,
       output wire [5:0] avg_delay);
 
@@ -20,12 +54,14 @@ module sync_data_to_clock(
    wire clk_in_risingedge;  assign clk_in_risingedge  = (clk_in_r[2:1]==2'b01);  // now we can detect SCK rising edges
    wire clk_in_fallingedge; assign clk_in_fallingedge = (clk_in_r[2:1]==2'b10);  // and falling edges
 
+   reg clk_out_reg = 0;
    always @(posedge fast_clk)
       begin
-         if      (clk_in_risingedge)  clk_out <= 1'b1;
-         else if (clk_in_fallingedge) clk_out <= 1'b0;
+         if      (clk_in_risingedge)  clk_out_reg <= 1'b1;
+         else if (clk_in_fallingedge) clk_out_reg <= 1'b0;
       end
-
+   assign clk_out = clk_out_reg;
+   
    reg [2:0] data_in_r;  always @(posedge fast_clk) data_in_r <= {data_in_r[1:0], data_in};
    assign data_in_risingedge = (data_in_r[2:1]==2'b01);  // now we can detect SCK rising edges
 

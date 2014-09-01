@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <report-views version="2.0" >
  <header>
-  <DateModified>2014-08-23T17:20:13</DateModified>
+  <DateModified>2014-09-01T16:53:41</DateModified>
   <ModuleName>tart</ModuleName>
-  <SummaryTimeStamp>2014-08-23T17:20:04</SummaryTimeStamp>
+  <SummaryTimeStamp>2014-08-25T18:56:12</SummaryTimeStamp>
   <SavedFilePath>C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/iseconfig/tart.xreport</SavedFilePath>
   <ImplementationReportsDirectory>C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi\</ImplementationReportsDirectory>
   <DateInitialized>2014-08-01T17:17:12</DateInitialized>
@@ -17,6 +17,9 @@
     <toc-item title="Performance Summary" target="Performance Summary" />
     <toc-item title="Failing Constraints" target="Failing Constraints" />
     <toc-item title="Detailed Reports" target="Detailed Reports" />
+    <table-item tableState="CollapsedTable" tableKey="DetailedReports" />
+    <table-item tableState="CollapsedTable" tableKey="CurrentWarnings" />
+    <table-item tableState="CollapsedTable" tableKey="CurrentErrors" />
    </view>
    <view inputState="Unknown" program="implementation" contextTags="FPGA_ONLY" hidden="true" type="HTML" file="test_tart_envsettings.html" label="System Settings" />
    <view inputState="Translated" program="map" locator="MAP_IOB_TABLE" contextTags="FPGA_ONLY" type="IOBProperties" file="test_tart_map.xrpt" showConstraints="0" label="IOB Properties" />

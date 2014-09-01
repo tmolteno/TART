@@ -11,8 +11,5 @@
 <msg type="info" file="ProjectMgmt" num="1845" ><arg fmt="%s" index="1">Analyzing Verilog file &quot;C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/ipcore_dir/fake_tart_clk.v&quot; into library work</arg>
 </msg>
 
-<msg type="info" file="ProjectMgmt" num="1845" ><arg fmt="%s" index="1">Analyzing Verilog file &quot;C:/Users/User/Documents/GitHub/TART/hardware/papilio/tart_spi/ipcore_dir/fake_tart_clk/example_design/fake_tart_clk_exdes.v&quot; into library work</arg>
-</msg>
-
 </messages>
 

@@ -42,7 +42,7 @@ module tart(
 
    //     GENERATE DIFFERENT CLOCK DOMAINS
 
-   fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk));
+   fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk), .CLK_OUT3(clk320));
 
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
 
@@ -52,10 +52,21 @@ module tart(
 
    //     TRI STATE FOR CHOOSING REAL DATA OR FAKE DATA
    wire spi_debug;
-   wire rx_clk;              assign       rx_clk = rx_clk_16;
+   wire sel_rx_clk;          assign       sel_rx_clk = rx_clk_16;
    //wire rx_clk;            assign       rx_clk = (spi_debug) ? fake_rx_clk  : rx_clk_16;
-   wire [23:0] antenna_data; assign antenna_data = (spi_debug) ? fake_antenna : antenna;
+   wire [23:0] sel_antenna_data; assign sel_antenna_data = (spi_debug) ? fake_antenna : antenna;
 
+   wire [5:0] avg_delay;
+   wire [23:0] antenna_data;
+   
+   sync_antennas_to_clock sync_ant_int(
+    .fast_clk(clk320), 
+    .clk_in(sel_rx_clk), 
+    .data_in(sel_antenna_data), 
+    .clk_out(rx_clk), 
+    .data_out(antenna_data)
+    );
+        
    //     AQUISITION BLOCK
 
    wire [23:0] aq_write_data;

@@ -17,10 +17,14 @@
 <msg type="warning" file="sim" num="0" delta="new" ><arg fmt="%s" index="1">Component clk_wiz_v3_5 does not have a valid model name for Verilog synthesis</arg>
 </msg>
 
-<msg type="info" file="sim" num="949" delta="old" >Finished generation of ASY schematic symbol.
+<msg type="info" file="sim" num="949" delta="new" >Finished generation of ASY schematic symbol.
 </msg>
 
-<msg type="info" file="sim" num="948" delta="old" >Finished FLIST file generation.
+<msg type="warning" file="coreutil" num="0" delta="new" >WARNING: This core does not have a top level called &quot;/fake_tart_clk&quot;
+WARNING: Top level has been set to &quot;/fake_tart_clk_exdes&quot;
+</msg>
+
+<msg type="info" file="sim" num="948" delta="new" >Finished FLIST file generation.
 </msg>
 
 </messages>
