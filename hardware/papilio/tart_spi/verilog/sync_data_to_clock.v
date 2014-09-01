@@ -7,7 +7,14 @@
  */
 `timescale 1ns/1ns
 
-module sync_data_to_clock(input fast_clk, input clk_in, input data_in, output reg clk_out, output reg data_out);
+module sync_data_to_clock(
+      input fast_clk,
+      input clk_in,
+      input data_in,
+
+      output reg clk_out,
+      output reg data_out,
+      output wire [5:0] avg_delay);
 
    reg [2:0] clk_in_r;  always @(posedge fast_clk) clk_in_r <= {clk_in_r[1:0], clk_in};
    wire clk_in_risingedge;  assign clk_in_risingedge  = (clk_in_r[2:1]==2'b01);  // now we can detect SCK rising edges
@@ -29,7 +36,7 @@ module sync_data_to_clock(input fast_clk, input clk_in, input data_in, output re
    integer j;
    initial  begin for (j = 0; j<8; j=j+1) delay_reg[j] = 6'b0; end
 
-   wire [5:0] avg_delay;  // avg number of fast clock cycles between rising edge of data and rising edge of data.
+   //wire [5:0] avg_delay;  // avg number of fast clock cycles between rising edge of data and rising edge of data.
    //assign avg_delay = (delay_reg[0] + delay_reg[1] + delay_reg[2] + delay_reg[3] + delay_reg[4] + delay_reg[5] + delay_reg[6] + delay_reg[7]) >> 3;
    assign avg_delay = delay_reg[0];
 
@@ -78,6 +85,7 @@ endmodule
 module sync_data_to_clock_tb();
    wire data_out;
    wire clk_out;
+   wire [5:0] avg_delay;
 
    reg clk_in = 0;
    reg fast_clk = 0;
@@ -98,6 +106,6 @@ module sync_data_to_clock_tb();
          #60 data_in = !data_in;
          # 200 $finish;
       end
-   sync_data_to_clock dut (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in), .clk_out(clk_out), .data_out(data_out));
+   sync_data_to_clock dut (.fast_clk(fast_clk), .clk_in(clk_in), .data_in(data_in), .clk_out(clk_out), .data_out(data_out), .avg_delay(avg_delay));
 
 endmodule
