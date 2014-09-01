@@ -1,2 +1,0 @@
-vhdtdtfi -prj sdram_verilog -o C:/Users/User/Documents/GitHub/projects/TART/hardware/verilog/sdram_verilog/sdram_verilog/SDRAM_Controller.tfi -module SDRAM_Controller -template C:/Xilinx_ise/14.1/ISE_DS/ISE//data/tfi.tft -deleteonerror -lib work SDRAM_Controller.vhd 
-vhdtdtfi -prj sdram_verilog -o C:/Users/User/Documents/GitHub/projects/TART/hardware/verilog/sdram_verilog/sdram_verilog/SDRAM_Controller.tfi -module SDRAM_Controller -template C:/Xilinx_ise/14.1/ISE_DS/ISE//data/tfi.tft -deleteonerror -lib work SDRAM_Controller.vhd 

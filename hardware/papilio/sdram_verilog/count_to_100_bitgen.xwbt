@@ -1,8 +1,0 @@
-INTSTYLE=ise
-INFILE=C:\Users\User\Documents\GitHub\TART\hardware\papilio\sdram_verilog\count_to_100.ncd
-OUTFILE=C:\Users\User\Documents\GitHub\TART\hardware\papilio\sdram_verilog\count_to_100.bit
-FAMILY=Spartan6
-PART=xc6slx9-2tqg144
-WORKINGDIR=C:\Users\User\Documents\GitHub\TART\hardware\papilio\sdram_verilog
-LICENSE=WebPack
-USER_INFO=210915474_0_0_926

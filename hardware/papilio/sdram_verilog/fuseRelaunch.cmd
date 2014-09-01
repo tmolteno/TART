@@ -1,1 +1,0 @@
--intstyle "ise" -incremental -lib "simprims_ver" -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -lib "secureip" -o "C:/Users/User/Documents/GitHub/projects/TART/hardware/verilog/sdram_verilog/sdram_verilog/tb_isim_par.exe" -prj "C:/Users/User/Documents/GitHub/projects/TART/hardware/verilog/sdram_verilog/sdram_verilog/tb_par.prj" "work.tb" "work.glbl" 
