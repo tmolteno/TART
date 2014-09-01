@@ -16,9 +16,6 @@ if __name__ == '__main__':
   args = parser.parse_args()
   
   num_bytes = np.power(2,args.bramexp)
-  if (args.bramexp>10):
-    num_bytes = num_bytes-32
-  
   spi.openSPI(speed=args.speed*1000000)
   
   if args.reset: 
