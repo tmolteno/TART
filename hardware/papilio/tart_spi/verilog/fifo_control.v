@@ -24,12 +24,12 @@ module fifo_sdram_fifo_scheduler(
 
    parameter SDRAM_ADDRESS_WIDTH = 22;
    parameter BLOCKSIZE = 8'd32;
-   parameter FILL_THRESHOLD = (21'b111111 << 15);   //  2064384 DID WORK
    
-   reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_wr_ptr = 0;
-   reg [SDRAM_ADDRESS_WIDTH-2:0] sdram_rd_ptr = 0;
-
-   
+   // 1 bit bigger than needed. 
+   parameter FILL_THRESHOLD = (22'h1FFFFF);
+   // 1 bit bigger than needed. 
+   reg [SDRAM_ADDRESS_WIDTH-1:0] sdram_wr_ptr = 0;
+   reg [SDRAM_ADDRESS_WIDTH-1:0] sdram_rd_ptr = 0;
 
    reg [1:0] Sync_start = 2'b0;  
    // new signal synchronized to (=ready to be used in) clkB domain
@@ -50,7 +50,6 @@ module fifo_sdram_fifo_scheduler(
            end
       end
    
-
    parameter AQ_WAITING       = 3'd0;
    parameter AQ_READ_ONE      = 3'd5;
    parameter AQ_FIFO_TO_SDRAM = 3'd1;
@@ -64,8 +63,8 @@ module fifo_sdram_fifo_scheduler(
       begin
          if (rst)
             begin
-               sdram_wr_ptr <= 21'b0;
-               sdram_rd_ptr <= 21'b0;
+               sdram_wr_ptr <= 22'b0; // 1 bit bigger than needed. 
+               sdram_rd_ptr <= 22'b0; // 1 bit bigger than needed. 
                aq_read_en   <= 1'b0;
                tart_state   <= AQ_WAITING;
                rcnt <= 6'b0;
