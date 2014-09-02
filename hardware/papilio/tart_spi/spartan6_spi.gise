@@ -31,7 +31,6 @@
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/xst.xmsgs"/>
     <file xil_pn:fileType="FILE_VERILOG_INSTTEMPLATE" xil_pn:name="fifo_sdram_fifo_scheduler.tfi"/>
     <file xil_pn:fileType="FILE_LOG" xil_pn:name="fuse.log"/>
-    <file xil_pn:fileType="FILE_LOG" xil_pn:name="ipcore_dir/coregen.log"/>
     <file xil_pn:fileType="FILE_ASY" xil_pn:name="ipcore_dir/fake_tart_clk.asy" xil_pn:origination="imported"/>
     <file xil_pn:fileType="FILE_VEO" xil_pn:name="ipcore_dir/fake_tart_clk.veo" xil_pn:origination="imported"/>
     <file xil_pn:fileType="FILE_ASY" xil_pn:name="ipcore_dir/ipcorefifo.asy" xil_pn:origination="imported"/>
@@ -105,13 +104,9 @@
       <status xil_pn:value="OutOfDateForOutputs"/>
       <status xil_pn:value="InputAdded"/>
       <status xil_pn:value="InputChanged"/>
+      <status xil_pn:value="InputRemoved"/>
       <status xil_pn:value="OutputChanged"/>
-      <outfile xil_pn:name="verilog/SDRAM_Controller.vhd"/>
-      <outfile xil_pn:name="verilog/block_buffer.v"/>
-      <outfile xil_pn:name="verilog/fake_telescope.v"/>
-      <outfile xil_pn:name="verilog/fifo_control.v"/>
-      <outfile xil_pn:name="verilog/spi_slave.v"/>
-      <outfile xil_pn:name="verilog/tart.v"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
     <transform xil_pn:end_ts="1408756404" xil_pn:name="TRAN_xawsToSimhdl" xil_pn:prop_ck="300687895044488326" xil_pn:start_ts="1408756404">
       <status xil_pn:value="SuccessfullyRun"/>
@@ -137,17 +132,11 @@
       <status xil_pn:value="OutOfDateForInputs"/>
       <status xil_pn:value="OutOfDateForPredecessor"/>
       <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputAdded"/>
       <status xil_pn:value="InputChanged"/>
+      <status xil_pn:value="InputRemoved"/>
       <status xil_pn:value="OutputChanged"/>
       <status xil_pn:value="OutputRemoved"/>
-      <outfile xil_pn:name="ipcore_dir/fake_tart_clk.v"/>
-      <outfile xil_pn:name="ipcore_dir/fake_tart_clk/example_design/fake_tart_clk_exdes.v"/>
-      <outfile xil_pn:name="verilog/SDRAM_Controller.vhd"/>
-      <outfile xil_pn:name="verilog/block_buffer.v"/>
-      <outfile xil_pn:name="verilog/fake_telescope.v"/>
-      <outfile xil_pn:name="verilog/fifo_control.v"/>
-      <outfile xil_pn:name="verilog/spi_slave.v"/>
-      <outfile xil_pn:name="verilog/tart.v"/>
     </transform>
     <transform xil_pn:end_ts="1408770210" xil_pn:in_ck="8118794611867960216" xil_pn:name="TRAN_ISimulateBehavioralModelRunFuse" xil_pn:prop_ck="1897227304014880747" xil_pn:start_ts="1408770204">
       <status xil_pn:value="SuccessfullyRun"/>
@@ -179,13 +168,13 @@
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1409631315" xil_pn:in_ck="-7246877797299699531" xil_pn:name="TRAN_regenerateCores" xil_pn:prop_ck="-5911455468239664737" xil_pn:start_ts="1409631315">
+    <transform xil_pn:end_ts="1409636794" xil_pn:in_ck="-7246877797299699531" xil_pn:name="TRAN_regenerateCores" xil_pn:prop_ck="-5911455468239664737" xil_pn:start_ts="1409636794">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
-      <outfile xil_pn:name="ipcore_dir/ipcorefifo.ngc"/>
-      <outfile xil_pn:name="ipcore_dir/ipcorefifo.v"/>
-      <outfile xil_pn:name="ipcore_dir/tx_fifo_ipcore.ngc"/>
-      <outfile xil_pn:name="ipcore_dir/tx_fifo_ipcore.v"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputRemoved"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
     <transform xil_pn:end_ts="1408949936" xil_pn:in_ck="-6032580347129495625" xil_pn:name="TRAN_SubProjectAbstractToPreProxy" xil_pn:start_ts="1408949936">
       <status xil_pn:value="SuccessfullyRun"/>
@@ -198,99 +187,87 @@
     <transform xil_pn:end_ts="1408949936" xil_pn:in_ck="-6032580347129495625" xil_pn:name="TRAN_SubProjectPreToStructuralProxy" xil_pn:prop_ck="250970745955965653" xil_pn:start_ts="1408949936">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
     </transform>
     <transform xil_pn:end_ts="1408949936" xil_pn:name="TRAN_platgen" xil_pn:prop_ck="-5105414565079279511" xil_pn:start_ts="1408949936">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
     </transform>
-    <transform xil_pn:end_ts="1409635057" xil_pn:in_ck="7458117610442201017" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="-7683597415678989799" xil_pn:start_ts="1409635045">
+    <transform xil_pn:end_ts="1409636805" xil_pn:in_ck="-8362215374428962214" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="-7683597415678989799" xil_pn:start_ts="1409636794">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
       <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputAdded"/>
+      <status xil_pn:value="InputRemoved"/>
       <status xil_pn:value="OutputChanged"/>
-      <outfile xil_pn:name="_xmsgs/xst.xmsgs"/>
-      <outfile xil_pn:name="tart.lso"/>
-      <outfile xil_pn:name="tart.ngc"/>
-      <outfile xil_pn:name="tart.ngr"/>
-      <outfile xil_pn:name="tart.prj"/>
-      <outfile xil_pn:name="tart.stx"/>
-      <outfile xil_pn:name="tart.syr"/>
-      <outfile xil_pn:name="tart.xst"/>
-      <outfile xil_pn:name="tart_xst.xrpt"/>
-      <outfile xil_pn:name="webtalk_pn.xml"/>
-      <outfile xil_pn:name="xst"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1409635057" xil_pn:in_ck="-3986960532762715474" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="123229027436179517" xil_pn:start_ts="1409635057">
+    <transform xil_pn:end_ts="1409636805" xil_pn:in_ck="6578114222110546020" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="123229027436179517" xil_pn:start_ts="1409636805">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
     </transform>
-    <transform xil_pn:end_ts="1409635061" xil_pn:in_ck="6770710117985938181" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-5880821926154873280" xil_pn:start_ts="1409635057">
+    <transform xil_pn:end_ts="1409636810" xil_pn:in_ck="6770710117985938181" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-5880821926154873280" xil_pn:start_ts="1409636805">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
-      <outfile xil_pn:name="_ngo"/>
-      <outfile xil_pn:name="_xmsgs/ngdbuild.xmsgs"/>
-      <outfile xil_pn:name="tart.bld"/>
-      <outfile xil_pn:name="tart.ngd"/>
-      <outfile xil_pn:name="tart_ngdbuild.xrpt"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputRemoved"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1409635069" xil_pn:in_ck="-2514159685537626970" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="-6293099775700639387" xil_pn:start_ts="1409635061">
+    <transform xil_pn:end_ts="1409636818" xil_pn:in_ck="-2514159685537626970" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="-6293099775700639387" xil_pn:start_ts="1409636810">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
-      <outfile xil_pn:name="_xmsgs/map.xmsgs"/>
-      <outfile xil_pn:name="tart.pcf"/>
-      <outfile xil_pn:name="tart_map.map"/>
-      <outfile xil_pn:name="tart_map.mrp"/>
-      <outfile xil_pn:name="tart_map.ncd"/>
-      <outfile xil_pn:name="tart_map.ngm"/>
-      <outfile xil_pn:name="tart_map.xrpt"/>
-      <outfile xil_pn:name="tart_summary.xml"/>
-      <outfile xil_pn:name="tart_usage.xml"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputRemoved"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1409635080" xil_pn:in_ck="7816435514635892415" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="93661965788626211" xil_pn:start_ts="1409635069">
+    <transform xil_pn:end_ts="1409636829" xil_pn:in_ck="7816435514635892415" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="93661965788626211" xil_pn:start_ts="1409636818">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
-      <outfile xil_pn:name="_xmsgs/par.xmsgs"/>
-      <outfile xil_pn:name="tart.ncd"/>
-      <outfile xil_pn:name="tart.pad"/>
-      <outfile xil_pn:name="tart.par"/>
-      <outfile xil_pn:name="tart.ptwx"/>
-      <outfile xil_pn:name="tart.unroutes"/>
-      <outfile xil_pn:name="tart.xpi"/>
-      <outfile xil_pn:name="tart_pad.csv"/>
-      <outfile xil_pn:name="tart_pad.txt"/>
-      <outfile xil_pn:name="tart_par.xrpt"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputRemoved"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1409635113" xil_pn:in_ck="5073612556222" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1409635080">
+    <transform xil_pn:end_ts="1409636859" xil_pn:in_ck="5073612556222" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1409636829">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
-      <outfile xil_pn:name="_xmsgs/bitgen.xmsgs"/>
-      <outfile xil_pn:name="tart.bgn"/>
-      <outfile xil_pn:name="tart.bit"/>
-      <outfile xil_pn:name="tart.drc"/>
-      <outfile xil_pn:name="tart.ut"/>
-      <outfile xil_pn:name="usage_statistics_webtalk.html"/>
-      <outfile xil_pn:name="webtalk.log"/>
-      <outfile xil_pn:name="webtalk_pn.xml"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputRemoved"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
     <transform xil_pn:end_ts="1409031175" xil_pn:in_ck="5073612543368" xil_pn:name="TRAN_configureTargetDevice" xil_pn:prop_ck="8482462020707587906" xil_pn:start_ts="1409031172">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
       <status xil_pn:value="InputAdded"/>
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="InputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1409635080" xil_pn:in_ck="-2514159685537627102" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1409635076">
+    <transform xil_pn:end_ts="1409636829" xil_pn:in_ck="-2514159685537627102" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1409636825">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
-      <outfile xil_pn:name="_xmsgs/trce.xmsgs"/>
-      <outfile xil_pn:name="tart.twr"/>
-      <outfile xil_pn:name="tart.twx"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputRemoved"/>
+      <status xil_pn:value="OutputRemoved"/>
     </transform>
   </transforms>
 
