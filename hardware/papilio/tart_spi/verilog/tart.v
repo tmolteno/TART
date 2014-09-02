@@ -8,7 +8,8 @@
 
 module tart(
             // PAPILIO
-            input fpga_clk_32, input rst, output wire led,
+            //input fpga_clk_32,
+            input rst, output wire led,
             // SDRAM
             output wire SDRAM_CLK,
             output wire SDRAM_CKE,
@@ -42,30 +43,38 @@ module tart(
 
    //     GENERATE DIFFERENT CLOCK DOMAINS
 
-   fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk), .CLK_OUT3(clk320));
+   //fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk), .CLK_OUT3(clk320));
+   tart_clk_generator clknetwork(
+      .CLKIN(rx_clk_16),               // 16.368 MHZ
+      .CLKOUT0(rx_clk_16_buffered),    // 16.368 MHZ buffered
+      .CLKOUT1(fpga_clk)               // 16.368x6 = 98.208 MHz
+    );
 
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
 
    wire [23:0] fake_antenna;
    //fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
-   fake_telescope fake_tart (.write_clk(rx_clk_16), .write_data(fake_antenna));
+   fake_telescope fake_tart (.write_clk(rx_clk_16_buffered), .write_data(fake_antenna));
 
    //     TRI STATE FOR CHOOSING REAL DATA OR FAKE DATA
    wire spi_debug;
-   wire sel_rx_clk;          assign       sel_rx_clk = rx_clk_16;
+   wire sel_rx_clk;          assign       sel_rx_clk = rx_clk_16_buffered;
    //wire rx_clk;            assign       rx_clk = (spi_debug) ? fake_rx_clk  : rx_clk_16;
    wire [23:0] sel_antenna_data; assign sel_antenna_data = (spi_debug) ? fake_antenna : antenna;
 
    wire [5:0] avg_delay;
    wire [23:0] antenna_data;
    
-   sync_antennas_to_clock sync_ant_int(
-    .fast_clk(clk320), 
-    .clk_in(sel_rx_clk), 
-    .data_in(sel_antenna_data), 
-    .clk_out(rx_clk), 
-    .data_out(antenna_data)
-    );
+//   sync_antennas_to_clock sync_ant_int(
+//    .fast_clk(fpga_clk), 
+//    .clk_in(sel_rx_clk), 
+//    .data_in(sel_antenna_data), 
+//    .clk_out(rx_clk), 
+//    .data_out(antenna_data)
+//    );
+   assign rx_clk = sel_rx_clk;
+   assign antenna_data = sel_antenna_data;
+   
         
    //     AQUISITION BLOCK
 
