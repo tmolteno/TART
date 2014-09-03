@@ -19,8 +19,33 @@ module fifo_sdram_fifo_scheduler(
    
    output reg tx_ready_for_first_read=0,
    input [4:0] tx_status_cnt,
+   output wire [23:0] outtt, // remove me
    output reg [2:0] tart_state = AQ_WAITING
    );
+
+
+   wire [23:0] aq_bb_rd_data;
+   reg  [23:0] aq_bb_wr_data = 0;
+   reg [8:0] aq_bb_rd_address = 0;
+   reg [8:0] aq_bb_wr_address = 0;
+
+   // Instantiate the module
+   block_buffer aq_bb(
+       .read_data(outtt), 
+       .write_data(aq_bb_wr_data), 
+       .clk(bb_clk), 
+       .read_address(aq_bb_rd_address), 
+       .write_address(aq_bb_wr_address)
+       );
+   //reg [23:0] outtt;
+//
+//
+//   aq_bb_wr_address <= aq_bb_wr_address + 1'b1;
+//   if (aq_bb_rd_address != aq_bb_wr_address)
+//      begin
+//         aq_bb_rd_address <= aq_bb_rd_address + 1'b1;
+//         out <= aq_bb_rd_data;
+//      end 
 
    parameter SDRAM_ADDRESS_WIDTH = 22;
    parameter BLOCKSIZE = 8'd32;
@@ -44,6 +69,13 @@ module fifo_sdram_fifo_scheduler(
             end
          else
            begin
+             aq_bb_wr_address <= aq_bb_wr_address+ 1'b1;
+             aq_bb_wr_data <= 24'b1;
+             if (aq_bb_rd_address != aq_bb_wr_address)
+               begin
+                  aq_bb_rd_address <= aq_bb_rd_address + 1'b1;
+                  //outtt <= aq_bb_rd_data;
+               end 
              Sync_start[0] <= spi_start_aq;
              Sync_start[1] <= Sync_start[0];
              if (spi_start_aq_int) aq_write_en <= 1'b1;
