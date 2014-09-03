@@ -25,6 +25,7 @@ module tart_clk_generator(
     );
 
    wire GND_PIN; assign GND_PIN = 0;
+   wire CLK0;
    
    IBUFG #(
          .IOSTANDARD("DEFAULT")
@@ -54,8 +55,7 @@ module tart_clk_generator(
       .CLKIN_DIVIDE_BY_2("FALSE"),          // CLKIN divide by two (TRUE/FALSE)
       .CLKIN_PERIOD(61.095),                // Input clock period specified in nS
       .CLKOUT_PHASE_SHIFT("NONE"),          // Output phase shift (NONE, FIXED, VARIABLE)
-      //.CLK_FEEDBACK("1X"),                // Feedback source (NONE, 1X, 2X)
-      .CLK_FEEDBACK("NONE"),                // Feedback source (NONE, 1X, 2X)
+      .CLK_FEEDBACK("1X"),                  // Feedback source (NONE, 1X, 2X)
       .DESKEW_ADJUST("SYSTEM_SYNCHRONOUS"), // SYSTEM_SYNCHRNOUS or SOURCE_SYNCHRONOUS
       .DFS_FREQUENCY_MODE("LOW"),           // Unsupported - Do not change value
       .DLL_FREQUENCY_MODE("LOW"),           // Unsupported - Do not change value
@@ -66,7 +66,7 @@ module tart_clk_generator(
       .STARTUP_WAIT("FALSE")                // Delay config DONE until DCM_SP LOCKED (TRUE/FALSE)
    )
    DCM_SP_inst (
-      //.CLK0(CLK0),         // 1-bit output: 0 degree clock output
+      .CLK0(CLK0),         // 1-bit output: 0 degree clock output
       //.CLK180(CLK180),     // 1-bit output: 180 degree clock output
       //.CLK270(CLK270),     // 1-bit output: 270 degree clock output
       //.CLK2X(CLK2X),       // 1-bit output: 2X clock frequency clock output
@@ -78,7 +78,7 @@ module tart_clk_generator(
       //.LOCKED(LOCKED),     // 1-bit output: DCM_SP Lock Output
       //.PSDONE(PSDONE),     // 1-bit output: Phase shift done output
       //.STATUS(STATUS),     // 8-bit output: DCM_SP status output
-      .CLKFB(GND_PIN),       // 1-bit input: Clock feedback input
+      .CLKFB(CLK0),       // 1-bit input: Clock feedback input
       .CLKIN(DIVCLK),        // 1-bit input: Clock input
       .DSSEN(GND_PIN),       // 1-bit input: Unsupported, specify to GND.
       .PSCLK(GND_PIN),       // 1-bit input: Phase shift clock input
