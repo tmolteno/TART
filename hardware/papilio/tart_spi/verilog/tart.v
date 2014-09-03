@@ -65,15 +65,14 @@ module tart(
    wire [5:0] avg_delay;
    wire [23:0] antenna_data;
    
-//   sync_antennas_to_clock sync_ant_int(
-//    .fast_clk(fpga_clk), 
-//    .clk_in(sel_rx_clk), 
-//    .data_in(sel_antenna_data), 
-//    .clk_out(rx_clk), 
-//    .data_out(antenna_data)
-//    );
-   assign rx_clk = sel_rx_clk;
-   assign antenna_data = sel_antenna_data;
+   sync_antennas_to_clock sync_ant_int(
+    .fast_clk(fpga_clk), 
+    .data_in(sel_antenna_data), 
+    .slow_clk(rx_clk), 
+    .data_out(antenna_data)  // data valid on the rising edge of the clock.
+    );
+//   assign rx_clk = sel_rx_clk;
+//   assign antenna_data = sel_antenna_data;
    
         
    //     AQUISITION BLOCK
