@@ -6,8 +6,9 @@ module block_buffer(
    input [BLOCK_BUFFER_ADDR_WIDTH-1:0] write_address
    );
 
-   parameter BLOCK_BUFFER_DEPTH = 512;
-   parameter BLOCK_BUFFER_ADDR_WIDTH = 10;
+
+   parameter BLOCK_BUFFER_ADDR_WIDTH = 9;
+   parameter BLOCK_BUFFER_DEPTH = 1 << BLOCK_BUFFER_ADDR_WIDTH; // 512 
 
    reg [23:0] block_buffer [BLOCK_BUFFER_DEPTH-1:0];
    //initialize all RAM cells to 0FF1CE at startup
