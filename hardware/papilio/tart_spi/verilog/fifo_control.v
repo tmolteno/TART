@@ -13,7 +13,9 @@ module fifo_sdram_fifo_scheduler(
    input [4:0] tx_status_cnt,
    output reg [2:0] tart_state = AQ_WAITING,
    output reg [8:0] aq_bb_rd_address = 9'b0,
-   output reg [8:0] aq_bb_wr_address = 9'b0
+   input [23:0] aq_read_data,
+   output reg [8:0] aq_bb_wr_address = 9'b0,
+   output reg [31:0] cmd_data_in = 32'b0
    );
 
 
@@ -51,8 +53,6 @@ module fifo_sdram_fifo_scheduler(
    parameter TX_IDLE            = 3'd3;
    parameter FINISHED           = 3'd4;
 
-   reg [5:0] rcnt = 6'b0;
-
    always @(posedge bb_clk or posedge rst)
       begin
          if (rst)
@@ -60,16 +60,16 @@ module fifo_sdram_fifo_scheduler(
                sdram_wr_ptr <= 22'b0; // 1 bit bigger than needed.
                sdram_rd_ptr <= 22'b0; // 1 bit bigger than needed.
                tart_state   <= AQ_WAITING;
-               cmd_enable <= 1'b0;
-               cmd_wr    <= 1'b0;
-               bb_filled <= 1'b0;
+               cmd_enable   <= 1'b0;
+               cmd_wr       <= 1'b0;
+               bb_filled    <= 1'b0;
                aq_bb_rd_address <= 9'b0;
             end
          else
             case (tart_state)
                AQ_WAITING:
                   begin
-                     if (sdram_wr_ptr >= FILL_THRESHOLD)            tart_state <= TX_WRITING;
+                     if (sdram_wr_ptr > FILL_THRESHOLD) tart_state <= TX_WRITING;
                      else if (aq_bb_rd_address != aq_bb_wr_address) tart_state <= AQ_BUFFER_TO_SDRAM;
                   end
                AQ_BUFFER_TO_SDRAM:
@@ -79,8 +79,9 @@ module fifo_sdram_fifo_scheduler(
                         begin
                            cmd_wr       <= 1'b1;
                            cmd_enable   <= 1'b1;
-                           cmd_address  <= sdram_wr_ptr;
+                           cmd_address  <= sdram_wr_ptr[20:0];
                            sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
+                           cmd_data_in <= aq_read_data[23:0];
                            aq_bb_rd_address <= aq_bb_rd_address + 1'b1;
                            tart_state <= AQ_WAITING;
                         end

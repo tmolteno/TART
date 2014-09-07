@@ -70,6 +70,7 @@ module tart(
     .slow_clk(rx_clk),
     .data_out(antenna_data)  // data valid on the rising edge of the clock.
     );
+    
 //   assign rx_clk = sel_rx_clk;
 //   assign antenna_data = sel_antenna_data;
 
@@ -78,21 +79,6 @@ module tart(
 
    wire [23:0] aq_write_data;
    wire [23:0] aq_read_data;
-   wire [7:0] aq_status_cnt;  // This is a count set in sync with the RD clk. it will never overstate the fullness of the fifo.
-
-   // ipcorefifo
-   // acquisition_fifo(
-   //                   .rst(reset),                        // input rst
-   //                   .wr_clk(rx_clk),                    // input wr_clk
-   //                   .rd_clk(fpga_clk),                  // input rd_clk
-   //                   .rd_data_count(aq_status_cnt),      // output [7 : 0] rd_data_count
-   //                   .wr_en(aq_write_en),                // input wr_en
-   //                   .rd_en(aq_read_en),                 // input rd_en
-   //                   .din(antenna_data),                 // input [23 : 0] din
-   //                   .dout(aq_read_data),                // output [23 : 0] dout
-   //                   .full(aq_full),                     // output full
-   //                   .empty(aq_empty)                    // output empty
-   //                );
 
    wire [8:0] aq_bb_rd_address;
    wire [8:0] aq_bb_wr_address;
@@ -102,75 +88,75 @@ module tart(
       .read_data(aq_read_data),
       .write_data(antenna_data),
       .clk(fpga_clk),
-      .read_address(aq_bb_rd_address),
-      .write_address(aq_bb_wr_address)
+      .write_address(aq_bb_wr_address),
+      .read_address(aq_bb_rd_address)
    );
 
-
-
-//      STORAGE BLOCK
+   //      STORAGE BLOCK
 
   wire [4:0] tx_status_cnt;
   wire [SDRAM_ADDRESS_WIDTH-2:0] cmd_address;
   wire [2:0] tart_state;
+  
+  wire [31:0] cmd_data_in;
 
   fifo_sdram_fifo_scheduler
   #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
   scheduler(
             .rst(reset),
-            .aq_bb_rd_address(aq_bb_rd_address),
+            .spi_start_aq(spi_start_aq),
             .aq_bb_wr_address(aq_bb_wr_address),
+            .aq_bb_rd_address(aq_bb_rd_address),
+            .aq_read_data(aq_read_data),
+            .cmd_data_in(cmd_data_in),
             .write_clk(rx_clk),
             .bb_clk(fpga_clk),
-            .tx_status_cnt(tx_status_cnt),
-            .tx_ready_for_first_read(tx_ready_for_first_read),
             .bb_filled(bb_filled),
             .cmd_ready(cmd_ready),
             .cmd_enable(cmd_enable),
             .cmd_wr(cmd_wr),
             .cmd_address(cmd_address),
-            .spi_start_aq(spi_start_aq),
+            .tx_status_cnt(tx_status_cnt),
+            .tx_ready_for_first_read(tx_ready_for_first_read),
             .tart_state(tart_state)
             );
 
    assign led = bb_filled;
    wire [31:0] data_out;
-   wire [31:0] cmd_data_in;
-   assign cmd_data_in = aq_read_data [23:0];
 
-      SDRAM_Controller
-             #(
-             .sdram_address_width(SDRAM_ADDRESS_WIDTH),
-             .sdram_column_bits(SDRAM_COLUMN_BITS),
-             .sdram_startup_cycles(SDRAM_STARTUP_CYCLES),
-             .cycles_per_refresh(CYCLES_PER_REFRESH)
-               )
-           hamster_sdram (
-          .clk(fpga_clk),
-          .reset(reset),
-          .cmd_ready(cmd_ready),
-          .cmd_enable(cmd_enable),
-          .cmd_wr(cmd_wr),
-          .cmd_address(cmd_address),
-          .cmd_byte_enable(4'b1111),
-          .cmd_data_in(cmd_data_in),
+   SDRAM_Controller
+          #(
+          .sdram_address_width(SDRAM_ADDRESS_WIDTH),
+          .sdram_column_bits(SDRAM_COLUMN_BITS),
+          .sdram_startup_cycles(SDRAM_STARTUP_CYCLES),
+          .cycles_per_refresh(CYCLES_PER_REFRESH)
+            )
+        hamster_sdram (
+       .clk(fpga_clk),
+       .reset(reset),
+       .cmd_ready(cmd_ready),
+       .cmd_enable(cmd_enable),
+       .cmd_wr(cmd_wr),
+       .cmd_address(cmd_address),
+       .cmd_byte_enable(4'b1111),
+       .cmd_data_in(cmd_data_in),
 
-          .data_out(data_out),
-          .data_out_ready(data_out_ready),
+       .data_out(data_out),
+       .data_out_ready(data_out_ready),
 
-          .SDRAM_CLK(SDRAM_CLK),
-          .SDRAM_CKE(SDRAM_CKE),
-          .SDRAM_CS(SDRAM_CS),
-          .SDRAM_RAS(SDRAM_RAS),
-          .SDRAM_CAS(SDRAM_CAS),
-          .SDRAM_WE(SDRAM_WE),
-          .SDRAM_DQM(SDRAM_DQM),
-          .SDRAM_ADDR(SDRAM_ADDR),
-          .SDRAM_BA(SDRAM_BA),
-          .SDRAM_DATA(SDRAM_DQ)
-       );
+       .SDRAM_CLK(SDRAM_CLK),
+       .SDRAM_CKE(SDRAM_CKE),
+       .SDRAM_CS(SDRAM_CS),
+       .SDRAM_RAS(SDRAM_RAS),
+       .SDRAM_CAS(SDRAM_CAS),
+       .SDRAM_WE(SDRAM_WE),
+       .SDRAM_DQM(SDRAM_DQM),
+       .SDRAM_ADDR(SDRAM_ADDR),
+       .SDRAM_BA(SDRAM_BA),
+       .SDRAM_DATA(SDRAM_DQ)
+    );
 
-//     TRANSMISSION BLOCK
+   //     TRANSMISSION BLOCK
 
    wire [23:0] tx_read_data;
    wire tx_empty, tx_full;
