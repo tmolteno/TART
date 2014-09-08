@@ -1,20 +1,21 @@
 module fifo_sdram_fifo_scheduler(
    input rst,
    input spi_start_aq,
-   input write_clk,
+   input spi_buffer_read_complete,
+   
+   output reg [2:0] tart_state = AQ_WAITING,
 
+   input write_clk,
    input bb_clk,
-   output reg bb_filled=0,
+   
    input cmd_ready,
    output reg cmd_enable = 0,
    output reg cmd_wr = 0,
    output reg [SDRAM_ADDRESS_WIDTH-2:0] cmd_address  = 0,
-   output reg tx_ready_for_first_read=0,
-   input [4:0] tx_status_cnt,
-   output reg [2:0] tart_state = AQ_WAITING,
+
    output reg [8:0] aq_bb_rd_address = 9'b0,
-   input [23:0] aq_read_data,
    output reg [8:0] aq_bb_wr_address = 9'b0,
+   input [23:0] aq_read_data,
    output reg [31:0] cmd_data_in = 32'b0
    );
 
@@ -62,7 +63,6 @@ module fifo_sdram_fifo_scheduler(
                tart_state   <= AQ_WAITING;
                cmd_enable   <= 1'b0;
                cmd_wr       <= 1'b0;
-               bb_filled    <= 1'b0;
                aq_bb_rd_address <= 9'b0;
             end
          else
@@ -88,31 +88,21 @@ module fifo_sdram_fifo_scheduler(
                   end
                TX_WRITING:
                   begin
-                     bb_filled <= 1'b1;
-                     if (tx_status_cnt > 5'd15)
-                        begin
-                           tx_ready_for_first_read <= 1'b1;
-                           tart_state <= TX_IDLE;
-                        end
-                     else
-                        begin
-                           if (cmd_enable) cmd_enable <= 1'b0;
-                           else if (cmd_ready)
-                             begin
-                                cmd_wr       <= 1'b0;
-                                cmd_enable   <= 1'b1;
-                                cmd_address  <= sdram_rd_ptr;
-                                sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
-                             end
+                     if (cmd_enable) cmd_enable <= 1'b0;
+                     else if (cmd_ready)
+                       begin
+                          cmd_wr       <= 1'b0;
+                          cmd_enable   <= 1'b1;
+                          cmd_address  <= sdram_rd_ptr;
+                          sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
+                          tart_state <= TX_IDLE;
                        end
                      end
                TX_IDLE:
                   begin
-                     if (sdram_rd_ptr < FILL_THRESHOLD)
-                        begin
-                           if (tx_status_cnt<5'd5) tart_state <= TX_WRITING;
-                        end
-                     else tart_state <= FINISHED;
+                     cmd_enable <= 1'b0;
+                     if (sdram_rd_ptr > FILL_THRESHOLD) tart_state <= FINISHED;
+                     else if (spi_buffer_read_complete) tart_state <= TX_WRITING;
                   end
                FINISHED:
                   begin

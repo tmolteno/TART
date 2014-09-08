@@ -8,7 +8,6 @@
 
 module tart(
             // PAPILIO
-            //input fpga_clk_32,
             input rst, output wire led,
             // SDRAM
             output wire SDRAM_CLK,
@@ -30,9 +29,9 @@ module tart(
            );
 
    parameter SDRAM_ADDRESS_WIDTH = 22;
-	parameter SDRAM_COLUMN_BITS   = 8;
-	parameter SDRAM_STARTUP_CYCLES= 10100;
-	parameter CYCLES_PER_REFRESH  = (64000*100)/4196-1;
+   parameter SDRAM_COLUMN_BITS   = 8;
+   parameter SDRAM_STARTUP_CYCLES= 10100;
+   parameter CYCLES_PER_REFRESH  = (64000*100)/4196-1;
 
    //     HOOK UP SPI RESET INTO RESET
 
@@ -47,7 +46,7 @@ module tart(
       .CLKIN(rx_clk_16),               // 16.368 MHZ
       .CLKOUT0(rx_clk_16_buffered),    // 16.368 MHZ buffered
       .CLKOUT1(fpga_clk)               // 16.368x6 = 98.208 MHz
-    );
+   );
 
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
 
@@ -61,25 +60,21 @@ module tart(
    //wire rx_clk;            assign       rx_clk = (spi_debug) ? fake_rx_clk  : rx_clk_16;
    wire [23:0] sel_antenna_data; assign sel_antenna_data = (spi_debug) ? fake_antenna : antenna;
 
-   wire [5:0] avg_delay;
    wire [23:0] antenna_data;
-
+   wire rx_clk;
    sync_antennas_to_clock sync_ant_int(
     .fast_clk(fpga_clk),
     .data_in(sel_antenna_data),
     .slow_clk(rx_clk),
     .data_out(antenna_data)  // data valid on the rising edge of the clock.
     );
-    
-//   assign rx_clk = sel_rx_clk;
-//   assign antenna_data = sel_antenna_data;
-
+   //assign rx_clk = sel_rx_clk;
+   //assign antenna_data = sel_antenna_data;
 
    //     AQUISITION BLOCK
 
    wire [23:0] aq_write_data;
    wire [23:0] aq_read_data;
-
    wire [8:0] aq_bb_rd_address;
    wire [8:0] aq_bb_wr_address;
 
@@ -94,15 +89,18 @@ module tart(
 
    //      STORAGE BLOCK
 
-  wire [4:0] tx_status_cnt;
-  wire [SDRAM_ADDRESS_WIDTH-2:0] cmd_address;
-  wire [2:0] tart_state;
-  
-  wire [31:0] cmd_data_in;
+   wire [SDRAM_ADDRESS_WIDTH-2:0] cmd_address;
+   wire [2:0] tart_state;
+   assign led = (tart_state>=2);
 
-  fifo_sdram_fifo_scheduler
-  #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
-  scheduler(
+   wire [31:0] cmd_data_in;
+   wire [31:0] data_out;
+
+   wire spi_buffer_read_complete;
+  
+   fifo_sdram_fifo_scheduler
+   #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
+   scheduler(
             .rst(reset),
             .spi_start_aq(spi_start_aq),
             .aq_bb_wr_address(aq_bb_wr_address),
@@ -111,98 +109,51 @@ module tart(
             .cmd_data_in(cmd_data_in),
             .write_clk(rx_clk),
             .bb_clk(fpga_clk),
-            .bb_filled(bb_filled),
             .cmd_ready(cmd_ready),
             .cmd_enable(cmd_enable),
             .cmd_wr(cmd_wr),
             .cmd_address(cmd_address),
-            .tx_status_cnt(tx_status_cnt),
-            .tx_ready_for_first_read(tx_ready_for_first_read),
-            .tart_state(tart_state)
-            );
-
-   assign led = bb_filled;
-   wire [31:0] data_out;
+            .tart_state(tart_state),
+            .spi_buffer_read_complete(spi_buffer_read_complete)
+   );
 
    SDRAM_Controller
-          #(
-          .sdram_address_width(SDRAM_ADDRESS_WIDTH),
-          .sdram_column_bits(SDRAM_COLUMN_BITS),
-          .sdram_startup_cycles(SDRAM_STARTUP_CYCLES),
-          .cycles_per_refresh(CYCLES_PER_REFRESH)
-            )
-        hamster_sdram (
-       .clk(fpga_clk),
-       .reset(reset),
-       .cmd_ready(cmd_ready),
-       .cmd_enable(cmd_enable),
-       .cmd_wr(cmd_wr),
-       .cmd_address(cmd_address),
-       .cmd_byte_enable(4'b1111),
-       .cmd_data_in(cmd_data_in),
+   #(
+      .sdram_address_width(SDRAM_ADDRESS_WIDTH),
+      .sdram_column_bits(SDRAM_COLUMN_BITS),
+      .sdram_startup_cycles(SDRAM_STARTUP_CYCLES),
+      .cycles_per_refresh(CYCLES_PER_REFRESH)
+   )
+   hamster_sdram(
+      .clk(fpga_clk),
+      .reset(reset),
+      .cmd_ready(cmd_ready),
+      .cmd_enable(cmd_enable),
+      .cmd_wr(cmd_wr),
+      .cmd_address(cmd_address),
+      .cmd_byte_enable(4'b1111),
+      .cmd_data_in(cmd_data_in),
+      .data_out(data_out),
+      .data_out_ready(data_out_ready),
 
-       .data_out(data_out),
-       .data_out_ready(data_out_ready),
-
-       .SDRAM_CLK(SDRAM_CLK),
-       .SDRAM_CKE(SDRAM_CKE),
-       .SDRAM_CS(SDRAM_CS),
-       .SDRAM_RAS(SDRAM_RAS),
-       .SDRAM_CAS(SDRAM_CAS),
-       .SDRAM_WE(SDRAM_WE),
-       .SDRAM_DQM(SDRAM_DQM),
-       .SDRAM_ADDR(SDRAM_ADDR),
-       .SDRAM_BA(SDRAM_BA),
-       .SDRAM_DATA(SDRAM_DQ)
-    );
+      .SDRAM_CLK(SDRAM_CLK),
+      .SDRAM_CKE(SDRAM_CKE),
+      .SDRAM_CS(SDRAM_CS),
+      .SDRAM_RAS(SDRAM_RAS),
+      .SDRAM_CAS(SDRAM_CAS),
+      .SDRAM_WE(SDRAM_WE),
+      .SDRAM_DQM(SDRAM_DQM),
+      .SDRAM_ADDR(SDRAM_ADDR),
+      .SDRAM_BA(SDRAM_BA),
+      .SDRAM_DATA(SDRAM_DQ)
+   );
 
    //     TRANSMISSION BLOCK
 
-   wire [23:0] tx_read_data;
-   wire tx_empty, tx_full;
+   reg [23:0] tx_read_data = 24'b0;
+   always @(posedge fpga_clk) if (data_out_ready) tx_read_data <= data_out[23:0];
 
-   wire [4:0] tx_debug_status_cnt;
-   reg tx_read_en = 0;
-   reg read_to_be_done = 0;
-   reg startup = 1;
-
-   // THIS IS A WORKAROUND FOR THE FIFO TO WORK...
-   always @(posedge fpga_clk or posedge reset)
-     if (reset)
-        begin
-           tx_read_en <= 0;
-           read_to_be_done <= 0;
-           startup <= 1;
-        end
-     else
-      begin
-         if (tx_empty) tx_read_en <= ~tx_read_en;
-         else if (spi_buffer_read_complete) read_to_be_done <= 1;
-         else if ((startup && tx_ready_for_first_read) || (tx_empty==0 && read_to_be_done==1))
-            begin
-               startup <= 0;
-               tx_read_en <= 1;
-               read_to_be_done <= 0;
-            end
-         else tx_read_en <= 0;
-      end
-
-   tx_fifo_ipcore
-   tx_fifo(
-            .rst(reset),                           // input rst
-            .wr_clk(fpga_clk),                     // input wr_clk
-            .rd_clk(fpga_clk),                     // input rd_clk
-            .din(data_out[23:0]),                  // input [23 : 0] din
-            .wr_en(data_out_ready),                // input wr_en
-            .rd_en(tx_read_en),                    // input rd_en
-            .dout(tx_read_data),                   // output [23 : 0] dout
-            .full(tx_full),                        // output full
-            .empty(tx_empty),                      // output empty
-            .rd_data_count(tx_debug_status_cnt),   // output [4 : 0] rd_data_count
-            .wr_data_count(tx_status_cnt)          // output [4 : 0] wr_data_count
-          );
-
-//     SPI SLAVE
+   //     SPI SLAVE
 
    SPI_slave dut (.fpga_clk(fpga_clk),
                   .SCK(spi_sck), .MOSI(spi_mosi), .MISO(spi_miso), .SSEL(spi_ssel),
@@ -277,7 +228,7 @@ module test_tart_tb();
 //         ssel_enable;
 //         $display("3BYTE READ %t", $time);
 //         spi_write(8'b0000_0010); fullsclk;
-//         spi_write(8'b0000_0000); fullsclk; 		//MSB
+//         spi_write(8'b0000_0000); fullsclk; //MSB
 //         spi_write(8'b0000_0000); fullsclk;
 //         spi_write(8'b0000_0000); ssel_disable; //LSB
 //         #200;
