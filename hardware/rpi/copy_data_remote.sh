@@ -1,5 +1,8 @@
 #!/bin/sh
-#
+# Create local data directory and change owner to pi:
+#    sudo mkdir /data
+#    sudo chown pi:pi /data
+
 # Copy data to the remote server and delete the local copy after successful transfer
 #
 # The user running this script will have to have done an SSH key exchange with the remote
@@ -7,8 +10,8 @@
 #    ssh-keygen 
 #    ssh-copyid ${REMOTE}
 # Now add to crontab
-# 5 * * * * sh /home/tim/WoW/rpi/software/copy_data_remote.sh
+# 5 * * * * sh /home/pi/TART/hardware/rpi/copy_data_remote.sh
 #
-REMOTE=wow@electron.otago.ac.nz
+REMOTE=tart@electron.otago.ac.nz
 HOST=`hostname`
-rsync --recursive --remove-source-files /freenas/cow/data/* ${REMOTE}:/freenas/cow/data/${HOST}/ 2>&1
+rsync --recursive --remove-source-files /data/* ${REMOTE}:/freenas2/tart/data/${HOST}/ 2>&1

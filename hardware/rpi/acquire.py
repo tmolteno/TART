@@ -1,3 +1,9 @@
+# SETUP
+
+# Create local data directory and change owner to pi:
+#    sudo mkdir /data
+#    sudo chown pi:pi /data
+ 
 import spinumpy as spi
 import datetime
 import os,errno
@@ -28,14 +34,14 @@ def create_timestamp_and_path(base_path):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
-  parser.add_argument('--bramexp', default=20.94, type=float, help='exponent of bram depth')
+  parser.add_argument('--bramexp', default=21, type=float, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
   parser.add_argument('--profile', action='store_true', help='Show profile information.')
-  parser.add_argument('--data-directory', required=True, help="The filesystem path for the telescope data.")
+  parser.add_argument('--data-dir', required=True, help="The filesystem path for the telescope data.")
   parser.add_argument('--config-file', default='telescope_config.json', help="The telescope configuration file.")
 
   args = parser.parse_args()
-  base_path = args.data_directory
+  base_path = args.data_dir
   
   num_bytes = np.power(2,args.bramexp)
 

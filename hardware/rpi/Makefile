@@ -1,12 +1,15 @@
-fobs:
-	python acquire.py --debug --data-directory test --bramexp 20
-
 obs:
-	python acquire.py --data-directory test --bramexp 20
+	python acquire.py --data-dir /freenas2/tart/data/
 
-debug:
+lobs:
+	python acquire.py --data-directory test
+
+fobs:
+	python acquire.py --debug --data-directory test
+
+debug10:
 	python spartan6_spi_acquire.py --speed 8 --bramexp 10 --fast --debug --reset
 
-acquire:
-	python spartan6_spi_acquire.py --speed 8 --bramexp 20.94 --fast --reset
+debug:
+	python spartan6_spi_acquire.py --speed 8 --bramexp 21 --fast --debug --reset
 

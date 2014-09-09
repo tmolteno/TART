@@ -100,9 +100,16 @@ if __name__ == '__main__':
     #resp_hex = np.array([[hex(i) for i in j] for j in resp])
     #for i, ent in enumerate(resp_dec):
     #  print i, ent, resp_bin[i], resp_hex[i]
-    print (resp_dec[1:]-resp_dec[:-1])
-    print (resp_dec[1:]-resp_dec[:-1]).__ne__(1).sum()
-  
+    diffs = (resp_dec[1:]-resp_dec[:-1])
+    
+    diffssum = diffs.__ne__(1).sum()
+    print diffs
+    print diffssum
+    index = np.arange(len(diffs))
+    print diffs[diffs.__ne__(1)]
+    print index[diffs.__ne__(1)] 
+    
+
   '''
   resp = []
   for i in range(num_bytes):
