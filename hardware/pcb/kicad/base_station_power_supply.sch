@@ -1,0 +1,283 @@
+EESchema Schematic File Version 2  date Tue 09 Sep 2014 11:32:54 NZST
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:TART
+LIBS:Papilio
+LIBS:base_station_integrated-cache
+EELAYER 25  0
+EELAYER END
+$Descr A4 11700 8267
+encoding utf-8
+Sheet 7 7
+Title ""
+Date "8 sep 2014"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L PWR_FLAG #FLG013
+U 1 1 540E3627
+P 9800 4850
+F 0 "#FLG013" H 9800 4945 30  0001 C CNN
+F 1 "PWR_FLAG" H 9800 5030 30  0000 C CNN
+	1    9800 4850
+	-1   0    0    1   
+$EndComp
+Connection ~ 9800 4600
+Wire Wire Line
+	9800 4850 9800 4300
+Connection ~ 8450 4600
+Wire Wire Line
+	8450 4600 8450 3900
+Wire Wire Line
+	8950 3900 8950 2350
+Connection ~ 5600 3600
+Wire Wire Line
+	5600 3900 5600 2350
+Wire Wire Line
+	5650 4100 5600 4100
+Connection ~ 5300 3600
+Wire Wire Line
+	5300 3600 5300 3900
+Connection ~ 4950 4600
+Wire Wire Line
+	4950 4300 4950 4600
+Connection ~ 2550 4450
+Wire Wire Line
+	4000 4450 2200 4450
+Wire Wire Line
+	2200 4450 2200 3700
+Wire Wire Line
+	2550 3850 2550 4450
+Wire Wire Line
+	2200 3700 2000 3700
+Connection ~ 8950 4600
+Connection ~ 8950 3600
+Wire Wire Line
+	9200 3600 8850 3600
+Connection ~ 7450 4600
+Wire Wire Line
+	7450 4600 7450 4300
+Connection ~ 7900 3600
+Wire Wire Line
+	7900 3600 7900 3900
+Wire Wire Line
+	7350 3600 8050 3600
+Wire Wire Line
+	7450 3900 7450 3600
+Connection ~ 7450 3600
+Wire Wire Line
+	6950 4600 6950 3900
+Wire Wire Line
+	8950 4600 8950 4300
+Connection ~ 6950 4600
+Wire Wire Line
+	7900 4600 7900 4300
+Connection ~ 7900 4600
+Wire Wire Line
+	9700 3600 9800 3600
+Wire Wire Line
+	9800 3600 9800 3900
+Wire Wire Line
+	6550 3600 6350 3600
+Wire Wire Line
+	2000 3500 2200 3500
+Wire Wire Line
+	2550 3350 2550 2750
+Wire Wire Line
+	2200 3500 2200 2750
+Wire Wire Line
+	2200 2750 4000 2750
+Connection ~ 2550 2750
+Wire Wire Line
+	3150 3600 3150 4600
+Wire Wire Line
+	5300 4600 5300 4300
+Connection ~ 5300 4600
+Wire Wire Line
+	4950 3900 4950 3600
+Connection ~ 4950 3600
+Wire Wire Line
+	5600 4300 5600 4850
+Connection ~ 5600 4600
+Wire Wire Line
+	4850 3600 5850 3600
+Wire Wire Line
+	3150 4600 9800 4600
+Wire Wire Line
+	6350 3600 6350 3350
+$Comp
+L PWR_FLAG #FLG014
+U 1 1 540E3477
+P 6350 3350
+F 0 "#FLG014" H 6350 3445 30  0001 C CNN
+F 1 "PWR_FLAG" H 6350 3530 30  0000 C CNN
+	1    6350 3350
+	1    0    0    -1  
+$EndComp
+NoConn ~ 2000 3600
+Text HLabel 5600 4850 3    60   Input ~ 0
+GND
+Text HLabel 8950 2350 1    60   Input ~ 0
++3V3
+Text HLabel 5600 2350 1    60   Input ~ 0
++24V
+$Comp
+L DIODESCH D3
+U 1 1 5407CBCB
+P 5600 4100
+F 0 "D3" H 5600 4200 40  0000 C CNN
+F 1 "DIODESCH" H 5600 4000 40  0000 C CNN
+	1    5600 4100
+	0    -1   -1   0   
+$EndComp
+$Comp
+L C C24
+U 1 1 5407CB7A
+P 5300 4100
+F 0 "C24" H 5350 4200 50  0000 L CNN
+F 1 "0.1u" H 5350 4000 50  0000 L CNN
+	1    5300 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L CP1 C23
+U 1 1 5407CB6C
+P 4950 4100
+F 0 "C23" H 5000 4200 50  0000 L CNN
+F 1 "100u" H 5000 4000 50  0000 L CNN
+	1    4950 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L BRIDGE D2
+U 1 1 5407CAA3
+P 4000 3600
+F 0 "D2" H 4000 3650 70  0000 C CNN
+F 1 "BRIDGE" H 4000 3550 70  0000 C CNN
+	1    4000 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L SHOTTKY-BIDR D1
+U 1 1 5407CA3E
+P 2550 3600
+F 0 "D1" H 2500 3725 40  0000 C CNN
+F 1 "SHOTTKY-BIDR" H 2550 3475 40  0000 C CNN
+	1    2550 3600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L POWER_JACKPTH_POWER_JACK_PTH U3
+U 1 1 5407A835
+P 1600 3700
+F 0 "U3" H 1600 3700 60  0001 C CNN
+F 1 "POWER_JACKPTH_POWER_JACK_PTH" H 1600 3700 60  0001 C CNN
+	1    1600 3700
+	1    0    0    -1  
+$EndComp
+$Comp
+L FUSE F1
+U 1 1 5407A432
+P 6100 3600
+F 0 "F1" H 6200 3650 40  0000 C CNN
+F 1 "FUSE" H 6000 3550 40  0000 C CNN
+	1    6100 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D4
+U 1 1 5407A3D9
+P 9800 4100
+F 0 "D4" H 9800 4200 50  0000 C CNN
+F 1 "LED" H 9800 4000 50  0000 C CNN
+	1    9800 4100
+	0    1    1    0   
+$EndComp
+$Comp
+L R R33
+U 1 1 5407A3AD
+P 9450 3600
+F 0 "R33" V 9530 3600 50  0000 C CNN
+F 1 "R" V 9450 3600 50  0000 C CNN
+	1    9450 3600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L CP1 C27
+U 1 1 5407A35C
+P 8950 4100
+F 0 "C27" H 9000 4200 50  0000 L CNN
+F 1 "10u" H 9000 4000 50  0000 L CNN
+	1    8950 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C26
+U 1 1 5407A2F7
+P 7900 4100
+F 0 "C26" H 7950 4200 50  0000 L CNN
+F 1 "0.1u" H 7950 4000 50  0000 L CNN
+	1    7900 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L CP1 C25
+U 1 1 5407A2C8
+P 7450 4100
+F 0 "C25" H 7500 4200 50  0000 L CNN
+F 1 "10u" H 7500 4000 50  0000 L CNN
+	1    7450 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L SPX3940 REG2
+U 1 1 5407A27B
+P 8450 3650
+F 0 "REG2" H 8600 3454 60  0000 C CNN
+F 1 "SPX3940" H 8450 3850 60  0000 C CNN
+	1    8450 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L OKI-78SR-5/1.5 REG1
+U 1 1 5407A0C8
+P 6950 3650
+F 0 "REG1" H 7100 3454 60  0000 C CNN
+F 1 "OKI-78SR-5/1.5" H 6950 3850 60  0000 C CNN
+	1    6950 3650
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
