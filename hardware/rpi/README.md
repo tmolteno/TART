@@ -48,18 +48,18 @@ Update to latest firmware.
 
     sudo apt-get update
     sudo apt-get dist-upgrade 
-    sudo aptitude install python-setuptools
+    sudo aptitude install python-setuptools ntp
 
     git clone https://github.com/tmolteno/TART.git
     cd TART/python
     sudo python setup.py install
 
-## Serial Port and SPI
+##  SPI
 
-    sudo aptitude install python-serial python-dev autossh
+    sudo aptitude install python-dev autossh
 
-    git clone https://github.com/lthiery/SPI-Py.git
-    cd SPI-Py
+    git clone https://github.com/maxscheel/SPI-NumPy.git
+    cd SPI-NumPy
     sudo python setup.py install
 
 ## Network setup
