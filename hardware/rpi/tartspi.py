@@ -56,7 +56,7 @@ if __name__ == '__main__':
     t_SPI = TartSPI(speed=args.speed*1000000)
     t_SPI.debug(args.debug)
     t_SPI.start_acquisition()
-    data = t_SPI.read_data(num_bytes=2**bramexp, blocksize=1000)
+    data = t_SPI.read_data(num_bytes=2**args.bramexp, blocksize=1000)
     t_SPI.reset()
     print 'shape antenna data'
     ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
