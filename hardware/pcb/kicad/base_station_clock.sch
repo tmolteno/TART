@@ -1,0 +1,294 @@
+EESchema Schematic File Version 2  date Tue 09 Sep 2014 11:32:54 NZST
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:TART
+LIBS:Papilio
+LIBS:base_station_integrated-cache
+EELAYER 25  0
+EELAYER END
+$Descr A4 11700 8267
+encoding utf-8
+Sheet 6 7
+Title ""
+Date "8 sep 2014"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L PWR_FLAG #FLG01
+U 1 1 540E3753
+P 8000 3300
+F 0 "#FLG01" H 8000 3395 30  0001 C CNN
+F 1 "PWR_FLAG" H 8000 3480 30  0000 C CNN
+	1    8000 3300
+	0    1    1    0   
+$EndComp
+$Comp
+L PWR_FLAG #FLG02
+U 1 1 540E3734
+P 6100 3650
+F 0 "#FLG02" H 6100 3745 30  0001 C CNN
+F 1 "PWR_FLAG" H 6100 3830 30  0000 C CNN
+	1    6100 3650
+	1    0    0    -1  
+$EndComp
+Text HLabel 2500 2650 1    60   Input ~ 0
++3V3
+Connection ~ 2700 2700
+Wire Wire Line
+	2500 2650 2500 2700
+Wire Wire Line
+	2500 2700 2850 2700
+Wire Wire Line
+	8000 2650 8000 2800
+Wire Wire Line
+	3450 3550 3250 3550
+Wire Wire Line
+	3250 3550 3250 2650
+Connection ~ 3250 3750
+Wire Wire Line
+	3450 3750 3250 3750
+Wire Wire Line
+	7800 3550 8300 3550
+Wire Wire Line
+	8000 4400 8000 4600
+Wire Wire Line
+	6300 3650 6100 3650
+Wire Wire Line
+	6100 3650 6100 3950
+Wire Wire Line
+	6300 3750 5650 3750
+Wire Wire Line
+	4950 3750 5250 3750
+Connection ~ 5850 3750
+Wire Wire Line
+	5850 4450 5850 4600
+Wire Wire Line
+	6100 4450 6100 4600
+Wire Wire Line
+	7800 3650 8000 3650
+Wire Wire Line
+	8000 4000 8000 3300
+Connection ~ 8000 3650
+Wire Wire Line
+	5850 3950 5850 3300
+Wire Wire Line
+	7800 3750 8300 3750
+Wire Wire Line
+	3450 3650 3250 3650
+Wire Wire Line
+	3250 3650 3250 4650
+Wire Wire Line
+	2850 4650 2850 4500
+Wire Wire Line
+	5850 2650 5850 2800
+Wire Wire Line
+	2700 2700 2700 2650
+Wire Wire Line
+	2850 2700 2850 2650
+$Comp
+L VCC #PWR03
+U 1 1 5408E937
+P 2850 2650
+F 0 "#PWR03" H 2850 2750 30  0001 C CNN
+F 1 "VCC" H 2850 2750 30  0000 C CNN
+	1    2850 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L VDD #PWR04
+U 1 1 5408E92E
+P 2700 2650
+F 0 "#PWR04" H 2700 2750 30  0001 C CNN
+F 1 "VDD" H 2700 2760 30  0000 C CNN
+	1    2700 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L VDD #PWR05
+U 1 1 5408E909
+P 3250 2650
+F 0 "#PWR05" H 3250 2750 30  0001 C CNN
+F 1 "VDD" H 3250 2760 30  0000 C CNN
+	1    3250 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L VCC #PWR06
+U 1 1 5408E8FA
+P 8000 2650
+F 0 "#PWR06" H 8000 2750 30  0001 C CNN
+F 1 "VCC" H 8000 2750 30  0000 C CNN
+	1    8000 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L VCC #PWR07
+U 1 1 5408E8F1
+P 5850 2650
+F 0 "#PWR07" H 5850 2750 30  0001 C CNN
+F 1 "VCC" H 5850 2750 30  0000 C CNN
+	1    5850 2650
+	1    0    0    -1  
+$EndComp
+Text HLabel 2850 4500 1    60   Input ~ 0
+GND
+$Comp
+L GND #PWR08
+U 1 1 5408E894
+P 2850 4650
+F 0 "#PWR08" H 2850 4650 30  0001 C CNN
+F 1 "GND" H 2850 4580 30  0001 C CNN
+	1    2850 4650
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR09
+U 1 1 5408E850
+P 3250 4650
+F 0 "#PWR09" H 3250 4650 30  0001 C CNN
+F 1 "GND" H 3250 4580 30  0001 C CNN
+	1    3250 4650
+	1    0    0    -1  
+$EndComp
+Text HLabel 8300 3750 2    60   Input ~ 0
+CLK_FPGA
+Text HLabel 8300 3550 2    60   Input ~ 0
+CLK_OUT
+$Comp
+L GND #PWR010
+U 1 1 5408E752
+P 8000 4600
+F 0 "#PWR010" H 8000 4600 30  0001 C CNN
+F 1 "GND" H 8000 4530 30  0001 C CNN
+	1    8000 4600
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR011
+U 1 1 5408E6DB
+P 6100 4600
+F 0 "#PWR011" H 6100 4600 30  0001 C CNN
+F 1 "GND" H 6100 4530 30  0001 C CNN
+	1    6100 4600
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR012
+U 1 1 5408E6B1
+P 5850 4600
+F 0 "#PWR012" H 5850 4600 30  0001 C CNN
+F 1 "GND" H 5850 4530 30  0001 C CNN
+	1    5850 4600
+	1    0    0    -1  
+$EndComp
+NoConn ~ 6300 3550
+$Comp
+L XTAL_DRIVER U2
+U 1 1 5408E653
+P 7050 3650
+F 0 "U2" H 7050 3550 50  0000 C CNN
+F 1 "XTAL_DRIVER" H 7050 3750 50  0000 C CNN
+F 2 "MODULE" H 7050 3650 50  0001 C CNN
+F 3 "DOCUMENTATION" H 7050 3650 50  0001 C CNN
+	1    7050 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L TCXO X1
+U 1 1 5407E949
+P 4200 3650
+F 0 "X1" H 4200 3550 50  0000 C CNN
+F 1 "TCXO" H 4200 3750 50  0000 C CNN
+F 2 "MODULE" H 4200 3650 50  0001 C CNN
+F 3 "DOCUMENTATION" H 4200 3650 50  0001 C CNN
+	1    4200 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C22
+U 1 1 5407E135
+P 8000 4200
+F 0 "C22" H 8050 4300 50  0000 L CNN
+F 1 "0.1u" H 8050 4100 50  0000 L CNN
+	1    8000 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R32
+U 1 1 5407E128
+P 8000 3050
+F 0 "R32" V 8080 3050 50  0000 C CNN
+F 1 "0" V 8000 3050 50  0000 C CNN
+	1    8000 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R31
+U 1 1 5407E121
+P 6100 4200
+F 0 "R31" V 6180 4200 50  0000 C CNN
+F 1 "0" V 6100 4200 50  0000 C CNN
+	1    6100 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R30
+U 1 1 5407E115
+P 5850 4200
+F 0 "R30" V 5930 4200 50  0000 C CNN
+F 1 "10k" V 5850 4200 50  0000 C CNN
+	1    5850 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R29
+U 1 1 5407E105
+P 5850 3050
+F 0 "R29" V 5930 3050 50  0000 C CNN
+F 1 "10k" V 5850 3050 50  0000 C CNN
+	1    5850 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C21
+U 1 1 5407E0F8
+P 5450 3750
+F 0 "C21" H 5500 3850 50  0000 L CNN
+F 1 "2200p" H 5500 3650 50  0000 L CNN
+	1    5450 3750
+	0    -1   -1   0   
+$EndComp
+$EndSCHEMATC

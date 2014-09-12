@@ -93,7 +93,7 @@ module fifo_sdram_fifo_scheduler(
                        begin
                           cmd_wr       <= 1'b0;
                           cmd_enable   <= 1'b1;
-                          cmd_address  <= sdram_rd_ptr;
+                          cmd_address  <= sdram_rd_ptr[20:0];
                           sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
                           tart_state <= TX_IDLE;
                        end

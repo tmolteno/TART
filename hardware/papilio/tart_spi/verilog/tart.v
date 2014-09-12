@@ -47,7 +47,11 @@ module tart(
       .CLKOUT0(rx_clk_16_buffered),    // 16.368 MHZ buffered
       .CLKOUT1(fpga_clk)               // 16.368x6 = 98.208 MHz
    );
-
+   
+   //     HOOK UP IO REGISTER TO INTERNAL LOGIC
+   reg [23:0] real_antenna;
+   always @(posedge fpga_clk) real_antenna <= antenna;
+   
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
 
    wire [23:0] fake_antenna;
@@ -58,7 +62,7 @@ module tart(
    wire spi_debug;
    wire sel_rx_clk;          assign       sel_rx_clk = rx_clk_16_buffered;
    //wire rx_clk;            assign       rx_clk = (spi_debug) ? fake_rx_clk  : rx_clk_16;
-   wire [23:0] sel_antenna_data; assign sel_antenna_data = (spi_debug) ? fake_antenna : antenna;
+   wire [23:0] sel_antenna_data; assign sel_antenna_data = (spi_debug) ? fake_antenna : real_antenna;
 
    wire [23:0] antenna_data;
    wire rx_clk;

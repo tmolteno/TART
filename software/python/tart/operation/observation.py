@@ -2,6 +2,7 @@ import numpy as np
 import datetime
 import cPickle
 import math
+import gzip
 
 from tart.imaging import tart_util  #FIXME
 from tart.imaging import location
@@ -44,7 +45,7 @@ class Observation:
     
     d['data'] = t
     
-    save_ptr = open(filename, 'wb')
+    save_ptr = gzip.open(filename, 'wb')
     cPickle.dump(d, save_ptr, cPickle.HIGHEST_PROTOCOL)
     save_ptr.close()
 
@@ -73,7 +74,7 @@ class Observation:
     return tart_util.get_mjd(self.timestamp)
 
 def Observation_Load(filename):
-    load_data = open(filename, 'rb')
+    load_data = gzip.open(filename, 'rb')
     d = cPickle.load(load_data)
     load_data.close()
     bipolar_data = []
