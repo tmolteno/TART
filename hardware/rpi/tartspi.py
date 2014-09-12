@@ -48,6 +48,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=11, type=int, help='exponent of bram depth')
+  parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
   parser.add_argument('--monitor', default='telescope_config.json', help="The telescope configuration file.")
   args = parser.parse_args()
 
