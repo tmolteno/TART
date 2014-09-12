@@ -16,7 +16,7 @@ class TartSPI:
     if on:
       spi.transfer((0b10001000,0b00000001))
       print 'debug now on'
-    else
+    else:
       spi.transfer((0b10001000,0b00000000))
       print 'debug now off'
     time.sleep(0.1)
