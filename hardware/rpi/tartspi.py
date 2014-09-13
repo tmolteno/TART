@@ -22,9 +22,10 @@ class TartSPI:
     time.sleep(0.1)
     return 1
 
-  def start_acquisition(self):
+  def start_acquisition(self,sleeptime=0.2):
     spi.transfer((0b10000001,0b00000001))
-    time.sleep(0.5)
+    print sleeptime
+    time.sleep(sleeptime)
     print 'acquision done'
     return 1
 
@@ -49,17 +50,18 @@ if __name__ == '__main__':
   parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=11, type=int, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
-  parser.add_argument('--monitor', default='telescope_config.json', help="The telescope configuration file.")
+  parser.add_argument('--monitor', action='store_true', help="The telescope configuration file.")
   args = parser.parse_args()
 
   if args.monitor:
     t_SPI = TartSPI(speed=args.speed*1000000)
-    t_SPI.debug(args.debug)
-    t_SPI.start_acquisition()
-    data = t_SPI.read_data(num_bytes=2**args.bramexp, blocksize=1000)
-    t_SPI.reset()
-    print 'shape antenna data'
-    ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
-    print ant_data[:,:15]
-    #ant_data.mean()
+    while 1:
+      t_SPI.debug(args.debug)
+      #t_SPI.start_acquisition(sleeptime=2**args.bramexp*1./(16.368e6)*1.1+0.01)
+      t_SPI.start_acquisition()
+      data = t_SPI.read_data(num_bytes=2**args.bramexp, blocksize=1024)
+      t_SPI.reset()
+      ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
+      #print ant_data[:,:15]
+      print ant_data.mean(axis=1)
 
