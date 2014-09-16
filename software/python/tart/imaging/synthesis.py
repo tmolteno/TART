@@ -1,4 +1,4 @@
-from tart.imaging.uvfits import uvfitsgenerator
+from tart.imaging import uvfitsgenerator
 from tart.imaging import radio_source
 from tart.simulation import antennas
 from tart.util import skyloc
