@@ -8,7 +8,7 @@
 
 module tart(
             // PAPILIO
-            input rst, output wire led,
+            output wire led,
             // SDRAM
             output wire SDRAM_CLK,
             output wire SDRAM_CKE,
@@ -31,13 +31,13 @@ module tart(
    parameter SDRAM_ADDRESS_WIDTH = 22;
    parameter SDRAM_COLUMN_BITS   = 8;
    parameter SDRAM_STARTUP_CYCLES= 10100;
-   parameter CYCLES_PER_REFRESH  = (64000*100)/4196-1;
+   parameter CYCLES_PER_REFRESH  = 1524;
 
    //     HOOK UP SPI RESET INTO RESET
 
    wire reset;
    wire spi_reset;
-   assign reset = spi_reset | rst;
+   assign reset = spi_reset;// | rst;
 
    //     GENERATE DIFFERENT CLOCK DOMAINS
 
@@ -121,7 +121,7 @@ module tart(
             .spi_buffer_read_complete(spi_buffer_read_complete)
    );
 
-   SDRAM_Controller
+   SDRAM_Controller_v
    #(
       .sdram_address_width(SDRAM_ADDRESS_WIDTH),
       .sdram_column_bits(SDRAM_COLUMN_BITS),
