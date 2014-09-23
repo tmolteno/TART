@@ -1,8 +1,6 @@
-update=Mon 15 Sep 2014 13:42:31 NZST
+update=Tue 23 Sep 2014 15:06:55 NZST
 version=1
-last_client=eeschema
-[general]
-version=1
+last_client=kicad
 [cvpcb]
 version=1
 NetIExt=net
@@ -102,3 +100,6 @@ LibName28=atmel
 LibName29=contrib
 LibName30=valves
 LibName31=libraries/TART
+LibName32=libraries/IC_raspberry
+[general]
+version=1

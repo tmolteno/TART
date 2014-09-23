@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Wed 17 Sep 2014 15:47:12 NZST
+EESchema Schematic File Version 2  date Tue 23 Sep 2014 15:10:21 NZST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -30,6 +30,7 @@ LIBS:atmel
 LIBS:contrib
 LIBS:valves
 LIBS:TART
+LIBS:IC_raspberry
 LIBS:base_station_integrated-cache
 EELAYER 25  0
 EELAYER END
@@ -37,7 +38,7 @@ $Descr A4 11700 8267
 encoding utf-8
 Sheet 6 7
 Title ""
-Date "17 sep 2014"
+Date "23 sep 2014"
 Rev ""
 Comp ""
 Comment1 ""

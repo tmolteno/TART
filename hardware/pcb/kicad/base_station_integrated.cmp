@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2012-apr-16-27)-stable date = Wed 17 Sep 2014 15:46:15 NZST
+Cmp-Mod V01 Created by CvPcb (2012-apr-16-27)-stable date = Tue 23 Sep 2014 14:53:29 NZST
 
 BeginCmp
 TimeStamp = /5407950D/5407CB6C;
@@ -179,7 +179,7 @@ BeginCmp
 TimeStamp = /5407DDC4/5407E0F8;
 Reference = C26;
 ValeurCmp = 2200p;
-IdModule  = SM0805;
+IdModule  = SM0603;
 EndCmp
 
 BeginCmp
@@ -456,31 +456,10 @@ IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
-TimeStamp = /5418D8AD;
-Reference = JP1;
-ValeurCmp = JUMP_OR_TART;
-IdModule  = JMP_OR_TART;
-EndCmp
-
-BeginCmp
-TimeStamp = /5418D8BD;
-Reference = JP2;
-ValeurCmp = JUMP_OR_TART;
-IdModule  = JMP_OR_TART;
-EndCmp
-
-BeginCmp
-TimeStamp = /5418D8B4;
-Reference = JP3;
-ValeurCmp = JUMP_OR_TART;
-IdModule  = JMP_OR_TART;
-EndCmp
-
-BeginCmp
-TimeStamp = /5418D8B8;
-Reference = JP4;
-ValeurCmp = JUMP_OR_TART;
-IdModule  = JMP_OR_TART;
+TimeStamp = /5420D065;
+Reference = P1;
+ValeurCmp = CONN_20X2;
+IdModule  = RASP_PI_B+;
 EndCmp
 
 BeginCmp
