@@ -73,7 +73,7 @@ def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl
         vi = 1.*vi/np.abs(vi)
       vis.append(vi)
       baselines.append([i, j])
-  obs = observation.Observation(utc_date, np.zeros(1), config)
+  obs = observation.Observation(utc_date, config, data=np.zeros(1))
   vis_o = visibility.Visibility(obs, angle.from_dms(90.), angle.from_dms(0.))
   vis_o.set_visibilities(vis, baselines)
   return vis_o

@@ -1,7 +1,7 @@
 from tart.operation import observation
 import numpy as np
 
-import pickle
+import cPickle as pickle
 from tart.util import angle
 from tart.simulation import antennas
 from tart.util import skyloc

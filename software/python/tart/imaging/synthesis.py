@@ -60,13 +60,15 @@ def get_difmap(fits_file, o=0):
   debug = False\n\
 observe %s\n\
 select I, 1,5\n\
+mapcolor color\n\
+device uv/uvplot%04d.png/png\n\
+uvplot\n\
 mapsize 2048, 1.25e5\n\
 device beam/beam%04d.png/png\n\
 mappl beam\n\
-mapcolor color\n\
 device map/map%04d.png/png\n\
 mappl\n\
-exit\n" % (fits_file, o, o)
+exit\n" % (fits_file, o, o, o)
   return difmap
 
 class Synthesis_Imaging(object):
@@ -74,6 +76,7 @@ class Synthesis_Imaging(object):
     self.vis_list = vis_list
     # vt = self.vis_list[int(len(self.vis_list)/2)]
     vt = self.vis_list[0]
+    print vt.config
     ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
     # ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
     # dec = angle.from_dms(-90.00)

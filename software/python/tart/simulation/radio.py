@@ -110,7 +110,7 @@ class Max2769B(Radio):
 
     data = np.array(sampled_signals)
 
-    obs = observation.Observation(utc_date, data, config)
+    obs = observation.Observation(utc_date, config, data=data)
     return obs
 
 
@@ -118,8 +118,8 @@ class Max2769B(Radio):
     num_samples = len(self.baseband_timebase)
     s_signals = []
 
-    if_sig = scipy.signal.hilbert(baseband_signals) * np.exp(2.0j * np.pi * (self.int_freq-self.bandwidth/2.) * self.baseband_timebase)
-    # if_sig = baseband_signals * np.sin(2.0 * np.pi * self.int_freq * self.baseband_timebase)
+    #if_sig = scipy.signal.hilbert(baseband_signals) * np.exp(2.0j * np.pi * (self.int_freq-self.bandwidth/2.) * self.baseband_timebase)
+    if_sig = baseband_signals * np.sin(2.0 * np.pi * self.int_freq * self.baseband_timebase)
 
     for i in range(config.num_antennas):
       if (self.noise_level[i] > 0.0):
@@ -139,7 +139,7 @@ class Max2769B(Radio):
     sampled_signals = np.sign(s_signals) # -1 if negative, 0 if 0, +1 if positive
     sampled_signals[s_signals == 0.0] = 1. # Replace 0 with 1 - true NRZ
     # sampled_signals = s_signals
-    obs = observation.Observation(utc_date, sampled_signals, config)
+    obs = observation.Observation(utc_date, config, data=sampled_signals)
     return obs
 
 
