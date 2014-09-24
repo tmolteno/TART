@@ -1,8 +1,6 @@
-update=Thu 11 Sep 2014 14:57:52 NZST
+update=Tue 23 Sep 2014 15:06:55 NZST
 version=1
-last_client=eeschema
-[general]
-version=1
+last_client=kicad
 [cvpcb]
 version=1
 NetIExt=net
@@ -24,7 +22,7 @@ DrawLar=150
 EdgeLar=150
 TxtLar=120
 MSegLar=150
-LastNetListRead=
+LastNetListRead=base_station_integrated.net
 [pcbnew/libraries]
 LibDir=
 LibName1=sockets
@@ -38,7 +36,7 @@ LibName8=led
 LibName9=dip_sockets
 LibName10=pga_sockets
 LibName11=valves
-LibName12=/home/charles/TART/hardware/pcb/kicad/libraries/Papilio
+LibName12=libraries/TART
 [eeschema]
 version=1
 LibDir=
@@ -102,5 +100,6 @@ LibName28=atmel
 LibName29=contrib
 LibName30=valves
 LibName31=libraries/TART
-LibName32=/home/charles/TART/hardware/pcb/eagle/Papilio
-LibName33=libraries/megawing_half_p1_megawing_half_noholes_p1
+LibName32=libraries/IC_raspberry
+[general]
+version=1

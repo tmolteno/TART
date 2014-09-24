@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Tue 09 Sep 2014 11:32:54 NZST
+EESchema Schematic File Version 2  date Tue 23 Sep 2014 15:10:21 NZST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -30,7 +30,7 @@ LIBS:atmel
 LIBS:contrib
 LIBS:valves
 LIBS:TART
-LIBS:Papilio
+LIBS:IC_raspberry
 LIBS:base_station_integrated-cache
 EELAYER 25  0
 EELAYER END
@@ -38,7 +38,7 @@ $Descr A4 11700 8267
 encoding utf-8
 Sheet 1 7
 Title ""
-Date "8 sep 2014"
+Date "23 sep 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -46,6 +46,25 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
+NoConn ~ 7800 2800
+Text Label 7600 2700 0    60   ~ 0
+MOSI
+Text Label 7600 2600 0    60   ~ 0
+MISO
+Text Label 7600 2500 0    60   ~ 0
+SCLK
+Wire Wire Line
+	7800 2600 7600 2600
+Wire Wire Line
+	9500 1250 9400 1250
+Wire Wire Line
+	10300 1450 10400 1450
+Wire Wire Line
+	10300 950  10400 950 
+Wire Wire Line
+	9500 1950 9200 1950
+Wire Wire Line
+	9500 1750 9200 1750
 Wire Wire Line
 	4450 4700 4950 4700
 Wire Wire Line
@@ -111,18 +130,6 @@ Wire Wire Line
 Wire Wire Line
 	2900 3100 3000 3100
 Wire Wire Line
-	9650 1700 9450 1700
-Wire Wire Line
-	8350 1700 8550 1700
-Wire Wire Line
-	7850 1700 7650 1700
-Wire Wire Line
-	7850 800  7650 800 
-Wire Wire Line
-	9900 900  9900 1100
-Wire Wire Line
-	8100 900  8100 1100
-Wire Wire Line
 	3000 2250 2800 2250
 Wire Wire Line
 	4300 2100 4550 2100
@@ -131,7 +138,7 @@ Wire Wire Line
 Wire Wire Line
 	2900 2950 3000 2950
 Wire Wire Line
-	2900 1150 3000 1150
+	2900 1350 3000 1350
 Wire Wire Line
 	7600 5200 7400 5200
 Wire Wire Line
@@ -203,7 +210,7 @@ Wire Wire Line
 Wire Wire Line
 	2900 950  3000 950 
 Wire Wire Line
-	2900 1350 3000 1350
+	2900 1550 3000 1550
 Wire Wire Line
 	2900 3400 3000 3400
 Wire Wire Line
@@ -212,18 +219,6 @@ Wire Wire Line
 	4550 2250 4300 2250
 Wire Wire Line
 	3000 2100 2800 2100
-Wire Wire Line
-	8100 1800 8100 2000
-Wire Wire Line
-	9900 1800 9900 2000
-Wire Wire Line
-	8350 800  8550 800 
-Wire Wire Line
-	9650 800  9450 800 
-Wire Wire Line
-	10150 1700 10350 1700
-Wire Wire Line
-	10150 800  10350 800 
 Wire Wire Line
 	7800 3200 7600 3200
 Wire Wire Line
@@ -242,8 +237,104 @@ Wire Wire Line
 	4450 4600 4950 4600
 Wire Wire Line
 	3000 4450 2500 4450
+Wire Wire Line
+	2900 1150 3000 1150
+Wire Wire Line
+	9500 1850 9200 1850
+Wire Wire Line
+	10300 850  10700 850 
+Wire Wire Line
+	10300 1050 10700 1050
+Wire Wire Line
+	10300 1750 10400 1750
+Wire Wire Line
+	7800 2500 7600 2500
+Wire Wire Line
+	7800 2700 7600 2700
+Text GLabel 9400 1250 0    60   Input ~ 0
+GND
+Text GLabel 10400 1750 2    60   Input ~ 0
+GND
+Text GLabel 10400 1450 2    60   Input ~ 0
+GND
+Text GLabel 10700 1050 2    60   Input ~ 0
+GND
+Text GLabel 10400 950  2    60   Input ~ 0
++5V
+Text GLabel 10700 850  2    60   Input ~ 0
++5V
+Text Label 9200 1750 0    60   ~ 0
+MOSI
+Text Label 9200 1850 0    60   ~ 0
+MISO
+Text Label 9200 1950 0    60   ~ 0
+SCLK
+NoConn ~ 10300 850 
+NoConn ~ 10300 1050
+NoConn ~ 10300 1150
+NoConn ~ 10300 1250
+NoConn ~ 10300 1350
+NoConn ~ 10300 1550
+NoConn ~ 10300 1650
+NoConn ~ 10300 1850
+NoConn ~ 10300 1950
+NoConn ~ 10300 2050
+NoConn ~ 10300 2150
+NoConn ~ 10300 2250
+NoConn ~ 10300 2350
+NoConn ~ 10300 2450
+NoConn ~ 10300 2550
+NoConn ~ 10300 2650
+NoConn ~ 10300 2750
+NoConn ~ 9500 2750
+NoConn ~ 9500 2650
+NoConn ~ 9500 2550
+NoConn ~ 9500 2450
+NoConn ~ 9500 2350
+NoConn ~ 9500 2250
+NoConn ~ 9500 2150
+NoConn ~ 9500 2050
+NoConn ~ 9500 1650
+NoConn ~ 9500 1550
+NoConn ~ 9500 1450
+NoConn ~ 9500 1350
+NoConn ~ 9500 1150
+NoConn ~ 9500 1050
+NoConn ~ 9500 950 
+NoConn ~ 9500 850 
+$Comp
+L CONN_20X2 P1
+U 1 1 5420D065
+P 9900 1800
+F 0 "P1" H 9900 2850 60  0000 C CNN
+F 1 "CONN_20X2" V 9900 1800 50  0000 C CNN
+	1    9900 1800
+	1    0    0    -1  
+$EndComp
+$Comp
+L PAPILIO_TART U1
+U 1 1 5418D93A
+P 8100 3800
+F 0 "U1" H 8100 3800 10  0001 C CNN
+F 1 "PAPILIO_TART" H 8900 850 60  0001 C CNN
+F 4 "PAPILIO" H 8900 950 60  0000 C CNN "NAME"
+	1    8100 3800
+	1    0    0    -1  
+$EndComp
+Text GLabel 2900 1150 0    60   Input ~ 0
++5V
+$Sheet
+S 3000 850  1600 800 
+U 5407950D
+F0 "power_supply" 60
+F1 "base_station_power_supply.sch" 60
+F2 "GND" I L 3000 1550 60 
+F3 "+3V3" I L 3000 1350 60 
+F4 "+24V" I L 3000 950 60 
+F5 "+5V" I L 3000 1150 60 
+$EndSheet
 Text Label 2500 4450 2    60   ~ 0
-CLK_3
+CLK
 Text Label 7600 3400 2    60   ~ 0
 CLK_OUT_3
 Text Label 7600 3200 2    60   ~ 0
@@ -357,13 +448,13 @@ GND
 Text GLabel 2900 7150 0    60   Input ~ 0
 GND
 Text Label 2500 6850 2    60   ~ 0
-CLK_1
+CLK
 Text GLabel 2900 6700 0    60   Input ~ 0
 +3V3
 Text GLabel 2900 5500 0    60   Input ~ 0
 +3V3
 Text Label 2500 5650 2    60   ~ 0
-CLK_2
+CLK
 Text GLabel 2900 5950 0    60   Input ~ 0
 GND
 Text GLabel 2900 5800 0    60   Input ~ 0
@@ -392,70 +483,10 @@ Text GLabel 2900 4300 0    60   Input ~ 0
 +3V3
 Text GLabel 2900 3100 0    60   Input ~ 0
 +3V3
-Text Label 10350 1700 0    60   ~ 0
-CLK_OUT_4
-Text Label 10350 800  0    60   ~ 0
-CLK_OUT_3
-Text Label 8550 1700 0    60   ~ 0
-CLK_OUT_2
-Text Label 8550 800  0    60   ~ 0
-CLK_OUT_1
-Text Label 9450 1700 2    60   ~ 0
-CLK
-Text Label 9450 800  2    60   ~ 0
-CLK
-Text Label 7650 1700 2    60   ~ 0
-CLK
-Text Label 7650 800  2    60   ~ 0
-CLK
 Text Label 2500 3250 2    60   ~ 0
-CLK_4
+CLK
 Text GLabel 2800 2100 0    60   Input ~ 0
 +3V3
-Text Label 9900 2000 3    60   ~ 0
-CLK_4
-Text Label 9900 1100 3    60   ~ 0
-CLK_3
-Text Label 8100 2000 3    60   ~ 0
-CLK_2
-Text Label 8100 1100 3    60   ~ 0
-CLK_1
-$Comp
-L JUMPER3 JP4
-U 1 1 5408EEDD
-P 9900 1700
-F 0 "JP4" H 9950 1600 40  0000 L CNN
-F 1 "JUMPER3" H 9900 1800 40  0000 C CNN
-	1    9900 1700
-	1    0    0    -1  
-$EndComp
-$Comp
-L JUMPER3 JP3
-U 1 1 5408EED4
-P 9900 800
-F 0 "JP3" H 9950 700 40  0000 L CNN
-F 1 "JUMPER3" H 9900 900 40  0000 C CNN
-	1    9900 800 
-	1    0    0    -1  
-$EndComp
-$Comp
-L JUMPER3 JP2
-U 1 1 5408EECF
-P 8100 1700
-F 0 "JP2" H 8150 1600 40  0000 L CNN
-F 1 "JUMPER3" H 8100 1800 40  0000 C CNN
-	1    8100 1700
-	1    0    0    -1  
-$EndComp
-$Comp
-L JUMPER3 JP1
-U 1 1 5408EE9D
-P 8100 800
-F 0 "JP1" H 8150 700 40  0000 L CNN
-F 1 "JUMPER3" H 8100 900 40  0000 C CNN
-	1    8100 800 
-	1    0    0    -1  
-$EndComp
 Text GLabel 2800 2250 0    60   Input ~ 0
 GND
 Text Label 4550 2250 0    60   ~ 0
@@ -480,19 +511,10 @@ Text GLabel 2900 2950 0    60   Input ~ 0
 +24V
 Text GLabel 2900 950  0    60   Input ~ 0
 +24V
-Text GLabel 2900 1150 0    60   Input ~ 0
-+3V3
 Text GLabel 2900 1350 0    60   Input ~ 0
++3V3
+Text GLabel 2900 1550 0    60   Input ~ 0
 GND
-$Sheet
-S 3000 850  1600 600 
-U 5407950D
-F0 "power_supply" 60
-F1 "base_station_power_supply.sch" 60
-F2 "GND" I L 3000 1350 60 
-F3 "+3V3" I L 3000 1150 60 
-F4 "+24V" I L 3000 950 60 
-$EndSheet
 Text GLabel 9200 5700 0    60   Input ~ 0
 GND
 Text GLabel 9200 4900 0    60   Input ~ 0
@@ -574,13 +596,4 @@ Text Label 4950 3100 0    60   ~ 0
 DT_5_4
 Text Label 4950 3000 0    60   ~ 0
 DT_6_4
-$Comp
-L MEGAWING_HALF_P1_MEGAWING_HALF_NOHOLES_P1 U1
-U 1 1 540692C1
-P 8100 3800
-F 0 "U1" H 8100 3800 60  0001 C CNN
-F 1 "MEGAWING_HALF_P1_MEGAWING_HALF_NOHOLES_P1" H 8100 3800 60  0001 C CNN
-	1    8100 3800
-	1    0    0    -1  
-$EndComp
 $EndSCHEMATC

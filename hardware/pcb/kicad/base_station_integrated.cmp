@@ -1,10 +1,10 @@
-Cmp-Mod V01 Created by CvPcb (2012-apr-16-27)-stable date = Tue 16 Sep 2014 16:21:26 NZST
+Cmp-Mod V01 Created by CvPcb (2012-apr-16-27)-stable date = Tue 23 Sep 2014 14:53:29 NZST
 
 BeginCmp
 TimeStamp = /5407950D/5407CB6C;
 Reference = C1;
 ValeurCmp = 100u;
-IdModule  = E5-10,5;
+IdModule  = E5-10,5_TART;
 EndCmp
 
 BeginCmp
@@ -18,14 +18,14 @@ BeginCmp
 TimeStamp = /5407950D/5407A2C8;
 Reference = C3;
 ValeurCmp = 10u;
-IdModule  = E5-10,5;
+IdModule  = E5-10,5_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5407950D/5407A2F7;
 Reference = C4;
 ValeurCmp = 0.1u;
-IdModule  = E2-5;
+IdModule  = E2-5_TART;
 EndCmp
 
 BeginCmp
@@ -179,7 +179,7 @@ BeginCmp
 TimeStamp = /5407DDC4/5407E0F8;
 Reference = C26;
 ValeurCmp = 2200p;
-IdModule  = SM0805;
+IdModule  = SM0603;
 EndCmp
 
 BeginCmp
@@ -190,80 +190,87 @@ IdModule  = SM0603;
 EndCmp
 
 BeginCmp
-TimeStamp = /5409247B/54164DCD;
+TimeStamp = /5407950D/5418E80C;
 Reference = CON1;
-ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+ValeurCmp = POWER_JACK_TART;
+IdModule  = POWER_JACK_TART;
 EndCmp
 
 BeginCmp
-TimeStamp = /5409247B/54164DFE;
+TimeStamp = /5409247B/5418D832;
 Reference = CON2;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /540924B7/54164DCD;
+TimeStamp = /5409247B/5418D866;
 Reference = CON3;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /540924B7/54164DFE;
+TimeStamp = /540924B7/5418D832;
 Reference = CON4;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /54092498/54164DCD;
+TimeStamp = /540924B7/5418D866;
 Reference = CON5;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /54092498/54164DFE;
+TimeStamp = /54092498/5418D832;
 Reference = CON6;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /540670D5/54164DCD;
+TimeStamp = /54092498/5418D866;
 Reference = CON7;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /540670D5/54164DFE;
+TimeStamp = /540670D5/5418D832;
 Reference = CON8;
 ValeurCmp = RJ45_TART;
 IdModule  = RJ45_8;
 EndCmp
 
 BeginCmp
-TimeStamp = /5407950D/5407CA3E;
+TimeStamp = /540670D5/5418D866;
+Reference = CON9;
+ValeurCmp = RJ45_TART;
+IdModule  = RJ45_8;
+EndCmp
+
+BeginCmp
+TimeStamp = /5407950D/5418D706;
 Reference = D1;
-ValeurCmp = SHOTTKY-BIDR;
+ValeurCmp = TVS_DIODE_BI_TART;
 IdModule  = SM0603;
 EndCmp
 
 BeginCmp
-TimeStamp = /5407950D/5407CBCB;
+TimeStamp = /5407950D/5418D6C0;
 Reference = D2;
-ValeurCmp = DIODESCH;
-IdModule  = SOD123;
+ValeurCmp = TVS_DIODE_UNI_TART;
+IdModule  = SOD123_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5407950D/5407A3D9;
 Reference = D3;
 ValeurCmp = LED;
-IdModule  = SOD123;
+IdModule  = SM0805;
 EndCmp
 
 BeginCmp
@@ -274,206 +281,185 @@ IdModule  = SM1206;
 EndCmp
 
 BeginCmp
-TimeStamp = /5407950D/541649E2;
+TimeStamp = /5407950D/5418D689;
 Reference = IC1;
 ValeurCmp = BRIDGE_TART;
-IdModule  = SOIC-4;
+IdModule  = SOIC-4_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/5406756E;
 Reference = IC2;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/5406756F;
 Reference = IC3;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/54067570;
 Reference = IC4;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/54067575;
 Reference = IC5;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/54067576;
 Reference = IC6;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/54067578;
 Reference = IC7;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/5406756E;
 Reference = IC8;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/5406756F;
 Reference = IC9;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/54067570;
 Reference = IC10;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/54067575;
 Reference = IC11;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/54067576;
 Reference = IC12;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/54067578;
 Reference = IC13;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/5406756E;
 Reference = IC14;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/5406756F;
 Reference = IC15;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/54067570;
 Reference = IC16;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/54067575;
 Reference = IC17;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/54067576;
 Reference = IC18;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/54067578;
 Reference = IC19;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/5406756E;
 Reference = IC20;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/5406756F;
 Reference = IC21;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/54067570;
 Reference = IC22;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/54067575;
 Reference = IC23;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/54067576;
 Reference = IC24;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/54067578;
 Reference = IC25;
 ValeurCmp = LTC2851;
-IdModule  = SOIC8;
+IdModule  = SOIC8_TART;
 EndCmp
 
 BeginCmp
-TimeStamp = /5408EE9D;
-Reference = JP1;
-ValeurCmp = 0R-JUMP;
-IdModule  = A0R-JMP;
-EndCmp
-
-BeginCmp
-TimeStamp = /5408EECF;
-Reference = JP2;
-ValeurCmp = 0R-JUMP;
-IdModule  = A0R-JMP;
-EndCmp
-
-BeginCmp
-TimeStamp = /5408EED4;
-Reference = JP3;
-ValeurCmp = 0R-JUMP;
-IdModule  = A0R-JMP;
-EndCmp
-
-BeginCmp
-TimeStamp = /5408EEDD;
-Reference = JP4;
-ValeurCmp = 0R-JUMP;
-IdModule  = A0R-JMP;
+TimeStamp = /5420D065;
+Reference = P1;
+ValeurCmp = CONN_20X2;
+IdModule  = RASP_PI_B+;
 EndCmp
 
 BeginCmp
@@ -708,31 +694,38 @@ IdModule  = SM0603;
 EndCmp
 
 BeginCmp
-TimeStamp = /54123D89;
+TimeStamp = /5407950D/54190317;
+Reference = REG1;
+ValeurCmp = OK1-78SR_TART;
+IdModule  = OKI-78SR_TART;
+EndCmp
+
+BeginCmp
+TimeStamp = /5407950D/5419032C;
+Reference = REG2;
+ValeurCmp = SPX3940_TART;
+IdModule  = SOT223;
+EndCmp
+
+BeginCmp
+TimeStamp = /5418D93A;
 Reference = U1;
-ValeurCmp = MEGAWING_HALF_P1_MEGAWING_HALF_NOHOLES_P1;
-IdModule  = MEGAWING_HALF_NOHOLES_P1;
+ValeurCmp = PAPILIO_TART;
+IdModule  = PAPILIO_TART;
 EndCmp
 
 BeginCmp
-TimeStamp = /5407950D/5407A835;
+TimeStamp = /5407DDC4/5418D7D2;
 Reference = U2;
-ValeurCmp = POWER_JACKPTH_POWER_JACK_PTH;
-IdModule  = POWER_JACK_PTH;
+ValeurCmp = XTAL_DRIVER_TART;
+IdModule  = 6TSSOP_TART;
 EndCmp
 
 BeginCmp
-TimeStamp = /5407DDC4/5408E653;
-Reference = U3;
-ValeurCmp = XTAL_DRIVER;
-IdModule  = NC7WZ16P6X;
-EndCmp
-
-BeginCmp
-TimeStamp = /5407DDC4/5407E949;
+TimeStamp = /5407DDC4/5418D7A5;
 Reference = X1;
-ValeurCmp = TCXO;
-IdModule  = 4-SMD;
+ValeurCmp = TCXO_TART;
+IdModule  = 4_SMD_TART;
 EndCmp
 
 EndListe
