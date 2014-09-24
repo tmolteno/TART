@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Tue 23 Sep 2014 15:10:21 NZST
+EESchema Schematic File Version 2  date Wed 24 Sep 2014 17:40:46 NZST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -38,7 +38,7 @@ $Descr A4 11700 8267
 encoding utf-8
 Sheet 2 7
 Title ""
-Date "23 sep 2014"
+Date "24 sep 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -47,20 +47,184 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L SPX3940_TART REG2
+L FUSE F1
+U 1 1 5421F748
+P 2350 5750
+F 0 "F1" H 2450 5800 40  0000 C CNN
+F 1 "FUSE" H 2250 5700 40  0000 C CNN
+	1    2350 5750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5600 2350 5600 3950
+Wire Wire Line
+	4650 6550 4650 6400
+Connection ~ 3700 6400
+Wire Wire Line
+	3200 6050 3200 6400
+Wire Wire Line
+	2100 5750 1850 5750
+Wire Wire Line
+	3700 5850 3700 5750
+Wire Wire Line
+	3700 6250 3700 6400
+Connection ~ 4150 5750
+Wire Wire Line
+	4150 5750 4150 5850
+Connection ~ 3700 5750
+Wire Wire Line
+	4150 6400 4150 6250
+Connection ~ 4150 6400
+Wire Wire Line
+	2800 5750 2600 5750
+Wire Wire Line
+	2600 5750 2600 5500
+Wire Wire Line
+	7450 3900 7450 2350
+Wire Wire Line
+	6350 3350 6350 3600
+Wire Wire Line
+	9800 4600 3150 4600
+Wire Wire Line
+	5850 3600 4850 3600
+Connection ~ 5600 4600
+Connection ~ 4950 3600
+Wire Wire Line
+	4950 3600 4950 3900
+Connection ~ 5300 4600
+Wire Wire Line
+	5300 4600 5300 4300
+Wire Wire Line
+	3150 4600 3150 3600
+Connection ~ 2550 2750
+Wire Wire Line
+	4000 2750 2200 2750
+Wire Wire Line
+	2200 2750 2200 3500
+Wire Wire Line
+	2550 3350 2550 2750
+Wire Wire Line
+	2200 3500 2000 3500
+Wire Wire Line
+	6350 3600 6550 3600
+Wire Wire Line
+	9800 3900 9800 3600
+Wire Wire Line
+	9800 3600 9700 3600
+Connection ~ 7900 4600
+Wire Wire Line
+	7900 4600 7900 4300
+Connection ~ 6950 4600
+Wire Wire Line
+	8950 4600 8950 4300
+Wire Wire Line
+	6950 4600 6950 3900
+Connection ~ 7450 3600
+Wire Wire Line
+	8050 3600 7350 3600
+Wire Wire Line
+	7900 3900 7900 3600
+Connection ~ 7900 3600
+Wire Wire Line
+	7450 4600 7450 4300
+Connection ~ 7450 4600
+Wire Wire Line
+	8850 3600 9200 3600
+Connection ~ 8950 3600
+Connection ~ 8950 4600
+Wire Wire Line
+	2000 3700 2200 3700
+Wire Wire Line
+	2550 3850 2550 4450
+Wire Wire Line
+	2200 3700 2200 4450
+Wire Wire Line
+	2200 4450 4000 4450
+Connection ~ 2550 4450
+Wire Wire Line
+	4950 4300 4950 4600
+Connection ~ 4950 4600
+Wire Wire Line
+	5300 3600 5300 3900
+Connection ~ 5300 3600
+Connection ~ 5600 3600
+Wire Wire Line
+	8950 2350 8950 3900
+Wire Wire Line
+	8450 4600 8450 3900
+Connection ~ 8450 4600
+Wire Wire Line
+	9800 4300 9800 4850
+Connection ~ 9800 4600
+Wire Wire Line
+	1850 5750 1850 5100
+Wire Wire Line
+	4650 5600 4650 5750
+Wire Wire Line
+	4650 5750 3600 5750
+Wire Wire Line
+	3200 6400 4650 6400
+Wire Wire Line
+	5600 4350 5600 4600
+Text HLabel 4650 6550 3    60   Input ~ 0
+GND
+Text HLabel 4650 5600 1    60   Input ~ 0
++5V_PI
+$Comp
+L CP1 C1
+U 1 1 5421F74A
+P 3700 6050
+F 0 "C1" H 3750 6150 50  0000 L CNN
+F 1 "10u" H 3750 5950 50  0000 L CNN
+F 2 "E5-10,5_TART" H 3700 6050 60  0001 C CNN
+	1    3700 6050
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C2
+U 1 1 5421F749
+P 4150 6050
+F 0 "C2" H 4200 6150 50  0000 L CNN
+F 1 "0.1u" H 4200 5950 50  0000 L CNN
+	1    4150 6050
+	1    0    0    -1  
+$EndComp
+Text HLabel 1850 5100 1    60   Input ~ 0
++24V
+$Comp
+L PWR_FLAG #FLG01
+U 1 1 5421F747
+P 2600 5500
+F 0 "#FLG01" H 2600 5595 30  0001 C CNN
+F 1 "PWR_FLAG" H 2600 5680 30  0000 C CNN
+	1    2600 5500
+	1    0    0    -1  
+$EndComp
+$Comp
+L OK1-78SR_TART REG1
+U 1 1 5421F746
+P 3200 5800
+F 0 "REG1" H 3350 5584 60  0000 C CNN
+F 1 "OK1-78SR_TART" H 3200 6110 60  0001 C CNN
+F 4 "OKI-78SR" H 3200 6004 60  0000 C CNN "NAME"
+	1    3200 5800
+	1    0    0    -1  
+$EndComp
+$Comp
+L SPX3940_TART REG3
 U 1 1 5419032C
 P 8450 3650
-F 0 "REG2" H 8600 3434 60  0000 C CNN
+F 0 "REG3" H 8600 3434 60  0000 C CNN
 F 1 "SPX3940_TART" H 8450 3960 60  0001 C CNN
 F 4 "SPX3940" H 8450 3854 60  0000 C CNN "NAME"
 	1    8450 3650
 	1    0    0    -1  
 $EndComp
 $Comp
-L OK1-78SR_TART REG1
+L OK1-78SR_TART REG2
 U 1 1 54190317
 P 6950 3650
-F 0 "REG1" H 7100 3434 60  0000 C CNN
+F 0 "REG2" H 7100 3434 60  0000 C CNN
 F 1 "OK1-78SR_TART" H 6950 3960 60  0001 C CNN
 F 4 "OKI-78SR" H 6950 3854 60  0000 C CNN "NAME"
 	1    6950 3650
@@ -109,103 +273,22 @@ F 7 "BRIDGE" H 4000 3550 70  0000 C CNN "NAME"
 	1    4000 3600
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	7450 2350 7450 3900
-Wire Wire Line
-	6350 3350 6350 3600
-Wire Wire Line
-	9800 4600 3150 4600
-Wire Wire Line
-	4850 3600 5850 3600
-Connection ~ 5600 4600
-Wire Wire Line
-	5600 4300 5600 4850
-Connection ~ 4950 3600
-Wire Wire Line
-	4950 3900 4950 3600
-Connection ~ 5300 4600
-Wire Wire Line
-	5300 4600 5300 4300
-Wire Wire Line
-	3150 4600 3150 3600
-Connection ~ 2550 2750
-Wire Wire Line
-	4000 2750 2200 2750
-Wire Wire Line
-	2200 2750 2200 3500
-Wire Wire Line
-	2550 3350 2550 2750
-Wire Wire Line
-	2200 3500 2000 3500
-Wire Wire Line
-	6350 3600 6550 3600
-Wire Wire Line
-	9800 3900 9800 3600
-Wire Wire Line
-	9800 3600 9700 3600
-Connection ~ 7900 4600
-Wire Wire Line
-	7900 4600 7900 4300
-Connection ~ 6950 4600
-Wire Wire Line
-	8950 4600 8950 4300
-Wire Wire Line
-	6950 4600 6950 3900
-Connection ~ 7450 3600
-Wire Wire Line
-	7350 3600 8050 3600
-Wire Wire Line
-	7900 3600 7900 3900
-Connection ~ 7900 3600
-Wire Wire Line
-	7450 4600 7450 4300
-Connection ~ 7450 4600
-Wire Wire Line
-	9200 3600 8850 3600
-Connection ~ 8950 3600
-Connection ~ 8950 4600
-Wire Wire Line
-	2000 3700 2200 3700
-Wire Wire Line
-	2550 3850 2550 4450
-Wire Wire Line
-	2200 3700 2200 4450
-Wire Wire Line
-	2200 4450 4000 4450
-Connection ~ 2550 4450
-Wire Wire Line
-	4950 4300 4950 4600
-Connection ~ 4950 4600
-Wire Wire Line
-	5300 3600 5300 3900
-Connection ~ 5300 3600
-Wire Wire Line
-	5600 3900 5600 2350
-Connection ~ 5600 3600
-Wire Wire Line
-	8950 3900 8950 2350
-Wire Wire Line
-	8450 4600 8450 3900
-Connection ~ 8450 4600
-Wire Wire Line
-	9800 4850 9800 4300
-Connection ~ 9800 4600
 Text HLabel 7450 2350 1    60   Input ~ 0
 +5V
 $Comp
-L PWR_FLAG #FLG01
+L PWR_FLAG #FLG02
 U 1 1 540E3627
 P 9800 4850
-F 0 "#FLG01" H 9800 4945 30  0001 C CNN
+F 0 "#FLG02" H 9800 4945 30  0001 C CNN
 F 1 "PWR_FLAG" H 9800 5030 30  0000 C CNN
 	1    9800 4850
 	-1   0    0    1   
 $EndComp
 $Comp
-L PWR_FLAG #FLG02
+L PWR_FLAG #FLG03
 U 1 1 540E3477
 P 6350 3350
-F 0 "#FLG02" H 6350 3445 30  0001 C CNN
+F 0 "#FLG03" H 6350 3445 30  0001 C CNN
 F 1 "PWR_FLAG" H 6350 3530 30  0000 C CNN
 	1    6350 3350
 	1    0    0    -1  
@@ -218,29 +301,29 @@ Text HLabel 8950 2350 1    60   Input ~ 0
 Text HLabel 5600 2350 1    60   Input ~ 0
 +24V
 $Comp
-L C C2
+L C C4
 U 1 1 5407CB7A
 P 5300 4100
-F 0 "C2" H 5350 4200 50  0000 L CNN
+F 0 "C4" H 5350 4200 50  0000 L CNN
 F 1 "0.1u" H 5350 4000 50  0000 L CNN
 	1    5300 4100
 	1    0    0    -1  
 $EndComp
 $Comp
-L CP1 C1
+L CP1 C3
 U 1 1 5407CB6C
 P 4950 4100
-F 0 "C1" H 5000 4200 50  0000 L CNN
+F 0 "C3" H 5000 4200 50  0000 L CNN
 F 1 "100u" H 5000 4000 50  0000 L CNN
 F 2 "E5-10,5_TART" H 4950 4100 60  0001 C CNN
 	1    4950 4100
 	1    0    0    -1  
 $EndComp
 $Comp
-L FUSE F1
+L FUSE F2
 U 1 1 5407A432
 P 6100 3600
-F 0 "F1" H 6200 3650 40  0000 C CNN
+F 0 "F2" H 6200 3650 40  0000 C CNN
 F 1 "FUSE" H 6000 3550 40  0000 C CNN
 	1    6100 3600
 	1    0    0    -1  
@@ -264,29 +347,29 @@ F 1 "R" V 9450 3600 50  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L CP1 C5
+L CP1 C7
 U 1 1 5407A35C
 P 8950 4100
-F 0 "C5" H 9000 4200 50  0000 L CNN
+F 0 "C7" H 9000 4200 50  0000 L CNN
 F 1 "10u" H 9000 4000 50  0000 L CNN
 F 2 "E2-5_TART" H 8950 4100 60  0001 C CNN
 	1    8950 4100
 	1    0    0    -1  
 $EndComp
 $Comp
-L C C4
+L C C6
 U 1 1 5407A2F7
 P 7900 4100
-F 0 "C4" H 7950 4200 50  0000 L CNN
+F 0 "C6" H 7950 4200 50  0000 L CNN
 F 1 "0.1u" H 7950 4000 50  0000 L CNN
 	1    7900 4100
 	1    0    0    -1  
 $EndComp
 $Comp
-L CP1 C3
+L CP1 C5
 U 1 1 5407A2C8
 P 7450 4100
-F 0 "C3" H 7500 4200 50  0000 L CNN
+F 0 "C5" H 7500 4200 50  0000 L CNN
 F 1 "10u" H 7500 4000 50  0000 L CNN
 F 2 "E5-10,5_TART" H 7450 4100 60  0001 C CNN
 	1    7450 4100

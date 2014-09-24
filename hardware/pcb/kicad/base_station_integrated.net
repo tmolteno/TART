@@ -1,10 +1,10 @@
-# EESchema Netlist Version 1.1 created  Tue 23 Sep 2014 15:11:41 NZST
+# EESchema Netlist Version 1.1 created  Wed 24 Sep 2014 14:45:01 NZST
 (
  ( /5420D065 $noname  P1 CONN_20X2 {Lib=CONN_20X2}
   (    1 ? )
-  (    2 +5V )
+  (    2 +5V_PI )
   (    3 ? )
-  (    4 +5V )
+  (    4 +5V_PI )
   (    5 ? )
   (    6 GND )
   (    7 ? )
@@ -94,117 +94,138 @@
   (  NCC ? )
   (  NCD ? )
  )
- ( /5407950D/5419032C $noname  REG2 SPX3940_TART {Lib=SPX3940_TART}
-  (    1 +3V3 )
+ ( /5407950D/5421F74A E5-10,5_TART  C1 10u {Lib=CP1}
+  (    1 +5V_PI )
   (    2 GND )
+ )
+ ( /5407950D/5421F749 $noname  C2 0.1u {Lib=C}
+  (    1 +5V_PI )
+  (    2 GND )
+ )
+ ( /5407950D/5421F748 $noname  F1 FUSE {Lib=FUSE}
+  (    1 +24V )
+  (    2 N-000113 )
+ )
+ ( /5407950D/5421F746 $noname  REG1 OK1-78SR_TART {Lib=OK1-78SR_TART}
+  (    1 N-000113 )
+  (    2 GND )
+  (    3 +5V_PI )
+ )
+ ( /5407950D/5419032C $noname  REG3 SPX3940_TART {Lib=SPX3940_TART}
+  (    1 +3V3 )
+  (    2 N-000115 )
   (    3 +5V )
   (    4 ? )
  )
- ( /5407950D/54190317 $noname  REG1 OK1-78SR_TART {Lib=OK1-78SR_TART}
-  (    1 N-000110 )
-  (    2 GND )
+ ( /5407950D/54190317 $noname  REG2 OK1-78SR_TART {Lib=OK1-78SR_TART}
+  (    1 N-000114 )
+  (    2 N-000115 )
   (    3 +5V )
  )
  ( /5407950D/5418E80C $noname  CON1 POWER_JACK_TART {Lib=POWER_JACK_TART}
-  (  GND N-000108 )
+  (  GND N-000109 )
   ( GNDB ? )
-  (  PWR N-000113 )
+  (  PWR N-000111 )
  )
  ( /5407950D/5418D706 $noname  D1 TVS_DIODE_BI_TART {Lib=TVS_DIODE_BI_TART}
-  (    1 N-000108 )
-  (    2 N-000113 )
+  (    1 N-000109 )
+  (    2 N-000111 )
  )
  ( /5407950D/5418D6C0 $noname  D2 TVS_DIODE_UNI_TART {Lib=TVS_DIODE_UNI_TART}
-  (    1 ? )
-  (    2 ? )
+  (    1 N-000115 )
+  (    2 +24V )
  )
  ( /5407950D/5418D689 $noname  IC1 BRIDGE_TART {Lib=BRIDGE_TART}
-  (    1 GND )
-  (    2 N-000108 )
+  (    1 N-000115 )
+  (    2 N-000109 )
   (    3 +24V )
-  (    4 N-000113 )
+  (    4 N-000111 )
  )
- ( /5407950D/5407CB7A $noname  C2 0.1u {Lib=C}
+ ( /5407950D/5407CB7A $noname  C4 0.1u {Lib=C}
   (    1 +24V )
-  (    2 GND )
+  (    2 N-000115 )
  )
- ( /5407950D/5407CB6C E5-10,5_TART  C1 100u {Lib=CP1}
+ ( /5407950D/5407CB6C E5-10,5_TART  C3 100u {Lib=CP1}
   (    1 +24V )
-  (    2 GND )
+  (    2 N-000115 )
  )
- ( /5407950D/5407A432 $noname  F1 FUSE {Lib=FUSE}
+ ( /5407950D/5407A432 $noname  F2 FUSE {Lib=FUSE}
   (    1 +24V )
-  (    2 N-000110 )
+  (    2 N-000114 )
  )
  ( /5407950D/5407A3D9 $noname  D3 LED {Lib=LED}
-  (    1 N-000115 )
-  (    2 GND )
+  (    1 N-000116 )
+  (    2 N-000115 )
  )
  ( /5407950D/5407A3AD $noname  R1 R {Lib=R}
   (    1 +3V3 )
+  (    2 N-000116 )
+ )
+ ( /5407950D/5407A35C E2-5_TART  C7 10u {Lib=CP1}
+  (    1 +3V3 )
   (    2 N-000115 )
  )
- ( /5407950D/5407A35C E2-5_TART  C5 10u {Lib=CP1}
+ ( /5407950D/5407A2F7 $noname  C6 0.1u {Lib=C}
+  (    1 +5V )
+  (    2 N-000115 )
+ )
+ ( /5407950D/5407A2C8 E5-10,5_TART  C5 10u {Lib=CP1}
+  (    1 +5V )
+  (    2 N-000115 )
+ )
+ ( /5409247B/5422055D $noname  C10 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /5407950D/5407A2F7 $noname  C4 0.1u {Lib=C}
-  (    1 +5V )
-  (    2 GND )
- )
- ( /5407950D/5407A2C8 E5-10,5_TART  C3 10u {Lib=CP1}
-  (    1 +5V )
-  (    2 GND )
- )
  ( /5409247B/5418D866 $noname  CON3 RJ45_TART {Lib=RJ45_TART}
-  (    1 N-000139 )
-  (    2 N-000121 )
-  (    3 N-000122 )
-  (    4 N-000140 )
-  (    5 N-000138 )
-  (    6 N-000125 )
-  (    7 N-000136 )
-  (    8 N-000144 )
+  (    1 N-000125 )
+  (    2 N-000144 )
+  (    3 N-000128 )
+  (    4 N-000126 )
+  (    5 N-000145 )
+  (    6 N-000139 )
+  (    7 N-000140 )
+  (    8 N-000141 )
  )
  ( /5409247B/5418D832 $noname  CON2 RJ45_TART {Lib=RJ45_TART}
   (    1 +24V )
   (    2 GND )
-  (    3 N-000142 )
-  (    4 N-000141 )
-  (    5 N-000131 )
-  (    6 N-000128 )
-  (    7 N-000137 )
-  (    8 N-000143 )
+  (    3 N-000143 )
+  (    4 N-000142 )
+  (    5 N-000127 )
+  (    6 N-000122 )
+  (    7 N-000123 )
+  (    8 N-000124 )
  )
  ( /5409247B/540678BD $noname  R2 100 {Lib=R}
-  (    1 N-000131 )
-  (    2 N-000141 )
- )
- ( /5409247B/540678A5 $noname  R3 100 {Lib=R}
-  (    1 N-000128 )
+  (    1 N-000127 )
   (    2 N-000142 )
  )
- ( /5409247B/5406788C $noname  R4 100 {Lib=R}
-  (    1 N-000137 )
+ ( /5409247B/540678A5 $noname  R3 100 {Lib=R}
+  (    1 N-000122 )
   (    2 N-000143 )
  )
+ ( /5409247B/5406788C $noname  R4 100 {Lib=R}
+  (    1 N-000123 )
+  (    2 N-000124 )
+ )
  ( /5409247B/54067855 $noname  R5 100 {Lib=R}
-  (    1 N-000139 )
-  (    2 N-000121 )
+  (    1 N-000125 )
+  (    2 N-000144 )
  )
  ( /5409247B/540677FC $noname  R6 100 {Lib=R}
-  (    1 N-000140 )
-  (    2 N-000138 )
+  (    1 N-000126 )
+  (    2 N-000145 )
  )
  ( /5409247B/54067578 MODULE  IC7 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
   (    2 /transceiver_block_3/DT_1 )
   (    3 /transceiver_block_1/CLK )
   (    4 GND )
-  (    5 N-000144 )
-  (    6 N-000136 )
-  (    7 N-000125 )
-  (    8 N-000122 )
+  (    5 N-000141 )
+  (    6 N-000140 )
+  (    7 N-000139 )
+  (    8 N-000128 )
  )
  ( /5409247B/54067576 MODULE  IC6 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -213,8 +234,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000138 )
-  (    8 N-000140 )
+  (    7 N-000145 )
+  (    8 N-000126 )
  )
  ( /5409247B/54067575 MODULE  IC5 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -223,16 +244,16 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000121 )
-  (    8 N-000139 )
+  (    7 N-000144 )
+  (    8 N-000125 )
  )
  ( /5409247B/54067574 $noname  R7 100 {Lib=R}
-  (    1 N-000122 )
-  (    2 N-000125 )
+  (    1 N-000128 )
+  (    2 N-000139 )
  )
  ( /5409247B/54067573 $noname  R8 100 {Lib=R}
-  (    1 N-000136 )
-  (    2 N-000144 )
+  (    1 N-000140 )
+  (    2 N-000141 )
  )
  ( /5409247B/54067570 MODULE  IC4 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -241,8 +262,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000143 )
-  (    8 N-000137 )
+  (    7 N-000124 )
+  (    8 N-000123 )
  )
  ( /5409247B/5406756F MODULE  IC3 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -251,8 +272,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000142 )
-  (    8 N-000128 )
+  (    7 N-000143 )
+  (    8 N-000122 )
  )
  ( /5409247B/5406756E MODULE  IC2 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -261,78 +282,82 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000141 )
-  (    8 N-000131 )
+  (    7 N-000142 )
+  (    8 N-000127 )
  )
- ( /5409247B/5406756A $noname  C6 0.1u {Lib=C}
+ ( /5409247B/5406756A $noname  C8 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /5409247B/54067569 $noname  C7 0.1u {Lib=C}
+ ( /5409247B/54067569 $noname  C9 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /5409247B/54067568 $noname  C8 0.1u {Lib=C}
+ ( /5409247B/54067568 $noname  C11 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /5409247B/54067567 $noname  C9 0.1u {Lib=C}
+ ( /5409247B/54067567 $noname  C12 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /5409247B/54067566 $noname  C10 0.1u {Lib=C}
+ ( /5409247B/54067566 $noname  C13 0.1u {Lib=C}
+  (    1 +3V3 )
+  (    2 GND )
+ )
+ ( /540924B7/5422055D $noname  C16 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
  ( /540924B7/5418D866 $noname  CON5 RJ45_TART {Lib=RJ45_TART}
-  (    1 N-000180 )
-  (    2 N-000181 )
-  (    3 N-000185 )
-  (    4 N-000182 )
-  (    5 N-000184 )
-  (    6 N-000171 )
-  (    7 N-000172 )
-  (    8 N-000192 )
+  (    1 N-000178 )
+  (    2 N-000185 )
+  (    3 N-000186 )
+  (    4 N-000177 )
+  (    5 N-000176 )
+  (    6 N-000173 )
+  (    7 N-000187 )
+  (    8 N-000174 )
  )
  ( /540924B7/5418D832 $noname  CON4 RJ45_TART {Lib=RJ45_TART}
   (    1 +24V )
   (    2 GND )
-  (    3 N-000175 )
-  (    4 N-000177 )
-  (    5 N-000176 )
-  (    6 N-000178 )
-  (    7 N-000183 )
-  (    8 N-000179 )
+  (    3 N-000183 )
+  (    4 N-000182 )
+  (    5 N-000179 )
+  (    6 N-000180 )
+  (    7 N-000181 )
+  (    8 N-000184 )
  )
  ( /540924B7/540678BD $noname  R9 100 {Lib=R}
-  (    1 N-000176 )
-  (    2 N-000177 )
+  (    1 N-000179 )
+  (    2 N-000182 )
  )
  ( /540924B7/540678A5 $noname  R10 100 {Lib=R}
-  (    1 N-000178 )
-  (    2 N-000175 )
+  (    1 N-000180 )
+  (    2 N-000183 )
  )
  ( /540924B7/5406788C $noname  R11 100 {Lib=R}
-  (    1 N-000183 )
-  (    2 N-000179 )
+  (    1 N-000181 )
+  (    2 N-000184 )
  )
  ( /540924B7/54067855 $noname  R12 100 {Lib=R}
-  (    1 N-000180 )
-  (    2 N-000181 )
+  (    1 N-000178 )
+  (    2 N-000185 )
  )
  ( /540924B7/540677FC $noname  R13 100 {Lib=R}
-  (    1 N-000182 )
-  (    2 N-000184 )
+  (    1 N-000177 )
+  (    2 N-000176 )
  )
  ( /540924B7/54067578 MODULE  IC13 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
   (    2 /transceiver_block_1/DT_1 )
   (    3 /transceiver_block_1/CLK )
   (    4 GND )
-  (    5 N-000192 )
-  (    6 N-000172 )
-  (    7 N-000171 )
-  (    8 N-000185 )
+  (    5 N-000174 )
+  (    6 N-000187 )
+  (    7 N-000173 )
+  (    8 N-000186 )
  )
  ( /540924B7/54067576 MODULE  IC12 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -341,8 +366,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000184 )
-  (    8 N-000182 )
+  (    7 N-000176 )
+  (    8 N-000177 )
  )
  ( /540924B7/54067575 MODULE  IC11 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -351,16 +376,16 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000181 )
-  (    8 N-000180 )
+  (    7 N-000185 )
+  (    8 N-000178 )
  )
  ( /540924B7/54067574 $noname  R14 100 {Lib=R}
-  (    1 N-000185 )
-  (    2 N-000171 )
+  (    1 N-000186 )
+  (    2 N-000173 )
  )
  ( /540924B7/54067573 $noname  R15 100 {Lib=R}
-  (    1 N-000172 )
-  (    2 N-000192 )
+  (    1 N-000187 )
+  (    2 N-000174 )
  )
  ( /540924B7/54067570 MODULE  IC10 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -369,8 +394,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000179 )
-  (    8 N-000183 )
+  (    7 N-000184 )
+  (    8 N-000181 )
  )
  ( /540924B7/5406756F MODULE  IC9 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -379,8 +404,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000175 )
-  (    8 N-000178 )
+  (    7 N-000183 )
+  (    8 N-000180 )
  )
  ( /540924B7/5406756E MODULE  IC8 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -389,78 +414,82 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000177 )
-  (    8 N-000176 )
+  (    7 N-000182 )
+  (    8 N-000179 )
  )
- ( /540924B7/5406756A $noname  C11 0.1u {Lib=C}
+ ( /540924B7/5406756A $noname  C14 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540924B7/54067569 $noname  C12 0.1u {Lib=C}
+ ( /540924B7/54067569 $noname  C15 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540924B7/54067568 $noname  C13 0.1u {Lib=C}
+ ( /540924B7/54067568 $noname  C17 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540924B7/54067567 $noname  C14 0.1u {Lib=C}
+ ( /540924B7/54067567 $noname  C18 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540924B7/54067566 $noname  C15 0.1u {Lib=C}
+ ( /540924B7/54067566 $noname  C19 0.1u {Lib=C}
+  (    1 +3V3 )
+  (    2 GND )
+ )
+ ( /54092498/5422055D $noname  C22 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
  ( /54092498/5418D866 $noname  CON7 RJ45_TART {Lib=RJ45_TART}
   (    1 N-000167 )
   (    2 N-000160 )
-  (    3 N-000159 )
-  (    4 N-000166 )
-  (    5 N-000161 )
-  (    6 N-000147 )
-  (    7 N-000165 )
-  (    8 N-000148 )
+  (    3 N-000163 )
+  (    4 N-000168 )
+  (    5 N-000159 )
+  (    6 N-000164 )
+  (    7 N-000149 )
+  (    8 N-000150 )
  )
  ( /54092498/5418D832 $noname  CON6 RJ45_TART {Lib=RJ45_TART}
   (    1 +24V )
   (    2 GND )
-  (    3 N-000163 )
-  (    4 N-000164 )
-  (    5 N-000158 )
-  (    6 N-000157 )
-  (    7 N-000168 )
-  (    8 N-000162 )
+  (    3 N-000162 )
+  (    4 N-000158 )
+  (    5 N-000169 )
+  (    6 N-000165 )
+  (    7 N-000166 )
+  (    8 N-000161 )
  )
  ( /54092498/540678BD $noname  R16 100 {Lib=R}
-  (    1 N-000158 )
-  (    2 N-000164 )
+  (    1 N-000169 )
+  (    2 N-000158 )
  )
  ( /54092498/540678A5 $noname  R17 100 {Lib=R}
-  (    1 N-000157 )
-  (    2 N-000163 )
+  (    1 N-000165 )
+  (    2 N-000162 )
  )
  ( /54092498/5406788C $noname  R18 100 {Lib=R}
-  (    1 N-000168 )
-  (    2 N-000162 )
+  (    1 N-000166 )
+  (    2 N-000161 )
  )
  ( /54092498/54067855 $noname  R19 100 {Lib=R}
   (    1 N-000167 )
   (    2 N-000160 )
  )
  ( /54092498/540677FC $noname  R20 100 {Lib=R}
-  (    1 N-000166 )
-  (    2 N-000161 )
+  (    1 N-000168 )
+  (    2 N-000159 )
  )
  ( /54092498/54067578 MODULE  IC19 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
   (    2 /transceiver_block_2/DT_1 )
   (    3 /transceiver_block_1/CLK )
   (    4 GND )
-  (    5 N-000148 )
-  (    6 N-000165 )
-  (    7 N-000147 )
-  (    8 N-000159 )
+  (    5 N-000150 )
+  (    6 N-000149 )
+  (    7 N-000164 )
+  (    8 N-000163 )
  )
  ( /54092498/54067576 MODULE  IC18 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -469,8 +498,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000161 )
-  (    8 N-000166 )
+  (    7 N-000159 )
+  (    8 N-000168 )
  )
  ( /54092498/54067575 MODULE  IC17 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -483,12 +512,12 @@
   (    8 N-000167 )
  )
  ( /54092498/54067574 $noname  R21 100 {Lib=R}
-  (    1 N-000159 )
-  (    2 N-000147 )
+  (    1 N-000163 )
+  (    2 N-000164 )
  )
  ( /54092498/54067573 $noname  R22 100 {Lib=R}
-  (    1 N-000165 )
-  (    2 N-000148 )
+  (    1 N-000149 )
+  (    2 N-000150 )
  )
  ( /54092498/54067570 MODULE  IC16 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -497,8 +526,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000162 )
-  (    8 N-000168 )
+  (    7 N-000161 )
+  (    8 N-000166 )
  )
  ( /54092498/5406756F MODULE  IC15 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -507,8 +536,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000163 )
-  (    8 N-000157 )
+  (    7 N-000162 )
+  (    8 N-000165 )
  )
  ( /54092498/5406756E MODULE  IC14 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -517,78 +546,82 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000164 )
-  (    8 N-000158 )
+  (    7 N-000158 )
+  (    8 N-000169 )
  )
- ( /54092498/5406756A $noname  C16 0.1u {Lib=C}
+ ( /54092498/5406756A $noname  C20 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /54092498/54067569 $noname  C17 0.1u {Lib=C}
+ ( /54092498/54067569 $noname  C21 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /54092498/54067568 $noname  C18 0.1u {Lib=C}
+ ( /54092498/54067568 $noname  C23 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /54092498/54067567 $noname  C19 0.1u {Lib=C}
+ ( /54092498/54067567 $noname  C24 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /54092498/54067566 $noname  C20 0.1u {Lib=C}
+ ( /54092498/54067566 $noname  C25 0.1u {Lib=C}
+  (    1 +3V3 )
+  (    2 GND )
+ )
+ ( /540670D5/5422055D $noname  C28 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
  ( /540670D5/5418D866 $noname  CON9 RJ45_TART {Lib=RJ45_TART}
-  (    1 N-000102 )
-  (    2 N-000084 )
-  (    3 N-000085 )
-  (    4 N-000103 )
-  (    5 N-000101 )
-  (    6 N-000086 )
-  (    7 N-000092 )
-  (    8 N-000107 )
+  (    1 N-000087 )
+  (    2 N-000107 )
+  (    3 N-000091 )
+  (    4 N-000085 )
+  (    5 N-000108 )
+  (    6 N-000101 )
+  (    7 N-000102 )
+  (    8 N-000104 )
  )
  ( /540670D5/5418D832 $noname  CON8 RJ45_TART {Lib=RJ45_TART}
   (    1 +24V )
   (    2 GND )
-  (    3 N-000105 )
-  (    4 N-000104 )
-  (    5 N-000098 )
-  (    6 N-000099 )
-  (    7 N-000100 )
-  (    8 N-000106 )
+  (    3 N-000106 )
+  (    4 N-000105 )
+  (    5 N-000086 )
+  (    6 N-000090 )
+  (    7 N-000089 )
+  (    8 N-000088 )
  )
  ( /540670D5/540678BD $noname  R23 100 {Lib=R}
-  (    1 N-000098 )
-  (    2 N-000104 )
- )
- ( /540670D5/540678A5 $noname  R24 100 {Lib=R}
-  (    1 N-000099 )
+  (    1 N-000086 )
   (    2 N-000105 )
  )
- ( /540670D5/5406788C $noname  R25 100 {Lib=R}
-  (    1 N-000100 )
+ ( /540670D5/540678A5 $noname  R24 100 {Lib=R}
+  (    1 N-000090 )
   (    2 N-000106 )
  )
+ ( /540670D5/5406788C $noname  R25 100 {Lib=R}
+  (    1 N-000089 )
+  (    2 N-000088 )
+ )
  ( /540670D5/54067855 $noname  R26 100 {Lib=R}
-  (    1 N-000102 )
-  (    2 N-000084 )
+  (    1 N-000087 )
+  (    2 N-000107 )
  )
  ( /540670D5/540677FC $noname  R27 100 {Lib=R}
-  (    1 N-000103 )
-  (    2 N-000101 )
+  (    1 N-000085 )
+  (    2 N-000108 )
  )
  ( /540670D5/54067578 MODULE  IC25 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
   (    2 /transceiver_block_4/DT_1 )
   (    3 /transceiver_block_1/CLK )
   (    4 GND )
-  (    5 N-000107 )
-  (    6 N-000092 )
-  (    7 N-000086 )
-  (    8 N-000085 )
+  (    5 N-000104 )
+  (    6 N-000102 )
+  (    7 N-000101 )
+  (    8 N-000091 )
  )
  ( /540670D5/54067576 MODULE  IC24 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -597,8 +630,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000101 )
-  (    8 N-000103 )
+  (    7 N-000108 )
+  (    8 N-000085 )
  )
  ( /540670D5/54067575 MODULE  IC23 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -607,16 +640,16 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000084 )
-  (    8 N-000102 )
+  (    7 N-000107 )
+  (    8 N-000087 )
  )
  ( /540670D5/54067574 $noname  R28 100 {Lib=R}
-  (    1 N-000085 )
-  (    2 N-000086 )
+  (    1 N-000091 )
+  (    2 N-000101 )
  )
  ( /540670D5/54067573 $noname  R29 100 {Lib=R}
-  (    1 N-000092 )
-  (    2 N-000107 )
+  (    1 N-000102 )
+  (    2 N-000104 )
  )
  ( /540670D5/54067570 MODULE  IC22 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -625,8 +658,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000106 )
-  (    8 N-000100 )
+  (    7 N-000088 )
+  (    8 N-000089 )
  )
  ( /540670D5/5406756F MODULE  IC21 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -635,8 +668,8 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000105 )
-  (    8 N-000099 )
+  (    7 N-000106 )
+  (    8 N-000090 )
  )
  ( /540670D5/5406756E MODULE  IC20 LTC2851 {Lib=LTC2851}
   (    1 +3V3 )
@@ -645,35 +678,35 @@
   (    4 GND )
   (    5 ? )
   (    6 ? )
-  (    7 N-000104 )
-  (    8 N-000098 )
+  (    7 N-000105 )
+  (    8 N-000086 )
  )
- ( /540670D5/5406756A $noname  C21 0.1u {Lib=C}
+ ( /540670D5/5406756A $noname  C26 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540670D5/54067569 $noname  C22 0.1u {Lib=C}
+ ( /540670D5/54067569 $noname  C27 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540670D5/54067568 $noname  C23 0.1u {Lib=C}
+ ( /540670D5/54067568 $noname  C29 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540670D5/54067567 $noname  C24 0.1u {Lib=C}
+ ( /540670D5/54067567 $noname  C30 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
- ( /540670D5/54067566 $noname  C25 0.1u {Lib=C}
+ ( /540670D5/54067566 $noname  C31 0.1u {Lib=C}
   (    1 +3V3 )
   (    2 GND )
  )
  ( /5407DDC4/5418D7D2 MODULE  U2 XTAL_DRIVER_TART {Lib=XTAL_DRIVER_TART}
   (    1 ? )
-  (    2 N-000118 )
-  (    3 N-000116 )
+  (    2 N-000119 )
+  (    3 N-000118 )
   (    4 /transceiver_block_1/CLK )
-  (    5 N-000119 )
+  (    5 N-000120 )
   (    6 /clock/CLK_FPGA )
  )
  ( /5407DDC4/5418D7A5 MODULE  X1 TCXO_TART {Lib=TCXO_TART}
@@ -682,29 +715,29 @@
   (    3 N-000117 )
   (    4 +3V3 )
  )
- ( /5407DDC4/5407E135 $noname  C27 0.1u {Lib=C}
-  (    1 N-000119 )
+ ( /5407DDC4/5407E135 $noname  C33 0.1u {Lib=C}
+  (    1 N-000120 )
   (    2 GND )
  )
  ( /5407DDC4/5407E128 $noname  R33 0 {Lib=R}
   (    1 +3V3 )
-  (    2 N-000119 )
+  (    2 N-000120 )
  )
  ( /5407DDC4/5407E121 $noname  R32 0 {Lib=R}
-  (    1 N-000118 )
+  (    1 N-000119 )
   (    2 GND )
  )
  ( /5407DDC4/5407E115 $noname  R31 10k {Lib=R}
-  (    1 N-000116 )
+  (    1 N-000118 )
   (    2 GND )
  )
  ( /5407DDC4/5407E105 $noname  R30 10k {Lib=R}
   (    1 +3V3 )
-  (    2 N-000116 )
+  (    2 N-000118 )
  )
- ( /5407DDC4/5407E0F8 $noname  C26 2200p {Lib=C}
+ ( /5407DDC4/5407E0F8 $noname  C32 2200p {Lib=C}
   (    1 N-000117 )
-  (    2 N-000116 )
+  (    2 N-000118 )
  )
 )
 *
@@ -712,10 +745,22 @@
 $component U1
  PAPILIO_TART
 $endlist
-$component REG2
- SOT223
+$component C1
+ CP*
+ SM*
+$endlist
+$component C2
+ SM*
+ C?
+ C1-1
 $endlist
 $component REG1
+ OKI-78SR_TART
+$endlist
+$component REG3
+ SOT223
+$endlist
+$component REG2
  OKI-78SR_TART
 $endlist
 $component CON1
@@ -731,12 +776,12 @@ $endlist
 $component IC1
  SOIC-4_TART
 $endlist
-$component C2
+$component C4
  SM*
  C?
  C1-1
 $endlist
-$component C1
+$component C3
  CP*
  SM*
 $endlist
@@ -756,18 +801,23 @@ $component R1
  R?-*
  SM1206
 $endlist
-$component C5
+$component C7
  CP*
  SM*
 $endlist
-$component C4
+$component C6
  SM*
  C?
  C1-1
 $endlist
-$component C3
+$component C5
  CP*
  SM*
+$endlist
+$component C10
+ SM*
+ C?
+ C1-1
 $endlist
 $component CON3
  RJ45_8
@@ -824,16 +874,6 @@ $component R8
  R?-*
  SM1206
 $endlist
-$component C6
- SM*
- C?
- C1-1
-$endlist
-$component C7
- SM*
- C?
- C1-1
-$endlist
 $component C8
  SM*
  C?
@@ -844,7 +884,22 @@ $component C9
  C?
  C1-1
 $endlist
-$component C10
+$component C11
+ SM*
+ C?
+ C1-1
+$endlist
+$component C12
+ SM*
+ C?
+ C1-1
+$endlist
+$component C13
+ SM*
+ C?
+ C1-1
+$endlist
+$component C16
  SM*
  C?
  C1-1
@@ -904,27 +959,32 @@ $component R15
  R?-*
  SM1206
 $endlist
-$component C11
- SM*
- C?
- C1-1
-$endlist
-$component C12
- SM*
- C?
- C1-1
-$endlist
-$component C13
- SM*
- C?
- C1-1
-$endlist
 $component C14
  SM*
  C?
  C1-1
 $endlist
 $component C15
+ SM*
+ C?
+ C1-1
+$endlist
+$component C17
+ SM*
+ C?
+ C1-1
+$endlist
+$component C18
+ SM*
+ C?
+ C1-1
+$endlist
+$component C19
+ SM*
+ C?
+ C1-1
+$endlist
+$component C22
  SM*
  C?
  C1-1
@@ -984,27 +1044,32 @@ $component R22
  R?-*
  SM1206
 $endlist
-$component C16
- SM*
- C?
- C1-1
-$endlist
-$component C17
- SM*
- C?
- C1-1
-$endlist
-$component C18
- SM*
- C?
- C1-1
-$endlist
-$component C19
- SM*
- C?
- C1-1
-$endlist
 $component C20
+ SM*
+ C?
+ C1-1
+$endlist
+$component C21
+ SM*
+ C?
+ C1-1
+$endlist
+$component C23
+ SM*
+ C?
+ C1-1
+$endlist
+$component C24
+ SM*
+ C?
+ C1-1
+$endlist
+$component C25
+ SM*
+ C?
+ C1-1
+$endlist
+$component C28
  SM*
  C?
  C1-1
@@ -1064,27 +1129,27 @@ $component R29
  R?-*
  SM1206
 $endlist
-$component C21
+$component C26
  SM*
  C?
  C1-1
 $endlist
-$component C22
+$component C27
  SM*
  C?
  C1-1
 $endlist
-$component C23
+$component C29
  SM*
  C?
  C1-1
 $endlist
-$component C24
+$component C30
  SM*
  C?
  C1-1
 $endlist
-$component C25
+$component C31
  SM*
  C?
  C1-1
@@ -1095,7 +1160,7 @@ $endlist
 $component X1
  4_SMD_TART
 $endlist
-$component C27
+$component C33
  SM*
  C?
  C1-1
@@ -1128,7 +1193,7 @@ $component R30
  R?-*
  SM1206
 $endlist
-$component C26
+$component C32
  SM*
  C?
  C1-1
@@ -1149,491 +1214,513 @@ Net 5 "/transceiver_block_3/DT_2" "DT_2"
  U1 B0
  IC6 2
 Net 6 "/transceiver_block_3/DT_1" "DT_1"
- IC7 2
  U1 B1
-Net 10 "/MISO" "MISO"
- U1 B6
- P1 21
-Net 13 "/transceiver_block_1/CLK" "CLK"
+ IC7 2
+Net 12 "/transceiver_block_1/CLK" "CLK"
+ IC19 3
  IC7 3
  IC13 3
- IC19 3
  IC25 3
  U2 4
-Net 14 "+5V" "+5V"
- C4 1
- P1 2
- C3 1
- REG1 3
- REG2 3
+Net 13 "+5V" "+5V"
  U1 5VA
- P1 4
-Net 25 "/transceiver_block_1/DT_1" "DT_1"
- U1 C13
+ C6 1
+ REG3 3
+ C5 1
+ REG2 3
+Net 24 "/transceiver_block_1/DT_1" "DT_1"
  IC13 2
-Net 26 "/transceiver_block_1/DT_3" "DT_3"
- IC11 2
+ U1 C13
+Net 25 "/transceiver_block_1/DT_3" "DT_3"
  U1 C12
-Net 27 "/transceiver_block_1/DT_6" "DT_6"
- IC8 2
+ IC11 2
+Net 26 "/transceiver_block_1/DT_6" "DT_6"
  U1 C11
-Net 28 "/transceiver_block_1/DT_4" "DT_4"
+ IC8 2
+Net 27 "/transceiver_block_1/DT_4" "DT_4"
  U1 C10
  IC10 2
-Net 29 "/transceiver_block_1/DT_5" "DT_5"
- U1 C9
+Net 28 "/transceiver_block_1/DT_5" "DT_5"
  IC9 2
-Net 30 "/clock/CLK_FPGA" "CLK_FPGA"
- U2 6
+ U1 C9
+Net 29 "/clock/CLK_FPGA" "CLK_FPGA"
  U1 B13
-Net 31 "/transceiver_block_1/DT_2" "DT_2"
- U1 C14
+ U2 6
+Net 30 "/transceiver_block_1/DT_2" "DT_2"
  IC12 2
-Net 32 "GND" "GND"
- CON8 2
- IC24 4
- IC24 3
- IC20 4
- IC2 4
- C22 2
- C21 2
+ U1 C14
+Net 31 "GND" "GND"
+ IC6 3
+ IC6 4
  IC2 3
+ C13 2
+ IC5 3
+ IC5 4
+ IC4 3
+ IC4 4
+ C12 2
+ C11 2
+ IC7 4
+ C10 2
+ C9 2
+ IC2 4
+ C8 2
+ C1 2
+ IC3 3
+ IC3 4
+ CON2 2
+ C30 2
+ C14 2
  IC20 3
  IC21 4
  IC21 3
- IC6 4
- IC6 3
- IC7 4
- REG1 2
- REG2 2
- X1 2
- C5 2
- C4 2
- X1 1
- C3 2
- R31 2
- D3 2
- C1 2
- C2 2
- R32 2
- IC18 3
+ IC22 4
+ IC22 3
+ IC23 3
+ IC23 4
+ C31 2
+ C29 2
  C27 2
- IC1 1
+ C26 2
+ X1 1
+ X1 2
+ C33 2
+ R32 2
+ R31 2
+ C2 2
+ IC20 4
+ REG1 2
  IC11 4
- IC11 3
  IC13 4
  IC12 3
  IC12 4
- IC9 4
+ IC11 3
+ C22 2
+ CON6 2
  IC8 4
  IC8 3
- C11 2
+ IC9 4
  IC9 3
  IC10 4
- CON4 2
  IC10 3
- C15 2
- C14 2
- C13 2
- C12 2
- CON2 2
- IC4 3
- C6 2
- C7 2
- C8 2
- C9 2
- C10 2
- IC5 3
- IC5 4
- IC4 4
- IC3 3
- IC14 3
- IC14 4
- IC15 4
- CON6 2
- IC17 4
- IC17 3
- IC16 3
- IC19 4
- IC3 4
- IC18 4
- C16 2
- C17 2
- C18 2
  C19 2
+ C18 2
+ C17 2
+ C15 2
+ CON4 2
+ C16 2
+ IC17 3
+ IC17 4
+ IC19 4
+ IC16 3
+ IC18 3
+ IC18 4
  C20 2
+ C21 2
+ C23 2
+ C24 2
+ C25 2
+ IC15 4
  IC16 4
  IC15 3
- IC22 3
- U1 GB
- C24 2
- IC22 4
- U1 GC
- U1 GD
- U1 GA
- P1 20
- IC23 4
- C25 2
- IC25 4
- IC23 3
+ IC14 3
+ IC14 4
+ IC24 4
+ CON8 2
+ P1 14
  P1 6
  P1 9
- P1 14
- C23 2
-Net 33 "/transceiver_block_2/DT_6" "DT_6"
- U1 B11
+ IC24 3
+ U1 GA
+ IC25 4
+ P1 20
+ C28 2
+ U1 GD
+ U1 GB
+ U1 GC
+Net 32 "/transceiver_block_2/DT_6" "DT_6"
  IC14 2
-Net 34 "/transceiver_block_4/DT_2" "DT_2"
- U1 C0
- IC24 2
-Net 37 "/transceiver_block_2/DT_5" "DT_5"
+ U1 B11
+Net 35 "/transceiver_block_2/DT_5" "DT_5"
  U1 B9
  IC15 2
-Net 38 "/transceiver_block_2/DT_4" "DT_4"
+Net 36 "/transceiver_block_2/DT_4" "DT_4"
  U1 B10
  IC16 2
-Net 39 "/transceiver_block_2/DT_3" "DT_3"
- U1 B12
+Net 37 "/transceiver_block_2/DT_3" "DT_3"
  IC17 2
-Net 40 "/transceiver_block_2/DT_1" "DT_1"
- IC19 2
+ U1 B12
+Net 38 "/transceiver_block_2/DT_1" "DT_1"
  U1 B14
-Net 41 "/transceiver_block_2/DT_2" "DT_2"
- U1 B15
+ IC19 2
+Net 39 "/transceiver_block_2/DT_2" "DT_2"
  IC18 2
-Net 44 "+24V" "+24V"
+ U1 B15
+Net 42 "+24V" "+24V"
  F1 1
- C1 1
- C2 1
- CON8 1
- CON4 1
+ C3 1
  CON6 1
- CON2 1
+ C4 1
+ D2 2
  IC1 3
-Net 45 "+3V3" "+3V3"
- IC7 1
- C8 1
- C7 1
- C6 1
- IC2 1
+ CON8 1
+ CON2 1
+ F2 1
+ CON4 1
+Net 43 "+3V3" "+3V3"
+ C28 1
+ IC17 1
+ IC16 1
+ IC19 1
+ IC18 1
+ C20 1
+ C21 1
+ C23 1
+ C10 1
  IC6 1
- C9 1
- C12 1
+ IC7 1
+ IC2 1
+ R30 1
+ R33 1
  IC3 1
  IC4 1
  IC5 1
- C10 1
+ C13 1
+ C12 1
+ C11 1
+ C9 1
+ C8 1
+ C16 1
+ IC23 1
  IC12 1
  IC13 1
- IC10 1
  IC11 1
- C13 1
  C14 1
  C15 1
- IC9 1
- C11 1
- IC8 1
+ C17 1
  C18 1
+ C19 1
+ IC10 1
+ IC20 1
+ C26 1
+ IC9 1
+ IC8 1
+ IC21 1
+ C29 1
+ C27 1
  IC14 1
  IC15 1
- C20 1
- C19 1
- C17 1
- C16 1
- IC18 1
- IC19 1
- IC16 1
- IC17 1
- C23 1
- IC20 1
- C24 1
- X1 4
- IC22 1
- IC21 1
- REG2 1
- C5 1
- R33 1
- IC25 1
- R1 1
- R30 1
- IC23 1
- C22 1
- C21 1
- IC24 1
  C25 1
-Net 46 "/transceiver_block_4/DT_6" "DT_6"
- IC20 2
+ C22 1
+ C31 1
+ C24 1
+ C30 1
+ X1 4
+ IC25 1
+ REG3 1
+ IC22 1
+ IC24 1
+ R1 1
+ C7 1
+Net 44 "/transceiver_block_4/DT_6" "DT_6"
  U1 C4
-Net 47 "/transceiver_block_4/DT_5" "DT_5"
+ IC20 2
+Net 45 "/transceiver_block_4/DT_5" "DT_5"
  IC21 2
  U1 C6
-Net 48 "/transceiver_block_4/DT_1" "DT_1"
- U1 C1
+Net 46 "/transceiver_block_4/DT_1" "DT_1"
  IC25 2
-Net 49 "/transceiver_block_4/DT_4" "DT_4"
+ U1 C1
+Net 47 "/transceiver_block_4/DT_4" "DT_4"
  IC22 2
  U1 C5
-Net 50 "/transceiver_block_4/DT_3" "DT_3"
- U1 C2
+Net 48 "/transceiver_block_4/DT_3" "DT_3"
  IC23 2
-Net 51 "/SCLK" "SCLK"
- P1 23
+ U1 C2
+Net 49 "/transceiver_block_4/DT_2" "DT_2"
+ IC24 2
+ U1 C0
+Net 50 "/SCLK" "SCLK"
  U1 A12
-Net 52 "/MOSI" "MOSI"
+ P1 23
+Net 51 "/MOSI" "MOSI"
  U1 A10
  P1 19
-Net 84 "" ""
- R26 2
- IC23 7
- CON9 2
+Net 52 "/MISO" "MISO"
+ P1 21
+ U1 B6
+Net 53 "+5V_PI" "+5V_PI"
+ P1 2
+ C1 1
+ REG1 3
+ P1 4
+ C2 1
 Net 85 "" ""
- IC25 8
- R28 1
- CON9 3
-Net 86 "" ""
- R28 2
- CON9 6
- IC25 7
-Net 92 "" ""
- R29 1
- CON9 7
- IC25 6
-Net 98 "" ""
- IC20 8
- R23 1
- CON8 5
-Net 99 "" ""
- R24 1
- IC21 8
- CON8 6
-Net 100 "" ""
- IC22 8
- CON8 7
- R25 1
-Net 101 "" ""
- IC24 7
- CON9 5
- R27 2
-Net 102 "" ""
- IC23 8
- CON9 1
- R26 1
-Net 103 "" ""
- IC24 8
- R27 1
  CON9 4
-Net 104 "" ""
- IC20 7
- CON8 4
- R23 2
-Net 105 "" ""
- R24 2
- CON8 3
- IC21 7
-Net 106 "" ""
+ R27 1
+ IC24 8
+Net 86 "" ""
+ CON8 5
+ R23 1
+ IC20 8
+Net 87 "" ""
+ R26 1
+ CON9 1
+ IC23 8
+Net 88 "" ""
  IC22 7
  CON8 8
  R25 2
-Net 107 "" ""
+Net 89 "" ""
+ IC22 8
+ CON8 7
+ R25 1
+Net 90 "" ""
+ IC21 8
+ CON8 6
+ R24 1
+Net 91 "" ""
+ R28 1
+ IC25 8
+ CON9 3
+Net 101 "" ""
+ R28 2
+ IC25 7
+ CON9 6
+Net 102 "" ""
+ IC25 6
+ CON9 7
+ R29 1
+Net 104 "" ""
  CON9 8
  IC25 5
  R29 2
+Net 105 "" ""
+ R23 2
+ CON8 4
+ IC20 7
+Net 106 "" ""
+ IC21 7
+ CON8 3
+ R24 2
+Net 107 "" ""
+ IC23 7
+ R26 2
+ CON9 2
 Net 108 "" ""
+ IC24 7
+ R27 2
+ CON9 5
+Net 109 "" ""
+ CON1 GND
  D1 1
  IC1 2
- CON1 GND
-Net 110 "" ""
+Net 111 "" ""
+ CON1 PWR
+ IC1 4
+ D1 2
+Net 113 "" ""
  REG1 1
  F1 2
-Net 113 "" ""
- CON1 PWR
- D1 2
- IC1 4
+Net 114 "" ""
+ REG2 1
+ F2 2
 Net 115 "" ""
- D3 1
- R1 2
+ C6 2
+ C7 2
+ REG3 2
+ D2 1
+ IC1 1
+ C3 2
+ D3 2
+ C5 2
+ C4 2
+ REG2 2
 Net 116 "" ""
- C26 2
- R30 2
- R31 1
- U2 3
+ R1 2
+ D3 1
 Net 117 "" ""
+ C32 1
  X1 3
- C26 1
 Net 118 "" ""
+ C32 2
+ R31 1
+ R30 2
+ U2 3
+Net 119 "" ""
  R32 1
  U2 2
-Net 119 "" ""
+Net 120 "" ""
  U2 5
  R33 2
- C27 1
-Net 121 "" ""
- R5 2
- CON3 2
- IC5 7
+ C33 1
 Net 122 "" ""
- R7 1
- CON3 3
- IC7 8
-Net 125 "" ""
- IC7 7
- R7 2
- CON3 6
-Net 128 "" ""
- CON2 6
- R3 1
  IC3 8
-Net 131 "" ""
- CON2 5
- IC2 8
- R2 1
-Net 136 "" ""
- R8 1
- IC7 6
- CON3 7
-Net 137 "" ""
+ R3 1
+ CON2 6
+Net 123 "" ""
+ CON2 7
  IC4 8
  R4 1
- CON2 7
-Net 138 "" ""
+Net 124 "" ""
+ CON2 8
+ IC4 7
+ R4 2
+Net 125 "" ""
+ CON3 1
+ R5 1
+ IC5 8
+Net 126 "" ""
+ R6 1
+ IC6 8
+ CON3 4
+Net 127 "" ""
+ CON2 5
+ R2 1
+ IC2 8
+Net 128 "" ""
+ CON3 3
+ IC7 8
+ R7 1
+Net 139 "" ""
+ CON3 6
+ IC7 7
+ R7 2
+Net 140 "" ""
+ IC7 6
+ CON3 7
+ R8 1
+Net 141 "" ""
+ R8 2
+ CON3 8
+ IC7 5
+Net 142 "" ""
+ R2 2
+ IC2 7
+ CON2 4
+Net 143 "" ""
+ R3 2
+ IC3 7
+ CON2 3
+Net 144 "" ""
+ R5 2
+ IC5 7
+ CON3 2
+Net 145 "" ""
  R6 2
  CON3 5
  IC6 7
-Net 139 "" ""
- R5 1
- IC5 8
- CON3 1
-Net 140 "" ""
- IC6 8
- CON3 4
- R6 1
-Net 141 "" ""
- CON2 4
- R2 2
- IC2 7
-Net 142 "" ""
- R3 2
- CON2 3
- IC3 7
-Net 143 "" ""
- CON2 8
- R4 2
- IC4 7
-Net 144 "" ""
- CON3 8
- IC7 5
- R8 2
-Net 147 "" ""
- IC19 7
- R21 2
- CON7 6
-Net 148 "" ""
+Net 149 "" ""
+ IC19 6
+ CON7 7
+ R22 1
+Net 150 "" ""
+ R22 2
  IC19 5
  CON7 8
- R22 2
-Net 157 "" ""
- CON6 6
- IC15 8
- R17 1
 Net 158 "" ""
- IC14 8
- R16 1
- CON6 5
+ IC14 7
+ CON6 4
+ R16 2
 Net 159 "" ""
- CON7 3
- IC19 8
- R21 1
+ R20 2
+ CON7 5
+ IC18 7
 Net 160 "" ""
  IC17 7
  CON7 2
  R19 2
 Net 161 "" ""
- CON7 5
- R20 2
- IC18 7
-Net 162 "" ""
- CON6 8
  R18 2
  IC16 7
-Net 163 "" ""
- R17 2
+ CON6 8
+Net 162 "" ""
  CON6 3
+ R17 2
  IC15 7
+Net 163 "" ""
+ CON7 3
+ IC19 8
+ R21 1
 Net 164 "" ""
- R16 2
- CON6 4
- IC14 7
+ CON7 6
+ IC19 7
+ R21 2
 Net 165 "" ""
- IC19 6
- CON7 7
- R22 1
+ IC15 8
+ CON6 6
+ R17 1
 Net 166 "" ""
- IC18 8
- R20 1
- CON7 4
-Net 167 "" ""
- IC17 8
- R19 1
- CON7 1
-Net 168 "" ""
- CON6 7
  R18 1
  IC16 8
-Net 171 "" ""
+ CON6 7
+Net 167 "" ""
+ IC17 8
+ CON7 1
+ R19 1
+Net 168 "" ""
+ R20 1
+ CON7 4
+ IC18 8
+Net 169 "" ""
+ R16 1
+ CON6 5
+ IC14 8
+Net 173 "" ""
  CON5 6
  R14 2
  IC13 7
-Net 172 "" ""
- IC13 6
- CON5 7
- R15 1
-Net 175 "" ""
- CON4 3
- IC9 7
- R10 2
+Net 174 "" ""
+ CON5 8
+ IC13 5
+ R15 2
 Net 176 "" ""
- IC8 8
- CON4 5
- R9 1
+ IC12 7
+ R13 2
+ CON5 5
 Net 177 "" ""
- R9 2
- IC8 7
- CON4 4
+ CON5 4
+ IC12 8
+ R13 1
 Net 178 "" ""
- CON4 6
- R10 1
- IC9 8
-Net 179 "" ""
- R11 2
- CON4 8
- IC10 7
-Net 180 "" ""
  R12 1
  CON5 1
  IC11 8
+Net 179 "" ""
+ R9 1
+ IC8 8
+ CON4 5
+Net 180 "" ""
+ IC9 8
+ R10 1
+ CON4 6
 Net 181 "" ""
- R12 2
- CON5 2
- IC11 7
-Net 182 "" ""
- R13 1
- CON5 4
- IC12 8
-Net 183 "" ""
- R11 1
  IC10 8
+ R11 1
  CON4 7
+Net 182 "" ""
+ CON4 4
+ IC8 7
+ R9 2
+Net 183 "" ""
+ CON4 3
+ R10 2
+ IC9 7
 Net 184 "" ""
- R13 2
- CON5 5
- IC12 7
+ CON4 8
+ R11 2
+ IC10 7
 Net 185 "" ""
- IC13 8
- R14 1
+ R12 2
+ IC11 7
+ CON5 2
+Net 186 "" ""
  CON5 3
-Net 192 "" ""
- R15 2
- IC13 5
- CON5 8
+ R14 1
+ IC13 8
+Net 187 "" ""
+ CON5 7
+ R15 1
+ IC13 6
 }
 #End
