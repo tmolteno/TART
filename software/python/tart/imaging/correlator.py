@@ -3,23 +3,15 @@ from tart.imaging import visibility
 from tart.util import angle
 
 import numpy as np
-from scipy.signal import hilbert
+
+from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
+def hilbert(x):
+ return x-1j*fftw_hilbert(x)
+
+# from scipy.signal import hilbert
 
 def V(x,y):
-  return sum(x*np.conjugate(y)) * 1./ len(x)
-
-def convert_to_baseband(xd, fs, fc0):
-  # import time
-  # aaa = time.time()
-  xd_padded = np.concatenate((xd,[1])) # pad to length np.power(2,n)
-  analytic = hilbert(xd_padded) * np.exp(-2.0j * np.pi * fc0 * np.arange(0.,len(xd_padded)/fs,1./fs))
-  # analytic = hilbert(xd) * np.exp(-2.0j * np.pi * fc0 * np.arange(0.,len(xd)/fs,1./fs))
-  # print 'hilbert: ', time.time()-aaa
-  # from tart.simulation import spectrum
-  # spectrum.plotSpectrum(xd, fs, c='red')
-  # spectrum.plotSpectrum(analytic, fs, c='green')
-  # plt.show()
-  return analytic
+  return np.dot(x,np.conjugate(y))/len(x)
 
 
 class Correlator:
@@ -30,23 +22,22 @@ class Correlator:
     vis.set_visibilities(visibilities, baselines)
     return vis
 
-  def convert_to_baseband(self, obs):
-    fs = obs.get_sampling_rate()
-    fc0 = 4.092e6
-    data = []
-    for i in range(0, obs.config.num_antennas):
-      xr = obs.get_antenna(i+1)
-      xc = convert_to_baseband(xr, fs, fc0)
-      data.append(xc)
-    return data
-
   def compute_complex_vis(self, obs):
     '''Return an array of baselines and visibilities from this observation'''
     v = []
     baselines = []
-    data = self.convert_to_baseband(obs)
+    fs = obs.get_sampling_rate()
+    fc0 = 4.092e6
+    shift = np.exp(-2.0j * np.pi * fc0 * np.arange(0.,len(obs.get_antenna(1))/fs,1./fs))
+    print 'here_0.1'
+    data = [hilbert(obs.get_antenna(i+1)) for i in range(obs.config.num_antennas)]
+    print 'here_0.2'
     for i in range(0, obs.config.num_antennas):
+      #data_i = hilbert(obs.get_antenna(i+1)) #*shift
+      print 'herei', i
       for j in range(i+1, obs.config.num_antennas):
+        #data_j = hilbert(obs.get_antenna(j+1)) #*shift
+        #v.append(V(data_i,data_j))
         v.append(V(data[i],data[j]))
         baselines.append([i,j])
     return v, baselines
