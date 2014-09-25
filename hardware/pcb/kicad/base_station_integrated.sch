@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Wed 24 Sep 2014 17:40:46 NZST
+EESchema Schematic File Version 2  date Thu 25 Sep 2014 15:05:39 NZST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -38,7 +38,7 @@ $Descr A4 11700 8267
 encoding utf-8
 Sheet 1 7
 Title ""
-Date "24 sep 2014"
+Date "25 sep 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -46,6 +46,16 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
+$Comp
+L PAPILIO_TART U1
+U 1 1 54238645
+P 7850 3800
+F 0 "U1" H 7850 3800 10  0001 C CNN
+F 1 "PAPILIO_TART" H 8650 850 60  0001 C CNN
+F 4 "PAPILIO" H 8650 950 60  0000 C CNN "NAME"
+	1    7850 3800
+	1    0    0    -1  
+$EndComp
 Wire Wire Line
 	2900 1350 3000 1350
 Wire Wire Line
@@ -313,16 +323,6 @@ P 9650 1800
 F 0 "P1" H 9650 2850 60  0000 C CNN
 F 1 "CONN_20X2" V 9650 1800 50  0000 C CNN
 	1    9650 1800
-	1    0    0    -1  
-$EndComp
-$Comp
-L PAPILIO_TART U1
-U 1 1 5418D93A
-P 7850 3800
-F 0 "U1" H 7850 3800 10  0001 C CNN
-F 1 "PAPILIO_TART" H 8650 850 60  0001 C CNN
-F 4 "PAPILIO" H 8650 950 60  0000 C CNN "NAME"
-	1    7850 3800
 	1    0    0    -1  
 $EndComp
 Text GLabel 2900 1150 0    60   Input ~ 0
