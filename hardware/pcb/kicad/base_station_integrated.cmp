@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (22-Jun-2014 BZR 4027)-stable date = Thu 25 Sep 2014 16:29:35 NZST
+Cmp-Mod V01 Created by PcbNew date = Fri 26 Sep 2014 17:11:35 NZST
 
 BeginCmp
 TimeStamp = /5407950D/5421F74A;
@@ -330,28 +330,28 @@ IdModule  = SM1206;
 EndCmp
 
 BeginCmp
-TimeStamp = /5409247B/5423D576;
+TimeStamp = /5409247B/54257C9F;
 Reference = F3;
 ValeurCmp = FUSE;
 IdModule  = SM1206;
 EndCmp
 
 BeginCmp
-TimeStamp = /540924B7/5423D576;
+TimeStamp = /540924B7/54257C9F;
 Reference = F4;
 ValeurCmp = FUSE;
 IdModule  = SM1206;
 EndCmp
 
 BeginCmp
-TimeStamp = /54092498/5423D576;
+TimeStamp = /54092498/54257C9F;
 Reference = F5;
 ValeurCmp = FUSE;
 IdModule  = SM1206;
 EndCmp
 
 BeginCmp
-TimeStamp = /540670D5/5423D576;
+TimeStamp = /540670D5/54257C9F;
 Reference = F6;
 ValeurCmp = FUSE;
 IdModule  = SM1206;
@@ -768,6 +768,34 @@ TimeStamp = /5407DDC4/5407E128;
 Reference = R33;
 ValeurCmp = 0;
 IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5424EBB2;
+Reference = R34;
+ValeurCmp = 0;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5424DE9D;
+Reference = R35;
+ValeurCmp = 0;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /54253532;
+Reference = R36;
+ValeurCmp = 0;
+IdModule  = SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /54253541;
+Reference = R37;
+ValeurCmp = 0;
+IdModule  = SM0805;
 EndCmp
 
 BeginCmp

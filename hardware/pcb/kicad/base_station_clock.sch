@@ -30,6 +30,7 @@ LIBS:atmel
 LIBS:contrib
 LIBS:valves
 LIBS:TART
+LIBS:spelsberg_box_template_TR
 LIBS:base_station_integrated-cache
 EELAYER 27 0
 EELAYER END
@@ -37,7 +38,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 7 7
 Title ""
-Date "25 sep 2014"
+Date "26 sep 2014"
 Rev ""
 Comp ""
 Comment1 ""
