@@ -1,4 +1,4 @@
-Cmp-Mod V01 Genere par PcbNew le Wed 24 Sep 2014 13:49:16 NZST
+Cmp-Mod V01 Created by CvPcb (22-Jun-2014 BZR 4027)-stable date = Thu 25 Sep 2014 16:29:35 NZST
 
 BeginCmp
 TimeStamp = /5407950D/5421F74A;
@@ -325,6 +325,34 @@ EndCmp
 BeginCmp
 TimeStamp = /5407950D/5407A432;
 Reference = F2;
+ValeurCmp = FUSE;
+IdModule  = SM1206;
+EndCmp
+
+BeginCmp
+TimeStamp = /5409247B/5423D576;
+Reference = F3;
+ValeurCmp = FUSE;
+IdModule  = SM1206;
+EndCmp
+
+BeginCmp
+TimeStamp = /540924B7/5423D576;
+Reference = F4;
+ValeurCmp = FUSE;
+IdModule  = SM1206;
+EndCmp
+
+BeginCmp
+TimeStamp = /54092498/5423D576;
+Reference = F5;
+ValeurCmp = FUSE;
+IdModule  = SM1206;
+EndCmp
+
+BeginCmp
+TimeStamp = /540670D5/5423D576;
+Reference = F6;
 ValeurCmp = FUSE;
 IdModule  = SM1206;
 EndCmp
@@ -764,7 +792,7 @@ IdModule  = SOT223;
 EndCmp
 
 BeginCmp
-TimeStamp = /5418D93A;
+TimeStamp = /54238645;
 Reference = U1;
 ValeurCmp = PAPILIO_TART;
 IdModule  = PAPILIO_TART;

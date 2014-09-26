@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Thu 25 Sep 2014 15:05:39 NZST
+EESchema Schematic File Version 2
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -30,11 +30,10 @@ LIBS:atmel
 LIBS:contrib
 LIBS:valves
 LIBS:TART
-LIBS:IC_raspberry
 LIBS:base_station_integrated-cache
-EELAYER 25  0
+EELAYER 27 0
 EELAYER END
-$Descr A4 11700 8267
+$Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title ""
@@ -52,6 +51,8 @@ U 1 1 54238645
 P 7850 3800
 F 0 "U1" H 7850 3800 10  0001 C CNN
 F 1 "PAPILIO_TART" H 8650 850 60  0001 C CNN
+F 2 "" H 7850 3800 60  0001 C CNN
+F 3 "" H 7850 3800 60  0001 C CNN
 F 4 "PAPILIO" H 8650 950 60  0000 C CNN "NAME"
 	1    7850 3800
 	1    0    0    -1  
@@ -322,6 +323,8 @@ U 1 1 5420D065
 P 9650 1800
 F 0 "P1" H 9650 2850 60  0000 C CNN
 F 1 "CONN_20X2" V 9650 1800 50  0000 C CNN
+F 2 "" H 9650 1800 60  0001 C CNN
+F 3 "" H 9650 1800 60  0001 C CNN
 	1    9650 1800
 	1    0    0    -1  
 $EndComp
