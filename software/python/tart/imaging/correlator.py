@@ -13,6 +13,11 @@ def hilbert(x):
 def V(x,y):
   return np.dot(x,np.conjugate(y))/len(x)
 
+## Only used for plotting spectra
+#def convert_to_baseband(xd, fs, fc0):
+  #analytic = hilbert(xd) * np.exp(-2.0j * np.pi * fc0 * np.arange(0.,len(xd)/fs,1./fs))
+  #return analytic
+
 
 class Correlator:
 
