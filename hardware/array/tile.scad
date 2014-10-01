@@ -63,16 +63,22 @@ module tile(squaresize = 1000, framewidth = 25, transport=false){
 	}else{
 	  color("SteelBlue") steel_frame(framewidth = framewidth, squaresize = squaresize);
 	}
-   translate([310,790]) tower(); //0
-	translate([310,460]) tower(); //1
+	translate([279,790]) tower(); //0
+	translate([300,470]) tower(); //1
 	translate([130,900]) tower(); //2
-	translate([820,110]) tower(); //3
+	translate([799,110]) tower(); //3
 	translate([860,840]) tower(); //4
 	translate([890,380]) tower(); //5
 }
 
+module tile_c(){
+	translate([-500,-500]) tile();
+}
+translate([1000,0,0])  rotate([0,0,0]) tile_c();
+translate([-1000,0,0]) rotate([0,0,330]) tile_c();
+translate([0,1000,0])  rotate([0,0,210]) tile_c();
+translate([0,-1000,0]) rotate([0,0,60]) tile_c();
 
-tile(transport=false);
 //translate ([1200,0,-425]) tile(transport=true);
 
 //tower();
