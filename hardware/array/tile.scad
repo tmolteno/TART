@@ -2,25 +2,24 @@
 module tower(height=300)
 {
 	capheight = 20; 
-	cylinder(h=height,r=45); // pluming pipe
-	module pluming_fitting(height=50, r1=50, r2=75){
+	module pluming_fitting(height=50, r1=50, r2=80){
       r_hole = (r2+r1)/2;
-	   cylinder(h=height,r=r1); // pluming fitting
-	   translate([0,0, 5]) cylinder(h=5,r=r2); // pluming fitting
-		
-		translate([r_hole,0,3])cylinder(h=10,r=3);
-		translate([-r_hole,0,3])cylinder(h=10,r=3);
-		translate([0,r_hole,3])cylinder(h=10,r=3);
-		translate([0,-r_hole,3])cylinder(h=10,r=3);
+	   translate([0,0, 5]) cylinder(h=5,r=r2);
+		translate([r_hole,0,3])  cylinder(h=10,r=3);
+		translate([-r_hole,0,3]) cylinder(h=10,r=3);
+		translate([0,r_hole,3])  cylinder(h=10,r=3);
+		translate([0,-r_hole,3]) cylinder(h=10,r=3);
 	}
-   pluming_fitting();
-	translate([0,0, height])cylinder(h=capheight,r=46); // cap
-	translate([0,0, height+capheight])cylinder(h=1,r=75); // relector
 	module gps_antenna(){
 		cylinder(h=15,r=25); // antenna lower
 		translate([0,0,15]) cylinder(h=33,r=25, r2=16); // antenna upper
 	}
-	translate([0,0, height+capheight]) gps_antenna();
+
+	color("lightblue") cylinder(h=height,r=45); 				// pluming pipe
+   color("LightSkyBlue") pluming_fitting();						// pluming fitting
+	color("LightSkyBlue") translate([0,0, height])cylinder(h=capheight,r=46); // cap
+	color("lightgrey") translate([0,0, height+capheight])cylinder(h=1,r=75); // reflector
+	color("Gray") translate([0,0, height+capheight]) gps_antenna();
 }
 
 
@@ -58,20 +57,22 @@ module screws(squaresize = 1000, framewidth=25)
 
 
 module tile(squaresize = 1000, framewidth = 25, transport=false){
-	cube([squaresize,squaresize,5]);
+	color("brown") cube([squaresize,squaresize,5]);
 	if (transport){
-			  translate([0,squaresize,0]) rotate([180,0,0])steel_frame(framewidth = framewidth, squaresize = squaresize);
+			  translate([0,squaresize,0]) rotate([180,0,0]) color("SteelBlue") steel_frame(framewidth = framewidth, squaresize = squaresize);
 	}else{
-	  steel_frame(framewidth = framewidth, squaresize = squaresize);
+	  color("SteelBlue") steel_frame(framewidth = framewidth, squaresize = squaresize);
 	}
-   translate([150,150]) tower(); //0
-	translate([700,150]) tower(); //1
-	translate([400,400]) tower(); //2
-	translate([700,350]) tower(); //3
-	translate([300,850]) tower(); //4
-	translate([850,850]) tower(); //5
+   translate([310,790]) tower(); //0
+	translate([310,460]) tower(); //1
+	translate([130,900]) tower(); //2
+	translate([820,110]) tower(); //3
+	translate([860,840]) tower(); //4
+	translate([890,380]) tower(); //5
 }
 
-tile(transport=false);
-translate ([1200,0,-425]) tile(transport=true);
 
+tile(transport=false);
+//translate ([1200,0,-425]) tile(transport=true);
+
+//tower();
