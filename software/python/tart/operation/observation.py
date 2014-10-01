@@ -74,9 +74,15 @@ class Observation:
     return tart_util.get_mjd(self.timestamp)
 
 def Observation_Load(filename):
-    load_data = gzip.open(filename, 'rb')
-    d = cPickle.load(load_data)
-    load_data.close()
+    try:
+      load_data = gzip.open(filename, 'rb')
+      d = cPickle.load(load_data)
+    except:
+      print 'not gzipped'
+      load_data = open(filename, 'rb')
+      d = cPickle.load(load_data)
+    finally:
+      load_data.close()
     bipolar_data = []
     for i in d['data']:
       bipolar_data.append(np.unpackbits(i)*2.-1)
