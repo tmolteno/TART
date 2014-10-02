@@ -2,7 +2,6 @@
 # Author: Tim Molteno tim@elec.ac.nz
 # 
 # Set up the buffer for force measurements and sample at regular intervals into these.
-# Also set up an interrupt for the RS232 input from the EID reader. These are also
 # buffered.
 #
 # A Measurement object is created from this buffered data when a suitable condition is
@@ -125,7 +124,7 @@ import time
 import argparse
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Plot measurements.')
+  parser = argparse.ArgumentParser(description='Operate the TART telescope.')
   parser.add_argument('--data-dir', default="/freenas/TART/data", help="The root directory for data storage.")
 
   args = parser.parse_args()
