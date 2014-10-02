@@ -1,16 +1,15 @@
-# Copyright (c) Tim Molteno, tim@elec.ac.nz. 2013.
+obs:
+	python acquire.py --data-dir /freenas2/tart/data/
 
-all: prepare
-	sudo python  interrupt_loop.py
+lobs:
+	python acquire.py --data-dir test
 
-monitor: prepare
-	sudo python read_data.py --data-directory foo --monitor 1
+fobs:
+	python acquire.py --debug --data-dir test
 
-noise: prepare
-	sudo python read_data.py --data-directory foo --monitor 0
+debug10:
+	python spartan6_spi_acquire.py --speed 8 --bramexp 10 --fast --debug --reset
 
-test:
-	python testbench.py
+debug:
+	python spartan6_spi_acquire.py --speed 8 --bramexp 21 --fast --debug --reset
 
-prepare:
-	sudo modprobe spi_bcm2708

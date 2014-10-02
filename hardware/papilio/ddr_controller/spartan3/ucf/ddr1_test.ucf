@@ -1,0 +1,1348 @@
+
+   ############################################################################
+##
+##  Xilinx, Inc. 2004           www.xilinx.com  
+##
+##  
+############################################################################
+##  
+## 
+##  Description :     Constraints file
+##                    targetted to 3s1500fg456-4 
+##  UCF file for left and right implementation 
+##                   
+############################################################################
+
+############################################################################
+# Clock constraints                                                        #
+############################################################################
+
+NET "ddr1_top0/iobs0/sys_clk_ibuf" TNM_NET = FFS(*) "SYS_CLK";
+TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 7.3 ns HIGH 57 %;
+
+
+NET "ddr1_top0/iobs0/rst_dqs_div" 		   MAXDELAY = 2400ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_wr_en" 		   MAXDELAY = 1050ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_wr_en_1" 		   MAXDELAY = 1050ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_wr_addr[*]"	   MAXDELAY = 2350ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_wr_addr_1[*]"	   MAXDELAY = 2350ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_rd_addr*" MAXDELAY = 3500ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_rd_addr_r*" MAXDELAY = 3500ps;
+NET "ddr1_top0/data_path0/data_read0/fifo*_data_out[*]"	   MAXDELAY = 3500ps;
+NET "ddr1_top0/data_path0/user_output_data[*]"	   MAXDELAY = 3500ps;
+NET "ddr1_top0/write_en_val*" 	MAXDELAY = 3500ps;
+NET "ddr1_top0/dqs_int_delay_in*" 	MAXDELAY = 300 ps; 
+NET "ddr1_top0/infrastructure0/cal_top0/tap_dly0/flop1[*]"	               MAXDELAY = 3000ps;
+
+NET "ddr1_top0/infrastructure0/cal_top0/tap_dly0/tap[7]"  MAXDELAY = 400ps;
+NET "ddr1_top0/infrastructure0/cal_top0/tap_dly0/tap[15]"  MAXDELAY = 400ps;
+NET "ddr1_top0/infrastructure0/cal_top0/tap_dly0/tap[23]"  MAXDELAY = 400ps;
+INST "ddr1_top0/controller0/rst_dqs_div_int" IOB = TRUE; 
+INST "ddr1_top0/controller0/rst_dqs_div_int1" IOB = TRUE;
+
+#NET "ddr1_top0/infrastructure0/cal_top0/cal_ctl0/tap_reg1[*]" MAXDELAY = 400ps;
+#NET "ddr1_top0/infrastructure0/cal_top0/cal_ctl0/tap_reg[*]" MAXDELAY = 400ps;
+NET "ddr1_top0/reset90_r" TIG;
+############################################################################
+# I/O STANDARDS                                                            #
+############################################################################
+# SSTL2_II for input or output signals
+
+NET "ddr1_address[*]"   IOSTANDARD = SSTL2_II;
+NET "ddr1_ba[*]"        IOSTANDARD = SSTL2_II;
+NET "ddr1_dm[*]"        IOSTANDARD = SSTL2_II;
+NET "ddr1_rasb"         IOSTANDARD = SSTL2_II;
+NET "ddr1_casb"         IOSTANDARD = SSTL2_II;
+NET "ddr1_web"          IOSTANDARD = SSTL2_II;
+NET "ddr1_csb"          IOSTANDARD = SSTL2_II;
+NET "ddr1_cke"          IOSTANDARD = SSTL2_II;
+NET "ddr1_clk*"         IOSTANDARD = SSTL2_II;
+NET "ddr1_clk*b"        IOSTANDARD = SSTL2_II;
+NET "ddr1_dq[*]"        IOSTANDARD = SSTL2_II;
+NET "ddr1_dqs[*]"       IOSTANDARD = SSTL2_II;
+NET "dimm_clk*"         IOSTANDARD = SSTL2_II;
+NET "dimm_clk*b"        IOSTANDARD = SSTL2_II;
+
+NET "SYS_CLK*"          IOSTANDARD = LVDS_25;
+
+
+#################################################################
+#################################################################
+
+# Pin Location Constraints for Clock, Address, and Controls 
+#################################################################
+NET "reset_in"        	LOC =  "D5"; # resetN
+
+NET "SYS_CLKb"         	LOC =  "C6"; # CLK.LVDSP  		    
+NET "SYS_CLK"          	LOC =  "B6"; # CLK.LVDSN              
+
+NET "dip1"            	LOC =  "C5"; # DIP1
+NET "dip2"            	LOC =  "F6"; # DIP2
+NET "dip3"            	LOC =  "B5"; # DIP3
+
+
+
+NET "display1[0]"      	LOC =  "E7"; # DISPLAY1A
+NET "display1[1]"      	LOC =  "D7";  # DISPLAY1B
+NET "display1[2]"      	LOC =  "B7";  # DISPLAY1C
+NET "display1[3]"      	LOC =  "A7"; # DISPLAY1D
+NET "display1[4]"      	LOC =  "E8"; # DISPLAY1E
+NET "display1[5]"      	LOC =  "D8"; # DISPLAY1F
+NET "display1[6]"      	LOC =  "B8"; # DISPLAY1G
+
+
+
+NET "ddr1_clk0"          LOC = "Y4";
+NET "ddr1_clk0b"       	LOC = "AA3";
+NET "ddr1_clk1"        	LOC = "AB4";
+NET "ddr1_clk1b"       	LOC = "AA4";
+NET "ddr1_clk2"        	LOC = "Y5";
+NET "ddr1_clk2b"       	LOC = "W5";
+NET "ddr1_clk3"        	LOC = "W6";
+NET "ddr1_clk3b"       	LOC = "V6";
+NET "ddr1_clk4"        	LOC = "AA6";
+NET "ddr1_clk4b"       	LOC = "Y6";
+
+NET "dimm_clk0"       	LOC = "B5";
+NET "dimm_clk0b"       	LOC = "A5";
+NET "dimm_clk1"       	LOC = "J4";
+NET "dimm_clk1b"       	LOC = "H4";
+NET "dimm_clk2"       	LOC = "J6";
+NET "dimm_clk2b"       	LOC = "J5";
+
+NET "ddr1_cke"         	LOC = "W21";            
+NET "ddr1_csb"         	LOC = "W20";            
+NET "ddr1_rasb"        	LOC = "W22";           
+NET "ddr1_casb"        	LOC = "Y22";          
+NET "ddr1_web"         	LOC = "Y21";
+
+NET "led_error_output1" 	LOC = "A8";
+
+NET "ddr1_dm[8]"       	LOC = "D2";
+NET "ddr1_dm[7]"       	LOC = "F4";
+NET "ddr1_dm[6]"       	LOC = "E3";
+NET "ddr1_dm[5]"       	LOC = "E1";
+NET "ddr1_dm[4]"       	LOC = "E2";
+NET "ddr1_dm[3]"       	LOC = "G6";
+NET "ddr1_dm[2]"       	LOC = "F5";
+NET "ddr1_dm[1]"       	LOC = "F2";
+NET "ddr1_dm[0]"      	 LOC = "F3";
+   
+NET "ddr1_ba[0]"       	LOC = "E4";
+NET "ddr1_ba[1]"       	LOC = "D4";            
+
+NET "ddr1_address[12]" 	LOC = "H5";  
+NET "ddr1_address[11]" 	LOC = "G5";  
+NET "ddr1_address[10]" 	LOC = "G3";
+NET "ddr1_address[9]"  	LOC = "G4";
+NET "ddr1_address[8]"  	LOC = "G1"; 
+NET "ddr1_address[7]"  	LOC = "H2"; 
+NET "ddr1_address[6]"  	LOC = "H1"; 
+NET "ddr1_address[5]"  	LOC = "V19"; 
+NET "ddr1_address[4]"  	LOC = "V10"; 
+NET "ddr1_address[3]"  	LOC = "V22"; 
+NET "ddr1_address[2]"  	LOC = "V21"; 
+NET "ddr1_address[1]"  	LOC = "U19"; 
+NET "ddr1_address[0]"  	LOC = "V20"; 
+
+
+
+NET "JP1_header[0]" 	LOC = "F9";       
+NET "JP1_header[1]" 	LOC = "E9";
+NET "JP1_header[2]" 	LOC = "D9";  
+NET "JP1_header[3]" 	LOC = "B9"; 
+NET "JP1_header[4]" 	LOC = "A9";  
+NET "JP1_header[5]" 	LOC = "F10";
+NET "JP1_header[6]" 	LOC = "E10";  
+NET "JP1_header[7]"	     LOC = "D10";
+
+
+NET "JP2_header[0]" 	LOC = "C10";
+NET "JP2_header[1]" 	LOC = "B10";
+NET "JP2_header[2]" 	LOC = "F11";
+NET "JP2_header[3]" 	LOC = "E11";
+NET "JP2_header[4]" 	LOC = "A10"; 
+NET "JP2_header[5]" 	LOC = "D11"; 
+NET "JP2_header[6]" 	LOC = "C11";
+NET "JP2_header[7]" 	LOC = "B11";
+
+
+
+
+##########################################################
+##
+##  Calibration Circuit Constraints
+##
+#########################################################
+
+###################################################
+#Placement constraints for luts in matched delay ckt
+###################################################
+
+## INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0"   RLOC_ORIGIN = X82Y62;
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0"  RLOC=X0Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l1" RLOC=X0Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l1"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l2" RLOC=X0Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l2"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l3" RLOC=X0Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l3"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l4" RLOC=X1Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l4"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l5" RLOC=X1Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l5"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l6" RLOC=X1Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l6"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l7" RLOC=X1Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l7"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+  
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l8" RLOC=X0Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l8"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l9" RLOC=X0Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l9"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l10" RLOC=X0Y5;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l10"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l11" RLOC=X0Y5;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l11"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l12" RLOC=X1Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l12"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l13" RLOC=X1Y4;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l13"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+ 
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l14" RLOC=X1Y5;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l14"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l15" RLOC=X1Y5;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l15"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l16" RLOC=X0Y2;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l16"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l17" RLOC=X0Y2;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l17"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l18" RLOC=X0Y3;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l18"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l19" RLOC=X0Y3;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l19"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l20" RLOC=X1Y2;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l20"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l21" RLOC=X1Y2;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l21"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l22" RLOC=X1Y3;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l22"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l23" RLOC=X1Y3;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l23"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l24" RLOC=X0Y0;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l24"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l25" RLOC=X0Y0;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l25"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l26" RLOC=X0Y1;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l26"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l27" RLOC=X0Y1;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l27"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l28" RLOC=X1Y0;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l28"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l29" RLOC=X1Y0;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l29"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l30" RLOC=X1Y1;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l30"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l31" RLOC=X1Y1;
+INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l31"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+##################################################################
+# Placement constraints for first stage flops in matched delay ckt
+##################################################################
+ 
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r0"    RLOC=X0Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r0"   U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r1" RLOC=X0Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r1"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r2" RLOC=X0Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r2"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r3" RLOC=X0Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r3"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r4" RLOC=X1Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r4"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r5" RLOC=X1Y6;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r5"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r6" RLOC=X1Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r6"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r7" RLOC=X1Y7;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r7"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r8" RLOC=X0Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r8"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r9" RLOC=X0Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r9"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r10" RLOC=X0Y5;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r10"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r11" RLOC=X0Y5;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r11"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r12" RLOC=X1Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r12"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r13" RLOC=X1Y4;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r13"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r14" RLOC=X1Y5;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r14"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r15" RLOC=X1Y5;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r15"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r16" RLOC=X0Y2;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r16"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r17" RLOC=X0Y2;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r17"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r18" RLOC=X0Y3;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r18"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r19" RLOC=X0Y3;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r19"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r20" RLOC=X1Y2;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r20"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r21" RLOC=X1Y2;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r21"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r22" RLOC=X1Y3;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r22"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r23" RLOC=X1Y3;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r23"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r24" RLOC=X0Y0;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r24"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r25" RLOC=X0Y0;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r25"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r26" RLOC=X0Y1;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r26"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r27" RLOC=X0Y1;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r27"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r28" RLOC=X1Y0;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r28"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r29" RLOC=X1Y0;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r29"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r30" RLOC=X1Y1;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r30"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r31" RLOC=X1Y1;
+ INST  "ddr1_top0/infrastructure0/cal_top0/tap_dly0/r31"  U_SET = "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0";
+
+################################################################################################################
+################################################################################################################
+
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l0" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l1" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l2" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l3" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l4" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l5" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l6" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l7" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l8" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l9" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l10" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l11" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l12" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l13" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l14" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l15" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l16" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l17" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l18" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l19" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l20" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l21" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l22" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l23" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l24" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l25" BEL= F;  
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l26" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l27" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l28" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l29" BEL= F;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l30" BEL= G;
+  INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0/l31" BEL= F;
+
+#############################################################
+#############################################################
+
+INST "ddr1_top0/controller0/ddr_address*" IOB = TRUE;
+INST "ddr1_top0/controller0/ddr_ba*" IOB = TRUE;
+
+INST "ddr1_top0/iobs0/controller_iobs0/iob_rasb" IOB = TRUE;
+INST "ddr1_top0/iobs0/controller_iobs0/iob_casb" IOB = TRUE;
+INST "ddr1_top0/iobs0/controller_iobs0/iob_web" IOB = TRUE;
+
+INST "ddr1_top0/iobs0/datapath_iobs0/s3_dqs_iob*" IOB = TRUE;
+INST "ddr1_top0/iobs0/datapath_iobs0/s3_ddr_iob*" IOB = TRUE;
+
+NET "ddr1_top0/controller0/rst_dqs_div_int" MAXDELAY = 400ps;
+NET "ddr1_top0/controller0/rst_dqs_div_int1" MAXDELAY = 400ps;
+NET "ddr1_top0/controller0/rst_dqs_div_r" MAXDELAY = 1500ps;
+NET "ddr1_top0/controller0/rst_dqs_div1_r" MAXDELAY = 1500ps;
+##INST "ddr1_test_bench0/INST3" AREA_GROUP = INST3;
+##AREA_GROUP "INST3" RANGE = SLICE_X83Y89:SLICE_X77Y74;  
+##AREA_GROUP "INST3" GROUP = CLOSED;  
+
+##INST "ddr1_top0/infrastructure0/cal_top0/cal_ctl0" AREA_GROUP = cal_ctl;
+##AREA_GROUP "cal_ctl" RANGE = SLICE_X87Y77:SLICE_X78Y70;  
+##AREA_GROUP "cal_ctl" GROUP = OPEN;  
+
+INST "ddr1_top0/infrastructure0/cal_top0/cal_ctl0" AREA_GROUP = cal_ctl;
+INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0" AREA_GROUP = cal_ctl;
+AREA_GROUP "cal_ctl" RANGE = SLICE_X65Y85:SLICE_X74Y72;
+#AREA_GROUP "cal_ctl" RANGE = SLICE_X35Y55:SLICE_X44Y42;    
+AREA_GROUP "cal_ctl" GROUP = CLOSED;  
+
+
+####AREA_GROUP "cal_ctl" RANGE = SLICE_X65Y85:SLICE_X74Y72;
+#AREA_GROUP "cal_ctl" RANGE = SLICE_X35Y55:SLICE_X44Y42;    
+####AREA_GROUP "cal_ctl" GROUP = CLOSED;  
+
+##INST "ddr1_top0/infrastructure0/cal_top0/tap_dly0" AREA_GROUP = flop2;
+##AREA_GROUP "flop2" RANGE = SLICE_X65Y85:SLICE_X74Y72;  
+##AREA_GROUP "flop2" GROUP = OPEN;  
+#############################################################
+##  constraints for bit ddr1_dq, 1, location in tile: ,
+INST "ddr1_dq[1]" LOC = C22;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit1" LOC = SLICE_X100Y108;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit1" LOC = SLICE_X100Y109;
+#############################################################
+##  constraints for bit ddr1_dq, 0, location in tile: ,
+INST "ddr1_dq[0]" LOC = D20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit0" LOC = SLICE_X102Y106;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit0" LOC = SLICE_X102Y107;
+#############################################################
+##  constraints for bit ddr1_dq, 3, location in tile: ,
+INST "ddr1_dq[3]" LOC = D19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit3" LOC = SLICE_X100Y106;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit3" LOC = SLICE_X100Y107;
+#############################################################
+##  constraints for bit ddr1_dq, 2, location in tile: ,
+INST "ddr1_dq[2]" LOC = D21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit2" LOC = SLICE_X102Y104;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit2" LOC = SLICE_X102Y105;
+#############################################################
+##  constraints for bit ddr1_dqs, 0, location in tile: ,
+INST "ddr1_dqs[0]" LOC = E18;
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/one" LOC = SLICE_X102Y103;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/two" LOC = SLICE_X102Y102;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/three" LOC = SLICE_X103Y102;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/four" LOC = SLICE_X103Y103;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/five" LOC = SLICE_X102Y102;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/six" LOC = SLICE_X102Y103;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col1/six" BEL = G;
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/one" LOC = SLICE_X100Y103;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/two" LOC = SLICE_X100Y102;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/three" LOC = SLICE_X101Y102;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/four" LOC = SLICE_X101Y103;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/five" LOC = SLICE_X100Y102;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/six" LOC = SLICE_X100Y103;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay0_col0/six" BEL = G;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst/bit0" LOC = SLICE_X103Y106;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst/bit1" LOC = SLICE_X103Y106;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst/bit2" LOC = SLICE_X103Y107;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst/bit3" LOC = SLICE_X103Y107;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst/bit0" LOC = SLICE_X101Y106;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst/bit1" LOC = SLICE_X101Y106;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst/bit2" LOC = SLICE_X101Y107;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst/bit3" LOC = SLICE_X101Y107;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_en_inst" LOC = SLICE_X103Y105;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_en_inst" LOC = SLICE_X101Y105;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst_1/bit0" LOC = SLICE_X101Y98;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst_1/bit1" LOC = SLICE_X101Y98;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst_1/bit2" LOC = SLICE_X101Y99;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_addr_inst_1/bit3" LOC = SLICE_X101Y99;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst_1/bit0" LOC = SLICE_X103Y98;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst_1/bit1" LOC = SLICE_X103Y98;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst_1/bit2" LOC = SLICE_X103Y99;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_addr_inst_1/bit3" LOC = SLICE_X103Y99;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_00_wr_en_inst_1" LOC = SLICE_X101Y101;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_01_wr_en_inst_1" LOC = SLICE_X103Y101;
+#############################################################
+##  constraints for bit ddr1_dq, 4, location in tile: ,
+INST "ddr1_dq[4]" LOC = E19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit4" LOC = SLICE_X102Y100;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit4" LOC = SLICE_X102Y101;
+#############################################################
+##  constraints for bit ddr1_dq, 5, location in tile: ,
+INST "ddr1_dq[5]" LOC = E20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit5" LOC = SLICE_X100Y100;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit5" LOC = SLICE_X100Y101;
+#############################################################
+##  constraints for bit ddr1_dq, 6, location in tile: ,
+INST "ddr1_dq[6]" LOC = E21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit6" LOC = SLICE_X102Y98;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit6" LOC = SLICE_X102Y99;
+#############################################################
+##  constraints for bit ddr1_dq, 7, location in tile: ,
+INST "ddr1_dq[7]" LOC = E22;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit7" LOC = SLICE_X100Y98;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit7" LOC = SLICE_X100Y99;
+#############################################################
+##  constraints for bit ddr1_dq, 9, location in tile: ,
+INST "ddr1_dq[9]" LOC = G18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit9" LOC = SLICE_X100Y96;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit9" LOC = SLICE_X100Y97;
+#############################################################
+##  constraints for bit ddr1_dq, 8, location in tile: ,
+INST "ddr1_dq[8]" LOC = F20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit8" LOC = SLICE_X102Y92;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit8" LOC = SLICE_X102Y93;
+#############################################################
+##  constraints for bit ddr1_dq, 11, location in tile: ,
+INST "ddr1_dq[11]" LOC = F21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit11" LOC = SLICE_X100Y92;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit11" LOC = SLICE_X100Y93;
+#############################################################
+##  constraints for bit ddr1_dq, 10, location in tile: ,
+INST "ddr1_dq[10]" LOC = G20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit10" LOC = SLICE_X102Y90;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit10" LOC = SLICE_X102Y91;
+#############################################################
+##  constraints for bit ddr1_dqs, 1, location in tile: ,
+INST "ddr1_dqs[1]" LOC = G21;
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/one" LOC = SLICE_X102Y89;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/two" LOC = SLICE_X102Y88;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/three" LOC = SLICE_X103Y88;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/four" LOC = SLICE_X103Y89;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/five" LOC = SLICE_X102Y88;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/six" LOC = SLICE_X102Y89;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col1/six" BEL = G;
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/one" LOC = SLICE_X100Y89;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/two" LOC = SLICE_X100Y88;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/three" LOC = SLICE_X101Y88;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/four" LOC = SLICE_X101Y89;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/five" LOC = SLICE_X100Y88;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/six" LOC = SLICE_X100Y89;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay1_col0/six" BEL = G;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst/bit0" LOC = SLICE_X103Y92;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst/bit1" LOC = SLICE_X103Y92;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst/bit2" LOC = SLICE_X103Y93;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst/bit3" LOC = SLICE_X103Y93;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst/bit0" LOC = SLICE_X101Y92;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst/bit1" LOC = SLICE_X101Y92;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst/bit2" LOC = SLICE_X101Y93;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst/bit3" LOC = SLICE_X101Y93;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_en_inst" LOC = SLICE_X103Y91;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_en_inst" LOC = SLICE_X101Y91;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst_1/bit0" LOC = SLICE_X101Y84;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst_1/bit1" LOC = SLICE_X101Y84;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst_1/bit2" LOC = SLICE_X101Y85;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_addr_inst_1/bit3" LOC = SLICE_X101Y85;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst_1/bit0" LOC = SLICE_X103Y84;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst_1/bit1" LOC = SLICE_X103Y84;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst_1/bit2" LOC = SLICE_X103Y85;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_addr_inst_1/bit3" LOC = SLICE_X103Y85;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_10_wr_en_inst_1" LOC = SLICE_X101Y87;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_11_wr_en_inst_1" LOC = SLICE_X103Y87;
+#############################################################
+##  constraints for bit ddr1_dq, 12, location in tile: ,
+INST "ddr1_dq[12]" LOC = H18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit12" LOC = SLICE_X102Y86;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit12" LOC = SLICE_X102Y87;
+#############################################################
+##  constraints for bit ddr1_dq, 13, location in tile: ,
+INST "ddr1_dq[13]" LOC = J17;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit13" LOC = SLICE_X100Y86;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit13" LOC = SLICE_X100Y87;
+#############################################################
+##  constraints for bit ddr1_dq, 14, location in tile: ,
+INST "ddr1_dq[14]" LOC = H21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit14" LOC = SLICE_X102Y84;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit14" LOC = SLICE_X102Y85;
+#############################################################
+##  constraints for bit ddr1_dq, 15, location in tile: ,
+INST "ddr1_dq[15]" LOC = H22;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit15" LOC = SLICE_X100Y84;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit15" LOC = SLICE_X100Y85;
+#############################################################
+##  constraints for bit ddr1_dq, 17, location in tile: ,
+INST "ddr1_dq[17]" LOC = J19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit17" LOC = SLICE_X100Y80;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit17" LOC = SLICE_X100Y81;
+#############################################################
+##  constraints for bit ddr1_dq, 16, location in tile: ,
+INST "ddr1_dq[16]" LOC = J21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit16" LOC = SLICE_X102Y78;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit16" LOC = SLICE_X102Y79;
+#############################################################
+##  constraints for bit ddr1_dq, 19, location in tile: ,
+INST "ddr1_dq[19]" LOC = J22;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit19" LOC = SLICE_X100Y78;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit19" LOC = SLICE_X100Y79;
+#############################################################
+##  constraints for bit ddr1_dq, 18, location in tile: ,
+INST "ddr1_dq[18]" LOC = K17;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit18" LOC = SLICE_X102Y76;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit18" LOC = SLICE_X102Y77;
+#############################################################
+##  constraints for bit ddr1_dqs, 2, location in tile: ,
+INST "ddr1_dqs[2]" LOC = K20;
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/one" LOC = SLICE_X102Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/two" LOC = SLICE_X102Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/three" LOC = SLICE_X103Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/four" LOC = SLICE_X103Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/five" LOC = SLICE_X102Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/six" LOC = SLICE_X102Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col1/six" BEL = G;
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/one" LOC = SLICE_X100Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/two" LOC = SLICE_X100Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/three" LOC = SLICE_X101Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/four" LOC = SLICE_X101Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/five" LOC = SLICE_X100Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/six" LOC = SLICE_X100Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay2_col0/six" BEL = G;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst/bit0" LOC = SLICE_X103Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst/bit1" LOC = SLICE_X103Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst/bit2" LOC = SLICE_X103Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst/bit3" LOC = SLICE_X103Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst/bit0" LOC = SLICE_X101Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst/bit1" LOC = SLICE_X101Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst/bit2" LOC = SLICE_X101Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst/bit3" LOC = SLICE_X101Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_en_inst" LOC = SLICE_X103Y77;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_en_inst" LOC = SLICE_X101Y77;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst_1/bit0" LOC = SLICE_X101Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst_1/bit1" LOC = SLICE_X101Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst_1/bit2" LOC = SLICE_X101Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_addr_inst_1/bit3" LOC = SLICE_X101Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst_1/bit0" LOC = SLICE_X103Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst_1/bit1" LOC = SLICE_X103Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst_1/bit2" LOC = SLICE_X103Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_addr_inst_1/bit3" LOC = SLICE_X103Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_20_wr_en_inst_1" LOC = SLICE_X101Y73;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_21_wr_en_inst_1" LOC = SLICE_X103Y73;
+#############################################################
+##  constraints for bit ddr1_dq, 20, location in tile: ,
+INST "ddr1_dq[20]" LOC = K21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit20" LOC = SLICE_X102Y72;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit20" LOC = SLICE_X102Y73;
+#############################################################
+##  constraints for bit ddr1_dq, 21, location in tile: ,
+INST "ddr1_dq[21]" LOC = K22;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit21" LOC = SLICE_X100Y72;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit21" LOC = SLICE_X100Y73;
+#############################################################
+##  constraints for bit ddr1_dq, 22, location in tile: ,
+INST "ddr1_dq[22]" LOC = L17;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit22" LOC = SLICE_X102Y68;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit22" LOC = SLICE_X102Y69;
+#############################################################
+##  constraints for bit ddr1_dq, 23, location in tile: ,
+INST "ddr1_dq[23]" LOC = L18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit23" LOC = SLICE_X100Y68;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit23" LOC = SLICE_X100Y69;
+#############################################################
+##  constraints for bit rst_dqs_div_in, 1, location in tile: ,
+INST "rst_dqs_div_in1" LOC = L20;
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/one" LOC = SLICE_X102Y67;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/two" LOC = SLICE_X102Y66;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/three" LOC = SLICE_X103Y66;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/four" LOC = SLICE_X103Y67;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/five" LOC = SLICE_X102Y67;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/six" LOC = SLICE_X102Y66;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/six" BEL = F;
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/one" LOC = SLICE_X100Y67;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/two" LOC = SLICE_X100Y66;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/three" LOC = SLICE_X101Y66;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/four" LOC = SLICE_X101Y67;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/five" LOC = SLICE_X100Y67;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/six" LOC = SLICE_X100Y66;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed1/six" BEL = F;
+#############################################################
+##  constraints for bit rst_dqs_div_out, 1, location in tile: ,
+INST "rst_dqs_div_out1" LOC = L21;
+#############################################################
+##  constraints for bit ddr1_dq, 25, location in tile: ,
+INST "ddr1_dq[25]" LOC = M21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit25" LOC = SLICE_X100Y62;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit25" LOC = SLICE_X100Y63;
+#############################################################
+##  constraints for bit ddr1_dq, 24, location in tile: ,
+INST "ddr1_dq[24]" LOC = M20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit24" LOC = SLICE_X102Y60;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit24" LOC = SLICE_X102Y61;
+#############################################################
+##  constraints for bit ddr1_dq, 27, location in tile: ,
+INST "ddr1_dq[27]" LOC = M19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit27" LOC = SLICE_X100Y60;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit27" LOC = SLICE_X100Y61;
+#############################################################
+##  constraints for bit ddr1_dq, 26, location in tile: ,
+INST "ddr1_dq[26]" LOC = M18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit26" LOC = SLICE_X102Y58;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit26" LOC = SLICE_X102Y59;
+#############################################################
+##  constraints for bit ddr1_dqs, 3, location in tile: ,
+INST "ddr1_dqs[3]" LOC = N22;
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/one" LOC = SLICE_X102Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/two" LOC = SLICE_X102Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/three" LOC = SLICE_X103Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/four" LOC = SLICE_X103Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/five" LOC = SLICE_X102Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/six" LOC = SLICE_X102Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col1/six" BEL = G;
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/one" LOC = SLICE_X100Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/two" LOC = SLICE_X100Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/three" LOC = SLICE_X101Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/four" LOC = SLICE_X101Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/five" LOC = SLICE_X100Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/six" LOC = SLICE_X100Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay3_col0/six" BEL = G;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst/bit0" LOC = SLICE_X103Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst/bit1" LOC = SLICE_X103Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst/bit2" LOC = SLICE_X103Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst/bit3" LOC = SLICE_X103Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst/bit0" LOC = SLICE_X101Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst/bit1" LOC = SLICE_X101Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst/bit2" LOC = SLICE_X101Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst/bit3" LOC = SLICE_X101Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_en_inst" LOC = SLICE_X103Y57;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_en_inst" LOC = SLICE_X101Y57;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst_1/bit0" LOC = SLICE_X101Y50;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst_1/bit1" LOC = SLICE_X101Y50;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst_1/bit2" LOC = SLICE_X101Y51;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_addr_inst_1/bit3" LOC = SLICE_X101Y51;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst_1/bit0" LOC = SLICE_X103Y50;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst_1/bit1" LOC = SLICE_X103Y50;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst_1/bit2" LOC = SLICE_X103Y51;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_addr_inst_1/bit3" LOC = SLICE_X103Y51;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_30_wr_en_inst_1" LOC = SLICE_X101Y53;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_31_wr_en_inst_1" LOC = SLICE_X103Y53;
+#############################################################
+##  constraints for bit ddr1_dq, 28, location in tile: ,
+INST "ddr1_dq[28]" LOC = N20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit28" LOC = SLICE_X102Y52;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit28" LOC = SLICE_X102Y53;
+#############################################################
+##  constraints for bit ddr1_dq, 30, location in tile: ,
+INST "ddr1_dq[30]" LOC = N18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit30" LOC = SLICE_X102Y50;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit30" LOC = SLICE_X102Y51;
+#############################################################
+##  constraints for bit ddr1_dq, 29, location in tile: ,
+INST "ddr1_dq[29]" LOC = N17;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit29" LOC = SLICE_X100Y50;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit29" LOC = SLICE_X100Y51;
+#############################################################
+##  constraints for bit ddr1_dq, 31, location in tile: ,
+INST "ddr1_dq[31]" LOC = P21;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit31" LOC = SLICE_X100Y48;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit31" LOC = SLICE_X100Y49;
+#############################################################
+##  constraints for bit ddr1_dq, 33, location in tile: ,
+INST "ddr1_dq[33]" LOC = P17;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit33" LOC = SLICE_X100Y46;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit33" LOC = SLICE_X100Y47;
+#############################################################
+##  constraints for bit ddr1_dq, 32, location in tile: ,
+INST "ddr1_dq[32]" LOC = P19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit32" LOC = SLICE_X102Y42;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit32" LOC = SLICE_X102Y43;
+#############################################################
+##  constraints for bit ddr1_dq, 35, location in tile: ,
+INST "ddr1_dq[35]" LOC = R19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit35" LOC = SLICE_X100Y42;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit35" LOC = SLICE_X100Y43;
+#############################################################
+##  constraints for bit ddr1_dq, 34, location in tile: ,
+INST "ddr1_dq[34]" LOC = R22;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit34" LOC = SLICE_X102Y40;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit34" LOC = SLICE_X102Y41;
+#############################################################
+##  constraints for bit ddr1_dqs, 4, location in tile: ,
+INST "ddr1_dqs[4]" LOC = T22;
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/one" LOC = SLICE_X102Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/two" LOC = SLICE_X102Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/three" LOC = SLICE_X103Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/four" LOC = SLICE_X103Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/five" LOC = SLICE_X102Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/six" LOC = SLICE_X102Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col1/six" BEL = G;
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/one" LOC = SLICE_X100Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/two" LOC = SLICE_X100Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/three" LOC = SLICE_X101Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/four" LOC = SLICE_X101Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/five" LOC = SLICE_X100Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/six" LOC = SLICE_X100Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay4_col0/six" BEL = G;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst/bit0" LOC = SLICE_X103Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst/bit1" LOC = SLICE_X103Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst/bit2" LOC = SLICE_X103Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst/bit3" LOC = SLICE_X103Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst/bit0" LOC = SLICE_X101Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst/bit1" LOC = SLICE_X101Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst/bit2" LOC = SLICE_X101Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst/bit3" LOC = SLICE_X101Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_en_inst" LOC = SLICE_X103Y41;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_en_inst" LOC = SLICE_X101Y41;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst_1/bit0" LOC = SLICE_X101Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst_1/bit1" LOC = SLICE_X101Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst_1/bit2" LOC = SLICE_X101Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_addr_inst_1/bit3" LOC = SLICE_X101Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst_1/bit0" LOC = SLICE_X103Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst_1/bit1" LOC = SLICE_X103Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst_1/bit2" LOC = SLICE_X103Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_addr_inst_1/bit3" LOC = SLICE_X103Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_40_wr_en_inst_1" LOC = SLICE_X101Y37;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_41_wr_en_inst_1" LOC = SLICE_X103Y37;
+#############################################################
+##  constraints for bit ddr1_dq, 36, location in tile: ,
+INST "ddr1_dq[36]" LOC = T20;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit36" LOC = SLICE_X102Y36;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit36" LOC = SLICE_X102Y37;
+#############################################################
+##  constraints for bit ddr1_dq, 37, location in tile: ,
+INST "ddr1_dq[37]" LOC = T19;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit37" LOC = SLICE_X100Y36;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit37" LOC = SLICE_X100Y37;
+#############################################################
+##  constraints for bit ddr1_dq, 38, location in tile: ,
+INST "ddr1_dq[38]" LOC = R18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit38" LOC = SLICE_X102Y34;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit38" LOC = SLICE_X102Y35;
+#############################################################
+##  constraints for bit ddr1_dq, 39, location in tile: ,
+INST "ddr1_dq[39]" LOC = T18;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit39" LOC = SLICE_X100Y34;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit39" LOC = SLICE_X100Y35;
+
+#############################################################
+##  constraints for bit ddr1_dq, 41, location in tile: 1
+INST "ddr1_dq[41]" LOC = W4;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit41" LOC = SLICE_X2Y20;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit41" LOC = SLICE_X2Y21;
+#############################################################
+##  constraints for bit ddr1_dq, 40, location in tile: 0
+INST "ddr1_dq[40]" LOC = W3;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit40" LOC = SLICE_X0Y20;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit40" LOC = SLICE_X0Y21;
+#############################################################
+##  constraints for bit ddr1_dq, 43, location in tile: 1
+INST "ddr1_dq[43]" LOC = W2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit43" LOC = SLICE_X2Y22;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit43" LOC = SLICE_X2Y23;
+#############################################################
+##  constraints for bit ddr1_dq, 42, location in tile: 0
+INST "ddr1_dq[42]" LOC = U5;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit42" LOC = SLICE_X0Y24;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit42" LOC = SLICE_X0Y25;
+#############################################################
+##  constraints for bit ddr1_dqs, 5, location in tile: 0
+INST "ddr1_dqs[5]" LOC = V3;
+
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/one" LOC = SLICE_X2Y27;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/two" LOC = SLICE_X2Y26;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/three" LOC = SLICE_X3Y26;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/four" LOC = SLICE_X3Y27;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/five" LOC = SLICE_X2Y27;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/six" LOC = SLICE_X2Y26;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col0/six" BEL = G;
+
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/one" LOC = SLICE_X0Y27;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/two" LOC = SLICE_X0Y26;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/three" LOC = SLICE_X1Y26;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/four" LOC = SLICE_X1Y27;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/five" LOC = SLICE_X0Y27;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/six" LOC = SLICE_X0Y26;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay5_col1/six" BEL = F;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst/bit0" LOC = SLICE_X1Y22;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst/bit1" LOC = SLICE_X1Y22;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst/bit2" LOC = SLICE_X1Y23;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst/bit3" LOC = SLICE_X1Y23;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst/bit0" LOC = SLICE_X3Y22;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst/bit1" LOC = SLICE_X3Y22;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst/bit2" LOC = SLICE_X3Y23;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst/bit3" LOC = SLICE_X3Y23;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_en_inst" LOC = SLICE_X1Y25;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_en_inst" LOC = SLICE_X3Y25;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst_1/bit0" LOC = SLICE_X3Y30;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst_1/bit1" LOC = SLICE_X3Y30;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst_1/bit2" LOC = SLICE_X3Y31;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_addr_inst_1/bit3" LOC = SLICE_X3Y31;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst_1/bit0" LOC = SLICE_X1Y30;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst_1/bit1" LOC = SLICE_X1Y30;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst_1/bit2" LOC = SLICE_X1Y31;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_addr_inst_1/bit3" LOC = SLICE_X1Y31;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_50_wr_en_inst_1" LOC = SLICE_X3Y29;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_51_wr_en_inst_1" LOC = SLICE_X1Y29;
+#############################################################
+##  constraints for bit ddr1_dq, 45, location in tile: 1
+INST "ddr1_dq[45]" LOC = V2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit45" LOC = SLICE_X2Y28;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit45" LOC = SLICE_X2Y29;
+#############################################################
+##  constraints for bit ddr1_dq, 44, location in tile: 0
+INST "ddr1_dq[44]" LOC = V1;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit44" LOC = SLICE_X0Y28;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit44" LOC = SLICE_X0Y29;
+#############################################################
+##  constraints for bit ddr1_dq, 47, location in tile: 1
+INST "ddr1_dq[47]" LOC = T6;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit47" LOC = SLICE_X2Y30;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit47" LOC = SLICE_X2Y31;
+#############################################################
+##  constraints for bit ddr1_dq, 46, location in tile: 0
+INST "ddr1_dq[46]" LOC = T5;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit46" LOC = SLICE_X0Y30;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit46" LOC = SLICE_X0Y31;
+#############################################################
+##  constraints for bit ddr1_dq, 49, location in tile: 1
+INST "ddr1_dq[49]" LOC = U4;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit49" LOC = SLICE_X2Y32;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit49" LOC = SLICE_X2Y33;
+#############################################################
+##  constraints for bit ddr1_dq, 48, location in tile: 0
+INST "ddr1_dq[48]" LOC = U2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit48" LOC = SLICE_X0Y34;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit48" LOC = SLICE_X0Y35;
+#############################################################
+##  constraints for bit ddr1_dq, 51, location in tile: 1
+INST "ddr1_dq[51]" LOC = T3;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit51" LOC = SLICE_X2Y36;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit51" LOC = SLICE_X2Y37;
+#############################################################
+##  constraints for bit ddr1_dq, 50, location in tile: 0
+INST "ddr1_dq[50]" LOC = R4;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit50" LOC = SLICE_X0Y36;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit50" LOC = SLICE_X0Y37;
+#############################################################
+##  constraints for bit ddr1_dqs, 6, location in tile: 0
+INST "ddr1_dqs[6]" LOC = T1;
+
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/one" LOC = SLICE_X2Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/two" LOC = SLICE_X2Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/three" LOC = SLICE_X3Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/four" LOC = SLICE_X3Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/five" LOC = SLICE_X2Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/six" LOC = SLICE_X2Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col0/six" BEL = G;
+
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/one" LOC = SLICE_X0Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/two" LOC = SLICE_X0Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/three" LOC = SLICE_X1Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/four" LOC = SLICE_X1Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/five" LOC = SLICE_X0Y39;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/six" LOC = SLICE_X0Y38;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay6_col1/six" BEL = F;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst/bit0" LOC = SLICE_X1Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst/bit1" LOC = SLICE_X1Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst/bit2" LOC = SLICE_X1Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst/bit3" LOC = SLICE_X1Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst/bit0" LOC = SLICE_X3Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst/bit1" LOC = SLICE_X3Y34;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst/bit2" LOC = SLICE_X3Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst/bit3" LOC = SLICE_X3Y35;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_en_inst" LOC = SLICE_X1Y37;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_en_inst" LOC = SLICE_X3Y37;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst_1/bit0" LOC = SLICE_X3Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst_1/bit1" LOC = SLICE_X3Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst_1/bit2" LOC = SLICE_X3Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_addr_inst_1/bit3" LOC = SLICE_X3Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst_1/bit0" LOC = SLICE_X1Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst_1/bit1" LOC = SLICE_X1Y42;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst_1/bit2" LOC = SLICE_X1Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_addr_inst_1/bit3" LOC = SLICE_X1Y43;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_60_wr_en_inst_1" LOC = SLICE_X3Y41;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_61_wr_en_inst_1" LOC = SLICE_X1Y41;
+#############################################################
+##  constraints for bit ddr1_dq, 53, location in tile: 1
+INST "ddr1_dq[53]" LOC = R5;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit53" LOC = SLICE_X2Y40;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit53" LOC = SLICE_X2Y41;
+#############################################################
+##  constraints for bit ddr1_dq, 52, location in tile: 0
+INST "ddr1_dq[52]" LOC = P6;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit52" LOC = SLICE_X0Y40;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit52" LOC = SLICE_X0Y41;
+#############################################################
+##  constraints for bit ddr1_dq, 55, location in tile: 1
+INST "ddr1_dq[55]" LOC = R2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit55" LOC = SLICE_X2Y42;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit55" LOC = SLICE_X2Y43;
+#############################################################
+##  constraints for bit ddr1_dq, 54, location in tile: 0
+INST "ddr1_dq[54]" LOC = R1;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit54" LOC = SLICE_X0Y42;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit54" LOC = SLICE_X0Y43;
+#############################################################
+##  constraints for bit rst_dqs_div_in, 2, location in tile: 1
+INST "rst_dqs_div_in2" LOC = P5;
+
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/one" LOC = SLICE_X2Y47;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/two" LOC = SLICE_X2Y46;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/three" LOC = SLICE_X3Y46;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/four" LOC = SLICE_X3Y47;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/five" LOC = SLICE_X2Y47;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/six" LOC = SLICE_X2Y46;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/six" BEL = G;
+
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/one" LOC = SLICE_X0Y47;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/two" LOC = SLICE_X0Y46;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/three" LOC = SLICE_X1Y46;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/four" LOC = SLICE_X1Y47;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/five" LOC = SLICE_X0Y47;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/six" LOC = SLICE_X0Y46;
+INST "ddr1_top0/data_path0/data_read_controller0/rst_dqs_div_delayed2/six" BEL = F;
+#############################################################
+##  constraints for bit rst_dqs_div_out, 2, location in tile: 0
+INST "rst_dqs_div_out2" LOC = P1;
+#############################################################
+##  constraints for bit ddr1_dq, 57, location in tile: 1
+INST "ddr1_dq[57]" LOC = N6;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit57" LOC = SLICE_X2Y50;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit57" LOC = SLICE_X2Y51;
+#############################################################
+##  constraints for bit ddr1_dq, 56, location in tile: 0
+INST "ddr1_dq[56]" LOC = N5;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit56" LOC = SLICE_X0Y50;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit56" LOC = SLICE_X0Y51;
+#############################################################
+##  constraints for bit ddr1_dq, 58, location in tile: 0
+INST "ddr1_dq[58]" LOC = N3;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit58" LOC = SLICE_X0Y52;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit58" LOC = SLICE_X0Y53;
+#############################################################
+##  constraints for bit ddr1_dq, 59, location in tile: 1
+INST "ddr1_dq[59]" LOC = N2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit59" LOC = SLICE_X2Y54;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit59" LOC = SLICE_X2Y55;
+#############################################################
+##  constraints for bit ddr1_dqs, 7, location in tile: 0
+INST "ddr1_dqs[7]" LOC = M5;
+
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/one" LOC = SLICE_X2Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/two" LOC = SLICE_X2Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/three" LOC = SLICE_X3Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/four" LOC = SLICE_X3Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/five" LOC = SLICE_X2Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/six" LOC = SLICE_X2Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col0/six" BEL = G;
+
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/one" LOC = SLICE_X0Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/two" LOC = SLICE_X0Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/three" LOC = SLICE_X1Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/four" LOC = SLICE_X1Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/five" LOC = SLICE_X0Y59;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/six" LOC = SLICE_X0Y58;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay7_col1/six" BEL = F;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst/bit0" LOC = SLICE_X1Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst/bit1" LOC = SLICE_X1Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst/bit2" LOC = SLICE_X1Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst/bit3" LOC = SLICE_X1Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst/bit0" LOC = SLICE_X3Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst/bit1" LOC = SLICE_X3Y54;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst/bit2" LOC = SLICE_X3Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst/bit3" LOC = SLICE_X3Y55;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_en_inst" LOC = SLICE_X1Y57;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_en_inst" LOC = SLICE_X3Y57;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst_1/bit0" LOC = SLICE_X3Y62;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst_1/bit1" LOC = SLICE_X3Y62;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst_1/bit2" LOC = SLICE_X3Y63;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_addr_inst_1/bit3" LOC = SLICE_X3Y63;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst_1/bit0" LOC = SLICE_X1Y62;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst_1/bit1" LOC = SLICE_X1Y62;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst_1/bit2" LOC = SLICE_X1Y63;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_addr_inst_1/bit3" LOC = SLICE_X1Y63;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_70_wr_en_inst_1" LOC = SLICE_X3Y61;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_71_wr_en_inst_1" LOC = SLICE_X1Y61;
+#############################################################
+##  constraints for bit ddr1_dq, 61, location in tile: 1
+INST "ddr1_dq[61]" LOC = M4;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit61" LOC = SLICE_X2Y60;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit61" LOC = SLICE_X2Y61;
+#############################################################
+##  constraints for bit ddr1_dq, 60, location in tile: 0
+INST "ddr1_dq[60]" LOC = M3;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit60" LOC = SLICE_X0Y60;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit60" LOC = SLICE_X0Y61;
+#############################################################
+##  constraints for bit ddr1_dq, 63, location in tile: 1
+INST "ddr1_dq[63]" LOC = M2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit63" LOC = SLICE_X2Y62;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit63" LOC = SLICE_X2Y63;
+#############################################################
+##  constraints for bit ddr1_dq, 62, location in tile: 0
+INST "ddr1_dq[62]" LOC = L2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit62" LOC = SLICE_X0Y64;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit62" LOC = SLICE_X0Y65;
+#############################################################
+##  constraints for bit ddr1_dq, 65, location in tile: 1
+INST "ddr1_dq[65]" LOC = L3;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit65" LOC = SLICE_X2Y66;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit65" LOC = SLICE_X2Y67;
+#############################################################
+##  constraints for bit ddr1_dq, 67, location in tile: 1
+INST "ddr1_dq[67]" LOC = L5;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit67" LOC = SLICE_X2Y68;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit67" LOC = SLICE_X2Y69;
+#############################################################
+##  constraints for bit ddr1_dq, 64, location in tile: 0
+INST "ddr1_dq[64]" LOC = L6;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit64" LOC = SLICE_X0Y68;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit64" LOC = SLICE_X0Y69;
+#############################################################
+##  constraints for bit ddr1_dq, 66, location in tile: 0
+INST "ddr1_dq[66]" LOC = K2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit66" LOC = SLICE_X0Y72;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit66" LOC = SLICE_X0Y73;
+#############################################################
+##  constraints for bit ddr1_dqs, 8, location in tile: 0
+INST "ddr1_dqs[8]" LOC = K4;
+
+## LUT location constraints for col 1
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/one" LOC = SLICE_X2Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/two" LOC = SLICE_X2Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/two" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/three" LOC = SLICE_X3Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/four" LOC = SLICE_X3Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/four" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/five" LOC = SLICE_X2Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/six" LOC = SLICE_X2Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col0/six" BEL = G;
+
+## LUT location constraints for col 0
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/one" LOC = SLICE_X0Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/one" BEL = F;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/two" LOC = SLICE_X0Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/two" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/three" LOC = SLICE_X1Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/three" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/four" LOC = SLICE_X1Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/four" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/five" LOC = SLICE_X0Y75;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/five" BEL = G;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/six" LOC = SLICE_X0Y74;
+INST "ddr1_top0/data_path0/data_read_controller0/dqs_delay8_col1/six" BEL = F;
+
+########################WRITE ADD & WRITE_EN##########
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst/bit0" LOC = SLICE_X1Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst/bit1" LOC = SLICE_X1Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst/bit2" LOC = SLICE_X1Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst/bit3" LOC = SLICE_X1Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst/bit0" LOC = SLICE_X3Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst/bit1" LOC = SLICE_X3Y70;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst/bit2" LOC = SLICE_X3Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst/bit3" LOC = SLICE_X3Y71;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_en_inst" LOC = SLICE_X1Y73;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_en_inst" LOC = SLICE_X3Y73;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst_1/bit0" LOC = SLICE_X3Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst_1/bit1" LOC = SLICE_X3Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst_1/bit2" LOC = SLICE_X3Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_addr_inst_1/bit3" LOC = SLICE_X3Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst_1/bit0" LOC = SLICE_X1Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst_1/bit1" LOC = SLICE_X1Y78;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst_1/bit2" LOC = SLICE_X1Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_addr_inst_1/bit3" LOC = SLICE_X1Y79;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_80_wr_en_inst_1" LOC = SLICE_X3Y77;
+INST "ddr1_top0/data_path0/data_read_controller0/fifo_81_wr_en_inst_1" LOC = SLICE_X1Y77;
+#############################################################
+##  constraints for bit ddr1_dq, 69, location in tile: 1
+INST "ddr1_dq[69]" LOC = K5;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit69" LOC = SLICE_X2Y76;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit69" LOC = SLICE_X2Y77;
+#############################################################
+##  constraints for bit ddr1_dq, 68, location in tile: 0
+INST "ddr1_dq[68]" LOC = K6;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit68" LOC = SLICE_X0Y76;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit68" LOC = SLICE_X0Y77;
+#############################################################
+##  constraints for bit ddr1_dq, 71, location in tile: 1
+INST "ddr1_dq[71]" LOC = J1;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit71" LOC = SLICE_X2Y78;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit71" LOC = SLICE_X2Y79;
+#############################################################
+##  constraints for bit ddr1_dq, 70, location in tile: 0
+INST "ddr1_dq[70]" LOC = J2;
+INST "ddr1_top0/data_path0/data_read0/fifo0_bit70" LOC = SLICE_X0Y78;
+INST "ddr1_top0/data_path0/data_read0/fifo1_bit70" LOC = SLICE_X0Y79;
