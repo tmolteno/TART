@@ -38,7 +38,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 7
 Title ""
-Date "26 sep 2014"
+Date "6 oct 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -167,7 +167,7 @@ Wire Wire Line
 Wire Wire Line
 	3200 6400 4650 6400
 Wire Wire Line
-	5600 4350 5600 4600
+	5600 4350 5600 4850
 Text HLabel 4650 6550 3    60   Input ~ 0
 GND
 Text HLabel 4650 5600 1    60   Input ~ 0
@@ -244,18 +244,6 @@ F 4 "OKI-78SR" H 6950 3854 60  0000 C CNN "NAME"
 	1    0    0    -1  
 $EndComp
 $Comp
-L POWER_JACK_TART CON1
-U 1 1 5418E80C
-P 1600 3700
-F 0 "CON1" H 1850 4000 60  0000 C CNN
-F 1 "POWER_JACK_TART" H 1600 4110 60  0001 C CNN
-F 2 "" H 1600 3700 60  0001 C CNN
-F 3 "" H 1600 3700 60  0001 C CNN
-F 4 "POWER_JACK" H 1720 3600 60  0000 C CNN "NAME"
-	1    1600 3700
-	1    0    0    -1  
-$EndComp
-$Comp
 L TVS_DIODE_BI_TART D1
 U 1 1 5418D706
 P 2550 3600
@@ -318,7 +306,6 @@ F 3 "" H 6350 3350 60  0001 C CNN
 	1    6350 3350
 	1    0    0    -1  
 $EndComp
-NoConn ~ 2000 3600
 Text HLabel 5600 4850 3    60   Input ~ 0
 GND
 Text HLabel 8950 2350 1    60   Input ~ 0
@@ -412,5 +399,16 @@ F 2 "E5-10,5_TART" H 7450 4100 60  0001 C CNN
 F 3 "" H 7450 4100 60  0001 C CNN
 	1    7450 4100
 	1    0    0    -1  
+$EndComp
+$Comp
+L CONN_2 CON1
+U 1 1 542A164F
+P 1650 3600
+F 0 "CON1" V 1600 3600 40  0000 C CNN
+F 1 "CONN_2" V 1700 3600 40  0000 C CNN
+F 2 "" H 1650 3600 60  0000 C CNN
+F 3 "" H 1650 3600 60  0000 C CNN
+	1    1650 3600
+	-1   0    0    -1  
 $EndComp
 $EndSCHEMATC

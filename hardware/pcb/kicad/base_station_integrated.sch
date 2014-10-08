@@ -38,7 +38,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title ""
-Date "26 sep 2014"
+Date "6 oct 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -407,32 +407,10 @@ Text Label 10300 1950 2    60   ~ 0
 CS0
 Text GLabel 2900 5950 0    60   Input ~ 0
 GND_L
-$Comp
-L R R35
-U 1 1 5424DE9D
-P 7250 1150
-F 0 "R35" V 7330 1150 40  0000 C CNN
-F 1 "0" V 7257 1151 40  0000 C CNN
-F 2 "~" V 7180 1150 30  0000 C CNN
-F 3 "~" H 7250 1150 30  0000 C CNN
-	1    7250 1150
-	0    -1   -1   0   
-$EndComp
 Text GLabel 6800 1150 0    60   Input ~ 0
 GND_PWR
 Text GLabel 7700 1150 2    60   Input ~ 0
 GND_L
-$Comp
-L R R34
-U 1 1 5424EBB2
-P 7250 900
-F 0 "R34" V 7330 900 40  0000 C CNN
-F 1 "0" V 7257 901 40  0000 C CNN
-F 2 "~" V 7180 900 30  0000 C CNN
-F 3 "~" H 7250 900 30  0000 C CNN
-	1    7250 900 
-	0    -1   -1   0   
-$EndComp
 Text GLabel 6800 900  0    60   Input ~ 0
 GND_PWR
 Text GLabel 7700 900  2    60   Input ~ 0
@@ -646,45 +624,15 @@ Wire Wire Line
 Wire Wire Line
 	2900 7150 3000 7150
 Wire Wire Line
-	7500 1150 7700 1150
+	7700 1150 6800 1150
 Wire Wire Line
-	7000 1150 6800 1150
-Wire Wire Line
-	7500 900  7700 900 
-Wire Wire Line
-	7000 900  6800 900 
+	7700 900  6800 900 
 Text GLabel 6800 1650 0    60   Input ~ 0
 GND
 Text GLabel 7600 1650 2    60   Input ~ 0
 GND_PWR
-$Comp
-L R R36
-U 1 1 54253532
-P 7250 1400
-F 0 "R36" V 7330 1400 40  0000 C CNN
-F 1 "0" V 7257 1401 40  0000 C CNN
-F 2 "~" V 7180 1400 30  0000 C CNN
-F 3 "~" H 7250 1400 30  0000 C CNN
-	1    7250 1400
-	0    -1   -1   0   
-$EndComp
-$Comp
-L R R37
-U 1 1 54253541
-P 7250 1650
-F 0 "R37" V 7330 1650 40  0000 C CNN
-F 1 "0" V 7257 1651 40  0000 C CNN
-F 2 "~" V 7180 1650 30  0000 C CNN
-F 3 "~" H 7250 1650 30  0000 C CNN
-	1    7250 1650
-	0    -1   -1   0   
-$EndComp
 Wire Wire Line
-	6800 1400 7000 1400
+	6800 1400 7600 1400
 Wire Wire Line
-	6800 1650 7000 1650
-Wire Wire Line
-	7500 1400 7600 1400
-Wire Wire Line
-	7500 1650 7600 1650
+	6800 1650 7600 1650
 $EndSCHEMATC

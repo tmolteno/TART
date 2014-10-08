@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by PcbNew date = Fri 26 Sep 2014 17:11:35 NZST
+Cmp-Mod V01 Created by CvPcb (22-Jun-2014 BZR 4027)-stable date = Tue 30 Sep 2014 14:49:27 NZDT
 
 BeginCmp
 TimeStamp = /5407950D/5421F74A;
@@ -232,10 +232,10 @@ IdModule  = SM0603;
 EndCmp
 
 BeginCmp
-TimeStamp = /5407950D/5418E80C;
+TimeStamp = /5407950D/542A164F;
 Reference = CON1;
-ValeurCmp = POWER_JACK_TART;
-IdModule  = POWER_JACK_TART;
+ValeurCmp = CONN_2;
+IdModule  = AK300-2;
 EndCmp
 
 BeginCmp
