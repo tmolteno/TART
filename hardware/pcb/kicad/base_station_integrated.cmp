@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (22-Jun-2014 BZR 4027)-stable date = Tue 30 Sep 2014 14:49:27 NZDT
+Cmp-Mod V01 Created by PcbNew date = Thu 09 Oct 2014 17:23:23 NZDT
 
 BeginCmp
 TimeStamp = /5407950D/5421F74A;
@@ -242,56 +242,56 @@ BeginCmp
 TimeStamp = /5409247B/5418D832;
 Reference = CON2;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /5409247B/5418D866;
 Reference = CON3;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/5418D832;
 Reference = CON4;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540924B7/5418D866;
 Reference = CON5;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/5418D832;
 Reference = CON6;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /54092498/5418D866;
 Reference = CON7;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/5418D832;
 Reference = CON8;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
 TimeStamp = /540670D5/5418D866;
 Reference = CON9;
 ValeurCmp = RJ45_TART;
-IdModule  = RJ45_8;
+IdModule  = RJ45_TART;
 EndCmp
 
 BeginCmp
