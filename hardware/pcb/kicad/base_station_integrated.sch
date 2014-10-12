@@ -38,7 +38,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title ""
-Date "6 oct 2014"
+Date "12 oct 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -94,20 +94,16 @@ NoConn ~ 10050 1650
 NoConn ~ 10050 1850
 NoConn ~ 10050 2050
 NoConn ~ 10050 2150
-NoConn ~ 10050 2250
 NoConn ~ 10050 2350
-NoConn ~ 10050 2450
 NoConn ~ 10050 2550
 NoConn ~ 10050 2650
 NoConn ~ 10050 2750
-NoConn ~ 9250 2750
 NoConn ~ 9250 2650
 NoConn ~ 9250 2550
 NoConn ~ 9250 2450
 NoConn ~ 9250 2350
 NoConn ~ 9250 2250
 NoConn ~ 9250 2150
-NoConn ~ 9250 2050
 NoConn ~ 9250 1650
 NoConn ~ 9250 1550
 NoConn ~ 9250 1450
@@ -635,4 +631,20 @@ Wire Wire Line
 	6800 1400 7600 1400
 Wire Wire Line
 	6800 1650 7600 1650
+Text GLabel 9150 2050 0    60   Input ~ 0
+GND
+Text GLabel 10150 2250 2    60   Input ~ 0
+GND
+Text GLabel 10150 2450 2    60   Input ~ 0
+GND
+Text GLabel 9150 2750 0    60   Input ~ 0
+GND
+Wire Wire Line
+	9150 2050 9250 2050
+Wire Wire Line
+	10050 2250 10150 2250
+Wire Wire Line
+	10050 2450 10150 2450
+Wire Wire Line
+	9150 2750 9250 2750
 $EndSCHEMATC
