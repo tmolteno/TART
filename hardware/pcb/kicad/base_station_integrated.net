@@ -1,7 +1,7 @@
 (export (version D)
   (design
     (source /home/charles/TART/hardware/pcb/kicad/base_station_integrated.sch)
-    (date "Mon 13 Oct 2014 10:19:55 NZDT")
+    (date "Tue 21 Oct 2014 11:59:51 NZDT")
     (tool "eeschema (22-Jun-2014 BZR 4027)-stable"))
   (components
     (comp (ref U1)
@@ -936,20 +936,6 @@
         (pin (num 6) (name ~) (type passive))
         (pin (num 7) (name ~) (type passive))
         (pin (num 8) (name ~) (type passive))))
-    (libpart (lib TART) (part SPX3940_TART)
-      (footprints
-        (fp SOT223))
-      (fields
-        (field (name Reference) REG)
-        (field (name Value) SPX3940_TART)
-        (field (name Footprint) ~)
-        (field (name Datasheet) ~)
-        (field (name NAME) SPX3940))
-      (pins
-        (pin (num 1) (name VO) (type power_out))
-        (pin (num 2) (name GND) (type input))
-        (pin (num 3) (name VI) (type input))
-        (pin (num 4) (name GND) (type input))))
     (libpart (lib TART) (part TCXO_TART)
       (footprints
         (fp 4_SMD_TART))
@@ -1019,7 +1005,21 @@
         (pin (num 5) (name Y) (type output))
         (pin (num 6) (name Z) (type output))
         (pin (num 7) (name B) (type input))
-        (pin (num 8) (name A) (type input)))))
+        (pin (num 8) (name A) (type input))))
+    (libpart (lib TART) (part SPX3940_TART)
+      (footprints
+        (fp SOT223))
+      (fields
+        (field (name Reference) REG)
+        (field (name Value) SPX3940_TART)
+        (field (name Footprint) ~)
+        (field (name Datasheet) ~)
+        (field (name NAME) SPX3940))
+      (pins
+        (pin (num 1) (name VI) (type input))
+        (pin (num 2) (name GND) (type input))
+        (pin (num 3) (name VO) (type power_out))
+        (pin (num 4) (name GND) (type input)))))
   (libraries
     (library (logical device)
       (uri /usr/share/kicad/library/device.lib))
@@ -1259,7 +1259,7 @@
       (node (ref IC2) (pin 1))
       (node (ref IC9) (pin 1))
       (node (ref C18) (pin 1))
-      (node (ref REG3) (pin 1))
+      (node (ref REG3) (pin 3))
       (node (ref C31) (pin 1))
       (node (ref IC23) (pin 1))
       (node (ref IC12) (pin 1))
@@ -1318,7 +1318,7 @@
     (net (code 47) (name +5V)
       (node (ref C6) (pin 1))
       (node (ref C5) (pin 1))
-      (node (ref REG3) (pin 3))
+      (node (ref REG3) (pin 1))
       (node (ref REG2) (pin 3))
       (node (ref U1) (pin 5VA)))
     (net (code 48) (name /transceiver_block_3/DT_5)
