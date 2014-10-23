@@ -38,7 +38,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title ""
-Date "12 oct 2014"
+Date "22 oct 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -61,9 +61,9 @@ $EndComp
 Text GLabel 2900 1350 0    60   Input ~ 0
 +5V_PI
 Text Label 7350 2700 0    60   ~ 0
-MOSI
-Text Label 7350 2600 0    60   ~ 0
 MISO
+Text Label 7350 2600 0    60   ~ 0
+MOSI
 Text Label 7350 2500 0    60   ~ 0
 SCLK
 Text GLabel 9150 1250 0    60   Input ~ 0
