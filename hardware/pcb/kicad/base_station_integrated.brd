@@ -1,4 +1,4 @@
-PCBNEW-BOARD Version 2 date Thu 30 Oct 2014 16:56:09 NZDT
+PCBNEW-BOARD Version 2 date Thu 30 Oct 2014 17:05:00 NZDT
 
 # Created by Pcbnew(22-Jun-2014 BZR 4027)-stable
 
@@ -10,7 +10,7 @@ EnabledLayers 1FFF8001
 Links 461
 NoConn 0
 Di 52.514499 36.8084 224.832333 165.1216
-Ndraw 70
+Ndraw 72
 Ntrack 1077
 Nzone 0
 BoardThickness 1.6002
@@ -68,7 +68,7 @@ Pad2MaskClearance 0.254
 SolderMaskMinWidth 0
 AuxiliaryAxisOrg 109.855 100.965
 VisibleElements FFFF7FBF
-PcbPlotParams (pcbplotparams (layerselection 271613953) (usegerberextensions true) (excludeedgelayer true) (linewidth 0.150000) (plotframeref false) (viasonmask false) (mode 1) (useauxorigin false) (hpglpennumber 1) (hpglpenspeed 20) (hpglpendiameter 15) (hpglpenoverlay 0) (psnegative false) (psa4output false) (plotreference true) (plotvalue false) (plotothertext false) (plotinvisibletext false) (padsonsilk false) (subtractmaskfromsilk false) (outputformat 1) (mirror false) (drillshape 0) (scaleselection 1) (outputdirectory gerber_files/))
+PcbPlotParams (pcbplotparams (layerselection 284196865) (usegerberextensions true) (excludeedgelayer true) (linewidth 0.150000) (plotframeref false) (viasonmask false) (mode 1) (useauxorigin false) (hpglpennumber 1) (hpglpenspeed 20) (hpglpendiameter 15) (hpglpenoverlay 0) (psnegative false) (psa4output false) (plotreference true) (plotvalue false) (plotothertext false) (plotinvisibletext false) (padsonsilk false) (subtractmaskfromsilk false) (outputformat 1) (mirror false) (drillshape 0) (scaleselection 1) (outputdirectory gerber_files/))
 $EndSETUP
 
 $EQUIPOT
@@ -15417,6 +15417,16 @@ Ne 91 "N-00000191"
 Po -1.905 2.59842
 $EndPAD
 $EndMODULE SOIC8_TART
+$TEXTPCB
+Te "B"
+Po 218.948 152.781 1.524 1.524 0.3048 0
+De 0 0 5451B886 Normal
+$EndTEXTPCB
+$TEXTPCB
+Te "T"
+Po 219.075 152.781 1.524 1.524 0.3048 0
+De 15 1 5451B860 Normal
+$EndTEXTPCB
 $TEXTPCB
 Te "RASPBERRY PI"
 Po 165.1 108.585 1.524 1.524 0.3048 900
