@@ -1,7 +1,11 @@
-EESchema-DOCLIB  Version 2.0  Date: Thu 23 Oct 2014 15:13:28 NZDT
+EESchema-DOCLIB  Version 2.0  Date: Thu 06 Nov 2014 15:26:30 NZDT
 #
 $CMP PAPILIO_TART
 D A15
+$ENDCMP
+#
+$CMP SI5317
+D N/C
 $ENDCMP
 #
 #End Doc Library
