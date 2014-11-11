@@ -1,4 +1,4 @@
-update=Mon 10 Nov 2014 12:20:30 NZDT
+update=Tue 11 Nov 2014 10:14:18 NZDT
 version=1
 last_client=eeschema
 [cvpcb]
@@ -87,4 +87,3 @@ LibName30=valves
 LibName31=libraries/TART
 LibName32=libraries/lib_exp_clk_mod/clk_module
 LibName33=libraries/texas_lvds
-LibName34=/home/charles/freenas/home/charles/transfer/laird
