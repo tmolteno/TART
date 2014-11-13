@@ -1,4 +1,4 @@
-EESchema-DOCLIB  Version 2.0  Date: Wed 12 Nov 2014 12:00:36 NZDT
+EESchema-DOCLIB  Version 2.0  Date: Thu 13 Nov 2014 16:10:26 NZDT
 #
 $CMP PAPILIO_TART
 D A15
@@ -6,6 +6,11 @@ $ENDCMP
 #
 $CMP SI5317
 D N/C
+$ENDCMP
+#
+$CMP SWITCH
+D Switch inverseur
+K switch
 $ENDCMP
 #
 #End Doc Library
