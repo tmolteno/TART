@@ -1,4 +1,4 @@
-update=Wed 12 Nov 2014 14:33:24 NZDT
+update=Thu 13 Nov 2014 17:25:31 NZDT
 version=1
 last_client=pcbnew
 [cvpcb]
@@ -54,10 +54,10 @@ LibName33=libraries/texas_lvds
 version=1
 LastNetListRead=
 UseCmpFile=1
-PadDrill=0.762000000000
-PadDrillOvalY=0.762000000000
-PadSizeH=1.524000000000
-PadSizeV=1.524000000000
+PadDrill=0.900000000000
+PadDrillOvalY=0.900000000000
+PadSizeH=1.300000000000
+PadSizeV=1.300000000000
 PcbTextSizeV=1.500000000000
 PcbTextSizeH=1.500000000000
 PcbTextThickness=0.300000000000
