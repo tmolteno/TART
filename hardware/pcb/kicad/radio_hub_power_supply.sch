@@ -39,7 +39,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 3
 Title "noname.sch"
-Date "26 nov 2014"
+Date "3 dec 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -407,10 +407,10 @@ F 3 "~" H 6300 2600 30  0000 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L R RNEW1
+L R RA12
 U 1 1 545FE6B7
 P 1600 4150
-F 0 "RNEW1" V 1680 4150 40  0000 C CNN
+F 0 "RA12" V 1680 4150 40  0000 C CNN
 F 1 "0" V 1607 4151 40  0000 C CNN
 F 2 "~" V 1530 4150 30  0000 C CNN
 F 3 "~" H 1600 4150 30  0000 C CNN

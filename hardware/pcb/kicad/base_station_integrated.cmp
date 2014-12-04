@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by PcbNew date = Thu 13 Nov 2014 15:54:23 NZDT
+Cmp-Mod V01 Created by PcbNew date = Thu 04 Dec 2014 13:36:48 NZDT
 
 BeginCmp
 TimeStamp = /5407950D/5421F74A;
@@ -536,7 +536,7 @@ BeginCmp
 TimeStamp = /5420D065;
 Reference = P1;
 ValeurCmp = CONN_20X2;
-IdModule  = RASP_PI_B+;
+IdModule  = RASP_PI_B+_TART;
 EndCmp
 
 BeginCmp

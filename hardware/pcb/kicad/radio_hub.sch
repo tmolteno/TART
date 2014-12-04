@@ -39,7 +39,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 3
 Title "noname.sch"
-Date "26 nov 2014"
+Date "3 dec 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -706,7 +706,7 @@ Wire Wire Line
 Wire Wire Line
 	3900 6350 3900 6450
 Wire Wire Line
-	3700 6450 3900 6450
+	3900 6450 3700 6450
 Wire Wire Line
 	3700 4250 3700 6650
 Wire Wire Line
