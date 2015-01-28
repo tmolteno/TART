@@ -10,7 +10,7 @@
 #    ssh-keygen 
 #    ssh-copyid ${REMOTE}
 # Now add to crontab
-# 5 * * * * sh /home/pi/TART/hardware/rpi/copy_data_remote.sh
+# 5 * * * * sh /home/pi/git/TART/hardware/rpi/copy_data_remote.sh
 #
 REMOTE=tart@electron.otago.ac.nz
 HOST=`hostname`
