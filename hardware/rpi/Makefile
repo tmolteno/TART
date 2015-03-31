@@ -8,8 +8,7 @@ fobs:
 	python acquire.py --debug --data-dir test
 
 debug10:
-	python spartan6_spi_acquire.py --speed 8 --bramexp 10 --fast --debug --reset
+	python tart_testbench.py --internal --bramexp 10
 
 debug:
-	python spartan6_spi_acquire.py --speed 8 --bramexp 21 --fast --debug --reset
-
+	python tart_testbench.py --internal --bramexp 21

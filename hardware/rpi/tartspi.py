@@ -4,7 +4,7 @@ import time
 
 class TartSPI:
   def __init__(self, speed=8000000):
-    spi.openSPI(speed=speed)
+    spi.openSPI(speed=int(speed))
 
   def reset(self):
     spi.transfer((0b10001111,0b00000001))
@@ -47,21 +47,40 @@ class TartSPI:
 import argparse
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
-  parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
+  parser.add_argument('--speed', default=8, type=float, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=11, type=int, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
   parser.add_argument('--monitor', action='store_true', help="The telescope configuration file.")
   args = parser.parse_args()
 
   if args.monitor:
+    import time
+    import matplotlib
+    matplotlib.use('gtk')
+    import matplotlib.pyplot as plt
+    from matplotlib import mlab
+    p_data = [[] for _ in range(6)]
+    plt.ion()
+    f2, ax2 = plt.subplots(6,sharex=True,figsize=(5,10))
+    fft_p = [ax2[i].plot([])[0] for i in range(6)]
+    #f2.tight_layout()
+    plt.show()
     t_SPI = TartSPI(speed=args.speed*1000000)
     while 1:
       t_SPI.debug(args.debug)
-      #t_SPI.start_acquisition(sleeptime=2**args.bramexp*1./(16.368e6)*1.1+0.01)
       t_SPI.start_acquisition()
       data = t_SPI.read_data(num_bytes=2**args.bramexp, blocksize=1024)
       t_SPI.reset()
-      ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
-      #print ant_data[:,:15]
-      print ant_data.mean(axis=1)
+      ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)*2-1.
+      for i,ant_idx in enumerate(range(0,6)):
+        mean = ant_data[ant_idx].mean()
+        print ant_idx, mean
+        power, freq = mlab.psd(ant_data[ant_idx]-mean,Fs=16.368e6, NFFT=4096)#NFFT=8192)
+        fft_p[i].set_data(freq/1e6,10.*np.log10(power))
+        #ax2[i].set_xlim(0,8)
+        #ax2[i].set_ylim(-80,-50)
+      	ax2[i].relim()
+	print
+      	ax2[i].autoscale_view(True,True,True)
+      plt.draw()
 
