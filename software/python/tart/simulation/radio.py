@@ -37,8 +37,9 @@ class Max2769B(Radio):
     The output of the LNA and the input of the mixer are brought off-chip to facilitate the use of a SAW filter.
   '''
 
-  def __init__(self, sample_duration, noise_level, ref_freq = 16.368e6, freq_mult = 256, ref_div = 16, main_div = 1536, bandwidth = 2.5e6, order = 5):
-    self.sample_duration = sample_duration
+  def __init__(self, noise_level, n_samples=2**15, ref_freq = 16.368e6, freq_mult = 256, ref_div = 16, main_div = 1536, bandwidth = 2.5e6, order = 5):
+    self.sample_duration = n_samples * 1./ref_freq #sample_duration
+    self.n_samples = n_samples
     self.ref_freq = ref_freq
     self.freq_mult = freq_mult
     self.ref_div = ref_div
@@ -48,12 +49,13 @@ class Max2769B(Radio):
     self.noise_level = noise_level
     self.sampling_rate = self.ref_freq * self.freq_mult
     self.timebase = np.arange(0, self.sample_duration, 1.0/self.sampling_rate)
-    self.baseband_timebase = np.arange(0, self.sample_duration, 1.0/self.ref_freq)
+    self.baseband_timebase = np.arange(0, self.n_samples) * 1.0/self.ref_freq
     self.int_freq = self.ref_freq / self.ref_div * 4
     # print self.int_freq
 
   def sampled_signal(self, ant_signal, ant_index, debug = False):
-    t = np.linspace(0, self.sample_duration, len(ant_signal))
+    # t = np.linspace(0, self.sample_duration, len(ant_signal))
+    t = np.arange(0, self.sample_duration, self.sample_duration/len(ant_signal))
 
     # Produce the LO signal - massively oversampled so approximates continuous time
     lo_freq = self.ref_freq / self.ref_div * self.main_div  # LO frequency
@@ -65,7 +67,7 @@ class Max2769B(Radio):
 
     # Mix the incoming signal with LO to generate the IF
     if_sig = lo * ant_signal
-    if debug: print 'if_sig\n', if_sig
+    # if debug: print 'if_sig\n', if_sigk         json
 
     # Need anti-aliasing filter BEFORE downsampling. See http://en.wikipedia.org/wiki/Downsampling
     # This is a low pass filter with a cutoff of ref_freq / 2.
@@ -100,52 +102,36 @@ class Max2769B(Radio):
     return filt_sig1
 
   def get_full_obs(self, ant_sigs, utc_date, config):
-    num_radio_samples = (len(self.timebase) / self.freq_mult) + 1
+    num_radio_samples = (len(self.timebase) / self.freq_mult) #+ 1
     # print num_radio_samples
-
     sampled_signals = np.zeros((config.num_antennas, num_radio_samples))
 
     for i in range(0, config.num_antennas):
       sampled_signals[i,:] = self.sampled_signal(ant_sigs[i], i)
 
     data = np.array(sampled_signals)
-
     obs = observation.Observation(utc_date, config, data=data)
     return obs
 
 
   def get_simplified_obs(self, baseband_signals, utc_date, config):
-    num_samples = len(self.baseband_timebase)
     s_signals = []
-
-    #if_sig = scipy.signal.hilbert(baseband_signals) * np.exp(2.0j * np.pi * (self.int_freq-self.bandwidth/2.) * self.baseband_timebase)
-    if_sig = baseband_signals * np.sin(2.0 * np.pi * self.int_freq * self.baseband_timebase)
+    if_sig = baseband_signals * np.exp(-2.0j * np.pi * self.int_freq * self.baseband_timebase)
 
     for i in range(config.num_antennas):
       if (self.noise_level[i] > 0.0):
-        # print i, self.noise_level[i]
         noise = np.random.normal(0., self.noise_level[i], len(if_sig[i]))
         if_sig[i] = if_sig[i] + noise
 
     for ant_num in range(0, config.num_antennas):
-      #print 'ant_sig1\n', if_sig[ant_num, :]
-      #####filt_sig = scipy.signal.lfilter(b, a, if_sig[ant_num])
       filt_sig1 = butter_filter.butter_bandpass_filter(if_sig[ant_num], self.int_freq-self.bandwidth/2., self.int_freq+self.bandwidth/2., self.ref_freq, self.order)
       s_signals.append(filt_sig1)
-      #print 'filt_sig1\n', filt_sig.astype(float)
 
-    # print s_signals
     s_signals = np.array(s_signals).real
     sampled_signals = np.sign(s_signals) # -1 if negative, 0 if 0, +1 if positive
     sampled_signals[s_signals == 0.0] = 1. # Replace 0 with 1 - true NRZ
-    # sampled_signals = s_signals
     obs = observation.Observation(utc_date, config, data=sampled_signals)
     return obs
-
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -163,15 +149,14 @@ if __name__ == '__main__':
     from tart.simulation.radio import *
 
     config = settings.Settings('../test/test_telescope_config.json')
-    # noiselvls =  0.1.*np.ones(config.num_antennas)
     noiselvls =  0.1 * np.ones(config.num_antennas)
-    rad = Max2769B(sample_duration = 1.0e-3, noise_level = noiselvls)
+    rad = Max2769B(n_samples=2**14, noise_level = noiselvls)
     sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.), elevation = angle.from_dms(90.), sample_duration = rad.sample_duration)]
     ants = [antennas.Antenna(config.get_loc(), pos) for pos in config.ant_positions]
     ant_models = [antenna_model.GpsPatchAntenna() for i in range(config.num_antennas)]
     utc_date = datetime.datetime.utcnow()
 
-
+    
     plt.figure()
     ant_sigs = antennas.antennas_signal(ants, ant_models, sources, rad.timebase)
     rad_sig_full = rad.sampled_signal(ant_sigs[0, :], 0)
@@ -181,9 +166,17 @@ if __name__ == '__main__':
     obs_simp = rad.get_simplified_obs(ant_sigs_simp, utc_date, config)
 
 
-    freqs, spec_full_before_obs = spectrum.plotSpectrum(rad_sig_full, rad.ref_freq, label='full_before_obs_obj', c='blue')
-    freqs, spec_full = spectrum.plotSpectrum(obs_full.get_antenna(1), rad.ref_freq, label='full', c='cyan')
-    freqs, spec_simp = spectrum.plotSpectrum(obs_simp.get_antenna(1), rad.ref_freq, label='simp', c='red')
+    from matplotlib import mlab
+    power, freq = mlab.psd(rad_sig_full,Fs=rad.ref_freq, NFFT=8192)
+    plt.plot(freq/1e6, 10.0*np.log10(power), label='full_before_obs_obj', c='blue')
+    power, freq = mlab.psd(obs_full.get_antenna(1),Fs=rad.ref_freq, NFFT=8192)
+    plt.plot(freq/1e6, 10.0*np.log10(power), label='full', c='cyan')
+    power, freq = mlab.psd(obs_simp.get_antenna(1),Fs=rad.ref_freq, NFFT=8192)
+    plt.plot(freq/1e6, 10.0*np.log10(power), label='simp', c='red')
+
+    # freqs, spec_full_before_obs = spectrum.plotSpectrum(rad_sig_full, rad.ref_freq, label='full_before_obs_obj', c='blue')
+    # freqs, spec_full = spectrum.plotSpectrum(obs_full.get_antenna(1), rad.ref_freq, label='full', c='cyan')
+    # freqs, spec_simp = spectrum.plotSpectrum(obs_simp.get_antenna(1), rad.ref_freq, label='simp', c='red')
     plt.legend()
     plt.show()
 
