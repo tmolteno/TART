@@ -5,19 +5,14 @@ from tart.util import angle
 import numpy as np
 
 from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
-def hilbert(x):
- return x-1j*fftw_hilbert(x)
 
-# from scipy.signal import hilbert
+def van_vleck_correction(R):
+  return np.sin(np.pi/2. * R)
 
-def V(x,y):
-  return np.dot(x,np.conjugate(y))/len(x)
-
-## Only used for plotting spectra
-#def convert_to_baseband(xd, fs, fc0):
-  #analytic = hilbert(xd) * np.exp(-2.0j * np.pi * fc0 * np.arange(0.,len(xd)/fs,1./fs))
-  #return analytic
-
+def V(x,y,yhilb):
+  real = van_vleck_correction(np.dot(x,y)*1./len(x)/2.)
+  imag = van_vleck_correction(np.dot(x,yhilb)*1./len(x)/2.)
+  return real-1.j*imag
 
 class Correlator:
 
@@ -31,19 +26,11 @@ class Correlator:
     '''Return an array of baselines and visibilities from this observation'''
     v = []
     baselines = []
-    fs = obs.get_sampling_rate()
-    fc0 = 4.092e6
-    shift = np.exp(-2.0j * np.pi * fc0 * np.arange(0.,len(obs.get_antenna(1))/fs,1./fs))
-    print 'here_0.1'
-    data = [hilbert(obs.get_antenna(i+1)) for i in range(obs.config.num_antennas)]
-    print 'here_0.2'
+    data = [obs.get_antenna(i+1)-np.mean(obs.get_antenna(i+1)) for i in range(obs.config.num_antennas)]
+    data_hilb = [-np.sign(fftw_hilbert(d)) for d in data]
     for i in range(0, obs.config.num_antennas):
-      #data_i = hilbert(obs.get_antenna(i+1)) #*shift
-      print 'herei', i
       for j in range(i+1, obs.config.num_antennas):
-        #data_j = hilbert(obs.get_antenna(j+1)) #*shift
-        #v.append(V(data_i,data_j))
-        v.append(V(data[i],data[j]))
+        v.append(V(data[i],data[j],data_hilb[j]))
         baselines.append([i,j])
     return v, baselines
 
