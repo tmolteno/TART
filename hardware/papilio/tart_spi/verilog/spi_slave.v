@@ -78,6 +78,7 @@ module SPI_slave(
    input [7:0] spi_status,
 
    output reg spi_buffer_read_complete = 0,
+	output wire [2:0] data_sample_delay,
    output wire spi_reset,
    output wire spi_start_aq,
    output wire spi_debug
@@ -125,13 +126,14 @@ module SPI_slave(
    // SPECIFIY POSSIBLE REGISTER ADDRESSES
    
    //                               Register    Function
-   parameter          ADDR_STATUS = 4'b0000; // STATUS ADDR
-   parameter         ADDR_STARTAQ = 4'b0001; // START SAMPLING
+   parameter      ADDR_STATUS = 4'b0000; // STATUS ADDR
+   parameter      ADDR_STARTAQ = 4'b0001; // START SAMPLING
    parameter      ADDR_READ_DATA1 = 4'b0010; // DATA MSB [23:16]
    parameter      ADDR_READ_DATA2 = 4'b0011; // DATA     [15:8]
    parameter      ADDR_READ_DATA3 = 4'b0100; // DATA LSB [7:0]
-   parameter           ADDR_DEBUG = 4'b1000; // DEBUG MODE 
-   parameter           ADDR_RESET = 4'b1111; // RESET
+	parameter      ADDR_SAMPLE_DELAY = 4'b1100; //
+	parameter      ADDR_DEBUG = 4'b1000; // DEBUG MODE 
+   parameter      ADDR_RESET = 4'b1111; // RESET
 
    reg [7:0] register [15:0];
    integer i;
@@ -142,7 +144,8 @@ module SPI_slave(
    reg [7:0] data_to_send = 8'bx;
    reg trigger_new_data = 0;
   
-   
+
+   assign data_sample_delay = register[ADDR_SAMPLE_DELAY][2:0]  ;
    assign spi_reset = (register[ADDR_RESET] == 8'b1);
    assign spi_start_aq = (register[ADDR_STARTAQ] == 8'b1);
    assign spi_debug = (register[ADDR_DEBUG] == 8'b1);
@@ -151,6 +154,7 @@ module SPI_slave(
    always @(posedge fpga_clk)
       if (spi_reset)
         begin
+		    register[ADDR_SAMPLE_DELAY] <= 8'b0;
           register[ADDR_RESET]   <= 8'b0;
           register[ADDR_STARTAQ] <= 8'b0;
           register[ADDR_DEBUG]   <= 8'b0;

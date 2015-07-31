@@ -45,7 +45,7 @@ NET "spi_sck"       LOC = P85 | IOSTANDARD = "LVTTL";                           
 #NET A(12)          LOC="P88"  | IOSTANDARD=LVTTL;                                # A12
 #NET A(13)          LOC="P93"  | IOSTANDARD=LVTTL;                                # A13
 #NET A(14)          LOC="P98"  | IOSTANDARD=LVTTL;                                # A14
-#NET A(15)          LOC="P100" | IOSTANDARD=LVTTL;                                # A15
+NET rx_clk_test_pin LOC="P100" | IOSTANDARD=LVTTL;                                # A15
 
 NET antenna(13)     LOC="P99"  | IOSTANDARD=LVTTL;                                # B0
 NET antenna(12)     LOC="P97"  | IOSTANDARD=LVTTL;                                # B1

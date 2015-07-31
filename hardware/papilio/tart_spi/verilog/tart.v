@@ -7,6 +7,8 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 
 module tart(
+				// SHOW DELAYED CLOCK:
+				output wire rx_clk_test_pin,
             // PAPILIO
             output wire led,
             // SDRAM
@@ -66,14 +68,24 @@ module tart(
 
    wire [23:0] antenna_data;
    wire rx_clk;
-   sync_antennas_to_clock sync_ant_int(
-    .fast_clk(fpga_clk),
-    .data_in(sel_antenna_data),
-    .slow_clk(rx_clk),
-    .data_out(antenna_data)  // data valid on the rising edge of the clock.
-    );
-   //assign rx_clk = sel_rx_clk;
-   //assign antenna_data = sel_antenna_data;
+   //sync_antennas_to_clock sync_ant_int(
+   // .fast_clk(fpga_clk),
+   // .data_in(sel_antenna_data),
+   // .slow_clk(rx_clk),
+   // .data_out(antenna_data)  // data valid on the rising edge of the clock.
+   // );
+   wire [2:0] data_sample_delay;
+
+	 delay_data_sampling_clk delay_rx_clk(
+	   .fast_clk(fpga_clk),
+		.data_sample_delay(data_sample_delay),
+		.slow_clk(rx_clk)
+	);
+	assign rx_clk_test_pin = rx_clk;
+	
+   // assign rx_clk = sel_rx_clk;
+   
+	assign antenna_data = sel_antenna_data;
 
    //     AQUISITION BLOCK
 
@@ -164,6 +176,7 @@ module tart(
                   .antenna_data(tx_read_data),
                   .spi_status({2'b10,spi_buffer_read_complete, spi_start_aq, spi_debug, tart_state[2:0]}),
                   .spi_buffer_read_complete(spi_buffer_read_complete),
+						.data_sample_delay(data_sample_delay),
                   .spi_reset(spi_reset),
                   .spi_start_aq(spi_start_aq),
                   .spi_debug(spi_debug)
