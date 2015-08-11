@@ -170,5 +170,8 @@ class Location:
 '''Convenient helper function for the location of the Physics Department Roof'''
 Dunedin = Location(lat=angle.from_dms(-45.86391200), lon=angle.from_dms(170.51348452), alt=46.5)
 
+'''Convenient helper function for the location of the rural TART'''
+Dunedin_Farm = Location(lat=angle.from_dms(-45.851868), lon=angle.from_dms(170.545558), alt=266.5)
+
 '''Convenient helper function for somewhere cold and damp in the far north'''
 Aachen = Location(lat=angle.from_dms(50.778), lon=angle.from_dms(6.086), alt=46.5)

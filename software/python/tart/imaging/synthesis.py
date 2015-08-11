@@ -77,11 +77,12 @@ class Synthesis_Imaging(object):
     # vt = self.vis_list[int(len(self.vis_list)/2)]
     vt = self.vis_list[0]
     print vt.config
-    ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
+    ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(90.))
     # ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
     # dec = angle.from_dms(-90.00)
     # print 'phasecenter:', ra, dec
     self.phase_center = radio_source.CosmicSource(ra, dec)
+    print 'debug:' , self.phase_center.to_horizontal(vt.config.get_loc(),vt.timestamp)
 
   def get_uvfits(self):
     os.system("rm out.uvfits")
@@ -163,36 +164,49 @@ class Synthesis_Imaging(object):
       arr[j, i, 1] += 1.
     # apply the masked array and divide by number of entries
     n_arr = np.ma.masked_array(arr[:, :, 0], arr[:, :, 1].real.__lt__(1.))
-    n_arr = n_arr/arr[:, :, 1].real
+    n_arr = n_arr/(arr[:, :, 1].real)
 
     return (n_arr, xedges, yedges) #uv_plane
 
   def get_image(self, num_bin=400, pax=0):
-
-    num_bin = 2*800 #2*800
-    nw = 120*2
+    nw = 30
+    num_bin = 2**7
 
     uv_plane, xedges, yedges = self.get_uvplane(self.vis_list, num_bin, nw)
-    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
 
+    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+    print 'maxang', maxang
+    beam_ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(1-uv_plane.mask)))
     ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
+    
+    def convert_to_polar(x, y):
+      theta = np.arctan2(x, y)
+      r = np.sqrt(x**2 + y**2)
+      return theta, r
+
+    grid_l, grid_m = np.mgrid[-maxang:maxang:num_bin*1j, -maxang:maxang:num_bin*1j]
+    # grid_phi, grid_r = convert_to_polar(np.arcsin(grid_l*np.pi/180.),np.arcsin(grid_m*np.pi/180.))
+    grid_phi, grid_r = convert_to_polar(grid_l,grid_m)
+    
+
+    # print lala, np.shape(lala)
+    # grid_theta, grid_phi = np.mgrid[0:np.pi:2j**10, 0:2*np.pi:2j**10]
+    # plt.pcolormesh(grid_phi, grid_theta, np.abs(ift))
+    # plt.show()
+
     if pax!=0:
-      if len(pax)==2:
-        pax[0].imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-        pax[1].imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
-        k = np.power(uv_plane.real.sum(axis=1),0).sum()*1.05/2
-        pax[1].set_xlim(xedges[len(xedges)/2-k], xedges[len(xedges)/2+k])
-        pax[1].set_ylim(xedges[len(xedges)/2-k], xedges[len(xedges)/2+k])
+      if len(pax)==4:
+        # pax[0].pcolormesh(grid_phi, grid_r*180./np.pi, np.flipud(np.fliplr(np.abs(ift.T))))
+        pax[0].pcolormesh(grid_phi, grid_r, np.flipud(np.abs(ift.T)))
+        pax[1].imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        pax[2].imshow(np.abs(beam_ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        pax[3].imshow(np.abs(uv_plane), extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
       else:
-        cropped = np.abs(ift)
-        x,y = cropped.shape
-        cropped = cropped[x*3/8: - x*3/8, y*3/8: -y*3/8]
-        dx = 35 
-        dy = -35
-        return pax[0].imshow(cropped, extent=[maxang/4 + dx, -maxang/4 + dx, -maxang/4+ dy, maxang/4+ dy], interpolation='nearest')
+        return pax[1].imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
 
 
     else:
+      # plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
       plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
       plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
 

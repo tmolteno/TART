@@ -22,6 +22,9 @@ class Sun(radio_source.RadioSource):
   def __init__(self, jy = 1200.0):
     radio_source.RadioSource.__init__(self, jy = jy, width = 0.5)
 
+  def __repr__(self):
+    return 'SUN'
+
   ''' Compute ecliptic longitude of the Sun: latitude B is assumed to be zero'''
   def solar_longitude_to_RA(self, L, utc_date):  # require L to be an angle object!!!
     jd = tart_util.JulianDay(utc_date)

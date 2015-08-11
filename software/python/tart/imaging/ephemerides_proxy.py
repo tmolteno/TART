@@ -1,3 +1,5 @@
+
+
 import jsonrpclib
 import datetime
 import numpy as np
@@ -12,7 +14,7 @@ from tart.imaging import sp3_interpolator
 @Singleton
 class EphemeridesProxy:
 
-  def __init__(self, server='astro.elec.ac.nz'):
+  def __init__(self, server='kaka.elec.ac.nz'):
   #def __init__(self, server='172.16.1.96'):
     self.server = jsonrpclib.Server('http://%s:8876/rpc/gps' % server)
     self.cache = {}

@@ -23,7 +23,8 @@ class Skymodel(object):
       self.add_src(sun.Sun(jy=sun_str))
     if gps:
       for i in range(32):
-        self.add_src(gps_satellite.GpsSatellite(i+1, location.Dunedin, jy=sat_str))
+        if i not in [7,]:
+          self.add_src(gps_satellite.GpsSatellite(i+1, jy=sat_str))
     if known_cosmic:
       for src in radio_source.BrightSources:
         self.add_src(src)
@@ -109,7 +110,7 @@ class Skymodel(object):
       state_vector[i+(3*self.n_sources)] = source.width
     return state_vector
 
-  def true_image(self, settings, utc_date):
+  def true_image(self, location, utc_date):
     '''Plot current sky.'''
     import healpy as hp
     import matplotlib.pyplot as plt
@@ -119,7 +120,7 @@ class Skymodel(object):
     l_name = []
 
     for src in self.known_objects:
-      el, az = src.to_horizontal(settings.get_loc(), utc_date)
+      el, az = src.to_horizontal(location, utc_date)
       l_el.append(el.to_rad())
       l_az.append(az.to_rad())
       l_name.append('%s %1.1e' % (str(src), src.jansky(utc_date)))
