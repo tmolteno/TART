@@ -19,7 +19,7 @@ class SimulationSource:
     max_baseline = 100 # in m
     max_time = max_baseline/constants.V_LIGHT
     F_noise = 1.e6*np.power(np.pi,3)/2.9/3.7123*2.5
-    print F_noise
+    # print F_noise
     from tart.simulation import butter_filter
     noisetime = np.arange(-max_time, self.duration + max_time, 1./(F_noise))
     randnoise = np.random.uniform(-1., 1., len(noisetime))
