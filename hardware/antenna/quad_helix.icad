@@ -2,10 +2,9 @@
 // http://www.rish.kyoto-u.ac.jp/digitalbeacon/information/Building_QFH_Antenna_Guide.pdf
 freq = 1545.42;
 lambda = 300000000.0 / freq;
+lambda = lambda / 1000.0;
 
 module big_loop() {
-
-  lambda = lambda / 1000.0; // Millimeters
   height = 0.26*lambda;
   diameter = 0.173*lambda;
   leg_size = 0.560*lambda;
@@ -24,7 +23,6 @@ module big_loop() {
 }
 
 module small_loop() {
-  lambda = lambda / 1000.0; // Millimeters
   height = 0.238*lambda;
   diameter = 0.156*lambda;
   leg_size = 0.508*lambda;
@@ -32,7 +30,7 @@ module small_loop() {
 
   union(r=d) {
     rotate([90,0,0]) cylinder(d=diameter, h=diameter, center=true);
-    translate([0,0,height]) rotate([0,90,0]) cylinder(d=diameter, h=diameter, center=true);
+    translate([0,0,height]) rotate([90,0,0]) cylinder(d=diameter, h=diameter, center=true);
     linear_extrude (height = height, twist(h) = 180*h/height) {
       union ( r = d) {
         translate ([0, diameter/2]) circle (d);
@@ -44,6 +42,7 @@ module small_loop() {
 
 
 union() {
+  z = (0.26*lambda - 0.238*lambda);
   big_loop();
-  // small_loop();
+  translate([0,0,10]) small_loop();
 }
