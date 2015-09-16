@@ -6,5 +6,5 @@ simulate:
 	xnecview inverted_v.out
 
 implicit:
-	/home/tim/.cabal/bin/extopenscad -r 1.1 quad_helix.icad
+	/home/tim/.cabal/bin/extopenscad -r 1.0 quad_helix.icad
 	meshlab quad_helix.stl

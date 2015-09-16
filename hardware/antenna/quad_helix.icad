@@ -3,46 +3,63 @@
 freq = 1545.42;
 lambda = 300000000.0 / freq;
 lambda = lambda / 1000.0;
+big_height = 0.26*lambda;
+small_height =  0.238*lambda;
+wire_r = (0.0088 * lambda)/2;
 
 module big_loop() {
-  height = 0.26*lambda;
+  height = big_height;
   diameter = 0.173*lambda;
   leg_size = 0.560*lambda;
-  d = 0.0088 * lambda;
 
-  union(r=d) {
+  union(r=wire_r) {
     rotate([0,90,0]) cylinder(d=diameter, h=diameter, center=true);
     translate([0,0,height]) rotate([0,90,0]) cylinder(d=diameter, h=diameter, center=true);
     linear_extrude (height = height, twist(h) = 180*h/height) {
-      union ( r = d) {
-        translate ([diameter/2,0]) circle (d);
-        translate ([-diameter/2,0]) circle (d);
+      union ( r = wire_r) {
+        translate ([diameter/2,0]) circle (r=wire_r);
+        translate ([-diameter/2,0]) circle (r=wire_r);
       }
     }
   }
 }
 
 module small_loop() {
-  height = 0.238*lambda;
+  height = small_height;
   diameter = 0.156*lambda;
   leg_size = 0.508*lambda;
-  d = 0.0088 * lambda;
 
-  union(r=d) {
+  union(r=wire_r) {
     rotate([90,0,0]) cylinder(d=diameter, h=diameter, center=true);
     translate([0,0,height]) rotate([90,0,0]) cylinder(d=diameter, h=diameter, center=true);
     linear_extrude (height = height, twist(h) = 180*h/height) {
-      union ( r = d) {
-        translate ([0, diameter/2]) circle (d);
-        translate ([0, -diameter/2]) circle (d);
+      union ( r = wire_r) {
+        translate ([0, diameter/2]) circle (r=wire_r);
+        translate ([0, -diameter/2]) circle (r=wire_r);
       }
     }
   }
 }
 
+elevation=10;
+
+module quad_helix() {   
+  union() {
+    z = (big_height - 0.238*lambda)/2;
+    translate([0,0,elevation]) big_loop();
+    translate([0,0,elevation+z]) small_loop();
+    cylinder(r=5, h=(big_height+wire_r+elevation));
+  }
+}
+
+base_height = 1.6;
+
+module base() {
+ cylinder(r=50, h=base_height);
+}
 
 union() {
-  z = (0.26*lambda - 0.238*lambda);
-  big_loop();
-  translate([0,0,10]) small_loop();
+  translate([0,0,base_height]) quad_helix();
+  base();
 }
+  
