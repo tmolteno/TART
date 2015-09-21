@@ -67,7 +67,7 @@ class NelderMead:
         if (f[j] < f[smallest_vertex]):
           smallest_vertex = j
       # Test for convergence
-      test = abs(f[largest_vertex] - f[smallest_vertex])/(1e-8 + abs(f[largest_vertex]) + abs(f[smallest_vertex]))
+      test = abs(f[largest_vertex] - f[smallest_vertex])/(tolerance + abs(f[largest_vertex]) + abs(f[smallest_vertex]))
       if (test <= tolerance):
         break
   
