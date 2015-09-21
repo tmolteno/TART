@@ -67,7 +67,8 @@ class NelderMead:
         if (f[j] < f[smallest_vertex]):
           smallest_vertex = j
       # Test for convergence
-      if ((abs(f[largest_vertex] - f[smallest_vertex])/(abs(f[largest_vertex]) + abs(f[smallest_vertex]))) <= tolerance):
+      test = abs(f[largest_vertex] - f[smallest_vertex])/(1e-8 + abs(f[largest_vertex]) + abs(f[smallest_vertex]))
+      if (test <= tolerance):
         break
   
       # centroid_pt point
@@ -130,23 +131,24 @@ class NelderMead:
 
     return amoeba[smallest_vertex]
   
-def ftest(x):
-  d = np.array([0,1.,1.])
-  return np.sum((x-d)**2)
+if __name__ == '__main__':
+  def ftest(x):
+    d = np.array([0,1.,1.])
+    return np.sum((x-d)**2)
 
-def gen_simplex(point, epsilon):
-  ret = []
-  N = len(point)
-  ret.append(np.zeros(N))
-  for j in range(N):
-    x = np.zeros(N)
-    x[j] += epsilon
-    ret.append(x)
-  return np.array(ret)
+  def gen_simplex(point, epsilon):
+    ret = []
+    N = len(point)
+    ret.append(np.zeros(N))
+    for j in range(N):
+      x = np.zeros(N)
+      x[j] += epsilon
+      ret.append(x)
+    return np.array(ret)
 
 
-nm = NelderMead(ftest)
-start = gen_simplex([0.,0.1,0.],1)
-result = nm.solve(start, 0.000000000001)
+  nm = NelderMead(ftest)
+  start = gen_simplex([0.,0.1,0.],1)
+  result = nm.solve(start, tolerance=1e-3, max_iterations=1023)
 
-print result
+  print result
