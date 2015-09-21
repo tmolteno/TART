@@ -9,19 +9,19 @@
 import numpy as np
 
 # Point is an N-dimensional array
-np.array(N)
+# point = np.zeros(N)
 
 ''' Simplex is N+1 points
 '''
-array(n+1 points)
-  
+# np.array((N+1,N))
 
-class NelderMeade:
+
+class NelderMead:
   def __init__(self, f):
      self.fun = f
      self.function_eval_count = 0
 
-  def self.func(x):
+  def func(self,x):
     self.function_eval_count += 1
     return self.fun(x)
     
@@ -31,57 +31,63 @@ class NelderMeade:
   \param tolerance The tolerance of the solution. 
   \return The minimum
   '''
-  point<T,N> solve(const simplex<T,N>& start, const T& tolerance)
-  {
-    int max_iterations = 500        # maximum number of iterations
-    T reflection_coefficient(1)       # reflection coefficient
-    T contraction_coefficient = T(1)/2      # contraction coefficient
-    T expansion_coefficient = T(2)    # expansion coefficient
+  # point<T,N> solve(const simplex<T,N>& start, const T& tolerance)
+  def solve(self,start, tolerance, max_iterations = 500):
+    # start simplex and tolerance
+    # maximum number of iterations
+    # T reflection_coefficient(1)       # reflection coefficient
+    # T contraction_coefficient = T(1)/2      # contraction coefficient
+    # T expansion_coefficient = T(2)    # expansion coefficient
+
+    reflection_coefficient = 1.
+    contraction_coefficient = 1/2.
+    expansion_coefficient = 2.
   
-    int n = N
-    int iteration_count       # track the number of iterations
-    
-    simplex<T,N> amoeba = start   # holds vertices of simplex
-    T f[N + 1]            # The function values at the simplex points
+    # n = N
+    n = np.shape(start)[1]
+    amoeba = start   # holds vertices of simplex
+
+    # T f[N + 1]            # The function values at the simplex points
     
     # find the initial function values
-    for (int j=0j<=nj++):
+    f = np.zeros(n+1)
+    for j in range(n+1):
       f[j] = self.func(amoeba[j])
     
     
-    int smallest_vertex = 0# vertex with smallest value
-  
-    for (iteration_count=0iteration_count<max_iterationsiteration_count++):
-    {
-      int largest_vertex = 0# vertex with largest value
+    smallest_vertex = 0# vertex with smallest value
+    # track the number of iterations
+    for iteration_count in range(1,max_iterations+1):
+      largest_vertex = 0# vertex with largest value
       smallest_vertex = 0# vertex with smallest value
-      for (int j=0j<=nj++):
+      # for (int j=0j<=nj++):
+      for j in range(n+1):
         if (f[j] > f[largest_vertex]):
           largest_vertex = j
-        
         if (f[j] < f[smallest_vertex]):
           smallest_vertex = j
       # Test for convergence
       if ((abs(f[largest_vertex] - f[smallest_vertex])/(abs(f[largest_vertex]) + abs(f[smallest_vertex]))) <= tolerance):
         break
   
-      
-      point<T,N> centroid_pt# Centroid of all but largest vertex
-      for (int m=0m<=nm++):
+      # centroid_pt point
+      # point<T,N> centroid_pt # Centroid of all but largest vertex
+      centroid_pt = np.zeros(n)
+      for m in range(n+1):
         if (m != largest_vertex):
           centroid_pt = centroid_pt + amoeba[m]
-      
-      centroid_pt = centroid_pt / T(n)
-  
+      centroid_pt = centroid_pt / float(n)
+
+      # centroid_pt = centroid_pt / T(n)
   
       # reflect largest_vertex to new vertex reflect_point
-      point<T,N> reflect_point = centroid_pt + (centroid_pt - amoeba[largest_vertex])*reflection_coefficient
-      T f_reflect = self.func(reflect_point)
+      reflect_point = centroid_pt + (centroid_pt - amoeba[largest_vertex])*reflection_coefficient
+      f_reflect = self.func(reflect_point)
   
       if ( f_reflect <  f[smallest_vertex]):
         # We have the best point, now try expansion
-        point<T,N> expansion_point = centroid_pt + (reflect_point-centroid_pt)*expansion_coefficient
-        T f_expand = self.func(expansion_point)
+        expansion_point = centroid_pt + (reflect_point-centroid_pt)*expansion_coefficient
+        f_expand = self.func(expansion_point)
   
         if (f_expand < f_reflect):
           # expansion succeeded - replace the largest point
@@ -100,8 +106,8 @@ class NelderMeade:
       
       
       # Now try contraction
-      point<T,N> contraction_point
-      T f_contract
+      # point<T,N> contraction_point
+      # T f_contract
   
       contraction_point = centroid_pt + (reflect_point-centroid_pt)*contraction_coefficient
       f_contract = self.func(contraction_point)
@@ -112,31 +118,35 @@ class NelderMeade:
       
   
       # finally try a shrink step
-      T half = T(1)/2
-      for (int vertex=0vertex<=nvertex++):
+      half = 1/float(2) #T(1)/2
+      for vertex in range(n+1):
         if (vertex != smallest_vertex):
           amoeba[vertex] = amoeba[smallest_vertex] + (amoeba[vertex]-amoeba[smallest_vertex])*half
           f[vertex] = self.func(amoeba[vertex])
         
-      
-    std::cout << "Nelder-Meade Complete" << std::endl
-    std::cout << "Function Evaluations: " << ++function_eval_count << std::endl
-  
+    print "Nelder-Meade Complete"
+    print "Iteration Count: " + str(iteration_count)
+    print "Function Evaluations: " + str(self.function_eval_count)
+
     return amoeba[smallest_vertex]
   
 def ftest(x):
-  return x[0]
+  d = np.array([0,1.,1.])
+  return np.sum((x-d)**2)
 
 def gen_simplex(point, epsilon):
   ret = []
   N = len(point)
-  ret.push(np.zeros(N))
-  for j in range(0,N):
+  ret.append(np.zeros(N))
+  for j in range(N):
     x = np.zeros(N)
-    x[j] = epsilon
-    ret.push(x)
+    x[j] += epsilon
+    ret.append(x)
   return np.array(ret)
 
-start = Simplex([a,b,c])
-nm = NelderMeade(ftest, start, 0.1)
-result = nm.solve()
+
+nm = NelderMead(ftest)
+start = gen_simplex([0.,0.1,0.],1)
+result = nm.solve(start, 0.000000000001)
+
+print result
