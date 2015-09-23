@@ -10,7 +10,7 @@ def from_db(x):
 
 def n_seg(freq, length):
   wavelength = 3e8/(1e6*freq)
-  return int(math.ceil(55*length/wavelength)) + 1
+  return (2 * (int(math.ceil(77*length/wavelength))/2)) + 1
   
 def quad_helix(freq, base, length, angle, phi_start, phi_stop):
     #creation of a nec context
@@ -21,7 +21,8 @@ def quad_helix(freq, base, length, angle, phi_start, phi_stop):
     
     wavelength = 3.0e8/(1e6*freq)
     wire_r = (0.0088 * wavelength)/2;
-
+    wire_r = wire_r / 2
+    
     big_height = 0.26*wavelength;
     big_r = (0.173*wavelength)/2;
     big_leg_size = 0.560*wavelength;
@@ -34,40 +35,46 @@ def quad_helix(freq, base, length, angle, phi_start, phi_stop):
     ground_conductivity = 0.002
     ground_dielectric = 10
 
-    big_z = 0.1
+    big_z = 0.2
     diff_z = (big_height - small_height)/2
     
-    print diff_z
+    print "Wire Diameter %s" % (wire_r * 2)
+    print "Height Difference %s" % diff_z
     
+    helix_turns = 0.5
     
     # Big helix
+    big_helix_twist_length = big_height / helix_turns
     geo.wire(1, n_seg(freq, big_r), 0, 0, big_z, 0,  big_r, big_z, wire_r, 1.0, 1.0)
     geo.wire(1, n_seg(freq, big_r), 0, 0, big_z, 0, -big_r, big_z, wire_r, 1.0, 1.0)
-    geo.helix(big_height*2, big_height, 0,  big_r, 0,  big_r, wire_r, n_seg(freq,big_height), 1)
-    geo.helix(big_height*2, big_height, 0, -big_r, 0, -big_r, wire_r, n_seg(freq,big_height), 1)
+    geo.helix(big_helix_twist_length, big_height, 0,  big_r, 0,  big_r, wire_r, n_seg(freq,big_height), 1)
+    geo.helix(big_helix_twist_length, big_height, 0, -big_r, 0, -big_r, wire_r, n_seg(freq,big_height), 1)
     geo.wire(2, n_seg(freq, big_r), 0, 0, big_z + big_height, 0,  big_r, big_z + big_height, wire_r, 1.0, 1.0)
     geo.wire(2, n_seg(freq, big_r), 0, 0, big_z + big_height, 0, -big_r, big_z + big_height, wire_r, 1.0, 1.0)
     
     # Small helix
+    small_helix_twist_length = small_height / helix_turns
     small_z = big_z + diff_z
     
     geo.wire(3, n_seg(freq, small_r), 0, 0, small_z,  small_r, 0, small_z, wire_r, 1.0, 1.0)
     geo.wire(3, n_seg(freq, small_r), 0, 0, small_z, -small_r, 0, small_z, wire_r, 1.0, 1.0)
-    geo.helix(small_height*2, small_height,  small_r, 0,  small_r, 0, wire_r, n_seg(freq,small_height), 3)
-    geo.helix(small_height*2, small_height, -small_r, 0, -small_r, 0, wire_r, n_seg(freq,small_height), 3)
+    geo.helix(small_helix_twist_length, small_height,  small_r, 0,  small_r, 0, wire_r, n_seg(freq,small_height), 3)
+    geo.helix(small_helix_twist_length, small_height, -small_r, 0, -small_r, 0, wire_r, n_seg(freq,small_height), 3)
     
     geo.wire(4, n_seg(freq, small_r), 0, 0, small_z + small_height,  small_r, 0, small_z + small_height, wire_r, 1.0, 1.0)
     geo.wire(4, n_seg(freq, small_r), 0, 0, small_z + small_height, -small_r, 0, small_z + small_height, wire_r, 1.0, 1.0)
 
     # Join big to small at the top
-    #geo.wire(3, n_seg(freq, diff_z), 0, 0, small_z + small_height, 0,  0, big_z + big_height, wire_r, 1.0, 1.0)
+    geo.wire(5, 3, 0, 0, small_z + small_height, 0,  0, big_z + big_height, 0.001, 1.0, 1.0)
    
     
-    context.geometry_complete(0)
-    #context.gn_card(0,16,ground_dielectric,ground_conductivity,length,0.001,0,0)
-    #context.ld_card(5, 0, 0, 0, conductivity, 0.0, 0.0)
-    context.ex_card(0, 2, 1, 0, 0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0)
-    context.ex_card(0, 4, 1, 0, 0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0)
+    context.geometry_complete(1)
+    #context.gn_card(0, 4, ground_dielectric,ground_conductivity,0.05,0.001,0,0)
+    context.ld_card(5, 0, 0, 0, conductivity, 0.0, 0.0)
+    
+    # Feed the two loops out of phase (at the top)
+    context.ex_card(0, 5, 2, 0, 0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0)
+    
     context.fr_card(0, 1, freq, 0)
 
     n_theta = 90
@@ -81,7 +88,7 @@ def quad_helix(freq, base, length, angle, phi_start, phi_stop):
 
     ip = context.get_input_parameters(0)
     z = ip.get_impedance()
-
+    print z
     #get the radiation_pattern
     rp = context.get_radiation_pattern(0)
 
@@ -114,7 +121,7 @@ droop = to_radians(40.0)
 #print r_best
 #print l_best
 
-z, gains_db, thetas, phis = quad_helix(freq=1545.42, base=0.1, length=l_best, angle=droop,  phi_start=10, phi_stop=90)
+z, gains_db, thetas, phis = quad_helix(freq=1545.42, base=0.1, length=l_best, angle=droop,  phi_start=5, phi_stop=90)
 
 print z
 print reflection_coefficient(z,50)
@@ -126,7 +133,7 @@ ax.grid(True)
 
 ax.set_title("Gain at an elevation of 45 degrees", va='bottom')
 plt.savefig('RadiationPattern.png')
-#plt.legend()
+plt.legend()
 plt.show()
 
 
