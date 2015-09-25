@@ -15,7 +15,6 @@ import numpy as np
 '''
 # np.array((N+1,N))
 
-
 class NelderMead:
   def __init__(self, f):
      self.fun = f
@@ -25,35 +24,24 @@ class NelderMead:
     self.function_eval_count += 1
     return self.fun(x)
     
-  ''' A Nelder Meade minimization algorithm
+  ''' A Nelder Mead minimization algorithm
   \param func A function pointer to the function to be minimized
   \param start A starting simplex
   \param tolerance The tolerance of the solution. 
   \return The minimum
   '''
-  # point<T,N> solve(const simplex<T,N>& start, const T& tolerance)
   def solve(self,start, tolerance, max_iterations = 500):
-    # start simplex and tolerance
-    # maximum number of iterations
-    # T reflection_coefficient(1)       # reflection coefficient
-    # T contraction_coefficient = T(1)/2      # contraction coefficient
-    # T expansion_coefficient = T(2)    # expansion coefficient
-
+    # start simplex and tolerance, optinal set maximum number of iterations
     reflection_coefficient = 1.
-    contraction_coefficient = 1/2.
+    contraction_coefficient = 0.5
     expansion_coefficient = 2.
-  
-    # n = N
+
     n = np.shape(start)[1]
     amoeba = start   # holds vertices of simplex
-
-    # T f[N + 1]            # The function values at the simplex points
-    
     # find the initial function values
     f = np.zeros(n+1)
     for j in range(n+1):
       f[j] = self.func(amoeba[j])
-    
     
     smallest_vertex = 0# vertex with smallest value
     # track the number of iterations
@@ -67,12 +55,11 @@ class NelderMead:
         if (f[j] < f[smallest_vertex]):
           smallest_vertex = j
       # Test for convergence
-      test = abs(f[largest_vertex] - f[smallest_vertex])/(tolerance + abs(f[largest_vertex]) + abs(f[smallest_vertex]))
+      test = np.abs(f[largest_vertex] - f[smallest_vertex])/(tolerance+np.abs(f[largest_vertex]) + np.abs(f[smallest_vertex]))
       if (test <= tolerance):
+        print test,'convergence tolerance reached'
         break
   
-      # centroid_pt point
-      # point<T,N> centroid_pt # Centroid of all but largest vertex
       centroid_pt = np.zeros(n)
       for m in range(n+1):
         if (m != largest_vertex):
@@ -96,8 +83,6 @@ class NelderMead:
           f[largest_vertex] = f_expand
           continue
         
-      
-  
       # OK expansion did not succeed (or was not tried). Check to see if reflection is OK
       if (f_reflect < f[largest_vertex]):
         # replace the highest with the reflection point
@@ -105,11 +90,7 @@ class NelderMead:
         f[largest_vertex] = f_reflect
         continue
       
-      
       # Now try contraction
-      # point<T,N> contraction_point
-      # T f_contract
-  
       contraction_point = centroid_pt + (reflect_point-centroid_pt)*contraction_coefficient
       f_contract = self.func(contraction_point)
       if (f_contract < f[largest_vertex]):
@@ -117,15 +98,14 @@ class NelderMead:
         f[largest_vertex] = f_contract
         continue
       
-  
       # finally try a shrink step
-      half = 1/float(2) #T(1)/2
+      half = 0.5
       for vertex in range(n+1):
         if (vertex != smallest_vertex):
           amoeba[vertex] = amoeba[smallest_vertex] + (amoeba[vertex]-amoeba[smallest_vertex])*half
           f[vertex] = self.func(amoeba[vertex])
         
-    print "Nelder-Meade Complete"
+    print "Nelder-Mead Complete"
     print "Iteration Count: " + str(iteration_count)
     print "Function Evaluations: " + str(self.function_eval_count)
 
@@ -133,22 +113,22 @@ class NelderMead:
   
 if __name__ == '__main__':
   def ftest(x):
-    d = np.array([0,1.,1.])
+    d = np.array([0,1.,-1.])
     return np.sum((x-d)**2)
 
   def gen_simplex(point, epsilon):
+    from copy import deepcopy
     ret = []
     N = len(point)
-    ret.append(np.zeros(N))
+    ret.append(point)
     for j in range(N):
-      x = np.zeros(N)
+      x = deepcopy(point)
       x[j] += epsilon
       ret.append(x)
     return np.array(ret)
 
-
   nm = NelderMead(ftest)
-  start = gen_simplex([0.,0.1,0.],1)
-  result = nm.solve(start, tolerance=1e-3, max_iterations=1023)
+  start = gen_simplex([1000.,1.1,-1.],1)
+  result = nm.solve(start, tolerance=1e-5, max_iterations=10240)
 
   print result
