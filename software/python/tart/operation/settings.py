@@ -32,24 +32,42 @@ def from_dict(configdict):
   ret.bandwidth  = configdict['bandwidth']
   return ret
 
-
 class Settings:
 
   def __init__(self, filename = 0):
     if filename != 0:
       f = open(filename, 'r')
       data = f.read()
-      settings = json.loads(data)
       f.close()
-      self.name = settings['name']
-      self.array_orientation = settings['orientation']
-      self.locations = settings['locations']
-      self.num_antennas = settings['num_antenna']
-      self.num_baselines = self.num_antennas*(self.num_antennas-1)/2
-      self.geo = [settings['lat'], settings['lon'], settings['alt']]
-      self.ant_positions = self.calc_antenna_ENU()
-      self.frequency = settings['frequency']
-      self.bandwidth = settings['bandwidth']
+      self.from_json(data)
+
+  def from_json(self, data):
+    settings = json.loads(data)
+    self.name = settings['name']
+    self.array_orientation = settings['orientation']
+    self.locations = np.array(settings['locations'])
+    self.num_antennas = settings['num_antenna']
+    self.num_baselines = self.num_antennas*(self.num_antennas-1)/2
+    self.geo = [settings['lat'], settings['lon'], settings['alt']]
+    self.ant_positions = self.calc_antenna_ENU()
+    self.frequency = settings['frequency']
+    self.bandwidth = settings['bandwidth']
+
+  def to_json(self):
+    configdict = {}
+    configdict['name'] = self.name
+    configdict['orientation'] = self.array_orientation
+    configdict['locations'] = self.locations.tolist()
+    configdict['num_antenna'] = self.num_antennas
+    # configdict['num_baselines'] = self.num_baselines
+    configdict['lat'] = self.geo[0]
+    configdict['lon'] = self.geo[1]
+    configdict['alt'] = self.geo[2]
+    # configdict['ant_positions'] = self.ant_positions
+    configdict['frequency'] = self.frequency
+    configdict['bandwidth'] = self.bandwidth
+    json_str = json.dumps(configdict, cls=NumpyEncoder)
+    return json_str
 
   def get_lat(self):
     return self.geo[0]
@@ -69,14 +87,16 @@ class Settings:
       ant_positions.append(rotate_location(-self.array_orientation, x))
     return ant_positions
 
-  def plot_antenna_positions(self):
+  def plot_antenna_positions(self, c='blue', label=''):
     import matplotlib.pyplot as plt
+    import numpy as np
+    # plt.figure(figsize=(8,8))
     labels = ['Ant{0}'.format(i+1) for i in range(self.num_antennas)]
     ante = np.array([a[0] for a in self.ant_positions])
     antn = np.array([a[1] for a in self.ant_positions])
-    plt.scatter(ante, antn, marker = 'o', s = 20.)
-    # plt.xlim(-4, 4)
-    # plt.ylim(-4, 4)
+    plt.scatter(ante, antn, marker = 'o', s = 20., color=c, label=label)
+    plt.xlim(-2,2)
+    plt.ylim(-2,2)
     plt.xlabel('East [m]')
     plt.ylabel('North [m]')
 
