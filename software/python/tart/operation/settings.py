@@ -5,7 +5,7 @@
 # Tim Molteno 2013 tim@elec.ac.nz
 #
 import json
-
+import numpy as np
 from tart.util import angle
 from tart.imaging import location
 
@@ -66,8 +66,13 @@ class Settings:
     # configdict['ant_positions'] = self.ant_positions
     configdict['frequency'] = self.frequency
     configdict['bandwidth'] = self.bandwidth
-    json_str = json.dumps(configdict, cls=NumpyEncoder)
+    json_str = json.dumps(configdict)
     return json_str
+
+  def save(self, fname):
+    f=open(fname,"w")
+    f.write(self.to_json())
+    f.close()
 
   def get_lat(self):
     return self.geo[0]
