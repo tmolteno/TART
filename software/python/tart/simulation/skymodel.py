@@ -14,18 +14,26 @@ import numpy as np
 
 class Skymodel(object):
   """Ensemble of sources and their visibilities"""
-  def __init__(self, n_sources, sun_str=2.e5, sat_str=5.01e6, gps=True, thesun=False, known_cosmic=True):
+  def __init__(self, n_sources, location, sun_str=2.e5, sat_str=5.01e6, gps=True, thesun=False, known_cosmic=True):
     self.n_sources = n_sources
     self.source_list = []
     self.known_objects = []
     self.gps_ants = []
-    if thesun:
+    self.location = location
+
+    self.sun_str=sun_str
+    self.sat_str=sat_str
+    self.gps = gps
+    self.thesun = thesun
+    self.known_cosmic= known_cosmic
+
+    if self.thesun:
       self.add_src(sun.Sun(jy=sun_str))
-    if gps:
+    if self.gps:
       for i in range(32):
         if i not in [7,]:
-          self.add_src(gps_satellite.GpsSatellite(i+1, jy=sat_str))
-    if known_cosmic:
+          self.add_src(gps_satellite.GpsSatellite(i+1, location=self.location,jy=sat_str))
+    if self.known_cosmic:
       for src in radio_source.BrightSources:
         self.add_src(src)
     for _ in range(self.n_sources):
@@ -108,9 +116,33 @@ class Skymodel(object):
         state_vector[i+(1*self.n_sources)] = source.skyloc.dec.to_degrees()
       state_vector[i+(2*self.n_sources)] = source.flux
       state_vector[i+(3*self.n_sources)] = source.width
-    return state_vector
+    return [self.sun_str, self.sat_str, self.gps, self.thesun, self.known_cosmic, self.location, state_vector]
 
-  def true_image(self, location, utc_date):
+  def true_image(self, location, utc_date, nside):
+    '''Plot current sky.'''
+    import healpy as hp
+    import matplotlib.pyplot as plt
+
+    l_el = []
+    l_az = []
+
+    for src in self.known_objects:
+      el, az = src.to_horizontal(location, utc_date)
+      if (el.to_rad()>0):
+        l_el.append(el.to_rad())
+        l_az.append(az.to_rad())
+
+    m = np.zeros(hp.nside2npix(nside))*hp.UNSEEN
+    th = -np.array(l_el) + np.pi/2.
+    l_phi = -np.array(l_az)
+    pix = hp.pixelfunc.ang2pix(nside, th, l_phi)
+    m[pix] = 1 #[src.jansky(utc_date) for src in self.known_objects]
+    m = hp.sphtfunc.smoothing(m,fwhm=3.*np.pi/180.)
+    # plt.figure()
+    # hp.visufunc.orthview(m, title="", rot=(0,90,0), )
+    return m
+
+  def true_image_overlay(self, location, utc_date):
     '''Plot current sky.'''
     import healpy as hp
     import matplotlib.pyplot as plt
@@ -121,27 +153,35 @@ class Skymodel(object):
 
     for src in self.known_objects:
       el, az = src.to_horizontal(location, utc_date)
-      l_el.append(el.to_rad())
-      l_az.append(az.to_rad())
-      l_name.append('%s %1.1e' % (str(src), src.jansky(utc_date)))
+      if (el.to_rad()>0):
+        l_el.append(el.to_rad())
+        l_az.append(az.to_rad())
+        l_name.append(str(src))
+        # l_name.append('%s %2.2f %1.1e' % (str(src), el.to_degrees(), src.jansky(utc_date)))
 
-    nside = np.power(2, 5)
-    m = np.zeros(hp.nside2npix(nside))*hp.UNSEEN
+    # nside = np.power(2, 6)
+    # m = np.zeros(hp.nside2npix(nside))*hp.UNSEEN
     th = -np.array(l_el) + np.pi/2.
-    l_az = np.array(l_az)
-    pix = hp.pixelfunc.ang2pix(nside, th, l_az)
-    m[pix] = [src.jansky(utc_date) for src in self.known_objects]
-    plt.figure()
-    hp.mollview(m)
-    _ = [hp.projtext(i, j, n, lonlat=False) for i, j, n in zip(th, l_az, l_name)]
-    plt.show()
-    plt.figure()
-    plt.plot(l_el)
-    plt.show()
+    l_phi = -np.array(l_az)
+    # pix = hp.pixelfunc.ang2pix(nside, th, l_az)
+    # m[pix] = [src.jansky(utc_date) for src in self.known_objects]
+    # plt.figure()
+    # hp.mollview(m)
+    # hp.visufunc.orthview(m, title="", rot=(0,90,0), )
+    _ = [hp.projscatter(i, j, rot=(0,90,0)) for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projtext(i, j, n, rot=(0,90,0)) for i, j, n in zip(th, l_phi, l_name)]
 
-def from_state_vector(state_vector):
+    hp.projtext(np.pi/2, 0., 'N', rot=(0,90,0))
+    hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0))
+    hp.projtext(np.pi/2, -np.pi, 'S', rot=(0,90,0))
+    hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0))
+    
+
+
+def from_state_vector(state):
   '''Generate skymodel from state vector'''
-  psky = Skymodel(0)
+  sun_str, sat_str, gps, thesun, known_cosmic, location, state_vector = state
+  psky = Skymodel(0, location=location, sun_str=sun_str, sat_str=sat_str,gps=gps,known_cosmic=known_cosmic)
   psky.n_sources = len(state_vector)/4
   psky.source_list = []
 
