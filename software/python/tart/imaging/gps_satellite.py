@@ -13,13 +13,14 @@ import numpy as np
 class GpsSatellite(radio_source.RadioSource):
   '''This is a class describing a GPS satellite as observed from
      a particular location on Earth.'''
-  def __init__(self, sv, jy=2.5e6):
+  def __init__(self, sv, location, jy=2.5e6):
     radio_source.RadioSource.__init__(self, jy=jy)
     self.sv = sv
+    self.location = location
     self.ep = EphemeridesProxy.Instance()
 
   def __repr__(self):
-    return 'GPS SV'+str(self.sv)
+    return 'SV'+str(self.sv)
 
   def to_horizontal(self, location, utc_date):
     x, y, z = self.ep.get_sv_position(utc_date, self.sv)
@@ -27,10 +28,10 @@ class GpsSatellite(radio_source.RadioSource):
     r, el, az = location.ecef_to_horizontal(x, y, z)
     return el, az
 
-  def jansky(self, location, utc_date):
+  def jansky(self, utc_date):
     x, y, z = self.ep.get_sv_position(utc_date, self.sv)
     # x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
-    x0,y0,z0 = location.get_ecef()
+    x0,y0,z0 = self.location.get_ecef()
 
     r0 = np.array([x0,y0,z0]) - np.array([x,y,z])
     rs = - np.array([x,y,z])
@@ -48,7 +49,7 @@ class GpsSatellite(radio_source.RadioSource):
     EIRP = 27.0 * angle_off_nadir.cos() # dbW
 
     # Now estimate the flux, based on the distance r (in meters)
-    r, el, az = location.ecef_to_horizontal(x, y, z)
+    r, el, az = self.location.ecef_to_horizontal(x, y, z)
     free_space_loss_db = 10.0 * np.log10(4.0*np.pi*r**2)
 
     # Received power (over whole band)
@@ -62,22 +63,22 @@ class GpsSatellite(radio_source.RadioSource):
     rx_jansky = 10.0**(rx_power_dbWHz / 10.0 + 26.0)
     return rx_jansky
 
-  def radec(self, location, utc_date): # Get the RA and Declination
+  def radec(self, utc_date): # Get the RA and Declination
     x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
-    r, el, az = location.ecef_to_horizontal(x, y, z)
-    ra, dec = location.horizontal_to_equatorial(utc_date, el, az)
+    r, el, az = self.location.ecef_to_horizontal(x, y, z)
+    ra, dec = self.location.horizontal_to_equatorial(utc_date, el, az)
     return ra, dec
 
   def velocity(self, utc_date):
     return self.ep.get_sv_velocity(utc_date, self.sv)
 
-  def doppler(self, location, utc_date):
+  def doppler(self, utc_date):
     dt = datetime.timedelta(seconds=0.5)
     p0 = self.ep.get_sv_position_sp3(utc_date - dt, self.sv)
     p1 = self.ep.get_sv_position_sp3(utc_date + dt, self.sv)
 
-    range1 = np.linalg.norm(p0 - location.get_ecef())
-    range2 = np.linalg.norm(p1 - location.get_ecef())
+    range1 = np.linalg.norm(p0 - self.location.get_ecef())
+    range2 = np.linalg.norm(p1 - self.location.get_ecef())
 
     assert type(range1) is np.float64, "range1 is not an float: %r" % range1
     assert type(range2) is np.float64, "range2 is not an float: %r" % range2
