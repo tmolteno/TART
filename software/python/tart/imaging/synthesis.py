@@ -130,13 +130,16 @@ class Synthesis_Imaging(object):
       ra, dec = self.phase_center.radec(v.timestamp)
       v.rotate(skyloc.Skyloc(ra, dec))
       for i in range(v.config.num_baselines):
-        a0 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][0]])
-        a1 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][1]])
-        uu, vv, ww = antennas.get_UVW(a0, a1, v.timestamp, ra, dec)
-        uu_l.append(uu/constants.L1_WAVELENGTH)
-        vv_l.append(vv/constants.L1_WAVELENGTH)
-        ww_l.append(ww/constants.L1_WAVELENGTH)
-        vis_l.append(v.v[i])
+        if ((21 not in v.baselines[i]) and (22 not in v.baselines[i]) and (23 not in v.baselines[i])):
+          a0 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][0]])
+          a1 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][1]])
+          uu, vv, ww = antennas.get_UVW(a0, a1, v.timestamp, ra, dec)
+          uu_l.append(uu/constants.L1_WAVELENGTH)
+          vv_l.append(vv/constants.L1_WAVELENGTH)
+          ww_l.append(ww/constants.L1_WAVELENGTH)
+          vis_l.append(v.v[i])
+        # else:
+        #   print 'Skipped', v.baselines[i]
 
     uu_a = np.array(uu_l)
     vv_a = np.array(vv_l)
