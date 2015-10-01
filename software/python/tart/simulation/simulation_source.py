@@ -19,18 +19,12 @@ class SimulationSource:
     max_baseline = 100 # in m
     max_time = max_baseline/constants.V_LIGHT
     F_noise = 1.e6*np.power(np.pi,3)/2.9/3.7123*2.5
-    # print F_noise
+
     from tart.simulation import butter_filter
     noisetime = np.arange(-max_time, self.duration + max_time, 1./(F_noise))
     randnoise = np.random.uniform(-1., 1., len(noisetime))
-    # bw = 2.5e6
-    # cf = 1.28e6
-    # randnoise = butter_filter.butter_bandpass_filter(randnoise, 1.e3, 2.5e6, F_noise, 5)
-    # randnoise = np.cos(np.pi*2.*np.random.uniform(0,5e4,len(noisetime))*noisetime)
-    self.f = interpolate.InterpolatedUnivariateSpline(noisetime, self.amplitude*randnoise)
-    # self.f = lambda t: np.cos(np.pi*2.*1.092e3*t)
 
-    # self.f = interpolate.interp1d(noisetime, self.amplitude*randnoise)
+    self.f = interpolate.InterpolatedUnivariateSpline(noisetime, self.amplitude*randnoise)
 
   def s_baseband(self, t):
     return self.f(t)
