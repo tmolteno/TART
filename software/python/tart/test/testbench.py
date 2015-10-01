@@ -20,9 +20,9 @@ Examples:
 '''
 import unittest
 # from tart.imaging.test.all import *
-#from tart.operation.test.all import *
+# from tart.operation.test.all import *
 from tart.simulation.test.all import *
-#from tart.util.test.all import *
+# from tart.util.test.all import *
 
 if __name__ == '__main__':
     unittest.main()

@@ -14,11 +14,6 @@ from tart.simulation import antennas
 from tart.util import angle
 from tart.imaging import correlator
 
-
-from tart.simulation import simulate_visibility
-
-# from tart.simulation.simulate_visibility import *
-
 def relative_diff(l1, l2):
   return (l1-l2)/np.sqrt(np.power(l1, 2) + np.power(l2, 2))
 
@@ -28,10 +23,9 @@ class TestSimulatedVisibility(unittest.TestCase):
 
     self.config = settings.Settings('test_telescope_config.json')
     self.utc_date = datetime.datetime.utcnow()
-    self.sample_duration = 4e-4
     self.sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = self.sample_duration)]
     self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.ant_positions]
-    self.rad = radio.Max2769B(sample_duration = self.sample_duration, noise_level=[0. for _ in self.config.ant_positions])
+    self.rad = radio.Max2769B(noise_level=[0. for _ in self.config.ant_positions])
     self.ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.config.num_antennas)]
     self.cor = correlator.Correlator()
 
@@ -67,9 +61,11 @@ class TestSimulatedVisibility(unittest.TestCase):
 
 class TestTelescope(unittest.TestCase):
   def setUp(self):
-    rad = radio.Max2769B(sample_duration = 1e-5, noise_level=0.)
+
+    # rad = radio.Max2769B(noise_level=0.)
     utc_date = datetime.datetime.utcnow()
     self.settings = settings.Settings('test_telescope_config.json')
+    rad = radio.Max2769B(noise_level=[0. for _ in self.settings.ant_positions])
     sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = rad.sample_duration)]
     ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.settings.num_antennas)]
     ants = [antennas.Antenna(self.settings.get_loc(), pos) for pos in self.settings.ant_positions]

@@ -1,5 +1,5 @@
 import unittest
-from tart.imaging.angle import *
+from tart.util.angle import *
 
 class TestAngle(unittest.TestCase):
 

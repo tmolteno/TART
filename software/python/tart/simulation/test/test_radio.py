@@ -20,7 +20,7 @@ class TestMax2769B(unittest.TestCase):
     self.config = settings.Settings('test_telescope_config.json')
     # noiselvls =  0.1.*np.ones(config.num_antennas)
     noiselvls =  0. * np.ones(self.config.num_antennas)
-    self.rad = Max2769B(sample_duration = 1.0e-3, noise_level = noiselvls)
+    self.rad = Max2769B(noise_level = noiselvls)
     self.sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.), elevation = angle.from_dms(90.), sample_duration = self.rad.sample_duration)]
     self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.ant_positions]
     self.ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.config.num_antennas)]
