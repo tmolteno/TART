@@ -49,19 +49,11 @@ class Observation:
     cPickle.dump(d, save_ptr, cPickle.HIGHEST_PROTOCOL)
     save_ptr.close()
 
-  def get_antenna_old(self, ant_num):
-    if (ant_num > self.config.num_antennas):
-      raise "Antenna %d doesn't exist" % ant_num
-    mask = (1 << (ant_num-1))
-    ant_data = ((self.data & mask) / mask)
-    ret_data = np.array(ant_data, dtype=np.int)
-    ret = ret_data*2.0 - 1.0 # Convert to bipolar binary
-    return ret
 
   def get_antenna(self, ant_num):
-    if (ant_num > self.config.num_antennas):
+    if (ant_num >= self.config.num_antennas):
       raise "Antenna %d doesn't exist" % ant_num
-    return self.data[ant_num-1] # Return to bipolar binary
+    return self.data[ant_num] # Return to bipolar binary
 
   def get_sampling_rate(self):
     ref_freq = 16.368e6  # See the Max 2769 data sheet. We operate in one of the predefined modes

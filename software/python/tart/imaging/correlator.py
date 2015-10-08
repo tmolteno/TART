@@ -26,7 +26,7 @@ class Correlator:
     '''Return an array of baselines and visibilities from this observation'''
     v = []
     baselines = []
-    data = [obs.get_antenna(i+1)-np.mean(obs.get_antenna(i+1)) for i in range(obs.config.num_antennas)]
+    data = [obs.get_antenna(i)-np.mean(obs.get_antenna(i)) for i in range(obs.config.num_antennas)]
     data_hilb = [-np.sign(fftw_hilbert(d)) for d in data]
     for i in range(0, obs.config.num_antennas):
       for j in range(i+1, obs.config.num_antennas):
