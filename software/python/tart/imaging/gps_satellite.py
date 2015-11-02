@@ -22,15 +22,18 @@ class GpsSatellite(radio_source.RadioSource):
   def __repr__(self):
     return 'SV'+str(self.sv)
 
-  def to_horizontal(self, location, utc_date):
+  def sv_position(self, utc_date, sv):
     x, y, z = self.ep.get_sv_position(utc_date, self.sv)
     # x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
+    return x,y,z
+ 
+  def to_horizontal(self, location, utc_date):
+    x, y, z = self.sv_position(utc_date, self.sv)
     r, el, az = location.ecef_to_horizontal(x, y, z)
     return el, az
 
   def jansky(self, utc_date):
-    x, y, z = self.ep.get_sv_position(utc_date, self.sv)
-    # x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
+    x, y, z = self.sv_position(utc_date, self.sv)
     x0,y0,z0 = self.location.get_ecef()
 
     r0 = np.array([x0,y0,z0]) - np.array([x,y,z])
@@ -64,7 +67,7 @@ class GpsSatellite(radio_source.RadioSource):
     return rx_jansky
 
   def radec(self, utc_date): # Get the RA and Declination
-    x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
+    x, y, z = self.sv_position(utc_date, self.sv)
     r, el, az = self.location.ecef_to_horizontal(x, y, z)
     ra, dec = self.location.horizontal_to_equatorial(utc_date, el, az)
     return ra, dec
@@ -74,11 +77,11 @@ class GpsSatellite(radio_source.RadioSource):
 
   def doppler(self, utc_date):
     dt = datetime.timedelta(seconds=0.5)
-    p0 = self.ep.get_sv_position_sp3(utc_date - dt, self.sv)
-    p1 = self.ep.get_sv_position_sp3(utc_date + dt, self.sv)
+    p0 = self.sv_position(utc_date - dt, self.sv)
+    p1 = self.sv_position(utc_date + dt, self.sv)
 
-    range1 = np.linalg.norm(p0 - self.location.get_ecef())
-    range2 = np.linalg.norm(p1 - self.location.get_ecef())
+    range1 = np.linalg.norm(np.array(p0) - self.location.get_ecef())
+    range2 = np.linalg.norm(np.array(p1) - self.location.get_ecef())
 
     assert type(range1) is np.float64, "range1 is not an float: %r" % range1
     assert type(range2) is np.float64, "range2 is not an float: %r" % range2
