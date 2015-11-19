@@ -159,7 +159,7 @@ class EmpiricalAntenna(AntennaModel):
       if interpolate=='increasing_neighborhood':
         self.interp_gain = lambda el, az: hp_interpolator(self.i_map, el, az, n_pix)
       else:
-        alms = hp.sphtfunc.map2alm(hp.ma(self.i_map), lmax=lmax, mmax=mmax, iter=10, pol=False, regression=False)
+        alms = hp.sphtfunc.map2alm(hp.ma(self.i_map), lmax=lmax, mmax=mmax, iter=10, pol=False)
         print hp.Alm.getlmax(len(alms), mmax=mmax)
         norm_map = hp.sphtfunc.alm2map(alms, np.power(2, nside_exp_syn), lmax=lmax, mmax=mmax, pixwin=False, pol=False)
         norm_map_min = norm_map.min()
@@ -178,6 +178,9 @@ class EmpiricalAntenna(AntennaModel):
     f.write(ret)
     f.close()
 
+  # def db_connect(self):
+  #   return db_connect()
+
   @classmethod
   def from_json(self, filename):
     import json
@@ -194,11 +197,11 @@ class EmpiricalAntenna(AntennaModel):
   @classmethod
   def from_db(self, antenna_num, db_file=None):
     ret = EmpiricalAntenna(antenna_num)
-    conn = db_connect()
+    conn = db_connect(db_file)
     c = conn.cursor()
-    #c.execute(sql("SELECT el, az, correlation FROM gps_signals WHERE (antenna=%(ph)s)"), (antenna_num, ))
+    c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s)"), (antenna_num, ))
     #c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND el>15 AND correlation<6 AND date<%(ph)s"), (antenna_num, "2013-11-25"))
-    c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND date<%(ph)s"), (antenna_num, "2013-11-25"))
+    # c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND date<%(ph)s"), (antenna_num, "2013-11-25"))
     pval = c.fetchall()
     print len(pval), ' entries'
     points = []
