@@ -178,6 +178,49 @@ class Skymodel(object):
     
 
 
+  def get_vis(self, cor, rad, ants, ant_models, config, timestamp, mode='simp'):
+    return __get_vis_helper__(self, cor, rad, ants, ant_models, config, timestamp, mode=mode)
+
+  def get_vis_parallel(self, cor, rad, ants, ant_models, config, t_list, mode='simp'):
+    from multiprocessing import Pool
+    p = Pool()
+    resultList = []
+    ret_vis_list = []
+    try:
+      for t in t_list:
+        resultList.append(p.apply_async(__get_vis_helper__, (self, cor, rad, ants, ant_models, config, t, mode)))
+      p.close
+      p.join
+      for thread in resultList:
+        x2 = thread.get()
+        if (x2 != None):
+          ret_vis_list.append(x2)
+      p.terminate()
+    except KeyboardInterrupt:
+      print 'control-c pressed'
+      p.terminate()
+    return ret_vis_list
+
+def __get_vis_helper__(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp'):
+  from tart.simulation import antennas
+  np.random.seed()
+  sources = sky.gen_photons_per_src( timestamp, radio=rad, config=config, n_samp=1)
+  # sources = sky.gen_n_photons(config, timestamp, radio=rad, n=10)
+  # print 'debug: total flux',  np.array([src.jansky(timestamp) for src in self.known_objects]).sum()
+  # print 'debug: total amplitude', np.array([src.amplitude for src in sources]).sum()
+
+  if mode == 'full':
+    ant_sigs_full = antennas.antennas_signal(ants, ant_models, sources, rad.timebase)
+    obs = rad.get_full_obs(ant_sigs_full, timestamp, config = config)
+    v = cor.correlate(obs)
+  elif mode == 'mini':
+    v = antennas.antennas_simp_vis(ants, ant_models, sources, timestamp, config, rad.noise_level)
+  else:
+    ant_sigs_simp = antennas.antennas_simplified_signal(ants, ant_models, sources, rad.baseband_timebase, rad.int_freq)
+    obs = rad.get_simplified_obs(ant_sigs_simp, timestamp, config = config)
+    v = cor.correlate(obs)
+  return v
+
 def from_state_vector(state):
   '''Generate skymodel from state vector'''
   sun_str, sat_str, gps, thesun, known_cosmic, location, state_vector = state
