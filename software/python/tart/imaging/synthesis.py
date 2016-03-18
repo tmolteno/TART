@@ -72,12 +72,12 @@ exit\n" % (fits_file, o, o, o)
   return difmap
 
 class Synthesis_Imaging(object):
-  def __init__(self, vis_list):
-    self.vis_list = vis_list
+  def __init__(self, cal_vis_list):
+    self.cal_vis_list = cal_vis_list
     # vt = self.vis_list[int(len(self.vis_list)/2)]
-    vt = self.vis_list[0]
+    vt = self.cal_vis_list[0]
     # print vt.config
-    ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(90.))
+    ra, dec = vt.get_config().get_loc().horizontal_to_equatorial(vt.get_timestamp(), angle.from_dms(90.), angle.from_dms(90.))
     # ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
     # dec = angle.from_dms(-90.00)
     # print 'phasecenter:', ra, dec
@@ -87,7 +87,7 @@ class Synthesis_Imaging(object):
   def get_uvfits(self):
     os.system("rm out.uvfits")
     fits_name = "out.uvfits" #self.fname + ".uvfits"
-    gen = uvfitsgenerator.UVFitsGenerator(copy.deepcopy(self.vis_list), self.phase_center)
+    gen = uvfitsgenerator.UVFitsGenerator(copy.deepcopy(self.cal_vis_list), self.phase_center)
     gen.write(fits_name)
     difcmd = get_difmap(fits_name)
     f = open('difmap_cmds', 'w')
@@ -99,9 +99,8 @@ class Synthesis_Imaging(object):
   def get_difmap_movie(self, base_index, frames):
     os.system("rm out.uvfits")
     fits_name = "out.uvfits" #self.fname + ".uvfits"
-    aaa = self.vis_list
     for i_frame in frames:
-      v_list = copy.deepcopy(aaa)
+      v_list = copy.deepcopy(self.cal_vis_list)
       vis_indexes = base_index + i_frame
       vis_part = [v_list[ni] for ni in vis_indexes]
       
@@ -109,7 +108,7 @@ class Synthesis_Imaging(object):
       # self.phase_center = radio_source.CosmicSource(ra, dec)
       # print ra, dec
 
-      uvgen = uvfitsgenerator.UVFitsGenerator(vis_part, self.phase_center)
+      uvgen = uvfitsgenerator.UVFitsGenerator(vis_part, self.phase_center) # FIXME
       uvgen.write(fits_name)
       difcmd = get_difmap(fits_name, i_frame)
       f = open('difmap_cmds', 'w')
@@ -118,28 +117,30 @@ class Synthesis_Imaging(object):
       os.system("difmap < difmap_cmds")
       os.system("rm out.uvfits")
 
-  def get_uvplane(self, vis_list, num_bin = 1600, nw = 36, grid_kernel_r_pixels=0.5, use_kernel=True):
+  def get_uvplane(self, num_bin = 1600, nw = 36, grid_kernel_r_pixels=0.5, use_kernel=True, flagged=None):
     pixels_per_wavelength = num_bin/(nw*2.)
 
     uu_l = []
     vv_l = []
     ww_l = []
     vis_l = []
-    for v in copy.deepcopy(vis_list):
+    for cal_vis in copy.deepcopy(self.cal_vis_list):
       # print 'above horizon?', self.phase_center.to_horizontal(v.config.get_loc(),v.timestamp)
-      ra, dec = self.phase_center.radec(v.timestamp)
-      v.rotate(skyloc.Skyloc(ra, dec))
-      for i in range(v.config.num_baselines):
-        if ((21 not in v.baselines[i]) and (22 not in v.baselines[i]) and (23 not in v.baselines[i])):
-          a0 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][0]])
-          a1 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][1]])
-          uu, vv, ww = antennas.get_UVW(a0, a1, v.timestamp, ra, dec)
-          uu_l.append(uu/constants.L1_WAVELENGTH)
-          vv_l.append(vv/constants.L1_WAVELENGTH)
-          ww_l.append(ww/constants.L1_WAVELENGTH)
-          vis_l.append(v.v[i])
-        # else:
-        #   print 'Skipped', v.baselines[i]
+      ra, dec = self.phase_center.radec(cal_vis.get_timestamp())
+      # v.rotate(skyloc.Skyloc(ra, dec))
+      # for i in range(v.config.num_baselines):
+      c = cal_vis.get_config()
+      ant_p = c.ant_positions
+      loc = c.get_loc()
+      # print '#baselines unflagged:', len(cal_vis.get_baselines())
+      for bl in cal_vis.get_baselines():
+        a0 = antennas.Antenna(loc, ant_p[bl[0]])
+        a1 = antennas.Antenna(loc, ant_p[bl[1]])
+        uu, vv, ww = antennas.get_UVW(a0, a1, cal_vis.get_timestamp(), ra, dec)
+        uu_l.append(uu/constants.L1_WAVELENGTH)
+        vv_l.append(vv/constants.L1_WAVELENGTH)
+        ww_l.append(ww/constants.L1_WAVELENGTH)
+        vis_l.append(cal_vis.get_visibility(bl[0],bl[1]))
 
     uu_a = np.array(uu_l)
     vv_a = np.array(vv_l)
@@ -224,11 +225,11 @@ class Synthesis_Imaging(object):
     # plt.show()
     return (n_arr, xedges, yedges) #uv_plane
 
-  def get_image(self, nw = 30, num_bin = 2**7, pax=0):
+  def get_image(self, nw = 30, num_bin = 2**7, pax=0, ex_ax=0):
 
-    uv_plane, xedges, yedges = self.get_uvplane(self.vis_list, num_bin, nw, use_kernel=True)
-    plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
-    plt.show()
+    uv_plane, xedges, yedges = self.get_uvplane(num_bin, nw, use_kernel=True)
+    # plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
+    # plt.show()
     maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
     # print 'maxang', maxang
     # beam_ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(1-uv_plane.mask)))
@@ -259,6 +260,15 @@ class Synthesis_Imaging(object):
 
     else:
       # plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-      plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-      plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
+      # plt.figure()
+      if ex_ax==0:
+        # return plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        return ift
+      else:
+        ex_ax.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        return ift
+
+      # plt.figure()
+      # plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
 

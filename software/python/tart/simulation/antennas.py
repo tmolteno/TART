@@ -43,7 +43,8 @@ def antennas_simplified_signal(antennas, ant_models, sources, timebase, fc0):
         dt = get_geo_delay_horizontal(a0, ant, src.elevation, src.azimuth)
         #print 'delay', dt, dt*constants.V_LIGHT
         #print "Delay %s %g" % (antenna_locations[ant], dt)
-        s_bb += src.s_baseband(timebase + dt) * gain * np.exp(-1j*src.omega*dt)
+        # s_bb += src.s_baseband(timebase + dt) * gain * np.exp(-1j*src.omega*dt)
+        s_bb += src.s_baseband(timebase + dt) * gain * np.exp(1j*src.omega*dt)
     ant_sigs.append(s_bb) # * int_sig
   #print 'antennas is;\n', antennas
   return np.array(ant_sigs) # signal in baseband

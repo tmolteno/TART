@@ -43,12 +43,13 @@ def decode_baseline(bl):
 
 class UVFitsGenerator(object):
   ''' Generate a UVFITS file for a target source from an array of visibilities.'''
-  def __init__(self, v_array, phase_center): # FIXME
+  def __init__(self, cal_vis, phase_center): # FIXME
     # self.phase_center_elevation = phase_center_elevation
     # self.phase_center_azimuth = phase_center_azimuth
-    self.v_array = v_array
-    self.n_baselines = len(v_array[0].baselines)
-    self.loc = v_array[0].config.get_loc() # Assume the array isn't moving
+
+    self.v_array = cal_vis_list
+    self.n_baselines = len(self.v_array[0].baselines)
+    self.loc = self.v_array[0].get_config().get_loc() # Assume the array isn't moving
     self.phase_center = phase_center
 
   def gen_vis_table(self):
@@ -59,8 +60,9 @@ class UVFitsGenerator(object):
       ra, dec = self.phase_center.radec(v.timestamp)
       v.rotate(skyloc.Skyloc(ra, dec))
       for i in range(v.config.num_baselines):
-        a0 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][0]])
-        a1 = antennas.Antenna(v.config.get_loc(), v.config.ant_positions[v.baselines[i][1]])
+        c = v.get_config()
+        a0 = antennas.Antenna(c.get_loc(), c.ant_positions[v.baselines[i][0]])
+        a1 = antennas.Antenna(c.get_loc(), c.ant_positions[v.baselines[i][1]])
         baseline = {}
         uu, vv, ww = antennas.get_UVW(a0, a1, v.timestamp, ra, dec)
         # print (np.array(a1.enu) - np.array(a0.enu)), uu, vv, ww
