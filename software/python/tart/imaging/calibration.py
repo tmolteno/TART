@@ -26,6 +26,12 @@ class CalibratedVisibility(object):
             self.flagged_baselines.append(bl)
             # print 'flagged', vis_idx, bl
 
+    def flag_antenna(self, i):
+        for bl in self.vis.baselines:
+          if i in bl:
+            [a,b] = bl
+            self.flag_baseline(a,b)
+
     def get_visibility(self,i,j):
         bl = [i,j]
         if bl in self.flagged_baselines:
@@ -96,5 +102,41 @@ if __name__ == '__main__':
 
   print cal_vis.get_baselines()
   print len(cal_vis.get_baselines())
+
+
+  def gen_tile_vis_list(tile_no,vis):
+    for v in vis:
+      cal_vis_list = []
+      cv = calibration.CalibratedVisibility(v)
+      for i in [0,1,2,3]:
+        if i!=tile_no:
+          cv.flag_tile(i)
+      
+    # cv.flag_tile(1)
+    # cv.flag_tile(2)
+    # cv.flag_tile(3)
+    # cv.leave_parallel_baselines(ns_threshold=0.1)
+    # cv.flag_baseline(0,5)
+    cal_vis_list.append(cv)
+    return cal_vis_list
+
+  # t0_vis_list = gen_tile_vis_list(0,vis)
+  # t1_vis_list = gen_tile_vis_list(1,vis)
+  # t2_vis_list = gen_tile_vis_list(2,vis)
+  # t3_vis_list = gen_tile_vis_list(3,vis)
+  # fig, axarr = plt.subplots(2,2,sharex=True,sharey=True)
+  # t_list = [t0_vis_list, t1_vis_list, t2_vis_list, t3_vis_list]
+  # ift_arr = []
+  # for i, ax in enumerate(axarr.ravel()):
+  #   syn_tile = synthesis.Synthesis_Imaging(t_list[i])
+  #   ift = syn_tile.get_image(nw=50,num_bin=2**9,ex_ax=ax)
+  #   ift_arr.append(ift)
+
+
+  # ift_arr = np.array(ift_arr)
+  # print ift_arr
+  # plt.figure()
+  # plt.imshow(np.prod(np.abs(ift_arr),axis=0))
+
 
   # print cal_vis.get_visibility(0,1)
