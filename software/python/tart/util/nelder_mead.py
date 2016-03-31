@@ -15,15 +15,20 @@ import numpy as np
 '''
 # np.array((N+1,N))
 
+
 class NelderMead:
-  def __init__(self, f):
+  def __init__(self, f, debug=False):
      self.fun = f
+     self.debug = debug
      self.function_eval_count = 0
 
   def func(self,x):
     self.function_eval_count += 1
-    return self.fun(x)
-    
+    y = self.fun(x)
+    if self.debug:
+        print y
+    return y
+
   ''' A Nelder Mead minimization algorithm
   \param func A function pointer to the function to be minimized
   \param start A starting simplex
@@ -42,13 +47,12 @@ class NelderMead:
     f = np.zeros(n+1)
     for j in range(n+1):
       f[j] = self.func(amoeba[j])
-    
-    smallest_vertex = 0# vertex with smallest value
-    # track the number of iterations
+
+
     for iteration_count in range(1,max_iterations+1):
+
       largest_vertex = 0# vertex with largest value
       smallest_vertex = 0# vertex with smallest value
-      # for (int j=0j<=nj++):
       for j in range(n+1):
         if (f[j] > f[largest_vertex]):
           largest_vertex = j
@@ -66,18 +70,19 @@ class NelderMead:
           centroid_pt = centroid_pt + amoeba[m]
       centroid_pt = centroid_pt / float(n)
 
-      # centroid_pt = centroid_pt / T(n)
-  
       # reflect largest_vertex to new vertex reflect_point
       reflect_point = centroid_pt + (centroid_pt - amoeba[largest_vertex])*reflection_coefficient
       f_reflect = self.func(reflect_point)
   
       if ( f_reflect <  f[smallest_vertex]):
         # We have the best point, now try expansion
+
         expansion_point = centroid_pt + (reflect_point-centroid_pt)*expansion_coefficient
         f_expand = self.func(expansion_point)
   
         if (f_expand < f_reflect):
+          if (self.debug):
+            print("Improved by reflection and expansion %f" % f_expand)
           # expansion succeeded - replace the largest point
           amoeba[largest_vertex] = expansion_point
           f[largest_vertex] = f_expand
@@ -85,6 +90,8 @@ class NelderMead:
         
       # OK expansion did not succeed (or was not tried). Check to see if reflection is OK
       if (f_reflect < f[largest_vertex]):
+        if (self.debug):
+          print("Improved by reflection %f" % f_reflect)
         # replace the highest with the reflection point
         amoeba[largest_vertex] = reflect_point
         f[largest_vertex] = f_reflect
@@ -99,10 +106,13 @@ class NelderMead:
         continue
       
       # finally try a shrink step
+      if (self.debug):
+        print "Doing a shrink step"
       half = 0.5
+      center = amoeba[smallest_vertex]
       for vertex in range(n+1):
         if (vertex != smallest_vertex):
-          amoeba[vertex] = amoeba[smallest_vertex] + (amoeba[vertex]-amoeba[smallest_vertex])*half
+          amoeba[vertex] = center + (amoeba[vertex]-center)*half
           f[vertex] = self.func(amoeba[vertex])
         
     print "Nelder-Mead Complete"
