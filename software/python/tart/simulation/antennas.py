@@ -25,7 +25,8 @@ def antennas_signal(antennas, ant_models, sources, timebase):
     ret[i, :] = working
   return ret
 
-def antennas_simplified_signal(antennas, ant_models, sources, timebase, fc0):
+def antennas_simplified_signal(antennas, ant_models, sources, timebase, fc0, seed=None):
+  np.random.seed(seed=seed)
   debug = False
   # create an array to hold the signal seen by each antenna (in rows)
   ant_sigs = []

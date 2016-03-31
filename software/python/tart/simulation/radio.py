@@ -114,7 +114,8 @@ class Max2769B(Radio):
     return obs
 
 
-  def get_simplified_obs(self, baseband_signals, utc_date, config):
+  def get_simplified_obs(self, baseband_signals, utc_date, config, seed=None):
+    np.random.seed(seed=seed)
     s_signals = []
     if_sig = baseband_signals * np.exp(-2.0j * np.pi * self.int_freq * self.baseband_timebase)
 
