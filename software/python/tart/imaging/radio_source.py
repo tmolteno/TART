@@ -34,6 +34,16 @@ class RadioSource:
     return el, az
 
 
+class ArtificialSource(RadioSource):
+  def __init__(self, location, utc_time, el, az, jy=1000.0, width=0.001):
+    RadioSource.__init__(self, jy, width)
+    a_az = angle.from_dms(az)
+    a_el = angle.from_dms(el)
+    self.skyloc = skyloc.Skyloc.from_horizontal(location, utc_time, a_el,a_az)
+  def radec(self, utc_date): # Get the RA and Declination
+    return self.skyloc.ra, self.skyloc.dec
+
+
 class CosmicSource(RadioSource):
   '''
   A cosmic radio source at fixed equatorial coordinates.
