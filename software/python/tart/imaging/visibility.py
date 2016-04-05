@@ -93,8 +93,17 @@ def Visibility_Save(vis, filename):
     
 def Visibility_Load(filename):
     load_data = open(filename, 'rb')
-    ret = pickle.load(load_data)
+    vis_list = pickle.load(load_data)
     load_data.close()
+    err_count = 0
+    ret = []
+    for v in vis_list:
+      if type(v) is tuple:
+        err_count += 1
+      else:
+        ret.append(v)
+    if err_count>0:
+      print 'Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)
     return ret
 
 def Visibility_Lsq(vis1, vis2):

@@ -10,6 +10,9 @@ class CalibratedVisibility(object):
         self.flagged_baselines = []
         self.phase_offset = np.zeros(self.get_config().num_antennas)
 
+    def set_config(self, config):
+        self.vis.config = config
+
     def get_config(self):
         return self.vis.config
 
@@ -42,9 +45,16 @@ class CalibratedVisibility(object):
     def get_baselines(self):
         return [bl for bl in self.vis.baselines if bl not in self.flagged_baselines]
 
+    def get_baseline_lengths(self):
+        pos = self.get_config().ant_positions
+        ret = []
+        for bln in self.get_baselines():
+            [i,j] = bln
+            ret.append([pos[j][0]-pos[i][0],pos[j][1]-pos[i][1]])
+        return np.abs(ret)
+
     def set_flagged_baselines(self, flaged_list):
         self.flagged_baselines = flaged_list
-
 
     def flag_tile(self, tile_idx):
         for i in range(0,self.get_config().num_antennas):
@@ -54,11 +64,11 @@ class CalibratedVisibility(object):
 
     def leave_parallel_baselines(self,ew_threshold=10,ns_threshold=10):
         ant_positions = np.array(self.get_config().ant_positions)
-        for i in range(0,self.get_config().num_antennas):
-            for j in range(i+1,self.get_config().num_antennas):
-                diff = ant_positions[i]-ant_positions[j]
-                if np.abs(diff[0])>ew_threshold or np.abs(diff[1])>ns_threshold:
-                    self.flag_baseline(i,j)
+        for bln in self.get_baselines():
+          [i,j] = bln
+          diff = ant_positions[i]-ant_positions[j]
+          if np.abs(diff[0])>ew_threshold or np.abs(diff[1])>ns_threshold:
+              self.flag_baseline(i,j)
 
     def set_phase_offset(self,i, val):
         self.phase_offset[i] = val
