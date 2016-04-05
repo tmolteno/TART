@@ -192,12 +192,12 @@ ignore-mixin-members=yes
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis. It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=
+ignored-modules= numpy, numpy.random
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set). This supports can work
 # with qualified names.
-ignored-classes=
+ignored-classes= numpy, numpy.random
 
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
@@ -215,7 +215,7 @@ logging-modules=logging
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=100
+max-line-length=150
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$
@@ -238,7 +238,7 @@ max-module-lines=1000
 indent-string='  '
 
 # Number of spaces of indent required inside a hanging  or continued line.
-indent-after-paren=4
+indent-after-paren=2
 
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
 expected-line-ending-format=
