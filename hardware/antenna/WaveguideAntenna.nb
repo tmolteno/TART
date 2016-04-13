@@ -1,0 +1,619 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='WolframEngine 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       160,          7]
+NotebookDataLength[     19536,        610]
+NotebookOptionsPosition[     16623,        506]
+NotebookOutlinePosition[     16961,        521]
+CellTagsIndexPosition[     16918,        518]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["TART Circular Waveguide Antenna", "Title",
+ CellChangeTimes->{{3.669511491059759*^9, 3.6695115045440207`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"ClearAll", "[", "\"\<Global`*\>\"", "]"}]], "Input",
+ CellChangeTimes->{{3.669514600698509*^9, 3.669514615338417*^9}, {
+   3.6695148449794483`*^9, 3.669514867978663*^9}, 3.6695149528257437`*^9, 
+   3.6695765407691383`*^9}],
+
+Cell[CellGroupData[{
+
+Cell["Circular Waveguide Modes", "Chapter",
+ CellChangeTimes->{{3.6695765497682657`*^9, 3.669576561770612*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"ClearAll", "[", "p", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"p", "[", 
+    RowBox[{"0", ",", "1"}], "]"}], " ", ":=", " ", "2.405"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"p", "[", 
+    RowBox[{"1", ",", "1"}], "]"}], " ", ":=", " ", "3.832"}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.669575713076269*^9, 3.669575736057892*^9}, 
+   3.669575901080846*^9, {3.6695759559044123`*^9, 3.669575975192854*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"ClearAll", "[", "pdash", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"pdash", "[", 
+    RowBox[{"0", ",", "1"}], "]"}], " ", ":=", " ", "3.832"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"pdash", "[", 
+    RowBox[{"1", ",", "1"}], "]"}], " ", ":=", " ", "1.841"}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.669575713076269*^9, 3.669575736057892*^9}, 
+   3.669575901080846*^9, {3.6695759559044123`*^9, 3.669575975192854*^9}, {
+   3.669576307043564*^9, 3.669576340991061*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"ClearAll", "[", "lambdaTM", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"lambdaTM", "[", 
+    RowBox[{"a_", ",", " ", "n_", ",", "m_"}], "]"}], ":=", " ", 
+   RowBox[{"2", " ", "Pi", " ", 
+    RowBox[{"a", " ", "/", " ", 
+     RowBox[{"p", "[", 
+      RowBox[{"n", ",", "m"}], "]"}]}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClearAll", "[", "lambdaTE", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"lambdaTE", "[", 
+    RowBox[{"a_", ",", " ", "n_", ",", "m_"}], "]"}], ":=", " ", 
+   RowBox[{"2", " ", "Pi", " ", 
+    RowBox[{"a", " ", "/", " ", 
+     RowBox[{"pdash", "[", 
+      RowBox[{"n", ",", "m"}], "]"}]}]}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.669575679462676*^9, 3.6695757107754297`*^9}, {
+  3.669575744603819*^9, 3.669575779879549*^9}, {3.669575870013112*^9, 
+  3.669575904329042*^9}, {3.66957636859807*^9, 3.6695763902841473`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"lambdaTE", "[", 
+  RowBox[{
+   RowBox[{"d", "/", "2"}], ",", " ", "0", ",", " ", "1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.66957591189145*^9, 3.6695759213293858`*^9}, {
+  3.6695764079975*^9, 3.669576414616346*^9}}],
+
+Cell[BoxData[
+ RowBox[{"0.8198310682645599`", " ", "d"}]], "Output",
+ CellChangeTimes->{
+  3.669575922271317*^9, 3.6695759785760307`*^9, {3.669576409092964*^9, 
+   3.669576415024722*^9}, 3.66957792023846*^9, 3.66957803860385*^9, 
+   3.669578858066772*^9, 3.6695791399690313`*^9}]
+}, Open  ]],
+
+Cell["The wavenumber", "Text",
+ CellChangeTimes->{{3.669576894747871*^9, 3.669576897908206*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"c", " ", "=", " ", 
+   RowBox[{"2.997", " ", 
+    RowBox[{"10", "^", "8"}]}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.669511594761149*^9, 3.66951160192988*^9}, {
+  3.669511719095405*^9, 3.669511737835595*^9}, {3.6695782245585117`*^9, 
+  3.669578228629315*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Clear", "[", "FreqToLambda", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"FreqToLambda", "[", "f_", "]"}], " ", ":=", " ", 
+   RowBox[{"c", " ", "/", " ", "f"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.669578250153131*^9, 3.669578281507444*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Clear", "[", "WavenumToLambda", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"WavenumToLambda", "[", "k_", "]"}], "  ", ":=", " ", 
+   RowBox[{"2", " ", 
+    RowBox[{"Pi", " ", "/", " ", "k"}]}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.669578077730052*^9, 3.669578100302082*^9}, {
+  3.669578131641947*^9, 3.669578201522493*^9}, {3.66957828755122*^9, 
+  3.6695782916135*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Clear", "[", "LambdaToWavenum", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"LambdaToWavenum", "[", "lambda_", "]"}], " ", ":=", " ", 
+   RowBox[{"2", " ", 
+    RowBox[{"Pi", " ", "/", " ", "lambda"}]}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.669578380649328*^9, 3.669578405003812*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Clear", "[", "WavenumToFreq", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"WavenumToFreq", "[", "k_", "]"}], "  ", ":=", 
+  RowBox[{"c", " ", "/", " ", 
+   RowBox[{"WavenumToLambda", "[", "k", "]"}]}]}]}], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"f", " ", "=", " ", 
+  RowBox[{"1.5745", " ", 
+   RowBox[{"10", "^", "9"}]}]}]], "Input",
+ CellChangeTimes->{{3.6695770164538307`*^9, 3.669577026429471*^9}}],
+
+Cell[BoxData["1.5745`*^9"], "Output",
+ CellChangeTimes->{3.669577027228497*^9, 3.669577920713374*^9, 
+  3.669578039483473*^9, 3.66957886009335*^9, 3.6695791420101748`*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"lambda", " ", "=", " ", 
+  RowBox[{"FreqToLambda", "[", "f", "]"}]}]], "Input",
+ CellChangeTimes->{{3.669577004702598*^9, 3.6695770141798563`*^9}, {
+  3.669578306623026*^9, 3.669578320249538*^9}}],
+
+Cell[BoxData["0.1903461416322642`"], "Output",
+ CellChangeTimes->{3.669577030022382*^9, 3.669577921246195*^9, 
+  3.669578039527381*^9, 3.669578320968649*^9, 3.669578860342499*^9, 
+  3.669579142054707*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"k0", " ", "=", " ", 
+  RowBox[{"LambdaToWavenum", "[", "lambda", "]"}]}]], "Input",
+ CellChangeTimes->{{3.669578353300508*^9, 3.669578353900792*^9}, {
+  3.669578414342143*^9, 3.669578417476843*^9}}],
+
+Cell[BoxData["33.009260147328185`"], "Output",
+ CellChangeTimes->{{3.669578418544943*^9, 3.669578423424491*^9}, 
+   3.669578860591221*^9, 3.6695791422747297`*^9}]
+}, Open  ]],
+
+Cell["The mode cutoff wavenumbers are kcTM and kcTE", "Text",
+ CellChangeTimes->{{3.669578521424632*^9, 3.669578537659477*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"ClearAll", "[", "kcTM", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"kcTM", "[", 
+    RowBox[{"n_", ",", "m_"}], "]"}], " ", ":=", " ", 
+   RowBox[{
+    RowBox[{"p", "[", 
+     RowBox[{"n", ",", "m"}], "]"}], " ", "/", " ", "a"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClearAll", "[", "kcTE", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"kcTE", "[", 
+    RowBox[{"n_", ",", "m_"}], "]"}], " ", ":=", " ", 
+   RowBox[{
+    RowBox[{"pdash", "[", 
+     RowBox[{"n", ",", "m"}], "]"}], " ", "/", " ", "a"}]}], ";"}]}], "Input",\
+
+ CellChangeTimes->{{3.6695767664591303`*^9, 3.669576778342154*^9}, 
+   3.669576840110217*^9, {3.6695768781552153`*^9, 3.669576879155197*^9}, {
+   3.669576913535143*^9, 3.669576944331649*^9}, {3.669577059467165*^9, 
+   3.669577069723496*^9}, {3.669577764773147*^9, 3.669577837836781*^9}, {
+   3.669578429481813*^9, 3.66957843142389*^9}}],
+
+Cell["\<\
+The TM and TE modes have weve numbers given by betaTM, betaTE. k0 is the \
+wavenumber in free space.\
+\>", "Text",
+ CellChangeTimes->{{3.669576673936016*^9, 3.6695766926190767`*^9}, {
+  3.669576723110488*^9, 3.6695767306952457`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"ClearAll", "[", "betaTM", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"betaTM", "[", 
+    RowBox[{"n_", ",", "m_"}], "]"}], " ", ":=", " ", 
+   RowBox[{"Sqrt", "[", 
+    RowBox[{
+     RowBox[{"k0", "^", "2"}], " ", "-", " ", 
+     RowBox[{
+      RowBox[{"kcTM", "[", 
+       RowBox[{"n", ",", "m"}], "]"}], "^", "2"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClearAll", "[", "betaTE", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"betaTE", "[", 
+    RowBox[{"n_", ",", "m_"}], "]"}], " ", ":=", " ", 
+   RowBox[{"Sqrt", "[", 
+    RowBox[{
+     RowBox[{"k0", "^", "2"}], " ", "-", " ", 
+     RowBox[{
+      RowBox[{"kcTE", "[", 
+       RowBox[{"n", ",", "m"}], "]"}], "^", "2"}]}], "]"}]}], ";"}]}], "Input",\
+
+ CellChangeTimes->{{3.669576051118682*^9, 3.669576074933331*^9}, {
+  3.669576129332652*^9, 3.6695762201374598`*^9}, {3.66957643254845*^9, 
+  3.669576452590369*^9}, {3.669577853416688*^9, 3.669577897716001*^9}, {
+  3.6695784468840733`*^9, 3.6695784529630136`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"betaTM", "[", 
+  RowBox[{"0", ",", "1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.669577928209366*^9, 3.669577931303588*^9}}],
+
+Cell[BoxData[
+ SqrtBox[
+  RowBox[{"1089.6112554739886`", "\[VeryThinSpace]", "-", 
+   FractionBox["5.784024999999999`", 
+    SuperscriptBox["a", "2"]]}]]], "Output",
+ CellChangeTimes->{3.669577932455614*^9, 3.669578040589068*^9, 
+  3.669578457217255*^9, 3.669578861208495*^9, 3.669579142839506*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"betaTM", "[", 
+  RowBox[{"1", ",", "1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.669577973323845*^9, 3.669577975980976*^9}}],
+
+Cell[BoxData[
+ SqrtBox[
+  RowBox[{"1089.6112554739886`", "\[VeryThinSpace]", "-", 
+   FractionBox["14.684223999999999`", 
+    SuperscriptBox["a", "2"]]}]]], "Output",
+ CellChangeTimes->{3.6695779766940317`*^9, 3.669578040841456*^9, 
+  3.6695784605501957`*^9, 3.669578861462941*^9, 3.669579143063003*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"betaTE", "[", 
+  RowBox[{"0", ",", "1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.669577979986775*^9, 3.66957798257386*^9}}],
+
+Cell[BoxData[
+ SqrtBox[
+  RowBox[{"1089.6112554739886`", "\[VeryThinSpace]", "-", 
+   FractionBox["14.684223999999999`", 
+    SuperscriptBox["a", "2"]]}]]], "Output",
+ CellChangeTimes->{3.669577983256104*^9, 3.669578041117131*^9, 
+  3.6695784627643127`*^9, 3.6695788617271*^9, 3.669579143286413*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"betaTE", "[", 
+  RowBox[{"1", ",", "1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.669577985345305*^9, 3.669577988630718*^9}}],
+
+Cell[BoxData[
+ SqrtBox[
+  RowBox[{"1089.6112554739886`", "\[VeryThinSpace]", "-", 
+   FractionBox["3.389281`", 
+    SuperscriptBox["a", "2"]]}]]], "Output",
+ CellChangeTimes->{3.6695779891992197`*^9, 3.6695780438306293`*^9, 
+  3.669578469056293*^9, 3.669578862164472*^9, 3.6695791435096283`*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["The TE11 Mode Antenna", "Chapter",
+ CellChangeTimes->{{3.669576601438939*^9, 3.669576612032196*^9}, 
+   3.669578688583259*^9}],
+
+Cell["\<\
+TE11 Mode cutoff, frequency must be greater than this to propagate.\
+\>", "Text",
+ CellChangeTimes->{{3.669511511421227*^9, 3.6695115196143303`*^9}, {
+  3.669511560987856*^9, 3.669511562099423*^9}, {3.6695787336200447`*^9, 
+  3.669578757783589*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"fTE11", " ", "=", " ", 
+  RowBox[{"WavenumToFreq", "[", 
+   RowBox[{"kcTE", "[", 
+    RowBox[{"1", ",", "1"}], "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.669578595651183*^9, 3.6695786483139257`*^9}}],
+
+Cell[BoxData[
+ FractionBox["8.781337379458416`*^7", "a"]], "Output",
+ CellChangeTimes->{{3.6695786377073517`*^9, 3.6695786490190163`*^9}, 
+   3.6695788622114363`*^9, 3.669579143953663*^9}]
+}, Open  ]],
+
+Cell["\<\
+TM01 Mode cutoff (Frequency must be greater than this to propagate)\
+\>", "Text",
+ CellChangeTimes->{{3.6695115530424957`*^9, 3.669511557275159*^9}, {
+  3.669578760583406*^9, 3.66957877096952*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"fTM01", " ", "=", " ", 
+  RowBox[{"WavenumToFreq", "[", 
+   RowBox[{"kcTM", "[", 
+    RowBox[{"0", ",", "1"}], "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.669578670725507*^9, 3.669578675646371*^9}, 
+   3.669578795141309*^9}],
+
+Cell[BoxData[
+ FractionBox["1.1471546114936167`*^8", "a"]], "Output",
+ CellChangeTimes->{3.66957867639611*^9, 3.669578796329093*^9, 
+  3.669578862484634*^9, 3.669579144002269*^9}]
+}, Open  ]],
+
+Cell["\<\
+To find the range of waveguide radius,a, that will satisfy the condition that \
+the TE11 mode propagate, and the TM01 mode does not propagate\
+\>", "Text",
+ CellChangeTimes->{{3.669579062492894*^9, 3.669579094690716*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Reduce", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"fTE11", " ", "<", " ", "f"}], ",", " ", 
+     RowBox[{"fTM01", " ", ">", " ", "f"}], ",", 
+     RowBox[{"f", ">", "0"}], ",", 
+     RowBox[{"a", ">", "0"}]}], "}"}], ",", "a", ",", "Reals"}], 
+  "]"}]], "Input",
+ CellChangeTimes->{{3.66957887723022*^9, 3.669578908801445*^9}, {
+  3.669579011392146*^9, 3.669579049765459*^9}, {3.669579107868278*^9, 
+  3.669579125304442*^9}, {3.6695791591300783`*^9, 3.6695791639558077`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"Reduce", "::", "ratnz"}], "MessageName"], 
+  RowBox[{
+  ":", " "}], "\<\"Reduce was unable to solve the system with inexact \
+coefficients. The answer was obtained by solving a corresponding exact system \
+and numericizing the result.\"\>"}]], "Message", "MSG",
+ CellChangeTimes->{{3.669578900904895*^9, 3.6695789097534122`*^9}, {
+  3.669579017940599*^9, 3.669579051449844*^9}, {3.669579115303772*^9, 
+  3.66957916594596*^9}}],
+
+Cell[BoxData[
+ RowBox[{"0.0557722285135498`", "<", "a", "<", 
+  "0.07285834306088387`"}]], "Output",
+ CellChangeTimes->{{3.669578901448167*^9, 3.669578910309635*^9}, {
+  3.6695790179500217`*^9, 3.669579051456484*^9}, {3.669579115542254*^9, 
+  3.669579165952744*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Waveguide Frequency", "Section",
+ CellChangeTimes->{{3.669511910051442*^9, 3.66951191324437*^9}}],
+
+Cell["\<\
+The TE11 mode is propagating.We need the phase velocity of the propagating \
+mode in order to determine the wavelength. The waveguide should be longer \
+than 3/4 wavelengths\
+\>", "Text",
+ CellChangeTimes->{{3.669513574141383*^9, 3.669513582214563*^9}, {
+  3.6695140205694113`*^9, 3.669514038480568*^9}, {3.66951443236651*^9, 
+  3.669514527928453*^9}, {3.669579190600391*^9, 3.669579191575193*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"b11", " ", "=", " ", 
+  RowBox[{
+   RowBox[{"betaTE", "[", 
+    RowBox[{"1", ",", "1"}], "]"}], " ", "/.", " ", 
+   RowBox[{"a", "\[Rule]", " ", "0.0625"}]}]}]], "Input",
+ CellChangeTimes->{{3.669579198768078*^9, 3.669579217602127*^9}, {
+  3.669579261016623*^9, 3.6695792623360233`*^9}}],
+
+Cell[BoxData["14.898164970021934`"], "Output",
+ CellChangeTimes->{{3.6695792075068607`*^9, 3.669579218249874*^9}, 
+   3.6695792628409863`*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"k11", " ", "=", " ", 
+  RowBox[{"WavenumToFreq", "[", "b11", "]"}]}]], "Input",
+ CellChangeTimes->{{3.669579248588985*^9, 3.669579286762539*^9}}],
+
+Cell[BoxData["7.106236444138596`*^8"], "Output",
+ CellChangeTimes->{{3.669579266150975*^9, 3.6695792872947493`*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"lambda11", " ", "=", " ", 
+  RowBox[{"FreqToLambda", "[", "k11", "]"}]}]], "Input",
+ CellChangeTimes->{{3.669579279191043*^9, 3.669579327303632*^9}}],
+
+Cell[BoxData["0.4217422293163354`"], "Output",
+ CellChangeTimes->{{3.669579293403634*^9, 3.6695793316536207`*^9}}]
+}, Open  ]],
+
+Cell["\<\
+Ideally the waveguide should be longer than 0.75 wavelengths.\
+\>", "Text",
+ CellChangeTimes->{{3.66957935646673*^9, 3.669579366692526*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"lambda11", " ", "*", " ", "0.75"}]], "Input",
+ CellChangeTimes->{{3.669512824514018*^9, 3.669512827862254*^9}, 
+   3.6695793720908422`*^9}],
+
+Cell[BoxData["0.3163066719872516`"], "Output",
+ CellChangeTimes->{
+  3.669512828191464*^9, 3.669513681109256*^9, 3.669514807723214*^9, {
+   3.6695148394145107`*^9, 3.669514876432537*^9}, 3.669514964875805*^9, 
+   3.669577927751541*^9, 3.669578048249346*^9, 3.669578867121553*^9, 
+   3.669579146018437*^9, 3.669579373387536*^9}]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{808, 867},
+WindowMargins->{{Automatic, 170}, {Automatic, 55}},
+FrontEndVersion->"10.3 for Linux ARM (32-bit) (January 18, 2016)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[582, 22, 116, 1, 96, "Title"],
+Cell[701, 25, 246, 4, 32, "Input"],
+Cell[CellGroupData[{
+Cell[972, 33, 111, 1, 69, "Chapter"],
+Cell[1086, 36, 501, 14, 77, "Input"],
+Cell[1590, 52, 563, 15, 77, "Input"],
+Cell[2156, 69, 954, 23, 99, "Input"],
+Cell[CellGroupData[{
+Cell[3135, 96, 242, 5, 32, "Input"],
+Cell[3380, 103, 279, 5, 32, "Output"]
+}, Open  ]],
+Cell[3674, 111, 96, 1, 33, "Text"],
+Cell[3773, 114, 296, 7, 32, "Input"],
+Cell[4072, 123, 309, 7, 55, "Input"],
+Cell[4384, 132, 440, 11, 55, "Input"],
+Cell[4827, 145, 354, 9, 55, "Input"],
+Cell[5184, 156, 267, 7, 55, "Input"],
+Cell[CellGroupData[{
+Cell[5476, 167, 180, 4, 32, "Input"],
+Cell[5659, 173, 171, 2, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5867, 180, 220, 4, 32, "Input"],
+Cell[6090, 186, 204, 3, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[6331, 194, 222, 4, 32, "Input"],
+Cell[6556, 200, 162, 2, 32, "Output"]
+}, Open  ]],
+Cell[6733, 205, 127, 1, 33, "Text"],
+Cell[6863, 208, 969, 25, 99, "Input"],
+Cell[7835, 235, 243, 5, 55, "Text"],
+Cell[8081, 242, 1086, 30, 99, "Input"],
+Cell[CellGroupData[{
+Cell[9192, 276, 148, 3, 32, "Input"],
+Cell[9343, 281, 298, 6, 64, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[9678, 292, 148, 3, 32, "Input"],
+Cell[9829, 297, 303, 6, 64, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10169, 308, 147, 3, 32, "Input"],
+Cell[10319, 313, 299, 6, 64, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10655, 324, 148, 3, 32, "Input"],
+Cell[10806, 329, 295, 6, 64, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11150, 341, 132, 2, 69, "Chapter"],
+Cell[11285, 345, 259, 5, 33, "Text"],
+Cell[CellGroupData[{
+Cell[11569, 354, 228, 5, 32, "Input"],
+Cell[11800, 361, 188, 3, 49, "Output"]
+}, Open  ]],
+Cell[12003, 367, 207, 4, 33, "Text"],
+Cell[CellGroupData[{
+Cell[12235, 375, 252, 6, 32, "Input"],
+Cell[12490, 383, 179, 3, 49, "Output"]
+}, Open  ]],
+Cell[12684, 389, 231, 4, 55, "Text"],
+Cell[CellGroupData[{
+Cell[12940, 397, 518, 12, 32, "Input"],
+Cell[13461, 411, 474, 10, 58, "Message"],
+Cell[13938, 423, 266, 5, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[14241, 433, 103, 1, 67, "Section"],
+Cell[14347, 436, 408, 7, 55, "Text"],
+Cell[CellGroupData[{
+Cell[14780, 447, 311, 7, 32, "Input"],
+Cell[15094, 456, 142, 2, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[15273, 463, 169, 3, 32, "Input"],
+Cell[15445, 468, 116, 1, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[15598, 474, 173, 3, 32, "Input"],
+Cell[15774, 479, 114, 1, 32, "Output"]
+}, Open  ]],
+Cell[15903, 483, 150, 3, 33, "Text"],
+Cell[CellGroupData[{
+Cell[16078, 490, 163, 3, 32, "Input"],
+Cell[16244, 495, 327, 5, 32, "Output"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
