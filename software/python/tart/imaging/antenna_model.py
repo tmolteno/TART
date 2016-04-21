@@ -6,28 +6,31 @@ import healpy as hp
 from tart.imaging import location
 from tart.util import angle
 
-def db_connect(db_file=None):
-  import sqlite3
-  import psycopg2
-  global paramstyle
-  if (db_file != None):
-    conn = sqlite3.connect(db_file, timeout=60)
+import sqlite3
+import psycopg2
+
+
+def db_connect(dbfile=None, conn_parameter="host='<hostname>' dbname=tart2 user=<USER> password='<PASSWORD>'", table="gps_signals"):
+  if (dbfile != None):
+    conn = sqlite3.connect(dbfile, timeout=60)
     paramstyle = sqlite3.paramstyle
   else:
-    conn = psycopg2.connect("host='tags.elec.ac.nz' dbname=tags user=rails password='kaka'")
+    conn = psycopg2.connect(conn_parameter)
     paramstyle = psycopg2.paramstyle
-  return conn
-
-def sql(cmd):
-  global paramstyle
-  if paramstyle == 'qmark':
-      ph = "?"
-  elif paramstyle == 'pyformat':
-      ph = "%s"
-  else:
-      raise Exception("Unexpected paramstyle: %s" % paramstyle)
-
-  return cmd % { "ph" : ph }
+  # Create table
+  c = conn.cursor()
+  c.execute("CREATE TABLE IF NOT EXISTS "+table+" (date timestamp, sv INTEGER, antenna INTEGER, el REAL, az REAL, correlation REAL)")
+  conn.commit()
+  def sql_(cmd, paramstyle):
+    if paramstyle == 'qmark':
+        ph = "?"
+    elif paramstyle == 'pyformat':
+        ph = "%s"
+    else:
+        raise Exception("Unexpected paramstyle: %s" % paramstyle)
+    return cmd % { "ph" : ph }
+  sql = lambda cmd: sql_(cmd, paramstyle)
+  return conn, sql
 
 class AntennaModel:
   '''Base class for all Antenna models.'''
@@ -178,9 +181,6 @@ class EmpiricalAntenna(AntennaModel):
     f.write(ret)
     f.close()
 
-  # def db_connect(self):
-  #   return db_connect()
-
   @classmethod
   def from_json(self, filename):
     import json
@@ -195,11 +195,11 @@ class EmpiricalAntenna(AntennaModel):
     return ret
 
   @classmethod
-  def from_db(self, antenna_num, db_file=None):
+  def from_db(self, antenna_num, db_file=None, table='gps_signals', conn_parameter="host='<hostname>' dbname=tart2 user=<USER> password='<PASSWORD>'"):
     ret = EmpiricalAntenna(antenna_num)
-    conn = db_connect(db_file)
+    conn, sql = db_connect(db_file, conn_parameter=conn_parameter, table=table)
     c = conn.cursor()
-    c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s)"), (antenna_num, ))
+    c.execute(sql("SELECT el, az, correlation, date FROM "+table+" WHERE (antenna=%(ph)s)"), (antenna_num, ))
     #c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND el>15 AND correlation<6 AND date<%(ph)s"), (antenna_num, "2013-11-25"))
     # c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND date<%(ph)s"), (antenna_num, "2013-11-25"))
     pval = c.fetchall()
