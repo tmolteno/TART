@@ -95,6 +95,9 @@ class Location:
     e = rho[0] #e
     
     az = angle.atan2(e, n)
+    if az.to_degrees() < 0.:
+      az = angle.from_dms(360. + az.to_degrees())
+
 
     return [r, el, az]
 
