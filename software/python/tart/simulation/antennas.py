@@ -1,11 +1,10 @@
 '''Models of Antennas'''
 
 import numpy as np
-from simulation_source import SimulationSource
 from tart.util import angle
-from tart.imaging import location
-
 from tart.util import constants
+from tart.operation import observation
+from tart.imaging import location
 
 def antennas_signal(antennas, ant_models, sources, timebase):
   ''' TODO think about introducing uncorrelated system noise at each antenna.'''
@@ -17,22 +16,24 @@ def antennas_signal(antennas, ant_models, sources, timebase):
     # A vector to hold the working value as signals are added
     working = np.zeros(len(timebase))
     for src in sources:
-      dt = ant.get_geo_delay_horizontal(src.elevation, src.azimuth)
+      delta = ant.get_geo_delay_horizontal(src.elevation, src.azimuth)
       #print "Delay %s: %g" % (ant, dt)
       gain = ant_models[i].get_gain(src.elevation, src.azimuth)
       #print 'Antenna: %i Gain: %1.1f el: %1.1f az: %1.1f' % (i, gain, src.elevation.to_degrees(), src.azimuth.to_degrees())
-      working += src.s(timebase + dt) * gain
+      working += src.s(timebase + delta) * gain
     ret[i, :] = working
   return ret
 
 def antennas_simplified_signal(antennas, ant_models, sources, timebase, fc0, seed=None):
+  """ Retun array of simplified (at baseband) antenna signals ."""
   np.random.seed(seed=seed)
   debug = False
   # create an array to hold the signal seen by each antenna (in rows)
   ant_sigs = []
   # int_sig = np.exp(-2.0j*np.pi*fc0*timebase)
 
-  a0 = antennas[1]
+  #a0 = antennas[1]
+  a0 = antennas[0]
   for i, ant in enumerate(antennas):
     s_bb = np.zeros(len(timebase), dtype=complex)
     for src in sources: # Cycle through each signal source in turn
@@ -51,13 +52,15 @@ def antennas_simplified_signal(antennas, ant_models, sources, timebase, fc0, see
   return np.array(ant_sigs) # signal in baseband
 
 def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl):
-  from tart.operation import observation
+  """ Return visibility object without generating timeseries or filtering."""
   from tart.imaging import visibility
-
   vis = []
   baselines = []
   # noise = np.random.uniform(0.,np.sqrt(noise_lvl),config.num_antennas) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antennas))
-  noise = np.random.normal(0.,noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antennas))
+  if noise_lvl.__gt__(0.).all():
+    noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., config.num_antennas))
+  else:
+    noise = np.zeros(config.num_antennas)
   for i in range(0, config.num_antennas):
     for j in range(i+1, config.num_antennas):
       vi = noise[i]+noise[j]
@@ -96,7 +99,7 @@ class Antenna(object):
        Calculate and return geometric delay for each antenna
        Negative value means the wavefront hits the antenna earlier (than the zero ENU location)
     """
-    el, az = self.loc.equatorial_to_horizontal(utc_time,sloc.ra,sloc.dec)
+    el, az = self.loc.equatorial_to_horizontal(utc_time, sloc.ra, sloc.dec)
     return self.get_geo_delay_horizontal(el, az)
 
 
@@ -121,9 +124,9 @@ class Antenna(object):
 
     x, y, z = self.dxdydz
     ha = self.loc.GHA(utc_time, ra)
-    u =            ha.sin()*x +           ha.cos()*y
+    u = ha.sin()*x + ha.cos()*y
     v = -dec.sin()*ha.cos()*x + dec.sin()*ha.sin()*y + dec.cos()*z
-    w =  dec.cos()*ha.cos()*x - dec.cos()*ha.sin()*y + dec.sin()*z
+    w = dec.cos()*ha.cos()*x - dec.cos()*ha.sin()*y + dec.sin()*z
     return np.array([u, v, w])
 
 
