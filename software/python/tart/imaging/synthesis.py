@@ -34,27 +34,6 @@ cc = np.concatenate
 
 #mapsize 1024, 1.25e6\n\
 
-def add_subplot_axes(ax,rect,axisbg='w'):
-    fig = plt.gcf()
-    box = ax.get_position()
-    width = box.width
-    height = box.height
-    inax_position  = ax.transAxes.transform(rect[0:2])
-    transFigure = fig.transFigure.inverted()
-    infig_position = transFigure.transform(inax_position)    
-    x = infig_position[0]
-    y = infig_position[1]
-    width *= rect[2]
-    height *= rect[3]
-    subax = fig.add_axes([x,y,width,height],axisbg=axisbg)
-    x_labelsize = subax.get_xticklabels()[0].get_size()
-    y_labelsize = subax.get_yticklabels()[0].get_size()
-    x_labelsize *= rect[2]**0.5
-    y_labelsize *= rect[3]**0.5
-    subax.xaxis.set_tick_params(labelsize=x_labelsize)
-    subax.yaxis.set_tick_params(labelsize=y_labelsize)
-    return subax
-
 def get_difmap(fits_file, o=0):
   difmap = "! Basic imaging instructions by Tim Molteno\n\
   debug = False\n\
@@ -103,7 +82,7 @@ class Synthesis_Imaging(object):
       v_list = copy.deepcopy(self.cal_vis_list)
       vis_indexes = base_index + i_frame
       vis_part = [v_list[ni] for ni in vis_indexes]
-      
+
       # ra, dec = vis_part[0].config.get_loc().horizontal_to_equatorial(vis_part[0].timestamp, angle.from_dms(90.), angle.from_dms(0.))
       # self.phase_center = radio_source.CosmicSource(ra, dec)
       # print ra, dec
@@ -127,20 +106,19 @@ class Synthesis_Imaging(object):
     for cal_vis in copy.deepcopy(self.cal_vis_list):
       # print 'above horizon?', self.phase_center.to_horizontal(v.config.get_loc(),v.timestamp)
       ra, dec = self.phase_center.radec(cal_vis.get_timestamp())
-      # v.rotate(skyloc.Skyloc(ra, dec))
-      # for i in range(v.config.num_baselines):
       c = cal_vis.get_config()
       ant_p = c.ant_positions
       loc = c.get_loc()
       # print '#baselines unflagged:', len(cal_vis.get_baselines())
       for bl in cal_vis.get_baselines():
-        a0 = antennas.Antenna(loc, ant_p[bl[0]])
-        a1 = antennas.Antenna(loc, ant_p[bl[1]])
+        ant_i, ant_j = bl
+        a0 = antennas.Antenna(loc, ant_p[ant_i])
+        a1 = antennas.Antenna(loc, ant_p[ant_j])
         uu, vv, ww = antennas.get_UVW(a0, a1, cal_vis.get_timestamp(), ra, dec)
         uu_l.append(uu/constants.L1_WAVELENGTH)
         vv_l.append(vv/constants.L1_WAVELENGTH)
         ww_l.append(ww/constants.L1_WAVELENGTH)
-        vis_l.append(cal_vis.get_visibility(bl[0],bl[1]))
+        vis_l.append(cal_vis.get_visibility(ant_i,ant_j))
 
     uu_a = np.array(uu_l)
     vv_a = np.array(vv_l)
@@ -148,25 +126,24 @@ class Synthesis_Imaging(object):
     vis_l = np.array(vis_l)
 
     outest_point = max(uu_a.max(), vv_a.max(), -vv_a.min(), -uu_a.min())
-    # xedges = np.linspace(-outest_point, outest_point, num_bin+1)
-    # yedges = np.linspace(-outest_point, outest_point, num_bin+1)
     if outest_point>nw:
+      print outest_point, nw
       'nw is number of wavelengths and describes the size of the UV plane'
-      raise
+      # raise
 
-    xedges = np.linspace(-nw, nw, num_bin+1)
-    yedges = np.linspace(-nw, nw, num_bin+1)
+    uu_edges = np.linspace(-nw, nw, num_bin+1)
+    vv_edges = np.linspace(-nw, nw, num_bin+1)
 
     if use_kernel==False:
       arr = np.zeros((num_bin, num_bin, 2), dtype=complex)
       # place complex visibilities in the UV grid and prepare averaging by counting entries.
       for uu, vv, v_l in zip(uu_a, vv_a, vis_l):
-        i = xedges.__lt__(uu).sum()-1
-        j = yedges.__lt__(vv).sum()-1
+        i = uu_edges.__lt__(uu).sum()-1
+        j = vv_edges.__lt__(vv).sum()-1
         arr[j, i, 0] += v_l
         arr[j, i, 1] += 1.
-        i = xedges.__lt__(-uu).sum()-1
-        j = yedges.__lt__(-vv).sum()-1
+        i = uu_edges.__lt__(-uu).sum()-1
+        j = vv_edges.__lt__(-vv).sum()-1
         arr[j, i, 0] += np.conjugate(v_l)
         arr[j, i, 1] += 1.
       # apply the masked array and divide by number of entries
@@ -174,7 +151,7 @@ class Synthesis_Imaging(object):
       n_arr = n_arr/(arr[:, :, 1].real)
 
     else:
-      
+
       halfbin = float(nw)/(num_bin)
       mid_points_uv = np.mgrid[-nw+halfbin:nw-halfbin:num_bin*1j, -nw+halfbin:nw-halfbin:num_bin*1j]
       n_arr = np.zeros((num_bin, num_bin), dtype=complex)
@@ -187,8 +164,8 @@ class Synthesis_Imaging(object):
 
       vis_max_abs = np.max(np.abs(vis_l))
       for uu, vv, v_l in zip(uu_a, vv_a, vis_l):
-        i = xedges.__lt__(uu).sum()-1
-        j = yedges.__lt__(vv).sum()-1
+        i = uu_edges.__lt__(uu).sum()-1
+        j = vv_edges.__lt__(vv).sum()-1
 
         # print 'u', mid_points_uv[0][i-1,0], mid_points_uv[0][i,0], mid_points_uv[0][i+1,0], uu
         # print 'v', mid_points_uv[1][0,j], vv
@@ -201,8 +178,8 @@ class Synthesis_Imaging(object):
             n_arr[j+j_offset, i+i_offset] += v_l * np.exp(-(r**2. / (grid_kernel_r_wavelength)**2.))
             # print i,j, i_offset, j_offset, r, v_l * np.exp(-(r**2. / (grid_kernel_r_pixels/pixels_per_wavelength)**2.))
 
-        i = xedges.__lt__(-uu).sum()-1
-        j = yedges.__lt__(-vv).sum()-1
+        i = uu_edges.__lt__(-uu).sum()-1
+        j = vv_edges.__lt__(-vv).sum()-1
         for i_offset in offsets:
           for j_offset in offsets:
             r = np.sqrt(np.power(-uu-mid_points_uv[0][i+i_offset,0],2) + np.power(-vv-mid_points_uv[1][0,j+j_offset],2))
@@ -212,63 +189,47 @@ class Synthesis_Imaging(object):
         mask = np.abs(n_arr).__gt__(vis_max_abs)
         n_arr[mask] = n_arr[mask]/np.abs(n_arr[mask])
 
+    return (n_arr, uu_edges, vv_edges)
 
-      # for uu, vv, v_l in zip(uu_a, vv_a, vis_l):
-      #   r1 = np.sqrt(np.power(uu-mid_points_uv[0],2) + np.power(vv-mid_points_uv[1],2))
-      #   r2 = np.sqrt(np.power(-uu-mid_points_uv[0],2) + np.power(-vv-mid_points_uv[1],2)) 
-      #   n_arr += v_l*np.exp(-(r1**2 / (grid_kernel_r_pixels/pixels_per_wavelength)**2))
-      #   n_arr += np.conjugate(v_l)*np.exp(-(r2**2 / (grid_kernel_r_pixels/pixels_per_wavelength)**2))
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.imshow(n_arr.real, interpolation='none')
-    # plt.savefig('uvplane.png')
-    # plt.show()
-    return (n_arr, xedges, yedges) #uv_plane
+
+  def get_ift(self, nw = 30, num_bin = 2**7, use_kernel=True):
+    uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
+    ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
+    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+    extent = [maxang, -maxang, -maxang, maxang]
+    return [ift, extent]
+
 
   def get_image(self, nw = 30, num_bin = 2**7, pax=0, ex_ax=0):
 
-    uv_plane, xedges, yedges = self.get_uvplane(num_bin, nw, use_kernel=True)
-    # plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
-    # plt.show()
-    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
-    # print 'maxang', maxang
-    # beam_ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(1-uv_plane.mask)))
-    ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
-    
-    def convert_to_polar(x, y):
-      theta = np.arctan2(x, y)
-      r = np.sqrt(x**2 + y**2)
-      return theta, r
-
-    grid_l, grid_m = np.mgrid[-maxang:maxang:num_bin*1j, -maxang:maxang:num_bin*1j]
-    # grid_phi, grid_r = convert_to_polar(np.arcsin(grid_l*np.pi/180.),np.arcsin(grid_m*np.pi/180.))
-    grid_phi, grid_r = convert_to_polar(grid_l,grid_m)
-    
+    ift, extent = self.get_ift(nw = nw, num_bin = num_bin)
     absift = np.abs(ift)
-    idx = np.unravel_index(absift.argmax(), absift.shape)
-    print (grid_phi[idx]*180/np.pi, 90.-grid_r[idx])
+
     if pax!=0:
       if len(pax)==4:
-        # pax[0].pcolormesh(grid_phi, grid_r*180./np.pi, np.flipud(np.fliplr(np.abs(ift.T))))
-        pax[0].pcolormesh(grid_phi, grid_r, np.abs(ift))
-        pax[1].imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-        pax[2].imshow(np.abs(beam_ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-        pax[3].imshow(np.abs(uv_plane), extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
-      else:
-        return pax[1].imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        def convert_to_polar(x, y):
+          theta = np.arctan2(x, y)
+          r = np.sqrt(x**2 + y**2)
+          return theta, r
+        maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+        grid_l, grid_m = np.mgrid[-maxang:maxang:num_bin*1j, -maxang:maxang:num_bin*1j]
+        grid_phi, grid_r = convert_to_polar(grid_l,grid_m)
+        idx = np.unravel_index(absift.argmax(), absift.shape)
+        print (grid_phi[idx]*180/np.pi, 90.-grid_r[idx])
 
+        uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=True)
+        beam_ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(1-uv_plane.__ne__(0))))
+        pax[0].pcolormesh(grid_phi, grid_r, absift)
+        pax[1].imshow(absift, origin='lower', extent=extent, interpolation='nearest')
+        pax[2].imshow(np.abs(beam_ift), origin='lower', extent=extent, interpolation='nearest')
+        pax[3].imshow(np.abs(uv_plane), origin='lower', extent=[uu_edges[-1], uu_edges[0], vv_edges[0], vv_edges[-1]], interpolation='nearest')
+      else:
+        return pax[1].imshow(absift, origin='lower', extent=extent, interpolation='nearest')
 
     else:
-      # plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-      # plt.figure()
       if ex_ax==0:
-        # return plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
-        plt.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        plt.imshow(absift, origin='lower', extent=extent, interpolation='nearest')
         return ift
       else:
-        ex_ax.imshow(np.abs(ift), extent=[maxang, -maxang, -maxang, maxang], interpolation='nearest')
+        ex_ax.imshow(absift, origin='lower', extent=extent, interpolation='nearest')
         return ift
-
-      # plt.figure()
-      # plt.imshow(uv_plane.real, extent=[xedges[-1], xedges[0], yedges[0], yedges[-1]], interpolation='nearest')
-
