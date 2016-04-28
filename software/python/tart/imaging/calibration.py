@@ -9,6 +9,7 @@ class CalibratedVisibility(object):
         self.vis = vis
         self.flagged_baselines = []
         self.phase_offset = np.zeros(self.get_config().num_antennas)
+        self.gain = np.ones(self.get_config().num_antennas)
 
     def set_config(self, config):
         self.vis.config = config
@@ -40,7 +41,7 @@ class CalibratedVisibility(object):
         if bl in self.flagged_baselines:
             raise
         else:
-            return self.__get_vis(bl) * np.exp(-1j*(self.get_phase_offset(i)-self.get_phase_offset(j)))
+            return self.__get_vis(bl) * self.get_gain(i) * self.get_gain(j) * np.exp(-1j*(self.get_phase_offset(i)-self.get_phase_offset(j)))
 
     def get_baselines(self):
         return [bl for bl in self.vis.baselines if bl not in self.flagged_baselines]
@@ -70,25 +71,44 @@ class CalibratedVisibility(object):
           if np.abs(diff[0])>ew_threshold or np.abs(diff[1])>ns_threshold:
               self.flag_baseline(i,j)
 
-    def set_phase_offset(self,i, val):
+    def set_phase_offset(self, i, val):
         self.phase_offset[i] = val
 
-    def get_phase_offset(self,i):
+    def get_phase_offset(self, i):
         return self.phase_offset[i]
 
-    def to_json(self):
+    def set_gain(self, i, val):
+        self.gain[i] = val
+
+    def get_gain(self, i):
+        return self.gain[i]
+
+    def to_json(self, filename='calibration.json'):
         calib_dict = {}
+        calib_dict['gain'] = self.gain.tolist()
         calib_dict['phase_offset'] = self.phase_offset.tolist()
         calib_dict['flagged_baselines'] = self.flagged_baselines
+        with open(filename, 'w') as handle:
+          json.dump(calib_dict, handle)
         json_str = json.dumps(calib_dict)
         return json_str
 
-def from_JSON(vis, json_str):
-    calib_dict = json.loads(json_str)    
+def from_dict(vis, calib_dict):
     ret = CalibratedVisibility(vis)
     ret.set_phase_offset(range(ret.get_config().num_antennas),np.array(calib_dict['phase_offset']))
+    ret.set_gain(range(ret.get_config().num_antennas),np.array(calib_dict['gain']))
     ret.set_flagged_baselines(calib_dict['flagged_baselines'])
     return ret
+
+def from_JSON(vis, json_str):
+    calib_dict = json.loads(json_str)
+    return from_dict(vis, calib_dict)
+
+def from_JSON_file(vis, filename='calibration.json'):
+    with open(filename) as data_file:
+      calib_dict = json.load(data_file)
+    return from_dict(vis, calib_dict)
+
 
 import argparse
 
@@ -121,7 +141,7 @@ if __name__ == '__main__':
       for i in [0,1,2,3]:
         if i!=tile_no:
           cv.flag_tile(i)
-      
+
     # cv.flag_tile(1)
     # cv.flag_tile(2)
     # cv.flag_tile(3)
