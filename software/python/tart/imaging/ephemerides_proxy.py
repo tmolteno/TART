@@ -14,8 +14,7 @@ from tart.imaging import sp3_interpolator
 @Singleton
 class EphemeridesProxy:
 
-  def __init__(self, server='ops.elec.ac.nz'):
-  #def __init__(self, server='172.16.1.96'):
+  def __init__(self, server='kraftwerk'):
     self.server = jsonrpclib.Server('http://%s:8876/rpc/gps' % server)
     self.cache = {}
     self.sp3_cache = {}
