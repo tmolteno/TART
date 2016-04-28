@@ -97,7 +97,7 @@ def from_hours(hour, minute=0.0, sec=0.0):
   hr = hour % 24.0
   return Angle(deg=hr*15, minute=minute*15, sec=sec*15)
 
-def from_dms(deg, minute=0.0, sec=0.0):
+def from_dms(deg=0.0, minute=0.0, sec=0.0):
   return Angle(deg, minute, sec)
 
 def from_rad(rad):
