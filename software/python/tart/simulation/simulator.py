@@ -1,38 +1,25 @@
 """Copyright (C) Max Scheel 2016. All rights reserved"""
-import datetime
-import argparse
 import numpy as np
 from multiprocessing import Pool
-
-from tart.operation import settings
-
-from tart.imaging import antenna_model
-from tart.imaging import location
-from tart.imaging import visibility
-from tart.imaging import radio_source
-
-from tart.simulation import skymodel
 from tart.simulation import antennas
-from tart.simulation import radio
-from tart.imaging import correlator
 
-from tart.util import angle
-from copy import deepcopy
-
-def get_vis_parallel(sky, cor, rad, ants, ant_models, config, t_list, mode='simp'):
-  from multiprocessing import Pool
+def get_vis_parallel(sky, cor, rad, ants, ant_models, config, time, mode='simp'):
   p = Pool()
   resultList = []
   ret_vis_list = []
   try:
-    for t in t_list:
-      resultList.append(p.apply_async(get_vis, (sky, cor, rad, ants, ant_models, config, t, mode)))
+    if type(sky) in [np.ndarray, list]:
+      for s in sky:
+        resultList.append(p.apply_async(get_vis, (s, cor, rad, ants, ant_models, config, time, mode)))
+    if type(time) in [np.ndarray, list]:
+      for t in time:
+        resultList.append(p.apply_async(get_vis, (sky, cor, rad, ants, ant_models, config, t, mode)))
     p.close
     p.join
     for thread in resultList:
-      x2 = thread.get()
-      if (x2 != None):
-        ret_vis_list.append(x2)
+      vis = thread.get()
+      if (vis != None):
+        ret_vis_list.append(vis)
     p.terminate()
   except KeyboardInterrupt:
     print 'control-c pressed'
@@ -40,7 +27,6 @@ def get_vis_parallel(sky, cor, rad, ants, ant_models, config, t_list, mode='simp
   return ret_vis_list
 
 def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp',seed=None):
-  from tart.simulation import antennas
   np.random.seed(seed=seed)
   sources = sky.gen_photons_per_src( timestamp, radio=rad, config=config, n_samp=1)
   # sources = sky.gen_n_photons(config, timestamp, radio=rad, n=10)
