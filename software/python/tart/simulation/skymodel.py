@@ -1,16 +1,16 @@
 """Copyright (C) Max Scheel 2013. All rights reserved"""
 
+from tart.util import angle
+
 from tart.imaging import sun
 from tart.imaging import radio_source
 from tart.imaging import gps_satellite
-from tart.imaging import location
-
-from tart.util import angle
 
 from tart.simulation import simulation_source
 
-
 import numpy as np
+import healpy as hp
+import matplotlib.pyplot as plt
 
 class Skymodel(object):
   """Ensemble of sources and their visibilities"""
@@ -31,8 +31,8 @@ class Skymodel(object):
       self.add_src(sun.Sun(jy=sun_str))
     if self.gps:
       for i in range(32):
-        if i not in [7,]:
-          self.add_src(gps_satellite.GpsSatellite(i+1, location=self.location,jy=sat_str))
+        sv = gps_satellite.GpsSatellite(i+1, location=self.location,jy=sat_str)
+        self.add_src(sv)
     if self.known_cosmic:
       for src in radio_source.BrightSources:
         self.add_src(src)
@@ -118,19 +118,27 @@ class Skymodel(object):
       state_vector[i+(3*self.n_sources)] = source.width
     return [self.sun_str, self.sat_str, self.gps, self.thesun, self.known_cosmic, self.location, state_vector]
 
-  def true_image(self, location, utc_date, nside):
-    '''Plot current sky.'''
-    import healpy as hp
-    import matplotlib.pyplot as plt
-
+  def get_src_positions(self, location, utc_date):
+    ''' Save way of getting lists of el and az for all known_objects'''
     l_el = []
     l_az = []
-
+    l_name = []
     for src in self.known_objects:
-      el, az = src.to_horizontal(location, utc_date)
-      if (el.to_rad()>0):
-        l_el.append(el.to_rad())
-        l_az.append(az.to_rad())
+      try:
+        el, az = src.to_horizontal(location, utc_date)
+        if (el.to_rad()>0):
+          l_el.append(el.to_rad())
+          l_az.append(az.to_rad())
+          l_name.append(str(src))
+          # l_name.append('%s %2.2f %1.1e' % (str(src), el.to_degrees(), src.jansky(utc_date)))
+      except:
+        print 'no position', src
+    return l_el, l_az, l_name
+
+  def true_image(self, location, utc_date, nside):
+    '''Plot current sky.'''
+
+    l_el, l_az, l_name = self.get_src_positions(location, utc_date)
 
     m = np.zeros(hp.nside2npix(nside))*hp.UNSEEN
     th = -np.array(l_el) + np.pi/2.
@@ -142,32 +150,22 @@ class Skymodel(object):
     # hp.visufunc.orthview(m, title="", rot=(0,90,0), )
     return m
 
+
   def true_image_overlay(self, location, utc_date):
-    '''Plot current sky.'''
-    import healpy as hp
-    import matplotlib.pyplot as plt
+    '''Plot current sky.
+    Theta is colatitude and measured from North pole. 0 .. pi
+     (straight up) |  el:  pi/2   | theta 0
+     (horizon)     |  el:  0      | theta pi/2
+    Th = pi/2 - el
 
-    l_el = []
-    l_az = []
-    l_name = []
+    flip : {'astro', 'geo''}, optional
+    Defines the convention of projection : 'astro'' (default, east towards left, west towards right) or 'geo' (east towards right, west towards left)
+    '''
 
-    for src in self.known_objects:
-      el, az = src.to_horizontal(location, utc_date)
-      if (el.to_rad()>0):
-        l_el.append(el.to_rad())
-        l_az.append(az.to_rad())
-        l_name.append(str(src))
-        # l_name.append('%s %2.2f %1.1e' % (str(src), el.to_degrees(), src.jansky(utc_date)))
+    l_el, l_az, l_name = self.get_src_positions(location, utc_date)
 
-    # nside = np.power(2, 6)
-    # m = np.zeros(hp.nside2npix(nside))*hp.UNSEEN
-    th = -np.array(l_el) + np.pi/2.
+    th = np.pi/2. - np.array(l_el)
     l_phi = -np.array(l_az)
-    # pix = hp.pixelfunc.ang2pix(nside, th, l_az)
-    # m[pix] = [src.jansky(utc_date) for src in self.known_objects]
-    # plt.figure()
-    # hp.mollview(m)
-    # hp.visufunc.orthview(m, title="", rot=(0,90,0), )
     _ = [hp.projscatter(i, j, rot=(0,90,0)) for i, j, n in zip(th, l_phi, l_name)]
     _ = [hp.projtext(i, j, n, rot=(0,90,0)) for i, j, n in zip(th, l_phi, l_name)]
 
@@ -175,7 +173,7 @@ class Skymodel(object):
     hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0))
     hp.projtext(np.pi/2, -np.pi, 'S', rot=(0,90,0))
     hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0))
-    
+
 def from_state_vector(state):
   '''Generate skymodel from state vector'''
   sun_str, sat_str, gps, thesun, known_cosmic, location, state_vector = state
