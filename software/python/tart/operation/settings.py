@@ -8,6 +8,7 @@ import json
 import numpy as np
 from tart.util import angle
 from tart.imaging import location
+import matplotlib.pyplot as plt
 
 '''Antenna positions are in 3D ENU coordinates in meters'''
 def rotate_location(array_orientation, localcoord):
@@ -74,6 +75,11 @@ class Settings:
     f.write(self.to_json())
     f.close()
 
+  def set_geo(self, lat, lon, alt):
+    self.geo[0] = lat
+    self.geo[1] = lon
+    self.geo[2] = alt
+
   def get_lat(self):
     return self.geo[0]
 
@@ -93,20 +99,17 @@ class Settings:
     return ant_positions
 
   def plot_antenna_positions(self, c='blue', label=''):
-    import matplotlib.pyplot as plt
-    import numpy as np
-    # plt.figure(figsize=(8,8))
-    labels = ['Ant{0}'.format(i+1) for i in range(self.num_antennas)]
+    labels = ['Ant{0}'.format(i) for i in range(self.num_antennas)]
     ante = np.array([a[0] for a in self.ant_positions])
     antn = np.array([a[1] for a in self.ant_positions])
-    plt.scatter(ante, antn, marker = 'o', s = 20., color=c, label=label)
+    plt.scatter(ante, antn, marker = 'o', s = 50., color=c, label=label)
     plt.xlim(-2,2)
     plt.ylim(-2,2)
     plt.xlabel('East [m]')
     plt.ylabel('North [m]')
-
+    plt.tight_layout()
     for label, x, y in zip(labels, ante, antn):
-      plt.annotate(label, xy = (x, y*1.05), fontsize=6)
+      plt.annotate(label, xy = (x+0.02, y-0.03), fontsize=20)
     # if args.png:
     #   plt.savefig('antenna_positions.png')
     # plt.show()
