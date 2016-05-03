@@ -66,7 +66,8 @@ class Skymodel(object):
   def gen_photons_per_src(self, utc_date, radio, config, n_samp=1):
     ''' Generate n_samp photons per source'''
     sources = []
-    for src in self.known_objects:
+    #for src in self.known_objects:
+    for src in self.get_src_objects(config.get_loc(), utc_date):
       ra, declination = src.radec(utc_date)
       dx, dy = np.random.multivariate_normal([0., 0.], np.identity(2)*np.power(src.width, 2.), n_samp).T
 
@@ -101,9 +102,33 @@ class Skymodel(object):
             azimuth = az, elevation = el, sample_duration = radio.sample_duration))
     return ret
 
+  def set_el_threshold(self, threshold=0):
+    self.el_threshold = threshold
+
+  def get_src_objects(self, location, utc_date, threshold=None, debug=False):
+    '''optional argument threshold defines elevation threshold in deg. 0 = horizon. 90 = zenith'''
+    if threshold is None:
+      if self.el_threshold is None:
+        self.set_el_threshold()
+      threshold = self.el_threshold
+    ret = []
+    for src in self.known_objects:
+      try:
+        el, az = src.to_horizontal(location=location, utc_date=utc_date)
+        if (el.to_degrees() > threshold):
+          ret.append(src)
+      except:
+        print 'No position for', src
+        self.del_src(src)
+    return ret
+
   def add_src(self, src):
     '''Add source to known_objects'''
     self.known_objects.append(src)
+
+  def del_src(self, src):
+    '''Remove source from known_objects'''
+    self.known_objects.remove(src)
 
   def get_state_vector(self):
     '''Return state vector'''
@@ -166,8 +191,8 @@ class Skymodel(object):
 
     th = np.pi/2. - np.array(l_el)
     l_phi = -np.array(l_az)
-    _ = [hp.projscatter(i, j, rot=(0,90,0)) for i, j, n in zip(th, l_phi, l_name)]
-    _ = [hp.projtext(i, j, n, rot=(0,90,0)) for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projscatter(i, j, rot=(0,90,0), color='red', alpha=0.5, s=25) for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projtext(i, j, n, rot=(0,90,0), color='red') for i, j, n in zip(th, l_phi, l_name)]
 
     hp.projtext(np.pi/2, 0., 'N', rot=(0,90,0))
     hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0))
@@ -177,7 +202,8 @@ class Skymodel(object):
 def from_state_vector(state):
   '''Generate skymodel from state vector'''
   sun_str, sat_str, gps, thesun, known_cosmic, location, state_vector = state
-  psky = Skymodel(0, location=location, sun_str=sun_str, sat_str=sat_str,gps=gps,known_cosmic=known_cosmic)
+  psky = Skymodel(0, location=location, sun_str=sun_str, \
+    sat_str=sat_str, gps=gps, known_cosmic=known_cosmic)
   psky.n_sources = len(state_vector)/4
   psky.source_list = []
 
