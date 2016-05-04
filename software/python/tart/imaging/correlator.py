@@ -4,7 +4,10 @@ from tart.util import angle
 
 import numpy as np
 
-from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
+#import pyfftw
+#from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
+from tart.util.hilbert import hilbert_fftw as fftw_hilbert
+import time
 
 def van_vleck_correction(R):
   return np.sin(np.pi/2. * R)
@@ -26,8 +29,14 @@ class Correlator:
     '''Return an array of baselines and visibilities from this observation'''
     v = []
     baselines = []
-    data = [obs.get_antenna(i)-np.mean(obs.get_antenna(i)) for i in range(obs.config.num_antennas)]
-    data_hilb = [-np.sign(fftw_hilbert(d)) for d in data]
+    data = []
+    for i in range(obs.config.num_antennas):
+      ant_i = obs.get_antenna(i)
+      mean_i = np.mean(ant_i)
+      data.append(ant_i-mean_i)
+    data_hilb = []
+    for d in data:
+      data_hilb.append(-np.sign(fftw_hilbert(d, debug=False)))
     for i in range(0, obs.config.num_antennas):
       for j in range(i+1, obs.config.num_antennas):
         v.append(V(data[i],data[j],data_hilb[j]))
