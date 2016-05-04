@@ -16,7 +16,7 @@ class Observation:
   def __init__(self, timestamp, config, data=None, savedata=None):
     self.timestamp = timestamp
     self.config = config
-    self.data = data
+    self.data = np.asarray(data, dtype=np.float16)
     self.savedata = savedata
 
   def save(self, filename):
@@ -77,7 +77,8 @@ def Observation_Load(filename):
       load_data.close()
     bipolar_data = []
     for i in d['data']:
-      bipolar_data.append(np.unpackbits(i)*2.-1)
+      ints = np.asarray(np.unpackbits(i), dtype=np.float16)
+      bipolar_data.append(ints*2.-1)
     # this is an array of bipolar radio signals.
     ret = Observation(d['timestamp'], settings.from_dict(d['config']), data=bipolar_data)
     return ret
