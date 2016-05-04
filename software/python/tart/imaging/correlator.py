@@ -6,7 +6,8 @@ import numpy as np
 
 #import pyfftw
 #from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
-from tart.util.hilbert import hilbert_fftw as fftw_hilbert
+from scipy.fftpack import hilbert as fftw_hilbert
+#from tart.util.hilbert import hilbert_fftw as fftw_hilbert
 import time
 
 def van_vleck_correction(R):
@@ -36,7 +37,7 @@ class Correlator:
       data.append(ant_i-mean_i)
     data_hilb = []
     for d in data:
-      data_hilb.append(-np.sign(fftw_hilbert(d, debug=False)))
+      data_hilb.append(-np.sign(fftw_hilbert(d)))
     for i in range(0, obs.config.num_antennas):
       for j in range(i+1, obs.config.num_antennas):
         v.append(V(data[i],data[j],data_hilb[j]))
