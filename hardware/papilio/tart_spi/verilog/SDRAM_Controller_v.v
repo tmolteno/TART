@@ -43,11 +43,12 @@ module SDRAM_Controller_v (
    //////////////////////////////////
    /// These need to be checked out
    //////////////////////////////////
-   parameter sdram_column_bits    = 8;     // 
-   parameter sdram_address_width  = 22;    // zzz
+   parameter sdram_column_bits    = 10;     // 8 for standard papilio pro
+   parameter sdram_address_width  = 25;    // 22 for standard papilio pro
    parameter sdram_startup_cycles = 10100; // -- 100us, plus a little more, @ 100MHz
-   parameter cycles_per_refresh   = 1524;  // (64000*100)/4196-1 Cacled as  (64ms @ 100MHz)/ 4196 rose
-   
+   parameter cycles_per_refresh   = 780;  //780 =  (64000*100)/8192-1 Cycled as  (64ms @ 100MHz)/ 8192 rows
+	
+	
    input  clk;
    input  reset;
    output cmd_ready;
@@ -191,13 +192,13 @@ module SDRAM_Controller_v (
    //--------------------------------------------------------------------------
    // Seperate the address into row / bank / address
    //--------------------------------------------------------------------------
-   assign addr_row[12]                        = 1'b0;
+   //assign addr_row[12] = 1'b0; // only needed for 64Mb chip.
    assign addr_row[end_of_row-start_of_row:0] = cmd_address[end_of_row:start_of_row];
-   assign addr_bank                           = cmd_address[end_of_bank:start_of_bank];
+   assign addr_bank = cmd_address[end_of_bank:start_of_bank];
    
-   assign addr_col[12:8]                      = 3'b00;
-   assign addr_col[sdram_column_bits-1:1]     = cmd_address[end_of_col:start_of_col];
-   assign addr_col[0]                         = 1'b0;
+   assign addr_col[12:sdram_column_bits] = 3'b00; //
+   assign addr_col[sdram_column_bits-1:1] = cmd_address[end_of_col:start_of_col];
+   assign addr_col[0] = 1'b0;
    
    wire [31:0] sdram_data_wire; assign SDRAM_DATA = sdram_data_wire;
    //-----------------------------------------------------------

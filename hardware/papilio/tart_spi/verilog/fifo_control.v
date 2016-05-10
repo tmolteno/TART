@@ -20,11 +20,11 @@ module fifo_sdram_fifo_scheduler(
    );
 
 
-   parameter SDRAM_ADDRESS_WIDTH = 22;
+   parameter SDRAM_ADDRESS_WIDTH = 25;
    parameter BLOCKSIZE = 8'd32;
 
    // 1 bit bigger than needed.
-   parameter FILL_THRESHOLD = (22'h1FFFFF);
+   parameter FILL_THRESHOLD = (25'hFFFFFF);
    // 1 bit bigger than needed.
    reg [SDRAM_ADDRESS_WIDTH-1:0] sdram_wr_ptr = 0;
    reg [SDRAM_ADDRESS_WIDTH-1:0] sdram_rd_ptr = 0;
@@ -58,8 +58,8 @@ module fifo_sdram_fifo_scheduler(
       begin
          if (rst)
             begin
-               sdram_wr_ptr <= 22'b0; // 1 bit bigger than needed.
-               sdram_rd_ptr <= 22'b0; // 1 bit bigger than needed.
+               sdram_wr_ptr <= 25'b0; // 1 bit bigger than needed.
+               sdram_rd_ptr <= 25'b0; // 1 bit bigger than needed.
                tart_state   <= AQ_WAITING;
                cmd_enable   <= 1'b0;
                cmd_wr       <= 1'b0;
@@ -79,7 +79,7 @@ module fifo_sdram_fifo_scheduler(
                         begin
                            cmd_wr       <= 1'b1;
                            cmd_enable   <= 1'b1;
-                           cmd_address  <= sdram_wr_ptr[20:0];
+                           cmd_address  <= sdram_wr_ptr[23:0];
                            sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
                            cmd_data_in <= aq_read_data[23:0];
                            aq_bb_rd_address <= aq_bb_rd_address + 1'b1;
@@ -93,7 +93,7 @@ module fifo_sdram_fifo_scheduler(
                        begin
                           cmd_wr       <= 1'b0;
                           cmd_enable   <= 1'b1;
-                          cmd_address  <= sdram_rd_ptr[20:0];
+                          cmd_address  <= sdram_rd_ptr[23:0];
                           sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
                           tart_state <= TX_IDLE;
                        end

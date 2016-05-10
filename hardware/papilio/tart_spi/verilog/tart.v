@@ -30,10 +30,10 @@ module tart(
             input [23:0] antenna // Radio Data Interface
            );
 
-   parameter SDRAM_ADDRESS_WIDTH = 22;
-   parameter SDRAM_COLUMN_BITS   = 8;
+   parameter SDRAM_ADDRESS_WIDTH = 25; //22;
+   parameter SDRAM_COLUMN_BITS   = 10; //8
    parameter SDRAM_STARTUP_CYCLES= 10100;
-   parameter CYCLES_PER_REFRESH  = 1524;
+   parameter CYCLES_PER_REFRESH  = 780; //1524
 
    //     HOOK UP SPI RESET INTO RESET
 
