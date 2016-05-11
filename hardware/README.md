@@ -27,6 +27,19 @@ This image shows a radio hub with six radio front end modules mounted.
 
 ## Base Station
 
+The basestation is responsible for three main tasks.
+
+* Clock & Power Generation
+* Data reception
+* Data resynchronization and buffering
+* Storage and Upload
+
+The clock and power generation hardware is described in the pcb/base_station folder.
+
+The data resynchronization and buffering is performed using an FPGA. The hardware and Verilog source for this are described
+int the folder FPGA.
+
+The Data storage and upload are managed by a raspberry pi computer running Linux. The software for operating this computer is described in the software directory in the main TART folder.
 
 -> ![Radio Telescope Basestation][basestation_image] <-
 
