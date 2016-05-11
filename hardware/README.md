@@ -23,6 +23,7 @@ The radio hub distributes this clean clock to each of the radio front end module
 
 -> ![Radio Hub Module][radio_hub_image] <-
 
+This image shows a radio hub with six radio front end modules mounted.
 
 ## Base Station
 
@@ -31,5 +32,5 @@ The radio hub distributes this clean clock to each of the radio front end module
 
 
 [radio_front_end_image]: https://github.com/tmolteno/TART/blob/master/doc/img/front_end.jpg "TART Radio Module"
-[radio_hub_image]: https://github.com/tmolteno/TART/blob/master/doc/img/tart_image.jpg "TART Radio Hub"
-[basestation_image]: https://github.com/tmolteno/TART/blob/master/doc/img/tart_image.jpg "TART Basestation"
+[radio_hub_image]: https://github.com/tmolteno/TART/blob/master/doc/img/radio_hub_photo.jpg "TART Radio Hub"
+[basestation_image]: https://github.com/tmolteno/TART/blob/master/doc/img/control_board_photo.jpg "TART Basestation"
