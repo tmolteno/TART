@@ -49,9 +49,9 @@ if __name__ == '__main__':
   t_SPI = TartSPI(speed=args.speed*1000000)
   t_SPI.debug(args.debug)
   t_stmp, path = create_timestamp_and_path(base_path)
-  t_SPI.start_acquisition()
+  t_SPI.start_acquisition(sleeptime=3) #wait for acquisition to finish
 
-  data = t_SPI.read_data(num_bytes=2**21, blocksize=1000)
+  data = t_SPI.read_data(num_bytes=num_bytes, blocksize=1000)
   t_SPI.reset()
 
   print 'reshape antenna data'

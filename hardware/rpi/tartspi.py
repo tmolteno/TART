@@ -77,9 +77,17 @@ if __name__ == '__main__':
 
   t_SPI = TartSPI(speed=args.speed*1000000)
   import time
-  while True:
-    for i in range(6):
-      t_SPI.set_sample_delay(i)
-      t_SPI.read_sample_delay()
-      time.sleep(2)
-
+  for i in range(6):
+    t_SPI.reset()
+    time.sleep(1)
+    t_SPI.read_sample_delay()
+    time.sleep(0.5)
+    t_SPI.set_sample_delay(i)
+    time.sleep(0.2)
+    t_SPI.read_sample_delay()
+    time.sleep(1)
+    print '__________'
+  t_SPI.start_acquisition()
+  time.sleep(1)
+  print t_SPI.read_data(num_bytes=2**10)
+  
