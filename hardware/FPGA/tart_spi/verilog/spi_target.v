@@ -140,7 +140,7 @@ module spi_target
    //-------------------------------------------------------------------------
    //  SPI transmission data prefetch.
    //-------------------------------------------------------------------------
-   reg spi_req = 0, dat_req_sync = 0, dat_req = 0, dat_req_one = 0;
+   reg spi_req = 0, dat_req_sync = 0, dat_req = 0;
 
    always @(posedge SCK or posedge SSEL)
      if (SSEL)
@@ -155,14 +155,10 @@ module spi_target
        dat_req_sync <= 0;
 
    always @(posedge clk_i)
-     if (rst_i) begin
-        dat_req <= 0;
-        dat_req_one <= 0;
-     end
-     else begin
-        dat_req <= dat_req_sync; // && bus_state == `BUS_IDLE; // !dat_req_one;
-        dat_req_one <= dat_req_sync;
-     end
+     if (rst_i)
+       dat_req <= 0;
+     else
+        dat_req <= dat_req_sync;
 
    //-------------------------------------------------------------------------
    //  Data-capture is on positive edges.
