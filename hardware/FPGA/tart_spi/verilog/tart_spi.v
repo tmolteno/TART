@@ -74,8 +74,8 @@ module tart_spi
    output reg       data_request = 0,
    input [23:0]     data_in,
 
+   // Indicate whether an overflow or underrun has occurred.
    output reg       debug_o = 0,
-//    output           debug_o,
 
    // SPI-transmitter status flags
    output reg       spi_reset = 0,
@@ -302,9 +302,8 @@ module tart_spi
        .dat_i(data_to_send),
        .dat_o(data_from_spi),
 
-       .overflow_o (oflow),
-       .underflow_o(uflow),
-       .debug_o    (debug_w),
+       .overflow_o(oflow),
+       .underrun_o(uflow),
        
        .SCK (SCK),
        .SSEL(SSEL),
