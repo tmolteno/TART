@@ -27,6 +27,7 @@ CONFIG PROHIBIT=P60;
 NET rx_clk_16       LOC="P55"  | IOSTANDARD=LVTTL | PERIOD = 61.095 ns HIGH 50% |IOB = True;  # B13
 
 NET "led" LOC = P112 | IOSTANDARD = "LVTTL" | DRIVE = 8 | SLEW = SLOW;          # LED1
+
 #NET RX             LOC="P101" | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST;          # RX
 #NET TX             LOC="P105" | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST | PULLUP; # TX
 
@@ -38,10 +39,14 @@ NET "led" LOC = P112 | IOSTANDARD = "LVTTL" | DRIVE = 8 | SLEW = SLOW;          
 #NET A(5)           LOC="P66"  | IOSTANDARD=LVTTL;                                # A5
 #NET A(6)           LOC="P67"  | IOSTANDARD=LVTTL;                                # A6
 #NET A(7)           LOC="P75"  | IOSTANDARD=LVTTL;                                # A7
+
 NET "spi_ssel"      LOC = P79 | IOSTANDARD = "LVTTL";                             # A8
 NET "spi_miso"      LOC = P81 | IOSTANDARD = "LVTTL" | DRIVE = 8 | SLEW = FAST;   # A9
 NET "spi_mosi"      LOC = P83 | IOSTANDARD = "LVTTL";                             # A10
-NET "spi_sck"       LOC = P85 | IOSTANDARD = "LVTTL";                             # A11
+# NET "spi_sck"       LOC = P85 | IOSTANDARD = "LVTTL";                             # A11
+NET "spi_sck"       LOC = P85  | IOSTANDARD=LVTTL | PERIOD = 8.0 ns HIGH 50% | IOB = True;  # A11
+# NET "spi_sck"       LOC = P85  | IOSTANDARD=LVTTL | PERIOD = 8.0 ns HIGH 50%;  # A11
+
 #NET A(12)          LOC="P88"  | IOSTANDARD=LVTTL;                                # A12
 #NET A(13)          LOC="P93"  | IOSTANDARD=LVTTL;                                # A13
 #NET A(14)          LOC="P98"  | IOSTANDARD=LVTTL;                                # A14

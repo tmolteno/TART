@@ -19,9 +19,10 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module tart_clk_generator(
-      input  wire CLKIN,      // 16.368 MHZ
-      output wire CLKOUT0,    // 16.368 MHZ buffered
-      output wire CLKOUT1     // 16.368x6 = 98.208 MHz
+      input wire  CLKIN, // 16.368 MHZ
+      output wire CLKOUT0, // 16.368 MHZ buffered
+      output wire CLKOUT1, // 16.368x6 = 98.208 MHz
+      output      reset_n
     );
 
    wire GND_PIN; assign GND_PIN = 0;
@@ -75,7 +76,7 @@ module tart_clk_generator(
       //.CLKDV(CLKDV),       // 1-bit output: Divided clock output
       .CLKFX(CLKFX),         // 1-bit output: Digital Frequency Synthesizer output (DFS)
       //.CLKFX180(CLKFX180), // 1-bit output: 180 degree CLKFX output
-      //.LOCKED(LOCKED),     // 1-bit output: DCM_SP Lock Output
+      .LOCKED(reset_n),     // 1-bit output: DCM_SP Lock Output
       //.PSDONE(PSDONE),     // 1-bit output: Phase shift done output
       //.STATUS(STATUS),     // 8-bit output: DCM_SP status output
       .CLKFB(CLK0),       // 1-bit input: Clock feedback input

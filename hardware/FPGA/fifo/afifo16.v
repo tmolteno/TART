@@ -1,4 +1,23 @@
-`timescale 1ns/100ps
+/*----------------------------------------------------------------------------
+-- |
+-- Module      : afifo16
+-- Copyright   : (C) Patrick Suggate 2007
+-- License     : LGPL3
+-- 
+-- Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+-- Stability   : Experimental
+-- Portability : non-portable
+-- 
+-- Asynchronous FIFO with a buffer-size of 16 entries.
+-- 
+-- Changelog:
+--  + ??/??/2007  --  initial file;
+-- 
+-- TODO:
+-- 
+----------------------------------------------------------------------------*/
+
+`timescale 1ns/1ps
 module afifo16 (
 		reset_ni,
 		
@@ -33,7 +52,7 @@ module afifo16 (
 		.rd_clk		(rd_clk_i),
 		.wr_clk		(wr_clk_i),
 		.rst		(reset_ni),
-		.clr		(0),
+		.clr		(1'b0),
 		.din		(wr_data_i),
 		.we		(wr_en_i),
 		
