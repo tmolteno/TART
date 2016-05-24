@@ -109,17 +109,6 @@ module tart_spi
    reg              ack = 0;
    wire             oflow, uflow, debug_w;
 
-//    assign debug_o = oflow | uflow;
-//    assign debug_o = debug_w;
-
-   always @(posedge clk)
-     if (rst)
-       debug_o <= 0;
-     else if (byte_arrival && register_addr == ADDR_RESET)
-       debug_o <= 1;
-     else
-       debug_o <= debug_o;
-
 
    //-------------------------------------------------------------------------
    //  
@@ -135,6 +124,15 @@ module tart_spi
        ack <= 0;
      else
        ack <= !ack && (byte_arrival || byte_request);
+
+   // Watch for a SPI FIFO overflow, or underrun.
+   always @(posedge clk)
+     if (rst)
+       debug_o <= 0;
+     else if (oflow || uflow)
+       debug_o <= 1;
+     else
+       debug_o <= debug_o;
 
 
    //-------------------------------------------------------------------------

@@ -41,11 +41,15 @@ module tart
    parameter CYCLES_PER_REFRESH   = 1524;  // = (64000*100)/4096-1 Cycled as  (64ms @ 100MHz)/ 4096 rows
 `endif // !`ifdef __512Mb_SDRAM
    parameter SDRAM_STARTUP_CYCLES = 10100; // -- 100us, plus a little more, @ 100MHz
-   
+
+   //-------------------------------------------------------------------------
    //     HOOK UP SPI RESET INTO RESET
+   //-------------------------------------------------------------------------
    wire reset, reset_n, spi_reset;
    reg  reset_0 = 0, reset_1 = 0, reset_r = 0;
 
+   // TODO: Remove the unwanted combinational delays.
+   // TODO: Make sure the reset is asserted for several clock-cycles.
    assign reset = reset_r | ~reset_n;
 
    always @(posedge fpga_clk)
@@ -55,7 +59,9 @@ module tart
         reset_r <= reset_1;
      end
 
+   //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
+   //-------------------------------------------------------------------------
    //fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk), .CLK_OUT3(clk320));
    tart_clk_generator clknetwork
      (
@@ -134,7 +140,7 @@ module tart
    wire [31:0] cmd_data_in;
    wire [31:0] data_out;
 
-   wire spi_buffer_read_complete;
+   wire request_from_spi;
   
    fifo_sdram_fifo_scheduler
    #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
@@ -152,7 +158,7 @@ module tart
             .cmd_wr(cmd_wr),
             .cmd_address(cmd_address),
             .tart_state(tart_state),
-            .spi_buffer_read_complete(spi_buffer_read_complete)
+            .spi_buffer_read_complete(request_from_spi)
    );
 
    SDRAM_Controller_v
@@ -194,12 +200,12 @@ module tart
        .rst(reset),
       
        .data_ready  (data_out_ready),
-       .data_request(spi_buffer_read_complete),
+       .data_request(request_from_spi),
        .data_in     (data_out[23:0]),
 
        .debug_o(debug_o),
 
-       .spi_status({2'b10,spi_buffer_read_complete, spi_start_aq, spi_debug, tart_state[2:0]}),
+       .spi_status({1'b1, debug_o, request_from_spi, spi_start_aq, spi_debug, tart_state[2:0]}),
 //        .spi_status(8'b00110011),
 //        .spi_buffer_read_complete(spi_buffer_read_complete),
 			 .data_sample_delay(data_sample_delay),
