@@ -23,7 +23,7 @@ module cable_space() {
 
 diameter=123.0;
 height = 112.5;
-frame_depth = 5;
+frame_depth = 3;
 frame_thickness = 15;
 
 module frame() {
