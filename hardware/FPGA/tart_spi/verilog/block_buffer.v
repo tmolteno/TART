@@ -1,25 +1,30 @@
-module block_buffer(
-   output reg [23:0] read_data = 24'b0,
-   input      [23:0] write_data,
-   input clk,
-   input [BLOCK_BUFFER_ADDR_WIDTH-1:0] read_address,
-   input [BLOCK_BUFFER_ADDR_WIDTH-1:0] write_address
+`timescale 1ns/1ps
+module block_buffer
+  (
+   output reg [DATA_MSB:0] read_data = {DATA_WIDTH{1'b0}},
+   input [DATA_MSB:0]      write_data,
+   input                   clk,
+   input [ADDR_WIDTH-1:0]  read_address,
+   input [ADDR_WIDTH-1:0]  write_address
    );
 
+   parameter DATA_WIDTH = 24;
+   parameter DATA_MSB = DATA_WIDTH - 1;
+   parameter ADDR_WIDTH = 9;
+   parameter ADDR_MSB = ADDR_WIDTH - 1;
+   parameter MEM_DEPTH = 1 << ADDR_WIDTH;
 
-   parameter BLOCK_BUFFER_ADDR_WIDTH = 9;
-   parameter BLOCK_BUFFER_DEPTH = 1 << BLOCK_BUFFER_ADDR_WIDTH; // 512 
+   reg [DATA_MSB:0] block_buffer [0:MEM_DEPTH-1];
 
-   reg [23:0] block_buffer [BLOCK_BUFFER_DEPTH-1:0];
    //initialize all RAM cells to 0FF1CE at startup
-   integer init_j;
-   initial for (init_j=0; init_j <BLOCK_BUFFER_DEPTH; init_j = init_j + 1) block_buffer[init_j] = 24'h0FF1CE; 
-
+   integer j;
+   initial
+     for (j=0; j <MEM_DEPTH; j = j+1) block_buffer[j] = 24'h0FF1CE;
 
    always @(posedge clk)
-      begin
-         block_buffer[write_address] <= write_data;
-         read_data <= block_buffer[read_address];
-      end
+     begin
+        block_buffer[write_address] <= write_data;
+        read_data <= block_buffer[read_address];
+     end
 
-endmodule
+endmodule // block_buffer

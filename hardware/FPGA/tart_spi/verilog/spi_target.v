@@ -5,12 +5,37 @@
  * 
  * TODO:
  *  + the design is still preliminary (as of 24/05/2016);
+ *  + constrain the input and output OFFSET's;
+ *  + can the output-delay be run-time configurable?
  * 
  * NOTE:
  *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
  * 
  */
 
+//----------------------------------------------------------------------------
+//
+//  Configuration options.
+//
+//----------------------------------------------------------------------------
+//
+// To simulate using Icarus Verilog:
+// `define __icarus
+// or, pass this on the command-line:
+//   > iverilog -D__icarus ...
+//
+// If the SPI interface will be used with SCK below 32 MHz, then use legacy
+// mode:
+// `define __LEGACY_MODE
+
+`ifdef __LEGACY_MODE
+ `define TX_EDGE negedge
+`elsif __icarus
+ `define TX_EDGE negedge
+`else
+ `define TX_EDGE posedge
+`endif
+  
 // Bus interface states.
 `define BUS_IDLE 0
 `define BUS_READ 1
@@ -36,13 +61,62 @@ module spi_target
    output reg       overflow_o = 0,
    output reg       underrun_o = 0,
 
-   input            SCK,
+   input            SCK_pin,    // Before being fed into a BUFGMUX
    input            SSEL,
    input            MOSI,
-   output           MISO
+   (* IOB = "FORCE" *)
+   output reg       MISO = HEADER_BYTE[7]
    );
 
    parameter HEADER_BYTE  = 8'hA7; // Pattern to send as the first byte
+
+   //-------------------------------------------------------------------------
+   //  
+   //  SPI clocking.
+   //  
+   //-------------------------------------------------------------------------
+   //-------------------------------------------------------------------------
+   //  Transmission is supposed to be on negative edges, but at high speeds,
+   //  the output latencies are large enough to require that transmission
+   //  begins on positive edges.
+   //-------------------------------------------------------------------------
+`ifdef __LEGACY_MODE
+   wire             SCK      = SCK_pin;
+   wire             SCK_miso = SCK_pin;
+   wire             SCK_tx   = ~SCK_pin;
+`elsif __icarus
+   wire             SCK, SCK_miso, SCK_tx;
+
+   assign    SCK      = SCK_pin;
+   assign    SCK_miso = SCK_pin;
+   assign    SCK_tx   = SCK_pin;
+`else
+   // The clock path:
+   //    SCK -> IBUFG -> fabric -> BUFGMUX -> fabric -> OBUF -> MISO
+   // is too long for high speed implementations.
+   wire             SCK_buf, SCK_bufg, SCK_miso, SCK_tx, SCK;
+
+   assign SCK    = SCK_bufg;    // Main SPI-domain clock
+   assign SCK_tx = SCK_bufg;    // TX FIFO clock
+
+   IBUFG IBUFG_SCK0 ( .I(SCK_pin), .O(SCK_buf ) );
+   BUFG  BUFG_SCK0  ( .I(SCK_buf), .O(SCK_bufg) );
+
+   // Use local I/O clocking resources to drive the output D-type flip-flop.
+   // TODO: Does this work with an intermittent input clock signal?
+   BUFIO2
+     #( .DIVIDE(1),
+        .DIVIDE_BYPASS("TRUE"),
+        .I_INVERT("FALSE"),
+        .USE_DOUBLER("FALSE")
+        ) BUFIO2_MISO0
+       (
+        .DIVCLK(DIVCLK),        // unused
+        .IOCLK(SCK_miso),
+        .SERDESSTROBE(SERDESSTROBE), // unused
+        .I(SCK_buf)
+        );
+`endif
 
    //-------------------------------------------------------------------------
    //
@@ -51,7 +125,7 @@ module spi_target
    //-------------------------------------------------------------------------
    reg              sync0 = 0, sync1 = 0; // synchronise `cyc_i` across domains.
    reg              tx_rst_n = 1'b0, tx_flg = 1'b0;
-   reg              spi_req = 0, dat_req_sync = 0, dat_req = 0;
+   reg              spi_req = 0, dat_req_sync = 1, dat_req = 0;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
@@ -186,23 +260,20 @@ module spi_target
    //-------------------------------------------------------------------------
    wire [7:0] rx_data  = {rx_reg[6:0], MOSI};
    wire [7:0] tx_data;
-   reg [7:0]  rx_reg, tx_reg;
+   reg [6:0]  tx_reg = HEADER_BYTE[6:0];
+   reg [6:0]  rx_reg;
    reg [2:0]  rx_count = 0, tx_count = 0;
    reg        tx_state = `SPI_IDLE;
    reg        tx_fifo_read = 0;
    wire       tx_next  = tx_count == 7;
    wire       rx_done  = rx_count == 7;
 
-   // Output the header/status byte on SPI start, else transmit FIFO data.
-   assign MISO  = tx_state == `SPI_IDLE ? HEADER_BYTE[7] : tx_reg[7];
-   assign SCK_n = ~SCK;
-
    //-------------------------------------------------------------------------
    //  Data-capture is on positive edges.
    //-------------------------------------------------------------------------
    // Deserialise the incoming SPI data, receiving MSB -> LSB.
    always @(posedge SCK)
-     rx_reg <= rx_data;
+     rx_reg <= {rx_reg[5:0], MOSI};
 
    always @(posedge SCK or posedge SSEL)
      if (SSEL) rx_count <= 0;
@@ -216,9 +287,9 @@ module spi_target
        overflow_o  <= 1;
 
    //-------------------------------------------------------------------------
-   //  Transmission is on negative edges.
+   //  Transmission logic.
    //-------------------------------------------------------------------------
-   always @(posedge SCK_n or posedge SSEL)
+   always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL)
        tx_state <= `SPI_IDLE;
      else
@@ -227,29 +298,32 @@ module spi_target
          default:   tx_state <= tx_state;
        endcase // case (tx_state)
 
+   // Output the header/status byte on SPI start, else transmit FIFO data.
    // Serialise the SPI data, sending MSB -> LSB.
-   always @(posedge SCK_n)
-     if (tx_state == `SPI_IDLE)
-       tx_reg <= {HEADER_BYTE[6:0], HEADER_BYTE[7]};
-     else if (tx_next)
-       tx_reg <= tx_data;
-     else
-       tx_reg <= {tx_reg[6:0], tx_reg[7]};
+   always @(`TX_EDGE SCK_miso or posedge SSEL)
+     if (SSEL)         MISO <= HEADER_BYTE[7];
+     else if (tx_next) MISO <= tx_data[7];
+     else              MISO <= tx_reg[6];
 
-   always @(posedge SCK_n or posedge SSEL)
+   always @(`TX_EDGE SCK or posedge SSEL)
+     if (SSEL)         tx_reg <= HEADER_BYTE[6:0];
+     else if (tx_next) tx_reg <= tx_data[6:0];
+     else              tx_reg <= {tx_reg[5:0], 1'bx};
+
+   always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL) tx_count <= 0;
      else      tx_count <= tx_count + 1;
 
    // Add a cycle of delay, avoiding an additional read just before a SPI
    // transaction completes.
-   always @(posedge SCK_n or posedge SSEL)
+   always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL)
        tx_fifo_read <= 0;
      else
        tx_fifo_read <= tx_next && !tx_empty;
 
    // TX FIFO underrun detection.
-   always @(posedge SCK_n or posedge rst_i)
+   always @(`TX_EDGE SCK)
      if (rst_i)
        underrun_o <= 0;
      else if (tx_next && tx_empty)
@@ -264,7 +338,7 @@ module spi_target
    afifo16 #( .WIDTH(8) ) TX_FIFO0
      ( .reset_ni (tx_rst_n),
        
-       .rd_clk_i (SCK_n),
+       .rd_clk_i (SCK_tx),
        .rd_en_i  (tx_fifo_read),
        .rd_data_o(tx_data),
        

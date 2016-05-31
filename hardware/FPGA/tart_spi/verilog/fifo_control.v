@@ -1,24 +1,25 @@
-module fifo_sdram_fifo_scheduler(
-   input rst,
-   input spi_start_aq,
-   input spi_buffer_read_complete,
-   
-   output reg [2:0] tart_state = AQ_WAITING,
+`timescale 1ns/1ps
+module fifo_sdram_fifo_scheduler
+  (
+   input                                clk,
+   input                                clk6x,
+   input                                rst,
 
-   input write_clk,
-   input bb_clk,
-   
-   input cmd_ready,
-   output reg cmd_enable = 0,
-   output reg cmd_wr = 0,
-   output reg [SDRAM_ADDRESS_WIDTH-2:0] cmd_address  = 0,
+   output reg [8:0]                     aq_bb_rd_address = 9'b0,
+   output reg [8:0]                     aq_bb_wr_address = 9'b0,
+   input [23:0]                         aq_read_data,
 
-   output reg [8:0] aq_bb_rd_address = 9'b0,
-   output reg [8:0] aq_bb_wr_address = 9'b0,
-   input [23:0] aq_read_data,
-   output reg [31:0] cmd_data_in = 32'b0
+   input                                spi_start_aq,
+   input                                spi_buffer_read_complete,
+
+   input                                cmd_ready,
+   output reg                           cmd_enable = 0,
+   output reg                           cmd_wr = 0,
+   output reg [SDRAM_ADDRESS_WIDTH-2:0] cmd_address = 0,
+   output reg [31:0]                    cmd_data_in = 32'b0,
+
+   output reg [2:0]                     tart_state = AQ_WAITING
    );
-
 
    parameter SDRAM_ADDRESS_WIDTH = 25;
    parameter BLOCKSIZE = 8'd32;
@@ -32,23 +33,24 @@ module fifo_sdram_fifo_scheduler(
    reg [SDRAM_ADDRESS_WIDTH-1:0] sdram_rd_ptr = 0;
 
    reg [1:0] Sync_start = 2'b0;
-   // new signal synchronized to (=ready to be used in) clkB domain
-   wire spi_start_aq_int; assign spi_start_aq_int = Sync_start[1];
 
-   always @(posedge write_clk or posedge rst)
-      begin
-         if (rst)
-            begin
-              aq_bb_wr_address <= 9'b0;
-              Sync_start <= 2'b00;
-            end
-         else
-           begin
-             Sync_start[0] <= spi_start_aq;
-             Sync_start[1] <= Sync_start[0];
-             if (spi_start_aq_int) aq_bb_wr_address <= aq_bb_wr_address + 1'b1;
-           end
-      end
+   // new signal synchronized to (=ready to be used in) clkB domain
+   wire spi_start_aq_int = Sync_start[1];
+
+   always @(posedge clk or posedge rst)
+     begin
+        if (rst)
+          begin
+             aq_bb_wr_address <= 9'b0;
+             Sync_start <= 2'b00;
+          end
+        else
+          begin
+             Sync_start <= {Sync_start[0], spi_start_aq};
+             if (spi_start_aq_int)
+               aq_bb_wr_address <= aq_bb_wr_address + 1'b1;
+          end
+     end
 
    parameter AQ_WAITING         = 3'd0;
    parameter AQ_BUFFER_TO_SDRAM = 3'd1;
@@ -56,7 +58,7 @@ module fifo_sdram_fifo_scheduler(
    parameter TX_IDLE            = 3'd3;
    parameter FINISHED           = 3'd4;
 
-   always @(posedge bb_clk or posedge rst)
+   always @(posedge clk6x or posedge rst)
       begin
          if (rst)
             begin
@@ -114,6 +116,8 @@ module fifo_sdram_fifo_scheduler(
                   begin
                      $display("Finished.");
                   end
-            endcase
-      end
-endmodule
+            endcase // case (tart_state)
+      end // always @ (posedge clk6x or posedge rst)
+   
+endmodule // fifo_sdram_fifo_scheduler
+

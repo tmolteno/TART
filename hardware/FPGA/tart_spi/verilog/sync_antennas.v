@@ -47,15 +47,19 @@ always @(posedge fast_clk)
       if (when_to_output[0] == 1'b1)
          begin // as this is usually set only one in six cycles, it crosses domains correctly.
             sampled_bit <= sampled[3];
-            if (sampled[4:2] == 3'b000 || sampled[4:2] == 3'b111) when_to_output <= {when_to_output[4:0], when_to_output[5]}; // looks like we are properly aligned
-            else slipping_bits <= 6'b111111;
+            if (sampled[4:2] == 3'b000 || sampled[4:2] == 3'b111)
+              // looks like we are properly aligned
+              when_to_output <= {when_to_output[4:0], when_to_output[5]};
+            else
+              slipping_bits <= 6'b111111;
            // don't advance when_to_output until we see three identical bits in a row.
            // Also tell the slower domain that phase sync has been lost
          end
-      else when_to_output <= {when_to_output[4:0], when_to_output[5]};
+      else
+        when_to_output <= {when_to_output[4:0], when_to_output[5]};
           
    end
-endmodule
+endmodule // sync_antennas
 
 module sync_antennas_tb();
    wire lost_alignment;

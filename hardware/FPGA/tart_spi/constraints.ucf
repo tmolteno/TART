@@ -41,11 +41,11 @@ NET "led" LOC = P112 | IOSTANDARD = "LVTTL" | DRIVE = 8 | SLEW = SLOW;          
 #NET A(7)           LOC="P75"  | IOSTANDARD=LVTTL;                                # A7
 
 NET "spi_ssel"      LOC = P79 | IOSTANDARD = "LVTTL";                             # A8
-NET "spi_miso"      LOC = P81 | IOSTANDARD = "LVTTL" | DRIVE = 8 | SLEW = FAST;   # A9
+NET "spi_miso"      LOC = P81 | IOSTANDARD = "LVTTL" | DRIVE = 12 | SLEW = FAST;  # A9
+NET "spi_miso"      OFFSET = OUT 8.0 ns AFTER "spi_sck" REFERENCE_PIN "spi_sck" RISING;
 NET "spi_mosi"      LOC = P83 | IOSTANDARD = "LVTTL";                             # A10
-# NET "spi_sck"       LOC = P85 | IOSTANDARD = "LVTTL";                             # A11
-NET "spi_sck"       LOC = P85  | IOSTANDARD=LVTTL | PERIOD = 8.0 ns HIGH 50% | IOB = True;  # A11
-# NET "spi_sck"       LOC = P85  | IOSTANDARD=LVTTL | PERIOD = 8.0 ns HIGH 50%;  # A11
+NET "spi_mosi"      OFFSET = IN 2.0 ns VALID 4.0 ns BEFORE "spi_sck" RISING;
+NET "spi_sck"       LOC = P85  | IOSTANDARD = LVTTL | PERIOD = 8.0 ns HIGH 50%;   # A11
 
 #NET A(12)          LOC="P88"  | IOSTANDARD=LVTTL;                                # A12
 #NET A(13)          LOC="P93"  | IOSTANDARD=LVTTL;                                # A13

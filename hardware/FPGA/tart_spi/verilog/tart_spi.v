@@ -303,7 +303,7 @@ module tart_spi
        .overflow_o(oflow),
        .underrun_o(uflow),
        
-       .SCK (SCK),
+       .SCK_pin(SCK),
        .SSEL(SSEL),
        .MOSI(MOSI),
        .MISO(MISO)
