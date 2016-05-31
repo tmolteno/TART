@@ -16,8 +16,25 @@ if __name__ == '__main__':
   num_bytes = np.power(2,args.bramexp)
   t = TartSPI(speed=args.speed*1000000)
   t.reset()
+  t.reset()
+  t.debug(on=1)
+  t.debug(on=1)
+  t.debug(on=0)
+  t.debug(on=0)
+  t.debug(on=1)
+  t.debug(on=1)
+  t.debug(on=0)
+  t.debug(on=0)
+  t.reset()
+  t.reset()
+  t.reset()
+
+
+
+
+
   t.debug(args.internal)
-  t.start_acquisition()
+  t.start_acquisition(sleeptime=3)
 
   data = t.read_data(num_bytes=num_bytes, blocksize=1024)
   print 'generate 24bit integer'

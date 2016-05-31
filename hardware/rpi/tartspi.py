@@ -2,19 +2,23 @@ import spinumpy as spi
 import numpy as np
 import time
 
+def tobin(arr):
+  return [bin(i) for i in arr]
+
 class TartSPI:
   def __init__(self, speed=8000000):
     spi.openSPI(speed=int(speed))
 
   def reset(self):
-    spi.transfer((0b10001111,0b00000001))
+    ret = spi.transfer((0b10001111,0b00000001))
+    print tobin(ret)
     time.sleep(0.005)
-    #print 'device now resetted'
+    print 'device now resetted'
     return 1
  
   def read_sample_delay(self):
-    ret = spi.transfer((0b00001100,0b0000000))
-    print ret
+    ret = spi.transfer((0b00001100,0x0,0b0000000))
+    print tobin(ret)
     delay = ret[1]
     time.sleep(0.005)
     return delay
@@ -30,11 +34,13 @@ class TartSPI:
 
   def debug(self,on=1):
     if on:
-      spi.transfer((0b10001000,0b00000001))
+      ret = spi.transfer((0b10001000,0b00000001))
+      print tobin(ret)
       print 'debug now on'
     else:
-      spi.transfer((0b10001000,0b00000000))
-      #print 'debug now off'
+      ret = spi.transfer((0b10001000,0b00000000))
+      print tobin(ret)
+      print 'debug now off'
     time.sleep(0.005)
     return 1
 
@@ -48,8 +54,8 @@ class TartSPI:
   def read_data(self, num_bytes=2**21, blocksize=1000):
     resp2 = []
     for i in range(0,int(num_bytes/blocksize)):
-      resp2.append(spi.transfer((0b00000010,) + (0,0,0,)*blocksize)[1:])
-    resp3 = spi.transfer((0b00000010,) + (0,0,0,)*(num_bytes%blocksize))[1:]
+      resp2.append(spi.transfer((0b00000010,0b11111111,) + (0,0,0,)*blocksize)[2:])
+    resp3 = spi.transfer((0b00000010,0b11111111,) + (0,0,0,)*(num_bytes%blocksize))[2:]
     resp2 = np.concatenate(resp2).reshape(-1,3)
     resp3 = resp3.reshape(-1,3)
     ret = np.concatenate((resp2,resp3))
@@ -77,9 +83,17 @@ if __name__ == '__main__':
 
   t_SPI = TartSPI(speed=args.speed*1000000)
   import time
-  while True:
-    for i in range(6):
-      t_SPI.set_sample_delay(i)
-      t_SPI.read_sample_delay()
-      time.sleep(2)
-
+  for i in range(6):
+    t_SPI.reset()
+    time.sleep(1)
+    t_SPI.read_sample_delay()
+    time.sleep(0.5)
+    t_SPI.set_sample_delay(i)
+    time.sleep(0.2)
+    t_SPI.read_sample_delay()
+    time.sleep(1)
+    print '__________'
+  t_SPI.start_acquisition()
+  time.sleep(1)
+  print t_SPI.read_data(num_bytes=2**10)
+  

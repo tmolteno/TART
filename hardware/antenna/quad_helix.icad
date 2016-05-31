@@ -1,8 +1,10 @@
 
 // http://www.rish.kyoto-u.ac.jp/digitalbeacon/information/Building_QFH_Antenna_Guide.pdf
 freq = 1545.42;
-lambda = 300000000.0 / freq;
-lambda = lambda / 1000.0;
+speed_of_light = 300000000.0;
+lambda_m = speed_of_light / freq;
+lambda = lambda_m / 1000.0; // millimeters
+
 big_height = 0.26*lambda;
 small_height =  0.238*lambda;
 wire_r = (0.0088 * lambda)/2;
@@ -45,7 +47,7 @@ elevation=10;
 
 module quad_helix() {   
   union() {
-    z = (big_height - 0.238*lambda)/2;
+    z = (big_height - small_height)/2;
     translate([0,0,elevation]) big_loop();
     translate([0,0,elevation+z]) small_loop();
     cylinder(r=5, h=(big_height+wire_r+elevation));

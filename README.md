@@ -8,8 +8,8 @@ developed by the elec research group at the University of Otago
 The tart software and hardware designs are released as open-source designs and are
 licensed under the GPL v3.
 
-The authors of the first version of the TART are Tim Molteno, Charles Shaw and Max 
-Scheel. Enquries about the TART should be addressed to Tim Molteno (tim@elec.ac.nz). 
+The authors of the first version of the TART are Tim Molteno, Charles Shaw, Max 
+Scheel and Phil Brown. Enquries about the TART should be addressed to Tim Molteno (tim@elec.ac.nz). 
 
 ## Hardware
 

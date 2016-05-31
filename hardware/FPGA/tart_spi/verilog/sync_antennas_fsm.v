@@ -50,7 +50,7 @@ always @(posedge fast_clk)
           5'b00111, 5'b11000: slice <= sampled[8:4];    // Phase marginal need to sample one bit later
           5'b01111, 5'b10000: slice <= sampled[7:3];    // Phase OK, need to sample one bit later
           default: slice <= sampled[6:2]; //do not adjust. bit errors..
-      endcase;
+      endcase
    end
 endmodule
 
