@@ -159,7 +159,7 @@ class Synthesis_Imaging(object):
       r_noise_wavelengths = 0.1
       grid_kernel_r_wavelength = r_noise_wavelengths + grid_kernel_r_pixels / pixels_per_wavelength
       offset_px = np.ceil(grid_kernel_r_wavelength * pixels_per_wavelength)
-      offsets = np.arange(-offset_px,offset_px+1)
+      offsets = np.arange(-offset_px, offset_px+1)
 
 
       vis_max_abs = np.max(np.abs(vis_l))
@@ -186,7 +186,8 @@ class Synthesis_Imaging(object):
             n_arr[j+j_offset, i+i_offset] += np.conjugate(v_l) * np.exp(-(r**2 / (grid_kernel_r_wavelength)**2))
       # apply the masked array and divide by number of entries
 
-        mask = np.abs(n_arr).__gt__(vis_max_abs)
+        mask = np.abs(n_arr).__gt__(0.)
+        #mask = np.abs(n_arr).__gt__(vis_max_abs)
         n_arr[mask] = n_arr[mask]/np.abs(n_arr[mask])
 
     return (n_arr, uu_edges, vv_edges)

@@ -9,6 +9,12 @@ from tart.imaging import location
 
 from tart.operation import settings
 
+def boolean_mean(x_bool_arr):
+  '''Return mean of boolean array where -1 -> 0  and 1 -> 1'''
+  ret = x_bool_arr.sum()/float(len(x_bool_arr))*2.-1
+  return ret
+
+
 class Observation:
 
   '''Antenna positions are going to be in meters from the array reference position.
@@ -35,25 +41,32 @@ class Observation:
     d = {}
     d['config'] = configdict
     d['timestamp']= self.timestamp
-    
+
     if (self.savedata is None):
-      self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
+      #self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
+      self.savedata = np.array(self.data,dtype=np.uint8)
 
     t = []
     for ant in self.savedata:
       t.append(np.packbits(ant))
-    
+
     d['data'] = t
-    
+
     save_ptr = gzip.open(filename, 'wb')
     cPickle.dump(d, save_ptr, cPickle.HIGHEST_PROTOCOL)
     save_ptr.close()
 
+  def get_means(self):
+    '''Calculate and return means of antenna data'''
+    ret = []
+    for i in range(self.config.num_antennas):
+      ret.append(boolean_mean(self.data[i]))
+    return np.array(ret)
 
   def get_antenna(self, ant_num):
     if (ant_num >= self.config.num_antennas):
       raise "Antenna %d doesn't exist" % ant_num
-    return self.data[ant_num] # Return to bipolar binary
+    return self.data[ant_num]*2-1. # Return to bipolar binary
 
   def get_sampling_rate(self):
     ref_freq = 16.368e6  # See the Max 2769 data sheet. We operate in one of the predefined modes
@@ -77,8 +90,8 @@ def Observation_Load(filename):
       load_data.close()
     bipolar_data = []
     for i in d['data']:
-      unpacked_ints = np.asarray(np.unpackbits(i))
-      bipolar_data.append(unpacked_ints*2.-1)
+      unpacked_ints = np.asarray(np.unpackbits(i),dtype=bool)
+      bipolar_data.append(unpacked_ints)
     # this is an array of bipolar radio signals.
     ret = Observation(d['timestamp'], settings.from_dict(d['config']), data=bipolar_data)
     return ret

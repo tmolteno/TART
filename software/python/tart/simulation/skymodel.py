@@ -27,6 +27,8 @@ class Skymodel(object):
     self.thesun = thesun
     self.known_cosmic= known_cosmic
 
+    self.el_threshold = 0
+
     if self.thesun:
       self.add_src(sun.Sun(jy=sun_str))
     if self.gps:
@@ -108,8 +110,6 @@ class Skymodel(object):
   def get_src_objects(self, location, utc_date, threshold=None, debug=False):
     '''optional argument threshold defines elevation threshold in deg. 0 = horizon. 90 = zenith'''
     if threshold is None:
-      if self.el_threshold is None:
-        self.set_el_threshold()
       threshold = self.el_threshold
     ret = []
     for src in self.known_objects:

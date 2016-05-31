@@ -7,7 +7,7 @@ import pyfftw
 
 from pyfftw.interfaces.scipy_fftpack import hilbert as scipy_fftpack_hilbert
 
-def hilbert(s):
+def hilbert(s, debug=False):
   '''
   http://au.mathworks.com/help/signal/ref/hilbert.html
   The analytic signal for a sequence x has a one-sided Fourier transform. That is, the transform vanishes for negative frequencies. To approximate the analytic signal, hilbert calculates the FFT of the input sequence, replaces those FFT coefficients that correspond to negative frequencies with zeros, and calculates the inverse FFT of the result.
@@ -23,14 +23,26 @@ def hilbert(s):
   It calculates the inverse FFT of the sequence obtained in step 3 and returns the first n elements of the result.
   This algorithm was first introduced in [2]. The technique assumes that the input signal, x, is a finite block of data. This assumption allows the function to remove the spectral redundancy in x exactly. Methods based on FIR filtering can only approximate the analytic signal, but they have the advantage that they operate continuously on the data. See Single-Sideband Amplitude Modulation for another example of a Hilbert transform computed with an FIR filter.'''
 
+  s_0 = time.time()
   S = np.fft.fft(s)
+  if debug:
+    print 'fft', time.time()-s_0
+  s_1 = time.time()
+
   n = len(s)
   h = np.zeros(n)
   h[0] = 1.
   h[n/2] = 1.
   h[1:n/2] = 2.
   #h[n/2+1:] = 0.
-  return np.fft.ifft(h*S)[:n].imag
+  if debug:
+    print 'setup', time.time()-s_1
+  s_2 = time.time()
+  ret = np.fft.ifft(h*S)[:n].imag
+  if debug:
+    print 'ifft', time.time()-s_2
+
+  return ret
 
 
 def hilbert_fftw(s, debug=False, dtype = 'complex64'):
@@ -68,8 +80,8 @@ def hilbert_fftw(s, debug=False, dtype = 'complex64'):
   fft_out = pyfftw.empty_aligned(n, dtype=dtype, n=align)
   ifft_in = pyfftw.empty_aligned(n, dtype=dtype, n=align)
   ifft_out = pyfftw.empty_aligned(n, dtype=dtype, n=align)
-  fft_machine = pyfftw.FFTW(fft_in, fft_out, direction='FFTW_FORWARD', flags=('FFTW_MEASURE',), )
-  ifft_machine = pyfftw.FFTW(ifft_in, ifft_out, direction='FFTW_BACKWARD', flags=('FFTW_MEASURE',), )
+  fft_machine = pyfftw.FFTW(fft_in, fft_out, direction='FFTW_FORWARD', flags=('FFTW_ESTIMATE',), threads=8)
+  ifft_machine = pyfftw.FFTW(ifft_in, ifft_out, direction='FFTW_BACKWARD', flags=('FFTW_ESTIMATE',), threads=8)
 
   if write_wisdom:
     wisdom = pyfftw.export_wisdom()
