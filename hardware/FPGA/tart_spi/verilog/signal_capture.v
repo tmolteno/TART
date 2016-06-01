@@ -23,8 +23,8 @@ module signal_capture
 
    // Supersample at the given rate.
    parameter CLOCK_RATE = 12;
+   parameter HALF = (CLOCK_RATE-1) >> 1;
    parameter BITS_COUNT = 4;
-   parameter HALF_COUNT = (CLOCK_RATE-1) >> 1;
 
    reg [BITS_COUNT-1:0] count = 0;
 
@@ -33,37 +33,34 @@ module signal_capture
    //  detection.
    //-------------------------------------------------------------------------
    (* IOB = "TRUE" *)
-   reg                  d_iob;
-   reg                  d_reg;
-   wire                 edge_found = d_iob ^ d_reg;
+   reg                  d_iob = 0;
+   reg [HALF-1:0]       d_reg = 0;
+   wire [HALF:0]        samples = {d_reg, d_iob};
 
    always @(posedge clk)
-     if (ce) begin
-        d_iob <= d;
-        d_reg <= d_iob;
-     end
+     if (ce) {d_reg, d_iob} <= {samples[HALF-1:0], d};
 
    //-------------------------------------------------------------------------
    //  Count the number of cycles between edges.
    //-------------------------------------------------------------------------
-   wire count_wrap = count == CLOCK_RATE-1;
+   wire [BITS_COUNT-1:0] count_next = edge_found || count_wrap ? count_init : count+1 ;
+   wire                  count_wrap = count >= CLOCK_RATE-1 && no_edges;
+   wire [BITS_COUNT-1:0] count_init = count == CLOCK_RATE+1 ? 1 : count == CLOCK_RATE-3 ? -1 : 0 ;
+   wire                  no_edges = &samples || ~|samples;
+   wire                  edge_found = samples == {1'b1, {HALF{1'b0}}} || samples == {1'b0, {HALF{1'b1}}};
 
    always @(posedge clk)
-     if (rst)
-       count <= 0;
-     else if (ce) begin
-        if (edge_found || count_wrap)
-          count <= 0;
-        else
-          count <= count + 1;
-     end
+     if (rst)     count <= 0;
+     else if (ce) count <= count_next;
+     else         count <= count;
 
    //-------------------------------------------------------------------------
    //  The signal is considered locked after four clean transitions.
    //-------------------------------------------------------------------------
    reg [1:0] locked_count = 0;
    reg       found = 0;
-   wire      valid_count = count > CLOCK_RATE-3 || !found && count < 2;
+//    wire      valid_count = count > CLOCK_RATE-3 || !found && count < 2;
+   wire      valid_count = count >= CLOCK_RATE-3 && count < CLOCK_RATE+2;
 
    always @(posedge clk)
      if (rst) begin
@@ -82,6 +79,39 @@ module signal_capture
         invalid      <= invalid || locked;
      end
 
+   //-------------------------------------------------------------------------
+   //  Output the captured data-samples.
+   //-------------------------------------------------------------------------
+   wire ready_w = ce && locked && count == HALF; // && !edge_found;
+
+   always @(posedge clk) begin
+      ready <= ready_w;
+//       q <= ready_w ? d_iob : q ;
+      q <= ready_w ? samples[HALF] : q ;
+   end
+
+   //-------------------------------------------------------------------------
+   //  Simulation stuff.
+   //-------------------------------------------------------------------------
+   reg  [BITS_COUNT-1:0] predictor = 0;
+   wire                  expected = predictor == CLOCK_RATE-1;
+   always @(posedge clk)
+     if (rst)
+       predictor <= 0;
+     else if (ce) begin
+        if (expected && count_next < HALF)
+          predictor <= count_next;
+        else if (edge_found && predictor < HALF)
+          predictor <= count_next;
+        else if (expected)
+          predictor <= 0;
+        else
+          predictor <= predictor+1;
+     end
+
+   //-------------------------------------------------------------------------
+   //  OBSOLETE stuff.
+   //-------------------------------------------------------------------------
    // Track whether an edge was found in the preceding aquisition period.
    always @(posedge clk)
      if (rst)
@@ -90,15 +120,6 @@ module signal_capture
        found <= edge_found;
      else
        found <= found;
-
-   //-------------------------------------------------------------------------
-   //  Output the captured data-samples.
-   //-------------------------------------------------------------------------
-   wire ready_w = ce && locked && count == HALF_COUNT; // && !edge_found;
-   always @(posedge clk) begin
-      ready <= ready_w;
-      q <= ready_w ? d_iob : q ;
-   end
 
 
 endmodule // sigcap

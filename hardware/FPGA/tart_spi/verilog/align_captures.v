@@ -12,7 +12,9 @@
  * Copyright (C) 2016 Patrick Suggate
  * 
  * NOTE:
- *  + assumes that `data_in` remains constant until next strobe;
+ *  + assumes that each `data_in[i]` remains constant until its next strobe;
+ *  + the supersampling clock is assumed to be synchronous with the data
+ *    clock;
  * 
  */
 
@@ -112,7 +114,7 @@ module align_captures
    //-------------------------------------------------------------------------
    //  Aquisition is locked if aligned.
    //-------------------------------------------------------------------------
-   wire clear_valid = !window && strobe && clear >= CLEAR_GAP;
+   wire clear_valid = strobe && clear >= CLEAR_GAP;
 
    always @(posedge clk)
      if (rst)     locked <= 0;
@@ -125,7 +127,7 @@ module align_captures
    always @(posedge clk)
      if (rst)
        ready <= 0;
-     else if (ce && strobes_all && locked) begin
+     else if (ce && strobes_all && locked && !ready) begin
         ready    <= 1;
         data_out <= data_in;
      end
