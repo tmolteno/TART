@@ -16,6 +16,10 @@
  *  + the supersampling clock is assumed to be synchronous with the data
  *    clock;
  * 
+ * TODO:
+ *  + window sizes for invalid calculations;
+ *  + clearing and counting assertions of `invalid`;
+ * 
  */
 
 module align_captures
@@ -140,17 +144,17 @@ module align_captures
    //   2) this is followed by at least 7 cycles of no strobes; and
    //   3) all signals remain locked.
    //-------------------------------------------------------------------------
-   wire overlapped_strobes = |(strobes_reg ^ strobes); // strobed twice?
-   wire invalid_input      = |invalids;
-   wire strobes_too_spread = locked && locked_w && !clear_valid;
+   wire has_overlaps    = |(strobes_reg & strobes); // strobed twice?
+   wire invalid_input   = |invalids;
+   wire too_much_spread = locked && locked_w && strobe && clear > 0 && clear < CLEAR_GAP;
+   wire capture_error   = has_overlaps || invalid_input || too_much_spread;
 
    // TODO:
    always @(posedge clk)
      if (rst)
        invalid <= 0;
      else if (ce)
-       invalid <= invalid || overlapped_strobes || invalid_input ||
-                  strobes_too_spread;
+       invalid <= invalid || locked && capture_error;
      else
        invalid <= invalid;
 
