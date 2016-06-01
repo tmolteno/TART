@@ -42,10 +42,6 @@
 `define BUS_WAIT 2
 `define BUS_SEND 4
 
-// SPI interface states.
-`define SPI_IDLE 0
-`define SPI_BUSY 1
-
 module spi_target
   (
    input            clk_i,
@@ -57,11 +53,11 @@ module spi_target
    input [7:0]      dat_i,
    output reg [7:0] dat_o,
 
-   // Debug/diagnostic output, and for when the recieve FIFO overflows.
+   // Debug/diagnostic output, for when the recieve FIFO overflows.
    output reg       overflow_o = 0,
    output reg       underrun_o = 0,
 
-   input            SCK_pin,    // Before being fed into a BUFGMUX
+   input            SCK_pin,    // Raw pin connection, not a global clock
    input            SSEL,
    input            MOSI,
    (* IOB = "FORCE" *)
@@ -78,7 +74,7 @@ module spi_target
    //-------------------------------------------------------------------------
    //  Transmission is supposed to be on negative edges, but at high speeds,
    //  the output latencies are large enough to require that transmission
-   //  begins on positive edges.
+   //  begins on the preceding positive edges.
    //-------------------------------------------------------------------------
 `ifdef __LEGACY_MODE
    wire             SCK      = SCK_pin;
@@ -87,13 +83,14 @@ module spi_target
 `elsif __icarus
    wire             SCK, SCK_miso, SCK_tx;
 
-   assign    SCK      = SCK_pin;
-   assign    SCK_miso = SCK_pin;
-   assign    SCK_tx   = SCK_pin;
+   assign SCK      = SCK_pin;
+   assign SCK_miso = SCK_pin;
+   assign SCK_tx   = SCK_pin;
 `else
    // The clock path:
    //    SCK -> IBUFG -> fabric -> BUFGMUX -> fabric -> OBUF -> MISO
-   // is too long for high speed implementations.
+   // is too long for high speed implementations, so a local I/O clock is
+   // used to drive MISO.
    wire             SCK_buf, SCK_bufg, SCK_miso, SCK_tx, SCK;
 
    assign SCK    = SCK_bufg;    // Main SPI-domain clock
@@ -104,6 +101,7 @@ module spi_target
 
    // Use local I/O clocking resources to drive the output D-type flip-flop.
    // TODO: Does this work with an intermittent input clock signal?
+   // TODO: Passed test @62.5 MHz, with a Raspberry Pi II (Pat @01/06/2016).
    BUFIO2
      #( .DIVIDE(1),
         .DIVIDE_BYPASS("TRUE"),
@@ -123,15 +121,15 @@ module spi_target
    //  Cross-domain synchronisation.
    //
    //-------------------------------------------------------------------------
-   reg              sync0 = 0, sync1 = 0; // synchronise `cyc_i` across domains.
+   reg              sync0 = 0, sync1 = 0;
    reg              tx_rst_n = 1'b0, tx_flg = 1'b0;
    reg              spi_req = 0, dat_req_sync = 1, dat_req = 0;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
    //-------------------------------------------------------------------------
-   // SSEL is used to generate the framing signal, `cyc_o`, for bus transation
-   // cycles.
+   // SSEL is used to generate the bus transaction's framing signal, `cyc_o`,
+   // but it must be synchronised across clock domains.
    always @(posedge SCK or posedge SSEL)
      if (SSEL)  sync0 <= 0;
      else       sync0 <= !SSEL;
@@ -263,7 +261,6 @@ module spi_target
    reg [6:0]  tx_reg = HEADER_BYTE[6:0];
    reg [6:0]  rx_reg;
    reg [2:0]  rx_count = 0, tx_count = 0;
-   reg        tx_state = `SPI_IDLE;
    reg        tx_fifo_read = 0;
    wire       tx_next  = tx_count == 7;
    wire       rx_done  = rx_count == 7;
@@ -289,26 +286,18 @@ module spi_target
    //-------------------------------------------------------------------------
    //  Transmission logic.
    //-------------------------------------------------------------------------
-   always @(`TX_EDGE SCK or posedge SSEL)
-     if (SSEL)
-       tx_state <= `SPI_IDLE;
-     else
-       case (tx_state)
-         `SPI_IDLE: tx_state <= !SSEL ? `SPI_BUSY : `SPI_IDLE;
-         default:   tx_state <= tx_state;
-       endcase // case (tx_state)
-
    // Output the header/status byte on SPI start, else transmit FIFO data.
    // Serialise the SPI data, sending MSB -> LSB.
-   always @(`TX_EDGE SCK_miso or posedge SSEL)
-     if (SSEL)         MISO <= HEADER_BYTE[7];
-     else if (tx_next) MISO <= tx_data[7];
-     else              MISO <= tx_reg[6];
-
    always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL)         tx_reg <= HEADER_BYTE[6:0];
      else if (tx_next) tx_reg <= tx_data[6:0];
      else              tx_reg <= {tx_reg[5:0], 1'bx};
+
+   // Use a local clock for faster source-synchronous transmission.
+   always @(`TX_EDGE SCK_miso or posedge SSEL)
+     if (SSEL)         MISO <= HEADER_BYTE[7];
+     else if (tx_next) MISO <= tx_data[7];
+     else              MISO <= tx_reg[6];
 
    always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL) tx_count <= 0;
