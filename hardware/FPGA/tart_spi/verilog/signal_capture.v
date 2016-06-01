@@ -6,6 +6,11 @@
  * NOTE:
  *  + output is "sample-and-hold" and valid once `ready` asserts;
  * 
+ * TODO:
+ *  + parameterised window size, when deciding if the edges is allowable;
+ *  + hardware testing;
+ *  + clean up the combinational paths;
+ * 
  */
 
 module signal_capture
@@ -59,7 +64,6 @@ module signal_capture
    //-------------------------------------------------------------------------
    reg [1:0] locked_count = 0;
    reg       found = 0;
-//    wire      valid_count = count > CLOCK_RATE-3 || !found && count < 2;
    wire      valid_count = count >= CLOCK_RATE-3 && count < CLOCK_RATE+2;
 
    always @(posedge clk)
@@ -82,11 +86,10 @@ module signal_capture
    //-------------------------------------------------------------------------
    //  Output the captured data-samples.
    //-------------------------------------------------------------------------
-   wire ready_w = ce && locked && count == HALF; // && !edge_found;
+   wire ready_w = ce && locked && count == HALF;
 
    always @(posedge clk) begin
       ready <= ready_w;
-//       q <= ready_w ? d_iob : q ;
       q <= ready_w ? samples[HALF] : q ;
    end
 
@@ -95,6 +98,7 @@ module signal_capture
    //-------------------------------------------------------------------------
    reg  [BITS_COUNT-1:0] predictor = 0;
    wire                  expected = predictor == CLOCK_RATE-1;
+
    always @(posedge clk)
      if (rst)
        predictor <= 0;
@@ -108,18 +112,6 @@ module signal_capture
         else
           predictor <= predictor+1;
      end
-
-   //-------------------------------------------------------------------------
-   //  OBSOLETE stuff.
-   //-------------------------------------------------------------------------
-   // Track whether an edge was found in the preceding aquisition period.
-   always @(posedge clk)
-     if (rst)
-       found <= 0;
-     else if (ce && locked && (edge_found || count_wrap))
-       found <= edge_found;
-     else
-       found <= found;
 
 
 endmodule // sigcap
