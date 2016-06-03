@@ -17,7 +17,6 @@ unsigned int spi_speed;
 
 
 
-
 //***********************************
 //***********************************
 //********** SPI OPEN PORT **********
@@ -175,17 +174,4 @@ int SpiWriteAndRead (int spi_device, unsigned char *data, int length)
 	}
 
 	return retVal;
-}
-
-
-int main(int argc, char* argv[])
-{
-  int res;
-  res = SpiOpenPort(0);
-  printf("SPI port-open result = %d\n", res);
-
-  res = SpiClosePort(0);
-  printf("SPI port-close result = %d\n", res);
-
-  return 0;
 }

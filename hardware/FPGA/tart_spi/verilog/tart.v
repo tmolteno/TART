@@ -67,7 +67,8 @@ module tart
      end
 
    // assign led = debug_o;
-   assign led = (tart_state>=2);
+   // assign led = (tart_state>=2);
+   assign led = ~spi_ssel;
 
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
