@@ -23,7 +23,8 @@ module signal_capture
    output reg q,
    output reg ready = 0,
    output reg locked = 0,
-   output reg invalid = 0
+   output reg invalid = 0,
+   input      ack               // acknowledge any invalid data
    );
 
    // Supersample at the given rate.
@@ -70,18 +71,24 @@ module signal_capture
      if (rst) begin
         locked       <= 0;
         locked_count <= 0;
-        invalid      <= 0;
      end
      else if (ce && edge_found && valid_count) begin
         locked       <= locked_count == 3;
         locked_count <= locked_count  < 3 ? locked_count + 1 : locked_count ;
-        invalid      <= invalid;
      end
      else if (ce && edge_found) begin // Edge too far from acceptable.
         locked       <= 0;
         locked_count <= 0;
-        invalid      <= invalid || locked;
      end
+
+   // If the signal is `locked`, and `edge_found`, but occuring to far to be
+   // considered a `valid_count`, then assert `invalid`.
+   // Clear `invalid` whenever any earlier `invalid` data is acknowledged.
+   always @(posedge clk)
+     if (rst)
+       invalid <= 0;
+     else if (ce)
+       invalid <= !ack && invalid || locked && edge_found && !valid_count;
 
    //-------------------------------------------------------------------------
    //  Output the captured data-samples.

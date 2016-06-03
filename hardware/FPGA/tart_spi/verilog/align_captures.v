@@ -41,7 +41,8 @@ module align_captures
     output reg [NUM_SIGNALS-1:0] data_out,
     output reg                   ready = 0,
     output reg                   locked = 0,
-    output reg                   invalid = 0
+    output reg                   invalid = 0,
+    input                        ack
     );
 
    reg [BITS_COUNT-1:0]          count = 0, clear = 0;
@@ -154,7 +155,7 @@ module align_captures
      if (rst)
        invalid <= 0;
      else if (ce)
-       invalid <= invalid || locked && capture_error;
+       invalid <= !ack && invalid || locked && capture_error;
      else
        invalid <= invalid;
 

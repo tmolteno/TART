@@ -76,6 +76,7 @@ module spi_target
    //  the output latencies are large enough to require that transmission
    //  begins on the preceding positive edges.
    //-------------------------------------------------------------------------
+   // TODO: Better configuration options.
 `ifdef __LEGACY_MODE
    wire             SCK      = SCK_pin;
    wire             SCK_miso = SCK_pin;
@@ -103,17 +104,16 @@ module spi_target
    // TODO: Does this work with an intermittent input clock signal?
    // TODO: Passed test @62.5 MHz, with a Raspberry Pi II (Pat @01/06/2016).
    BUFIO2
-     #( .DIVIDE(1),
-        .DIVIDE_BYPASS("TRUE"),
-        .I_INVERT("FALSE"),
-        .USE_DOUBLER("FALSE")
-        ) BUFIO2_MISO0
-       (
-        .DIVCLK(DIVCLK),        // unused
-        .IOCLK(SCK_miso),
-        .SERDESSTROBE(SERDESSTROBE), // unused
-        .I(SCK_buf)
-        );
+     #(  .DIVIDE(1),
+         .DIVIDE_BYPASS("TRUE"),
+         .I_INVERT("FALSE"),
+         .USE_DOUBLER("FALSE")
+         ) BUFIO2_MISO0
+       ( .DIVCLK(DIVCLK),       // unused
+         .IOCLK(SCK_miso),
+         .SERDESSTROBE(SERDESSTROBE), // unused
+         .I(SCK_buf)
+         );
 `endif
 
    //-------------------------------------------------------------------------

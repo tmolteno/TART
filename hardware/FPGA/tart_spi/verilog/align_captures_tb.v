@@ -9,8 +9,8 @@ module align_captures_tb;
 
    wire [MSB:0] daq, sig, cap, strobes, lockeds, invalids;
    wire         ready, locked, invalid;
-   reg          clk12x = 1, clk = 1, rst = 0, ce = 0;
-   reg [MSB:0]  raw;
+   reg          clk12x = 1, clk = 1, rst = 0, ce = 0, ack = 0;
+   reg [MSB:0]  raw, acks = 0;
 
    always #2.50 clk12x <= ~clk12x;
    always #30.0 clk <= ~clk;
@@ -27,6 +27,8 @@ module align_captures_tb;
    end
 
 
+   //-------------------------------------------------------------------------
+   // Generate random data to be aquired.
    always @(posedge clk)
      raw <= $random;
 
@@ -36,6 +38,10 @@ module align_captures_tb;
    // Start aquisition after a reset.
    always @(posedge clk)
      ce <= !rst ? 1 : 0 ;
+
+   // Acknowledge that invalid data was received.
+   always @(posedge clk)
+     ack <= !ack && !rst && ce && |{invalid, invalids};
 
 
    //-------------------------------------------------------------------------
@@ -60,7 +66,8 @@ module align_captures_tb;
         .data_out(daq),
         .ready(ready),
         .locked(locked),
-        .invalid(invalid)
+        .invalid(invalid),
+        .ack(ack)
         );
 
    signal_capture SIGCAP0 [MSB:0]
@@ -71,7 +78,8 @@ module align_captures_tb;
        .q(cap),
        .ready(strobes),
        .locked(lockeds),
-       .invalid(invalids)
+       .invalid(invalids),
+       .ack(acks)
        );
 
    // Offset and jitter the given signals.
