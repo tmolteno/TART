@@ -1,3 +1,9 @@
+/*
+ * TODO:
+ *  + parse command-line arguments to determine action to take;
+ *
+ */
+
 #include <fcntl.h>				//Needed for SPI port
 #include <sys/ioctl.h>			//Needed for SPI port
 #include <linux/spi/spidev.h>	//Needed for SPI port
@@ -17,26 +23,26 @@
 
 int TartSpiReset (int spi_device)
 {
-  struct spi_ioc_transfer spi;
-  const struct spi_ioc_transfer *cmd = &spi;
+  struct spi_ioc_transfer spi[1];
+  //   struct spi_ioc_transfer spi;
+  // const struct spi_ioc_transfer *cmd = &spi;
   int ret = -1;
   int *spi_cs_fd;
-  unsigned char rst_cmd[4] = {0x8f, 0x01};
+  unsigned char rst_cmd[4] = {0x8f, 0x01, 0, 0};
 
-  if (spi_device)
-    spi_cs_fd = &spi_cs1_fd;
-  else
-    spi_cs_fd = &spi_cs0_fd;
+  spi_cs_fd = SET_SPIDEV(spi_device);
 
-  memset(cmd, 0, sizeof (spi));
+  //   memset(&spi, 0, sizeof (spi));
+  memset(spi, 0, sizeof (spi[0]));
+  spi[0].tx_buf        = (unsigned long)(rst_cmd+0);
+  spi[0].rx_buf        = (unsigned long)(rst_cmd+2);
+  spi[0].len           = 2;
+  spi[0].delay_usecs   = 1000;
+  spi[0].speed_hz      = spi_speed;
+  spi[0].bits_per_word = spi_bitsPerWord;
 
-  spi.tx_buf        = (unsigned long)(rst_cmd+0);
-  spi.rx_buf        = (unsigned long)(rst_cmd+2); // receive into "data"
-  spi.len           = 2;
-  spi.speed_hz      = spi_speed;
-  spi.bits_per_word = spi_bitsPerWord;
-
-	ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(1), &cmd) ;
+	ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(1), &spi);
+  // 	ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(1), &cmd);
 
 	if(ret < 0) {
     perror("Error - Problem transmitting spi data..ioctl");
@@ -48,19 +54,43 @@ int TartSpiReset (int spi_device)
   return ret;
 }
 
-int TartSpiRead (int spi_device, unsigned char *data, int length)
+int TartSpiAquire (int spi_device)
 {
-  struct spi_ioc_transfer spi[2];
+  struct spi_ioc_transfer spi[1];
+  int ret = -1;
+  int *spi_cs_fd;
+  unsigned char rst_cmd[4] = {0x81, 0x01, 0, 0};
+
+  spi_cs_fd = SET_SPIDEV(spi_device);
+  memset(spi, 0, sizeof (spi[0]));
+
+  spi[0].tx_buf        = (unsigned long)(rst_cmd+0);
+  spi[0].rx_buf        = (unsigned long)(rst_cmd+2);
+  spi[0].len           = 2;
+  spi[0].speed_hz      = spi_speed;
+  spi[0].bits_per_word = spi_bitsPerWord;
+
+	ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(1), &spi);
+
+	if(ret < 0) {
+    perror("Error - Problem transmitting spi data..ioctl");
+		exit(1);
+	} else {
+    printf("Read back: {%02x, %02x}\n", (unsigned)rst_cmd[2], (unsigned)rst_cmd[3]);
+  }
+
+  return ret;
+}
+
+int TartSpiReadPackets (const int spi_device, unsigned char *data, int packets, const int length)
+{
+  struct spi_ioc_transfer spi[++packets];
   int ret = -1;
   int *spi_cs_fd;
   const unsigned char read_cmd[8] = {0x02, 0xe5, 0, 0, 0, 0, 0, 0};
 
-  if (spi_device)
-    spi_cs_fd = &spi_cs1_fd;
-  else
-    spi_cs_fd = &spi_cs0_fd;
-
-  memset(spi, 0, 2*sizeof (spi[0]));
+  spi_cs_fd = SET_SPIDEV(spi_device);
+  memset(spi, 0, packets*sizeof (spi[0]));
 
 	// Build SPI transactions for a read register command, and then to receive
   // data:
@@ -69,12 +99,13 @@ int TartSpiRead (int spi_device, unsigned char *data, int length)
   spi[0].speed_hz      = spi_speed;
   spi[0].bits_per_word = spi_bitsPerWord;
 
-  spi[1].rx_buf        = (unsigned long) data; // receive into "data"
-  spi[1].len           = (unsigned int) length;
-  spi[1].speed_hz      = spi_speed;
-  spi[1].bits_per_word = spi_bitsPerWord;
-
-	ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(2), &spi) ;
+  for (int i = 1; i < packets; i++) {
+    spi[i].rx_buf        = (unsigned long)(data+(i-1)*length);
+    spi[i].len           = (unsigned int) length;
+    spi[i].speed_hz      = spi_speed;
+    spi[i].bits_per_word = spi_bitsPerWord;
+  }
+	ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(packets), &spi) ;
 
 	if(ret < 0) {
     perror("Error - Problem transmitting spi data..ioctl");
@@ -84,12 +115,67 @@ int TartSpiRead (int spi_device, unsigned char *data, int length)
   return ret;
 }
 
+int TartSpiRead (const int spi_device, unsigned char *data, const int packets, const int length)
+{
+  struct spi_ioc_transfer spi[2];
+  int ret = -1, tot = 0;
+  int *spi_cs_fd;
+  const unsigned char read_cmd[8] = {0x02, 0xe5, 0, 0, 0, 0, 0, 0};
+
+  spi_cs_fd = SET_SPIDEV(spi_device);
+  memset(spi, 0, 2*sizeof (spi[0]));
+
+	// Build SPI transactions for a read register command, and then to receive
+  // data:
+  spi[0].tx_buf        = (unsigned long)(&read_cmd);
+  spi[0].len           = 2;
+  spi[0].speed_hz      = spi_speed;
+  spi[0].bits_per_word = spi_bitsPerWord;
+
+  for (int i = 0; i < packets; i++) {
+    spi[1].rx_buf        = (unsigned long)(data+i*length);
+    spi[1].len           = (unsigned int) length;
+    spi[1].speed_hz      = spi_speed;
+    spi[1].bits_per_word = spi_bitsPerWord;
+    ret = ioctl(*spi_cs_fd, SPI_IOC_MESSAGE(2), &spi) ;
+
+    if(ret < 0) {
+      perror("Error - Problem transmitting spi data..ioctl");
+      exit(1);
+    }
+    tot += ret;
+  }
+  
+  return tot;
+}
+
+#define READ_LENGTH 32768
+#define NUM_PACKETS 512
+#define NUM_TRANSFERS 3
+
 
 int main(int argc, char* argv[])
 {
   int res;
   res = SpiOpenPort(0);
   printf("SPI port-open result = %d\n", res);
+
+  /*
+  res = TartSpiReset(0);
+  res = TartSpiReset(0);
+  printf("SPI reset result = %d\n", res);
+
+  res = TartSpiAquire(0);
+  printf("SPI aquisition ON result = %d\n", res);
+  */
+
+  printf("SPI beginning transfer...\n");
+  unsigned char* data = (unsigned char*) malloc(READ_LENGTH*NUM_PACKETS);
+  for (int i=0; i<NUM_TRANSFERS; i++) {
+    res = TartSpiRead(0, data, NUM_PACKETS, READ_LENGTH);
+    printf("SPI read-back result = %d\n", res);
+  }
+  free((void*) data);
 
   res = SpiClosePort(0);
   printf("SPI port-close result = %d\n", res);

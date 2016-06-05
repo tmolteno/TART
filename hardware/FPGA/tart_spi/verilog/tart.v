@@ -73,7 +73,8 @@ module tart
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
    //-------------------------------------------------------------------------
-   //fake_tart_clk clknetwork(.CLK_IN1(fpga_clk_32), .CLK_OUT1(fpga_clk), .CLK_OUT2(fake_rx_clk), .CLK_OUT3(clk320));
+`define __USE_OLD_CLOCKS
+`ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
       .CLKIN(rx_clk_16),               // 16.368 MHZ
@@ -81,7 +82,19 @@ module tart
       .CLKOUT1(fpga_clk),               // 16.368x6 = 98.208 MHz
       .reset_n(reset_n)
       );
+`else
+   tart_dcm TART_DCM0
+     ( .clk_pin(rx_clk_16),               // 16.368 MHZ
+       .clk_rst(0),
 
+       .clk(rx_clk_16_buffered), // 16.368 MHZ buffered
+       .reset_n(reset_n),
+       .status_n(status_n),
+       .clk6x(fpga_clk)         // 16.368x6 = 98.208 MHz
+       );
+`endif // __USE_OLD_CLOCKS
+
+   
    //-------------------------------------------------------------------------
    //     DATA CAPTURE
    //-------------------------------------------------------------------------

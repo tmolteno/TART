@@ -1,4 +1,10 @@
 `timescale 1ns / 1ps
+/*
+ *
+ * TODO:
+ *  + needs a pair of DCM's, so that phase can be locked?
+ * 
+ */
 
 // Create Date:    17:29:42 09/02/2014 
 module tart_dcm
@@ -47,6 +53,7 @@ module tart_dcm
          .CLKFX_MULTIPLY(12), // Multiply value on CLKFX outputs - M - (2-256)
          .CLKFX_DIVIDE(1), // Divide value on CLKFX outputs - D - (1-256)
          .CLKFXDV_DIVIDE(2), // CLKFXDV divide value, from {(2),4,8,16,32}
+//          .DFS_OSCILLATOR_MODE("PHASE_FREQ_LOCK"),
          .STARTUP_WAIT("FALSE") // Delay config DONE until DCM_CLKGEN LOCKED (TRUE/FALSE)
          ) TART_DCM0
        ( .CLKIN(clk_buf),        // 1-bit input: Clock input
