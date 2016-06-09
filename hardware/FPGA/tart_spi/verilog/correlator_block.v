@@ -46,7 +46,7 @@ module correlator_block
     input [11:0]   im,
 
     output reg     overflow_cos = 0,
-    output reg     overflow_sin = 0,
+    output reg     overflow_sin = 0
     );
   
 endmodule // correlator_block
