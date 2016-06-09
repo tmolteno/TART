@@ -73,7 +73,7 @@ module tart
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
    //-------------------------------------------------------------------------
-`define __USE_OLD_CLOCKS
+// `define __USE_OLD_CLOCKS
 `ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
