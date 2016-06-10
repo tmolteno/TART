@@ -18,8 +18,8 @@
 
 // Bus transaction states.
 `define BUS_IDLE 0
-`define BUS_READ 1
-`define BUS_WAIT 2
+`define BUS_WAIT 1
+`define BUS_READ 2
 
 module correlator
   #( parameter ACCUM = 32,
@@ -40,22 +40,23 @@ module correlator
      parameter MSB   = ACCUM - 1,
      parameter DELAY = 3)
    (
-    input              clk_x, // correlator clock
+    input              clk_x,   // correlator clock
     input              rst,
 
     // Wishbone-like bus interface for reading visibilities.
-    input              clk_i, // bus clock
+    input              clk_i,   // bus clock
     input              cyc_i,
     input              stb_i,
-    input              we_i, // writes are ignored
+    input              we_i,    // writes are ignored
+    input              bst_i,   // burst-mode transfer?
     output             ack_o,
     input [4:0]        adr_i,
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
 
     // Real and imaginary components from the antennas.
-    input              sw, // switch banks
-    input              en, // data is valid
+    input              sw,      // switch banks
+    input              en,      // data is valid
     input [11:0]       re,
     input [11:0]       im,
 
@@ -103,6 +104,7 @@ module correlator
         bank  <= #DELAY 0;
         clear <= #DELAY 1;
      end
+//      else if (wrap_x_rd_adr && swap) begin // swap banks
      else if (wrap_x_rd_adr && (sw || swap)) begin // swap banks
         swap  <= #DELAY 0;
         bank  <= #DELAY ~bank;
@@ -131,29 +133,39 @@ module correlator
    //-------------------------------------------------------------------------
    //  Bus interface logic.
    //-------------------------------------------------------------------------
-   wire [4:0] adr_w = {~bank, adr_i[3:0]};
+   wire [4:0] adr_w = {bank_n, adr_i[3:0]};
    reg [1:0]  bus_state = `BUS_IDLE;
+   reg        bank_n = 1;
 
-   assign ack_o = bus_state[0];
+   assign ack_o = bus_state[1];
 
    always @(posedge clk_i)
      if (rst)
-       bus_state <= `BUS_IDLE;
+       bus_state <= #DELAY `BUS_IDLE;
      else
        case (bus_state)
          `BUS_IDLE:
-           bus_state <= cyc_i && stb_i ? `BUS_READ : bus_state ;
-
-         `BUS_READ:
-           bus_state <= `BUS_WAIT;
+           bus_state <= #DELAY cyc_i && stb_i ? `BUS_READ : bus_state ;
 
          `BUS_WAIT:
-           bus_state <= cyc_i ? (stb_i ? `BUS_READ : bus_state) : `BUS_IDLE ;
+           bus_state <= #DELAY cyc_i ? (stb_i ? `BUS_READ : bus_state) : `BUS_IDLE ;
+
+         // Burst transfers do not need wait-states, as the next address is
+         // available one cycle earlier.
+         // BST -- Bulk Sequential Transfer.
+         `BUS_READ:
+           bus_state <= #DELAY bst_i ? bus_state : `BUS_WAIT ;
        endcase // case (bus_state)
 
+   // Synchronise the number of the innactive bank across domains.
+   always @(posedge clk_i)
+     if (rst) bank_n <= #DELAY 1;
+     else     bank_n <= #DELAY ~bank;
+   
    // Read only from the innactive bank.
    always @(posedge clk_i)
-     if (cyc_i && stb_i) dat_o <= adr_i[4] ? sinram[adr_w] : cosram[adr_w] ;
+     if (cyc_i && stb_i)
+       dat_o <= #DELAY adr_i[4] ? sinram[adr_w] : cosram[adr_w] ;
 
 
    //-------------------------------------------------------------------------

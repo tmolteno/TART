@@ -120,6 +120,13 @@ module correlator_block_tb;
    //-------------------------------------------------------------------------
    //  Read back visibility data, from the correlators' registers.
    //-------------------------------------------------------------------------
+   wire bst_w = get || cyc && stb && adr < 7'h1b;
+   reg  bst = 0;                // Use BurSTs (Bulk Seq. Transfers)
+
+   always @(posedge clk_b)
+     if (rst) bst <= #DELAY 0;
+     else     bst <= #DELAY bst_w;
+
    always @(posedge clk_b)
      if (rst) begin
         {fin, get} <= #DELAY 0;
@@ -127,10 +134,10 @@ module correlator_block_tb;
      end
      else if (get) begin
         {fin, get} <= #DELAY 0;
-        {cyc, stb} <= #DELAY 3;
+        {cyc, stb} <= #DELAY 7;
      end
-//      else if (cyc && stb && ack && adr == 7'h7b) begin
-     else if (cyc && stb && ack && adr == 7'h1b) begin
+     else if (cyc && stb && ack && !bst) begin
+//      else if (cyc && stb && ack && adr == 7'h1b) begin
         {fin, get} <= #DELAY 2;
         {cyc, stb} <= #DELAY 0;
      end
@@ -143,16 +150,20 @@ module correlator_block_tb;
    wire [6:0] next_adr = adr[3:0] == 11 ? adr + 5 : adr + 1 ;
 
    always @(posedge clk_b)
-     if (rst || get || fin)      adr <= #DELAY 0;
-     else if (cyc && stb && ack) adr <= #DELAY next_adr;
+     if (rst || get || fin)        adr <= #DELAY 0;
+     else if (cyc && stb && bst_w) adr <= #DELAY next_adr;
 
+   //-------------------------------------------------------------------------
    // Display the data, and which correlator and register it is from.
-   wire [1:0] ci = adr[6:5];
-   wire [4:0] ri = adr[4:0];
+   reg [1:0]  ci;
+   reg [4:0]  ri;
 
    always @(posedge clk_b)
-     if (cyc && stb && ack)
-       $display("%8t: Vis = %08x (c: %1x, r:%02x)", $time, dat, ci, ri);
+     begin
+        {ci, ri} <= adr;
+        if (cyc && stb && ack)
+          $display("%8t: Vis = %08x (c: %1x, r:%02x)", $time, dat, ci, ri);
+     end
 
 
    //-------------------------------------------------------------------------
@@ -173,6 +184,7 @@ module correlator_block_tb;
          .cyc_i(cyc),
          .stb_i(stb),
          .we_i (we),
+         .bst_i(bst),
          .ack_o(ack),
          .adr_i(adr[6:0]),
          .dat_i(32'bx),

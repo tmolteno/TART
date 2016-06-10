@@ -34,8 +34,9 @@ module correlator_block
     input          cyc_i,
     input          stb_i,
     input          we_i,        // writes are ignored
+    input          bst_i,       // Bulk Sequential Transfer?
     output         ack_o,
-    input [7:0]    adr_i,
+    input [6:0]    adr_i,
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
 
@@ -81,6 +82,7 @@ module correlator_block
          .cyc_i(cyc_i),
          .stb_i(stb_i && sel0),
          .we_i (we_i),
+         .bst_i(bst_i),
          .ack_o(ack_0),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
@@ -107,6 +109,7 @@ module correlator_block
          .cyc_i(cyc_i),
          .stb_i(stb_i && sel1),
          .we_i (we_i),
+         .bst_i(bst_i),
          .ack_o(ack_1),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
@@ -133,6 +136,7 @@ module correlator_block
          .cyc_i(cyc_i),
          .stb_i(stb_i && sel2),
          .we_i (we_i),
+         .bst_i(bst_i),
          .ack_o(ack_2),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
@@ -150,18 +154,6 @@ module correlator_block
    correlator
      #(  .ACCUM(ACCUM),
          .PAIRS(PAIRS3),
-//          .PAIR0(PAIRS3[ 7: 0]),
-//          .PAIR1(PAIRS3[15: 8]),
-//          .PAIR2(PAIRS3[23:16]),
-//          .PAIR3(PAIRS3[31:24]),
-//          .PAIR4(PAIRS3[39:32]),
-//          .PAIR5(PAIRS3[47:40]),
-//          .PAIR6(PAIRS3[55:48]),
-//          .PAIR7(PAIRS3[63:56]),
-//          .PAIR8(PAIRS3[71:64]),
-//          .PAIR9(PAIRS3[79:72]),
-//          .PAIRA(PAIRS3[87:80]),
-//          .PAIRB(PAIRS3[95:88]),
          .DELAY(DELAY)
          ) CORRELATOR3
        ( .clk_x(clk_x),
@@ -171,6 +163,7 @@ module correlator_block
          .cyc_i(cyc_i),
          .stb_i(stb_i && sel3),
          .we_i (we_i),
+         .bst_i(bst_i),
          .ack_o(ack_3),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
