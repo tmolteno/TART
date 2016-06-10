@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 /*
  *
  * Time-multiplexed block of correlator-blocks.
@@ -33,9 +33,9 @@ module correlator_block
     input          clk_i,       // bus clock
     input          cyc_i,
     input          stb_i,
-    input          we_i, // writes are ignored
+    input          we_i,        // writes are ignored
     output         ack_o,
-    input [4:0]    adr_i,
+    input [7:0]    adr_i,
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
 
@@ -48,5 +48,142 @@ module correlator_block
     output reg     overflow_cos = 0,
     output reg     overflow_sin = 0
     );
-  
+
+
+   //-------------------------------------------------------------------------
+   //  Wishbone-like bus interface.
+   //-------------------------------------------------------------------------
+   wire [MSB:0]    dat_0, dat_1, dat_2, dat_3;
+
+   // Address decoders.
+   wire            sel0 = adr_i[6:5] == 2'b00;
+   wire            sel1 = adr_i[6:5] == 2'b01;
+   wire            sel2 = adr_i[6:5] == 2'b10;
+   wire            sel3 = adr_i[6:5] == 2'b11;
+
+   // 4:1 multiplexer for returning requested visibilities.
+   assign ack_o = cyc_i & stb_i & (sel0 & ack_0 | sel1 & ack_1 | sel2 & ack_2 | sel3 & ack_3);
+   assign dat_o = adr_i[6] ? (adr_i[5] ? dat_3 : dat_2) : (adr_i[5] ? dat_1 : dat_0) ;
+
+
+   //-------------------------------------------------------------------------
+   //  Correlator instances.
+   //-------------------------------------------------------------------------
+   correlator
+     #(  .ACCUM(ACCUM),
+         .PAIRS(PAIRS0),
+         .DELAY(DELAY)
+         ) CORRELATOR0
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stb_i && sel0),
+         .we_i (we_i),
+         .ack_o(ack_0),
+         .adr_i(adr_i[4:0]),
+         .dat_i(dat_i),
+         .dat_o(dat_0),
+
+         .sw(sw),
+         .en(en),
+         .re(re[11:0]),
+         .im(im[11:0]),
+
+         .overflow_cos(oc_0),
+         .overflow_sin(os_0)
+         );
+
+   correlator
+     #(  .ACCUM(ACCUM),
+         .PAIRS(PAIRS1),
+         .DELAY(DELAY)
+         ) CORRELATOR1
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stb_i && sel1),
+         .we_i (we_i),
+         .ack_o(ack_1),
+         .adr_i(adr_i[4:0]),
+         .dat_i(dat_i),
+         .dat_o(dat_1),
+
+         .sw(sw),
+         .en(en),
+         .re(re[11:0]),
+         .im(im[11:0]),
+
+         .overflow_cos(oc_1),
+         .overflow_sin(os_1)
+         );
+
+   correlator
+     #(  .ACCUM(ACCUM),
+         .PAIRS(PAIRS2),
+         .DELAY(DELAY)
+         ) CORRELATOR2
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stb_i && sel2),
+         .we_i (we_i),
+         .ack_o(ack_2),
+         .adr_i(adr_i[4:0]),
+         .dat_i(dat_i),
+         .dat_o(dat_2),
+
+         .sw(sw),
+         .en(en),
+         .re(re[11:0]),
+         .im(im[11:0]),
+
+         .overflow_cos(oc_2),
+         .overflow_sin(os_2)
+         );
+
+   correlator
+     #(  .ACCUM(ACCUM),
+         .PAIRS(PAIRS3),
+//          .PAIR0(PAIRS3[ 7: 0]),
+//          .PAIR1(PAIRS3[15: 8]),
+//          .PAIR2(PAIRS3[23:16]),
+//          .PAIR3(PAIRS3[31:24]),
+//          .PAIR4(PAIRS3[39:32]),
+//          .PAIR5(PAIRS3[47:40]),
+//          .PAIR6(PAIRS3[55:48]),
+//          .PAIR7(PAIRS3[63:56]),
+//          .PAIR8(PAIRS3[71:64]),
+//          .PAIR9(PAIRS3[79:72]),
+//          .PAIRA(PAIRS3[87:80]),
+//          .PAIRB(PAIRS3[95:88]),
+         .DELAY(DELAY)
+         ) CORRELATOR3
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stb_i && sel3),
+         .we_i (we_i),
+         .ack_o(ack_3),
+         .adr_i(adr_i[4:0]),
+         .dat_i(dat_i),
+         .dat_o(dat_3),
+
+         .sw(sw),
+         .en(en),
+         .re(re[11:0]),
+         .im(im[11:0]),
+
+         .overflow_cos(oc_3),
+         .overflow_sin(os_3)
+         );
+
+   
 endmodule // correlator_block

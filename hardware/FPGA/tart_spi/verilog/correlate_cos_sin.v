@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 /*
  *
  * Performs a "complex correlation step."
@@ -43,8 +43,8 @@ module correlate_cos_sin
         {os, qsin} <= #DELAY 0;
      end
      else if (en) begin
-        {oc, qcos} <= #DELAY dcos + ~(ar ^ br);
-        {os, qsin} <= #DELAY dsin + ~(ar ^ bi);
+        {oc, qcos} <= #DELAY ar == br ? dcos + 1 : dcos ;
+        {os, qsin} <= #DELAY ar == bi ? dsin + 1 : dsin ;
      end
 
 endmodule // correlate_cos_sin
