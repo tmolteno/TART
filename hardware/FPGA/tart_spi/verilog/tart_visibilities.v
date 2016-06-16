@@ -1,6 +1,7 @@
 `timescale 1ns/100ps
 /*
- *
+ * 
+ * Manages the correlators, including its flags and settings.
  * Transfers visibilities from the correlators to a SRAM after each bank-swap.
  * 
  * NOTE:
@@ -22,7 +23,7 @@ module tart_visibilities
     parameter MSB   = BLOCK-1,
     parameter COUNT = 576,     // correlators and averages
     parameter CBITS = 10,
-    parameter CSB   = CBITS-1,
+    parameter CSB   = CBITS,
     parameter MRATE = 12,       // time-multiplexing rate
     parameter MBITS = 4,
     parameter MSKIP = (1 << MBITS - MRATE + 1),
@@ -38,7 +39,7 @@ module tart_visibilities
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
     output reg         ack_o = 0,
-    input [CBITS+1:0]  adr_i, // upper address-space for registers
+    input [CBITS+2:0]  adr_i, // upper address-space for registers
     input [7:0]        byt_i,
     output reg [7:0]   byt_o,
 
@@ -53,7 +54,8 @@ module tart_visibilities
     output reg [MSB:0] dat_o,
 
     // Status flags for the correlators and visibilities.
-    input              switched, // inicates that banks have switched
+    input              switching, // inicates that banks have switched
+    output reg [MSB:0] blocksize = 0, // block size - 1
     output reg         available = 0 // asserted when a window is accessed
     );
 
@@ -68,6 +70,30 @@ module tart_visibilities
 
 
    //-------------------------------------------------------------------------
+   //  System registers.
+   //  NOTE: Addressed by `{3'b111, reg#}`.
+   //  TODO:
+   //-------------------------------------------------------------------------
+   //  Register#:
+   //    00  --  status register;
+   //    01  --  logarithm of the bit-width of the visibilities counter;
+   //
+   wire [7:0]          status = {available, 2'b00, count_log[4:0]};
+   reg [7:0]           count_log = 0;
+
+   // TODO: Should be computed from `count_log`, and synchronised across
+   //   domains.
+   always @(posedge clk_i)
+     if (rst_i) begin
+        count_log <= #DELAY 0;
+        blocksize <= #DELAY 0;
+     end
+     else if (cyc_i && stb_i && we_i && adr_i == 11'h701) begin
+        count_log <= #DELAY byt_i;
+        blocksize <= #DELAY (1 << byt_i[4:0]) - 1;
+     end
+
+   //-------------------------------------------------------------------------
    //  Correlator read-back.
    //-------------------------------------------------------------------------
    wire                wrap_adr = &adr_o[CSB:MBITS];
@@ -79,7 +105,7 @@ module tart_visibilities
    always @(posedge clk_i)
      if (rst_i)
        {cyc_o, stb_o, we_o, bst_o, adr_o} <= #DELAY 0;
-     else if (switched) begin
+     else if (switching) begin
         {cyc_o, stb_o, bst_o} <= #DELAY 7;
         {we_o, adr_o} <= #DELAY 0;
      end
@@ -93,7 +119,7 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    //  Address and data update logic for SRAM writes.
    always @(posedge clk_i)
-     if (rst || switch && !cyc_o)
+     if (rst_i || switching && !cyc_o)
        vis_adr <= #DELAY 0;
      else if (cyc_o && stb_o && !we_o && ack_i)
        vis_adr <= #DELAY vis_adr + 1;
@@ -112,7 +138,8 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    //  Bus interface to TART's SPI unit.
    //-------------------------------------------------------------------------
-   wire [CSB:0] sram_adr = adr_i[CBITS+1:2];
+   wire [CSB-1:0] sram_adr = adr_i[CBITS+1:2];
+   reg            bst_r = 0;
 
    always @(posedge clk_i)
      if (rst_i) ack_o <= #DELAY 0;

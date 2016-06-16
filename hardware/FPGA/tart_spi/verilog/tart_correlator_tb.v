@@ -3,20 +3,21 @@ module tart_correlator_tb;
 
    parameter BLOCK = 32;        // Number of bits of a block
    parameter MSB   = BLOCK-1;
+   parameter MRATE = 12;
    parameter DELAY = 3;
-   parameter COUNT = (1 << 3) - 1;
+   parameter COUNT = 4; // (1 << 3) - 1;
 
-   wire [MSB:0] dat;
-   wire [12:0]  adr_c;
-   wire [7:0]   dat_c;
-   reg [MSB:0]  val;
+   wire [MSB:0] dat_c, val_c, blocksize;
+   wire [10:0]  adr_c;
+   wire [7:0]   dat;
    reg          clk_x = 1, clk_b = 1, rst = 0, en = 0;
    reg          cyc = 0, stb = 0, we = 0;
-   reg [10:0]   adr;
-   reg [7:0]    val_c;
-   reg          set = 0, get = 0, fin = 0;
+   reg [12:0]   adr;
+   reg [7:0]    val;
+   reg          set = 0, get = 0, fin = 0, sw = 0;
    reg [2:0]    dev = 0;
-   wire         ack, sw;
+   wire         ack;
+   wire         cyc_c, stb_c, we_c, bst_c, ack_c;
 
    //-------------------------------------------------------------------------
    //  Setup correlator and bus clocks, respectively.
@@ -85,7 +86,7 @@ module tart_correlator_tb;
    reg [3:0]  cnt = 0;
    reg        strobe = 0;
    wire [3:0] next_cnt = wrap_cnt ? 0 : cnt + 1 ;
-   wire       wrap_cnt = cnt == 11;
+   wire       wrap_cnt = cnt == MRATE-1;
 
    always @(posedge clk_x)
      if (rst) cnt <= #DELAY 0;
@@ -100,6 +101,12 @@ module tart_correlator_tb;
      if (!rst && en && wrap_cnt)
        antenna <= #DELAY $random;
 
+   reg        sw_wait = 0;
+   always @(posedge clk_b)
+     if (rst) {sw, sw_wait} <= #DELAY 0;
+     else if (!sw && !sw_wait && available) {sw, sw_wait} <= #DELAY 3;
+     else if (sw && sw_wait && available) sw <= #DELAY 0;
+     else if (sw_wait && !available) sw_wait <= #DELAY 0;
 
    //-------------------------------------------------------------------------
    //  Read back visibility data, from the correlators' registers.
@@ -189,9 +196,10 @@ module tart_correlator_tb;
          .dat_o(dat_c),
 
          .enable(en),
+         .blocksize(blocksize),
          .strobe(strobe),
          .antenna(antenna),
-         .switch(sw)
+         .switch(switching)
          );
 
    //-------------------------------------------------------------------------
@@ -199,6 +207,7 @@ module tart_correlator_tb;
    tart_visibilities
      #(  .BLOCK (BLOCK),
          .COUNT (24),
+         .MRATE (MRATE),
          .DELAY (DELAY)
          ) TART_VISIBILITIES0
        ( .clk_i(clk_b),
@@ -210,8 +219,8 @@ module tart_correlator_tb;
          .bst_i(bst),
          .ack_o(ack),
          .adr_i(adr),
-         .dat_i(val),
-         .dat_o(byt),
+         .byt_i(val),
+         .byt_o(dat),
 
          .cyc_o(cyc_c),
          .stb_o(stb_c),
@@ -222,8 +231,9 @@ module tart_correlator_tb;
          .dat_i(val_c),
          .dat_o(dat_c),
 
-         .switched(switched),
-         .accessed(accessed)
+         .switching(switching),
+         .blocksize(blocksize),
+         .available(available)
          );
 
 

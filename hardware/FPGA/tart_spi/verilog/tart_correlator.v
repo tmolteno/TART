@@ -49,45 +49,27 @@ module tart_correlator
 
     // The real component of the signal from the antennas.
     input              enable, // data aquisition is active
+    input [MSB:0]      blocksize, // block size - 1
     input              strobe, // `antenna` data is valid
     input [23:0]       antenna,// the real component from each antenna
     output reg         switch = 0
     );
-
-`include "../include/tart_config.v"
-
-   //-------------------------------------------------------------------------
-   //  System registers.
-   //  NOTE: Addressed by `{3'b111, reg#}`.
-   //  TODO:
-   //-------------------------------------------------------------------------
-   //  Register#:
-   //    00  --  status register;
-   //    01  --  logarithm of the bit-width of the visibilities counter;
-   //
-   reg [MSB:0]         count_max = -1;
-   reg [7:0]           count_log;
-   reg                 active = 0;
-   reg                 unread_data = 0;
-
-   // TODO: Should be computed from `count_log`, and synchronised across
-   //   domains.
-   always @(posedge clk_i)
-     if (rst)
-       count_max <= #DELAY -1;
-     else if (cyc_i && stb_i && we_i && adr_i == 11'h701)
-       count_max <= #DELAY dat_i;
-
 
    //-------------------------------------------------------------------------
    //  Hardware-correlator control logic.
    //-------------------------------------------------------------------------
    //  Fill a block with visibilities, and then switch banks.
    wire [MSB:0]        next_blk = wrap_blk ? 0 : blk + 1 ;
-   wire                wrap_blk = blk == count_max;
+   wire                wrap_blk = blk == blocksize;
+   reg                 active = 0;
    reg                 sw = 0, strobe_r = 0;
    reg [MSB:0]         blk = 0;
    reg [3:0]           delays = 0;
+
+   //-------------------------------------------------------------------------
+   //  The configuration file includes the parameters that determine which
+   //  antannae connect to each of the correlators.
+`include "../include/tart_config.v"
 
    // Activate the Hilbert transform and correlators once this module has been
    // enabled, and when the first valid data arrives.
