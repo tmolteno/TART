@@ -217,6 +217,68 @@ module tart
       .SDRAM_DATA(SDRAM_DQ)
    );
 
+
+   /*
+   //-------------------------------------------------------------------------
+   //  CORRELATOR / VISIBILITIES BLOCK.
+   //-------------------------------------------------------------------------
+   //  Correlator functional unit.
+   tart_correlator
+     #(  .BLOCK (BLOCK),
+         .DELAY (DELAY)
+         ) TART_CORRELATOR0
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_b),
+         .cyc_i(cyc),
+         .stb_i(stb),
+         .we_i (we),
+         .bst_i(bst),
+         .ack_o(ack),
+         .adr_i(adr),
+         .dat_i(val),
+         .dat_o(dat),
+
+         .enable(en),
+         .strobe(strobe),
+         .antenna(antenna),
+         .switch(sw)
+         );
+
+   //-------------------------------------------------------------------------
+   //  Visibilities read-back unit.
+   tart_visibilities
+     #(  .BLOCK (BLOCK),
+         .DELAY (DELAY)
+         ) TART_VISIBILITIES0
+       ( .clk_i(clk_b),
+         .rst_i(rst),
+
+         .cyc_i(cyc),
+         .stb_i(stb),
+         .we_i (we),
+         .bst_i(bst),
+         .ack_o(ack),
+         .adr_i(adr),
+         .dat_i(val),
+         .dat_o(dat),
+
+         .cyc_o(cyc),
+         .stb_o(stb),
+         .we_o (we),
+         .bst_o(bst),
+         .ack_i(ack),
+         .adr_o(adr),
+         .dat_i(val),
+         .dat_o(dat),
+
+         .switched(switched),
+         .accessed(accessed)
+         );
+    */
+
+   
    //-------------------------------------------------------------------------
    //     TRANSMISSION BLOCK
    //     SPI SLAVE

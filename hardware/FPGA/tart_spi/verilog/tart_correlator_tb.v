@@ -2,17 +2,21 @@
 module tart_correlator_tb;
 
    parameter BLOCK = 32;        // Number of bits of a block
+   parameter MSB   = BLOCK-1;
    parameter DELAY = 3;
    parameter COUNT = (1 << 3) - 1;
 
-   wire [31:0] dat;
-   reg         clk_x = 1, clk_b = 1, rst = 0, en = 0;
-   reg         cyc = 0, stb = 0, we = 0;
-   reg [10:0]  adr;
-   reg [31:0]  val;
-   reg         set = 0, get = 0, fin = 0;
-   reg [2:0]   dev = 0;
-   wire        ack, sw;
+   wire [MSB:0] dat;
+   wire [12:0]  adr_c;
+   wire [7:0]   dat_c;
+   reg [MSB:0]  val;
+   reg          clk_x = 1, clk_b = 1, rst = 0, en = 0;
+   reg          cyc = 0, stb = 0, we = 0;
+   reg [10:0]   adr;
+   reg [7:0]    val_c;
+   reg          set = 0, get = 0, fin = 0;
+   reg [2:0]    dev = 0;
+   wire         ack, sw;
 
    //-------------------------------------------------------------------------
    //  Setup correlator and bus clocks, respectively.
@@ -164,8 +168,9 @@ module tart_correlator_tb;
 
 
    //-------------------------------------------------------------------------
-   //  Device under test (DUT).
+   //  Devices under test (DUT).
    //-------------------------------------------------------------------------
+   //  Correlator functional unit.
    tart_correlator
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
@@ -174,6 +179,31 @@ module tart_correlator_tb;
          .rst(rst),
 
          .clk_i(clk_b),
+         .cyc_i(cyc_c),
+         .stb_i(stb_c),
+         .we_i (we_c),
+         .bst_i(bst_c),
+         .ack_o(ack_c),
+         .adr_i(adr_c),
+         .dat_i(val_c),
+         .dat_o(dat_c),
+
+         .enable(en),
+         .strobe(strobe),
+         .antenna(antenna),
+         .switch(sw)
+         );
+
+   //-------------------------------------------------------------------------
+   //  Visibilities read-back unit.
+   tart_visibilities
+     #(  .BLOCK (BLOCK),
+         .COUNT (24),
+         .DELAY (DELAY)
+         ) TART_VISIBILITIES0
+       ( .clk_i(clk_b),
+         .rst_i(rst),
+
          .cyc_i(cyc),
          .stb_i(stb),
          .we_i (we),
@@ -181,12 +211,19 @@ module tart_correlator_tb;
          .ack_o(ack),
          .adr_i(adr),
          .dat_i(val),
-         .dat_o(dat),
+         .dat_o(byt),
 
-         .enable(en),
-         .strobe(strobe),
-         .antenna(antenna),
-         .switch(sw)
+         .cyc_o(cyc_c),
+         .stb_o(stb_c),
+         .we_o (we_c ),
+         .bst_o(bst_c),
+         .ack_i(ack_c),
+         .adr_o(adr_c),
+         .dat_i(val_c),
+         .dat_o(dat_c),
+
+         .switched(switched),
+         .accessed(accessed)
          );
 
 

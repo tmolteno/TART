@@ -19,10 +19,10 @@
 module correlator_block
   #( parameter ACCUM = 32,
      // Pairs of antennas to correlate, for each block.
-     parameter PAIRS0 = 96'hb1a191817161b0a090807060,
-     parameter PAIRS1 = 96'hb3a393837363b2a292827262,
-     parameter PAIRS2 = 96'hb5a595857565b4a494847464,
-     parameter PAIRS3 = 96'hb1a191817161b0a090807060, // TODO:
+     parameter PAIRS0 = 120'hb1a191817161b0a090807060,
+     parameter PAIRS1 = 120'hb3a393837363b2a292827262,
+     parameter PAIRS2 = 120'hb5a595857565b4a494847464,
+     parameter PAIRS3 = 120'hb1a191817161b0a090807060, // TODO:
      parameter MSB   = ACCUM - 1,
      parameter DELAY = 3)
    (
@@ -43,8 +43,8 @@ module correlator_block
     // Real and imaginary components from the antennas.
     input          sw,          // switch banks
     input          en,          // data is valid
-    input [11:0]   re,
-    input [11:0]   im,
+    input [23:0]   re,
+    input [23:0]   im,
 
     output reg     overflow_cos = 0,
     output reg     overflow_sin = 0
@@ -90,8 +90,8 @@ module correlator_block
 
          .sw(sw),
          .en(en),
-         .re(re[11:0]),
-         .im(im[11:0]),
+         .re(re),
+         .im(im),
 
          .overflow_cos(oc_0),
          .overflow_sin(os_0)
@@ -117,8 +117,8 @@ module correlator_block
 
          .sw(sw),
          .en(en),
-         .re(re[11:0]),
-         .im(im[11:0]),
+         .re(re),
+         .im(im),
 
          .overflow_cos(oc_1),
          .overflow_sin(os_1)
@@ -144,8 +144,8 @@ module correlator_block
 
          .sw(sw),
          .en(en),
-         .re(re[11:0]),
-         .im(im[11:0]),
+         .re(re),
+         .im(im),
 
          .overflow_cos(oc_2),
          .overflow_sin(os_2)
@@ -171,8 +171,8 @@ module correlator_block
 
          .sw(sw),
          .en(en),
-         .re(re[11:0]),
-         .im(im[11:0]),
+         .re(re),
+         .im(im),
 
          .overflow_cos(oc_3),
          .overflow_sin(os_3)

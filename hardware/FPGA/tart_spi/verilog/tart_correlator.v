@@ -54,6 +54,7 @@ module tart_correlator
     output reg         switch = 0
     );
 
+`include "../include/tart_config.v"
 
    //-------------------------------------------------------------------------
    //  System registers.
@@ -123,6 +124,7 @@ module tart_correlator
    reg                 ack_7 = 0;
 //    reg [7:0]           stbs = 0;
 //    reg [10:0]          adr;
+   reg                 cyc_r = 0; // TODO:
    wire [MSB:0]        dats [0:7];
    wire [7:0]          stbs, acks;
    wire                we_w = 0, ack_w = |acks;
@@ -152,6 +154,18 @@ module tart_correlator
        endcase // case (bus_state)
 
    /*
+   always @(posedge clk_i)
+     if (rst)
+       cyc_r <= #DELAY 0;
+     else if (cyc_i && bus_state == `BUS_IDLE)
+       cyc_r <= #DELAY 1;
+     else if (bus_state == `BUS_READ || bus_state == `BUS_WRITE)
+       cyc_r <= #DELAY bst_i;
+     else if (!cyc_i && cyc_r)
+       cyc_r <= #DELAY 0;
+     else
+       cyc_r <= #DELAY cyc_r;
+
    // Set the strobes for the sub-units.
    always @(posedge clk_i)
      if (rst) stbs <= #DELAY 0;
@@ -200,25 +214,14 @@ module tart_correlator
    //  There are six correlator-blocks, each connected to 12 of the 24
    //  antennas.
    //-------------------------------------------------------------------------
-   // Break up the 24 antennas into blocks, for convenience.
-   wire [5:0]          re0 = re[ 5: 0];
-   wire [5:0]          re1 = re[11: 6];
-   wire [5:0]          re2 = re[17:12];
-   wire [5:0]          re3 = re[23:18];
-
-   wire [5:0]          im0 = im[ 5: 0];
-   wire [5:0]          im1 = im[11: 6];
-   wire [5:0]          im2 = im[17:12];
-   wire [5:0]          im3 = im[23:18];
-
    wire [5:0]          oc, os;  // overflows
 
    correlator_block
      #(  .ACCUM (BLOCK),
-//          .PAIRS0(PAIRS0),
-//          .PAIRS1(PAIRS1),
-//          .PAIRS2(PAIRS2),
-//          .PAIRS3(PAIRS3),
+         .PAIRS0(PAIRS00_00),
+         .PAIRS1(PAIRS00_01),
+         .PAIRS2(PAIRS00_02),
+         .PAIRS3(PAIRS00_03),
          .DELAY (DELAY)
          ) CORRELATOR_BLOCK0
        ( .clk_x(clk_x),
@@ -236,8 +239,8 @@ module tart_correlator
 
          .sw(sw),
          .en(go),
-         .re({re1, re0}),
-         .im({im1, im0}),
+         .re(re),
+         .im(im),
 
          .overflow_cos(oc[0]),
          .overflow_sin(os[0])
@@ -245,10 +248,10 @@ module tart_correlator
 
    correlator_block
      #(  .ACCUM (BLOCK),
-//          .PAIRS0(PAIRS0),
-//          .PAIRS1(PAIRS1),
-//          .PAIRS2(PAIRS2),
-//          .PAIRS3(PAIRS3),
+         .PAIRS0(PAIRS01_00),
+         .PAIRS1(PAIRS01_01),
+         .PAIRS2(PAIRS01_02),
+         .PAIRS3(PAIRS01_03),
          .DELAY (DELAY)
          ) CORRELATOR_BLOCK1
        ( .clk_x(clk_x),
@@ -266,11 +269,131 @@ module tart_correlator
 
          .sw(sw),
          .en(go),
-         .re({re2, re0}),
-         .im({im2, im0}),
+         .re(re),
+         .im(im),
 
          .overflow_cos(oc[1]),
          .overflow_sin(os[1])
+         );
+
+   correlator_block
+     #(  .ACCUM (BLOCK),
+         .PAIRS0(PAIRS02_00),
+         .PAIRS1(PAIRS02_01),
+         .PAIRS2(PAIRS02_02),
+         .PAIRS3(PAIRS02_03),
+         .DELAY (DELAY)
+         ) CORRELATOR_BLOCK2
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stbs[2]),
+         .we_i (we_w),
+         .bst_i(bst_i),
+         .ack_o(acks[2]),
+         .adr_i(adr_i[6:0]),
+         .dat_i(32'bx),
+         .dat_o(dats[2]),
+
+         .sw(sw),
+         .en(go),
+         .re(re),
+         .im(im),
+
+         .overflow_cos(oc[2]),
+         .overflow_sin(os[2])
+         );
+
+   correlator_block
+     #(  .ACCUM (BLOCK),
+         .PAIRS0(PAIRS03_00),
+         .PAIRS1(PAIRS03_01),
+         .PAIRS2(PAIRS03_02),
+         .PAIRS3(PAIRS03_03),
+         .DELAY (DELAY)
+         ) CORRELATOR_BLOCK3
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stbs[3]),
+         .we_i (we_w),
+         .bst_i(bst_i),
+         .ack_o(acks[3]),
+         .adr_i(adr_i[6:0]),
+         .dat_i(32'bx),
+         .dat_o(dats[3]),
+
+         .sw(sw),
+         .en(go),
+         .re(re),
+         .im(im),
+
+         .overflow_cos(oc[3]),
+         .overflow_sin(os[3])
+         );
+
+   correlator_block
+     #(  .ACCUM (BLOCK),
+         .PAIRS0(PAIRS04_00),
+         .PAIRS1(PAIRS04_01),
+         .PAIRS2(PAIRS04_02),
+         .PAIRS3(PAIRS04_03),
+         .DELAY (DELAY)
+         ) CORRELATOR_BLOCK4
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stbs[4]),
+         .we_i (we_w),
+         .bst_i(bst_i),
+         .ack_o(acks[4]),
+         .adr_i(adr_i[6:0]),
+         .dat_i(32'bx),
+         .dat_o(dats[4]),
+
+         .sw(sw),
+         .en(go),
+         .re(re),
+         .im(im),
+
+         .overflow_cos(oc[4]),
+         .overflow_sin(os[4])
+         );
+
+   correlator_block
+     #(  .ACCUM (BLOCK),
+         .PAIRS0(PAIRS05_00),
+         .PAIRS1(PAIRS05_01),
+         .PAIRS2(PAIRS05_02),
+         .PAIRS3(PAIRS05_03),
+         .DELAY (DELAY)
+         ) CORRELATOR_BLOCK5
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(clk_i),
+         .cyc_i(cyc_i),
+         .stb_i(stbs[5]),
+         .we_i (we_w),
+         .bst_i(bst_i),
+         .ack_o(acks[5]),
+         .adr_i(adr_i[6:0]),
+         .dat_i(32'bx),
+         .dat_o(dats[5]),
+
+         .sw(sw),
+         .en(go),
+         .re(re),
+         .im(im),
+
+         .overflow_cos(oc[5]),
+         .overflow_sin(os[5])
          );
 
    

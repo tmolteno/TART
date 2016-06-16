@@ -22,43 +22,32 @@
 `define BUS_READ 2
 
 module correlator
-  #( parameter ACCUM = 32,
-     // Pairs of antennas to correlate:
-     parameter PAIRS = 96'hb1a191817161b0a090807060,
-     //      parameter PAIR0 = 8'h60,
-     //      parameter PAIR1 = 8'h70,
-     //      parameter PAIR2 = 8'h80,
-     //      parameter PAIR3 = 8'h90,
-     //      parameter PAIR4 = 8'ha0,
-     //      parameter PAIR5 = 8'hb0,
-     //      parameter PAIR6 = 8'h61,
-     //      parameter PAIR7 = 8'h71,
-     //      parameter PAIR8 = 8'h81,
-     //      parameter PAIR9 = 8'h91,
-     //      parameter PAIRA = 8'ha1,
-     //      parameter PAIRB = 8'hb1,
-     parameter MSB   = ACCUM - 1,
-     parameter DELAY = 3)
+  #(parameter ACCUM = 32,
+    //      parameter 
+    // Pairs of antennas to correlate:
+    parameter PAIRS = 120'hb1a191817161b0a090807060,
+    parameter MSB   = ACCUM - 1,
+    parameter DELAY = 3)
    (
-    input              clk_x,   // correlator clock
+    input              clk_x, // correlator clock
     input              rst,
 
     // Wishbone-like bus interface for reading visibilities.
-    input              clk_i,   // bus clock
+    input              clk_i, // bus clock
     input              cyc_i,
     input              stb_i,
-    input              we_i,    // writes are ignored
-    input              bst_i,   // burst-mode transfer?
+    input              we_i, // writes are ignored
+    input              bst_i, // burst-mode transfer?
     output             ack_o,
     input [4:0]        adr_i,
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
 
     // Real and imaginary components from the antennas.
-    input              sw,      // switch banks
-    input              en,      // data is valid
-    input [11:0]       re,
-    input [11:0]       im,
+    input              sw, // switch banks
+    input              en, // data is valid
+    input [23:0]       re,
+    input [23:0]       im,
 
     output reg         overflow_cos = 0,
     output reg         overflow_sin = 0
@@ -171,14 +160,28 @@ module correlator
    //-------------------------------------------------------------------------
    //  Select pairs of antenna to correlate.
    //-------------------------------------------------------------------------
-   wire [95:0] pairs_wide = PAIRS;
-   wire [7:0]  pairs_index = pairs[x_rd_adr];
-   wire [3:0]  a_index = pairs_index[3:0];
-   wire [3:0]  b_index = pairs_index[7:4];
-   reg [7:0]   pairs[0:11];
+   wire [119:0] pairs_wide = PAIRS;
+   wire [9:0]  pairs_index = pairs[x_rd_adr];
+   wire [4:0]  a_index = pairs_index[4:0];
+   wire [4:0]  b_index = pairs_index[9:5];
+   reg [9:0]   pairs[0:11];
    reg         go = 0, ar, br, bi;
 
    initial begin : PAIRS_ROM
+      pairs[00] = pairs_wide[  9:  0];
+      pairs[01] = pairs_wide[ 19: 10];
+      pairs[02] = pairs_wide[ 29: 20];
+      pairs[03] = pairs_wide[ 39: 30];
+      pairs[04] = pairs_wide[ 49: 40];
+      pairs[05] = pairs_wide[ 59: 50];
+      pairs[06] = pairs_wide[ 69: 60];
+      pairs[07] = pairs_wide[ 79: 70];
+      pairs[08] = pairs_wide[ 89: 80];
+      pairs[09] = pairs_wide[ 99: 90];
+      pairs[10] = pairs_wide[109:100];
+      pairs[11] = pairs_wide[119:110];
+
+      /*
       pairs[00] = pairs_wide[ 7: 0];
       pairs[01] = pairs_wide[15: 8];
       pairs[02] = pairs_wide[23:16];
@@ -191,6 +194,7 @@ module correlator
       pairs[09] = pairs_wide[79:72];
       pairs[10] = pairs_wide[87:80];
       pairs[11] = pairs_wide[95:88];
+       */
    end // block: PAIRS_ROM
 
    // Add a cycle of latency to wait for the RAM read.
