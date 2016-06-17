@@ -12,52 +12,54 @@
  * 
  */
 
-// Bus transaction states.
-`define BUS_IDLE  0
-`define BUS_WAIT  1
-`define BUS_READ  2
-`define BUS_WRITE 4
-
 module tart_visibilities
   #(parameter BLOCK = 32,
     parameter MSB   = BLOCK-1,
-    parameter COUNT = 576,     // correlators and averages
+    parameter COUNT = 576,     // TODO: correlators and averages
     parameter CBITS = 10,
-    parameter CSB   = CBITS,
+    parameter CSB   = CBITS-1,
     parameter MRATE = 12,       // time-multiplexing rate
     parameter MBITS = 4,
-    parameter MSKIP = (1 << MBITS - MRATE + 1),
+    parameter MSKIP = (1 << MBITS) - MRATE + 1,
     parameter RSB   = MBITS-1,
     parameter DELAY = 3)
    (
     input              clk_i, // bus clock
     input              rst_i,
 
-    // Wishbone-like bus interface that connects to `tart_spi`.
+    // Wishbone-like (slave) bus interface that connects to `tart_spi`:
     input              cyc_i,
     input              stb_i,
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
-    output reg         ack_o = 0,
-    input [CBITS+2:0]  adr_i, // upper address-space for registers
+    output             ack_o,
+    input [CSB+2:0]    adr_i, // upper address-space for registers
     input [7:0]        byt_i,
-    output reg [7:0]   byt_o,
+    output [7:0]       byt_o,
 
-    // Wishbone-like bus interface that connects to the correlators.
-    output reg         cyc_o = 0,
-    output reg         stb_o = 0,
-    output reg         we_o = 0, // writes only work for system registers
-    output reg         bst_o = 0, // Bulk Sequential Transfer?
+    // Wishbone-like (master) bus interface that connects to the correlators:
+    output             cyc_o,
+    output             stb_o,
+    output             we_o, // writes only work for system registers
+    output             bst_o, // Bulk Sequential Transfer?
     input              ack_i,
-    output reg [CSB:0] adr_o = 0, // upper address-space for registers
+    output [CSB:0]     adr_o, // upper address-space for registers
     input [MSB:0]      dat_i,
-    output reg [MSB:0] dat_o,
+    output [MSB:0]     dat_o,
 
     // Status flags for the correlators and visibilities.
     input              switching, // inicates that banks have switched
     output reg [MSB:0] blocksize = 0, // block size - 1
-    output reg         available = 0 // asserted when a window is accessed
+    output             available // asserted when a window is accessed
     );
+
+   //-------------------------------------------------------------------------
+   //  The time-multiplexing ratio determines how many values are stored
+   //  within each correlator. E.g., for `MRATE = 12`, there are 12 real and
+   //  12 complex values within each of the correlator's SRAM's.
+   parameter BSIZE = MRATE*2-1;
+   parameter BBITS = MBITS+1;
+   parameter BSB   = BBITS-1;
 
 
    //-------------------------------------------------------------------------
@@ -88,93 +90,77 @@ module tart_visibilities
         count_log <= #DELAY 0;
         blocksize <= #DELAY 0;
      end
-     else if (cyc_i && stb_i && we_i && adr_i == 11'h701) begin
+     else if (cyc_i && stb_i && we_i && adr_i == 12'he01) begin
         count_log <= #DELAY byt_i;
         blocksize <= #DELAY (1 << byt_i[4:0]) - 1;
      end
 
-   //-------------------------------------------------------------------------
-   //  Correlator read-back.
-   //-------------------------------------------------------------------------
-   wire                wrap_adr = &adr_o[CSB:MBITS];
-   wire                skip_adr = adr_o[RSB:0] == MRATE-1;
-   wire [CSB:0]        next_adr = adr_o + (skip_adr ? MSKIP : 1);
-   wire                wrap_vis_adr = vis_adr == COUNT-1;
-   reg [CSB:0]         vis_adr = 0;
-
-   always @(posedge clk_i)
-     if (rst_i)
-       {cyc_o, stb_o, we_o, bst_o, adr_o} <= #DELAY 0;
-     else if (switching) begin
-        {cyc_o, stb_o, bst_o} <= #DELAY 7;
-        {we_o, adr_o} <= #DELAY 0;
-     end
-     else if (cyc_o && stb_o && bst_o) begin
-        bst_o <= #DELAY wrap_adr ? 0 : bst_o;
-        adr_o <= #DELAY wrap_adr ? adr_o : next_adr;
-     end
-     else if (cyc_o && stb_o && ack_i && wrap_vis_adr)
-       {cyc_o, stb_o, we_o, bst_o, adr_o} <= #DELAY 0;
 
    //-------------------------------------------------------------------------
-   //  Address and data update logic for SRAM writes.
-   always @(posedge clk_i)
-     if (rst_i || switching && !cyc_o)
-       vis_adr <= #DELAY 0;
-     else if (cyc_o && stb_o && !we_o && ack_i)
-       vis_adr <= #DELAY vis_adr + 1;
-     else
-       vis_adr <= #DELAY vis_adr;
-
-   always @(posedge clk_i)
-     if (cyc_o && stb_o && !we_o && ack_i) begin
-        sram0[vis_adr] <= #DELAY dat_i[7:0];
-        sram1[vis_adr] <= #DELAY dat_i[15:8];
-        sram2[vis_adr] <= #DELAY dat_i[23:16];
-        sram3[vis_adr] <= #DELAY dat_i[31:24];
-     end
-
-
+   //  Cores that prefetch and store visibility data, to be transferred off-
+   //  board via SPI.
    //-------------------------------------------------------------------------
-   //  Bus interface to TART's SPI unit.
-   //-------------------------------------------------------------------------
-   wire [CSB-1:0] sram_adr = adr_i[CBITS+1:2];
-   reg            bst_r = 0;
+   wire [MSB:0] p_val, p_dat;
+   wire [CSB:0] p_adr, adr_w;
+   wire         p_cyc, p_stb, p_we, p_bst, p_ack;
 
-   always @(posedge clk_i)
-     if (rst_i) ack_o <= #DELAY 0;
-     else       ack_o <= #DELAY cyc_i && stb_i && (bst_r || !ack_o);
+   //  Swap the LSB with the real/complex bank-select signal, so that real +
+   //  complex pairs are read out together.
+   assign adr_o = {adr_w[CSB:BBITS], adr_w[0], adr_w[BSB:1]};
 
-   always @(posedge clk_i)
-     if (rst_i) bst_r <= #DELAY 0;
-     else       bst_r <= #DELAY cyc_i && stb_i && bst_i;
+   //  Prefetches data from the various correlators after each bank-switch,
+   //  and then sends it on to a block SRAM.
+   wb_prefetch #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT-1),
+                  .BSIZE(BSIZE), .BBITS(BBITS) ) PREFETCH0
+     ( .rst_i(rst_i),
+       .clk_i(clk_i),
 
-   // SRAM reads & writes.
-   always @(posedge clk_i)
-     if (!rst_i && cyc_i && stb_i && !we_i)
-       case (adr_i[1:0])
-         0: byt_o <= #DELAY sram0[sram_adr];
-         1: byt_o <= #DELAY sram1[sram_adr];
-         2: byt_o <= #DELAY sram2[sram_adr];
-         3: byt_o <= #DELAY sram3[sram_adr];
-       endcase // case (adr_i[1:0])
-     else if (!rst_i && cyc_i && stb_i && we_i)
-       case (adr_i[1:0])
-         0: sram0[sram_adr] <= #DELAY byt_i;
-         1: sram1[sram_adr] <= #DELAY byt_i;
-         2: sram2[sram_adr] <= #DELAY byt_i;
-         3: sram3[sram_adr] <= #DELAY byt_i;
-       endcase // case (adr_i[1:0])
+       .begin_i(switching),
+       .ready_o(available),
 
-   //-------------------------------------------------------------------------
-   //  Manage the `available` flag.
-   always @(posedge clk_i)
-     if (rst_i)
-       available <= #DELAY 0;
-     else if (cyc_o && stb_o && ack_i && wrap_vis_adr)
-       available <= #DELAY 1;
-     else if (cyc_i && stb_i && !we_i && adr_i == 0)
-       available <= #DELAY 0;
+       .a_cyc_o(cyc_o),         // prefetch interface (from the correlators)
+       .a_stb_o(stb_o),
+       .a_we_o (we_o),
+       .a_bst_o(bst_o),
+       .a_ack_i(ack_i),
+       .a_adr_o(adr_w),
+       .a_dat_i(dat_i),
+       .a_dat_o(dat_o),
+
+       .b_cyc_o(p_cyc),         // interface between prefetcher & SRAM
+       .b_stb_o(p_stb),
+       .b_we_o (p_we),
+       .b_bst_o(p_bst),
+       .b_ack_i(p_ack),
+       .b_adr_o(p_adr),
+       .b_dat_i(p_val),
+       .b_dat_o(p_dat)
+       );
+
+   //  Buffers the visibility data until ready via the TART SPI interface.
+   wb_sram_dual_port #( .SBITS(CBITS) ) SRAM0
+     ( .rst_i(rst_i),
+
+       .a_clk_i(clk_i),    // this port is filled by the prefetch unit
+       .a_cyc_i(p_cyc),    // whenever the correlators perform a bank-
+       .a_stb_i(p_stb),    // switch
+       .a_we_i (p_we),
+       .a_bst_i(p_bst),
+       .a_ack_o(p_ack),
+       .a_adr_i(p_adr),
+       .a_dat_i(p_val),
+       .a_dat_o(p_dat),
+
+       .b_clk_i(clk_i),    // this port is driven by the TART SPI unit
+       .b_cyc_i(cyc_i),
+       .b_stb_i(stb_i),
+       .b_we_i (we_i),
+       .b_bst_i(bst_i),
+       .b_ack_o(ack_o),
+       .b_adr_i(adr_i),
+       .b_dat_i(byt_i),
+       .b_dat_o(byt_o)
+       );
 
 
 endmodule // tart_visibilities

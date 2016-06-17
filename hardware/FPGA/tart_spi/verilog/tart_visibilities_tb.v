@@ -1,9 +1,8 @@
 `timescale 1ns/100ps
-module tart_correlator_tb;
+module tart_visibilities_tb;
 
    parameter BLOCK = 32;        // Number of bits of a block
    parameter MSB   = BLOCK-1;
-   parameter ASB   = 11;
    parameter MRATE = 12;
    parameter DELAY = 3;
    parameter COUNT = 4; // (1 << 3) - 1;
@@ -16,6 +15,7 @@ module tart_correlator_tb;
    reg [11:0]   adr;
    reg [7:0]    val;
    reg          set = 0, get = 0, fin = 0, sw = 0;
+   reg [2:0]    dev = 0;
    wire         ack;
    wire         cyc_c, stb_c, we_c, bst_c, ack_c;
 
@@ -40,39 +40,36 @@ module tart_correlator_tb;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Setting up the block-size:", $time);
-      #40 set <= 1; num <= 1; val <= COUNT; ptr <= 12'he01;
+      #40 set <= 1; num <= 1; val <= COUNT; ptr <= 11'h701;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
       $display("%8t: Beginning data-correlation (bank 0):", $time);
       #40  en <= 1; strobe <= 1;
+      while (!sw) #10;
 
       //----------------------------------------------------------------------
       $display("%8t: Switching banks (bank 1):", $time);
-      while (!switching) #10;
-      while (switching) #10;
-
+      while (sw) #10;
       $display("%8t: Reading back visibilities (bank 0):", $time);
-      while (!available) #10;
-      #10 get <= 1; num <= 24; ptr <= 0;
+      #80 get <= 1; dev <= 3'h0;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      while (!switching) #10; while (switching) #10;
+      while (!sw) #10;
       $display("\n%8t: Stopping data-correlation (bank 1):", $time);
       while (!wrap_cnt) #10;
       #10 en <= 0;
 
       //----------------------------------------------------------------------
       $display("%8t: Reading back visibilities (bank 1):", $time);
-      while (!available) #10;
-      #10 get <= 1; num <= 24; ptr <= 0;
+      #80 get <= 1; dev <= 3'h0;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-//       $display("\n%8t: Reading back counts (bank 1):", $time);
-//       #80 get <= 1;
-//       while (!fin) #10;
+      $display("\n%8t: Reading back counts (bank 1):", $time);
+      #80 get <= 1; dev <= 3'h6;
+      while (!fin) #10;
 
       //----------------------------------------------------------------------
       #80 $display("\n%8t: Simulation finished:", $time);
@@ -117,11 +114,14 @@ module tart_correlator_tb;
    //  Read back visibility data, from the correlators' registers.
    //-------------------------------------------------------------------------
    wire       bst_w = num > 2 && cyc;
-   integer    rxd = 0;
+
+   always @(posedge clk)
+     if (rst) bst <= #DELAY 0;
+     else     bst <= #DELAY bst_w || (set || get) && num > 1;
 
    always @(posedge clk_b)
      if (rst) bst <= #DELAY 0;
-     else     bst <= #DELAY bst_w || (set || get) && num > 1;
+     else     bst <= #DELAY bst_w;
 
    always @(posedge clk_b)
      if (rst) begin
@@ -141,8 +141,7 @@ module tart_correlator_tb;
      else if (cyc) begin
         if (!stb && ack) $display("%8t: transfer ending", $time);
         {fin, get, set} <= #DELAY {!stb && ack, get, set};
-//         {cyc, stb, we } <= #DELAY {stb || !ack, bst, we && (stb || !ack)};
-        {cyc, stb, we } <= #DELAY {!(rxd == 1 && ack), bst, we && (stb || !ack)};
+        {cyc, stb, we } <= #DELAY {stb || !ack, bst, we && (stb || !ack)};
      end
      else begin
         {fin, get, set} <= #DELAY 0;
@@ -151,17 +150,13 @@ module tart_correlator_tb;
 
    wire [ASB:0] next_adr = bst ? adr + 1 : adr;
 
-   always @(posedge clk_b)
+   always @(posedge clk)
      if (rst)             adr <= #DELAY 0;
      else if (set || get) adr <= #DELAY ptr;
      else if (cyc)        adr <= #DELAY next_adr;
 
-   always @(posedge clk_b)
+   always @(posedge clk)
      if (cyc && stb) num <= #DELAY num - 1;
-
-   always @(posedge clk_b)
-     if (get || set) rxd <= num;
-     else if (cyc && ack) rxd <= #DELAY rxd - 1;
 
    //-------------------------------------------------------------------------
    // Display the data, and which correlator and register it is from.
@@ -181,33 +176,6 @@ module tart_correlator_tb;
    //-------------------------------------------------------------------------
    //  Devices under test (DUT).
    //-------------------------------------------------------------------------
-   //  Correlator functional unit.
-   tart_correlator
-     #(  .BLOCK (BLOCK),
-         .DELAY (DELAY)
-         ) TART_CORRELATOR0
-       ( .clk_x(clk_x),
-         .rst(rst),
-
-         .clk_i(clk_b),
-         .cyc_i(cyc_c),
-         .stb_i(stb_c),
-         .we_i (we_c),
-         .bst_i(bst_c),
-         .ack_o(ack_c),
-         .adr_i(adr_c),
-         .dat_i(val_c),
-         .dat_o(dat_c),
-
-         .enable(en),
-         .blocksize(blocksize),
-         .strobe(strobe),
-         .antenna(antenna),
-         .switch(switching)
-         );
-
-   //-------------------------------------------------------------------------
-   //  Visibilities read-back unit.
    tart_visibilities
      #(  .BLOCK (BLOCK),
          .COUNT (24),
@@ -240,5 +208,18 @@ module tart_correlator_tb;
          .available(available)
          );
 
+   wb_sram #( .WIDTH(32), .SBITS(10) ) SRAM0
+     ( .clk_i(clk),
+       .rst_i(rst),
+       .cyc_i(cyc),
+       .stb_i(stb),
+       .we_i (we),
+       .bst_i(bst),
+       .ack_o(ack),
+       .adr_i(adr),
+       .dat_i(val),
+       .dat_o(dat)
+       );
 
-endmodule // tart_correlator_tb
+
+endmodule // tart_visibilities_tb

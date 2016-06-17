@@ -43,7 +43,7 @@ module tart_correlator
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
     output reg         ack_o = 0,
-    input [10:0]       adr_i, // upper address-space for registers
+    input [9:0]        adr_i, // upper address-space for registers
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
 
@@ -103,19 +103,19 @@ module tart_correlator
    //  Bus interface.
    //-------------------------------------------------------------------------
    reg [2:0]           bus_state = `BUS_IDLE;
-   reg                 ack_7 = 0;
 //    reg [7:0]           stbs = 0;
-//    reg [10:0]          adr;
+//    reg [9:0]          adr;
    reg                 cyc_r = 0; // TODO:
    wire [MSB:0]        dats [0:7];
-   wire [7:0]          stbs, acks;
+//    wire [7:0]          stbs, acks;
+   wire [7:0]          acks;
    wire                we_w = 0, ack_w = |acks;
    wire [2:0]          bus_mode = we_i ? `BUS_WRITE : `BUS_READ ;
 
-   assign stbs = {6'b0, stb_i} << adr_i[10:8];
+//    assign stbs = {6'b0, stb_i} << adr_i[10:8];
 
    assign acks[5:2] = 0; // FIXME:
-   assign acks[7] = ack_7; // TODO: system registers.
+   assign acks[7] = 0;
 
    always @(posedge clk_i)
      if (rst)
@@ -155,24 +155,28 @@ module tart_correlator
      else stbs <= #DELAY 0;
     */
 
+   //-------------------------------------------------------------------------
+   //  Address decoders.
+   reg [7:0]           stbs = 0;
+   reg [2:0]           dev = 0;
+
+   always @(posedge clk_i)
+     if (rst)
+       stbs <= #DELAY 0;
+     else
+       stbs <= #DELAY {8{stb_i}} & (1 << adr_i[9:7]);
+
    // 8:1 MUX and output-data latch.
    always @(posedge clk_i)
-     if (cyc_i && stb_i && !we_i && ack_w)
-       dat_o <= #DELAY dats[adr_i[10:8]];
+     if (cyc_i && !we_i && ack_w)
+       dat_o <= #DELAY dats[dev];
+
+   always @(posedge clk_i)
+     dev <= #DELAY adr_i[10:8];
 
    always @(posedge clk_i)
      if (rst) ack_o <= #DELAY 0;
-     else     ack_o <= #DELAY cyc_i && stb_i ? ack_w : 0 ;
-
-   //-------------------------------------------------------------------------
-   // Acknowledge accesses to system registers.
-   always @(posedge clk_i)
-     if (rst)
-       ack_7 <= #DELAY 0;
-     else if (cyc_i && stb_i && adr_i[10:8] == 3'h7 && (bst_i || !ack_7))
-       ack_7 <= #DELAY 1;
-     else
-       ack_7 <= #DELAY 0;
+     else     ack_o <= #DELAY cyc_i && ack_w;
 
 
    //-------------------------------------------------------------------------

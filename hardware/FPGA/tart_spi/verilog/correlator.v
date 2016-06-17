@@ -13,13 +13,9 @@
  *  + bus transactions read from the currently-innactive bank, to prevent
  *    possible metastability/corruption;
  *  + potentially uses quite a lot of the FPGA's distributed-RAM resources;
+ *  + ignores write-attempts, but still generates acknowledges;
  * 
  */
-
-// Bus transaction states.
-`define BUS_IDLE 0
-`define BUS_WAIT 1
-`define BUS_READ 2
 
 module correlator
   #(parameter ACCUM = 32,
@@ -38,7 +34,7 @@ module correlator
     input              stb_i,
     input              we_i, // writes are ignored
     input              bst_i, // burst-mode transfer?
-    output             ack_o,
+    output reg         ack_o = 0,
     input [4:0]        adr_i,
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
@@ -120,42 +116,27 @@ module correlator
 
 
    //-------------------------------------------------------------------------
-   //  Bus interface logic.
+   //  Wishbone-like bus interface logic.
    //-------------------------------------------------------------------------
    wire [4:0] adr_w = {bank_n, adr_i[3:0]};
-   reg [1:0]  bus_state = `BUS_IDLE;
    reg        bank_n = 1;
 
-   assign ack_o = bus_state[1];
-
+   // Acknowledge any request, even if ignored.
    always @(posedge clk_i)
-     if (rst)
-       bus_state <= #DELAY `BUS_IDLE;
-     else
-       case (bus_state)
-         `BUS_IDLE:
-           bus_state <= #DELAY cyc_i && stb_i ? `BUS_READ : bus_state ;
+     if (rst) ack_o <= #DELAY 0;
+     else     ack_o <= #DELAY cyc_i && stb_i;
 
-         `BUS_WAIT:
-           bus_state <= #DELAY cyc_i ? (stb_i ? `BUS_READ : bus_state) : `BUS_IDLE ;
-
-         // Burst transfers do not need wait-states, as the next address is
-         // available one cycle earlier.
-         // BST -- Bulk Sequential Transfer.
-         `BUS_READ:
-           bus_state <= #DELAY bst_i ? bus_state : `BUS_WAIT ;
-       endcase // case (bus_state)
-
-   // Synchronise the number of the innactive bank across domains.
-   always @(posedge clk_i)
-     if (rst) bank_n <= #DELAY 1;
-     else     bank_n <= #DELAY ~bank;
-   
    // Read only from the innactive bank.
    always @(posedge clk_i)
      if (cyc_i && stb_i)
        dat_o <= #DELAY adr_i[4] ? sinram[adr_w] : cosram[adr_w] ;
 
+   //-------------------------------------------------------------------------
+   // Synchronise the number of the innactive bank across domains.
+   always @(posedge clk_i)
+     if (rst) bank_n <= #DELAY 1;
+     else     bank_n <= #DELAY ~bank;
+   
 
    //-------------------------------------------------------------------------
    //  Select pairs of antenna to correlate.
