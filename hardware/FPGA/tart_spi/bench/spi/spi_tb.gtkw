@@ -1,0 +1,90 @@
+[*]
+[*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
+[*] Sat Jun 18 09:47:54 2016
+[*]
+[dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/spi/spi_tb.vcd"
+[dumpfile_mtime] "Sat Jun 18 09:46:37 2016"
+[dumpfile_size] 116208
+[savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/spi/spi_tb.gtkw"
+[timestart] 0
+[size] 2560 1416
+[pos] -1 -1
+*-18.331121 423000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] spi_slave_tb.
+[sst_width] 223
+[signals_width] 126
+[sst_expanded] 1
+[sst_vpaned_height] 731
+@28
+spi_slave_tb.clk
+spi_slave_tb.rst
+spi_slave_tb.get
+spi_slave_tb.set
+spi_slave_tb.fin
+@22
+spi_slave_tb.stat[7:0]
+@23
+spi_slave_tb.ptr[6:0]
+@22
+spi_slave_tb.num[31:0]
+@200
+-
+-<< BUS >>
+@28
+spi_slave_tb.cyc
+spi_slave_tb.stb
+spi_slave_tb.bst
+spi_slave_tb.we
+spi_slave_tb.ack
+spi_slave_tb.rdy
+spi_slave_tb.wat
+@22
+spi_slave_tb.adr[6:0]
+spi_slave_tb.dtx[7:0]
+spi_slave_tb.drx[7:0]
+@200
+-
+-** Master **
+@28
+spi_slave_tb.SPI_MASTER0.tx_empty
+spi_slave_tb.SPI_MASTER0.rx_empty
+@200
+-
+-** Slave **
+@28
+spi_slave_tb.s_cyc
+spi_slave_tb.s_stb
+spi_slave_tb.s_bst
+spi_slave_tb.s_we
+spi_slave_tb.s_ack
+@22
+spi_slave_tb.s_adr[6:0]
+spi_slave_tb.s_dtx[7:0]
+spi_slave_tb.s_drx[7:0]
+@200
+-
+@22
+spi_slave_tb.SPI_SLAVE0.spi[3:0]
+@200
+-
+--- Target --
+@28
+spi_slave_tb.SPI_SLAVE0.t_cyc
+spi_slave_tb.SPI_SLAVE0.t_stb
+spi_slave_tb.SPI_SLAVE0.t_bst
+spi_slave_tb.SPI_SLAVE0.t_we
+spi_slave_tb.SPI_SLAVE0.t_ack
+@22
+spi_slave_tb.SPI_SLAVE0.t_dati[7:0]
+spi_slave_tb.SPI_SLAVE0.t_dato[7:0]
+@200
+-
+-** SPI **
+@28
+spi_slave_tb.SCK
+spi_slave_tb.SCK_pin
+spi_slave_tb.SSEL
+spi_slave_tb.MISO
+spi_slave_tb.MOSI
+[pattern_trace] 1
+[pattern_trace] 0
