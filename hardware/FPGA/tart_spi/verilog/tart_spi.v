@@ -57,11 +57,6 @@ ANTENNA_DATA
 `define TART_WRITE 8
 `define TART_BUS   4
 
-// Data prefetcher states.
-`define PRE_EMPTY 0
-`define PRE_WORD1 1
-`define PRE_WORD2 2
-
 module tart_spi
   #( parameter ADDRESS = 12,
      parameter ASB     = ADDRESS-1,
@@ -74,7 +69,7 @@ module tart_spi
      // NOTE: Doesn't need to initiate transfers, but data is valid whenever
      //   `data_ready` is asserted.
      input              data_ready,
-     output reg         data_request = 0,
+     output             data_request,
      input [23:0]       data_in,
 
      // Indicate whether an overflow or underrun has occurred.
@@ -277,63 +272,29 @@ module tart_spi
          ADDR_SAMPLE_DELAY: data_sample_delay <= data_from_spi[2:0];
          ADDR_DEBUG:        spi_debug         <= data_from_spi[0];
        endcase // case (register_addr)
-   
+
 
    //-------------------------------------------------------------------------
-   //  
-   //  Data prefetch (from SDRAM) logic.
-   //  
+   //  DRAM prefetch logic.
    //-------------------------------------------------------------------------
-   reg [23:0] prefetch_data = 24'b0;
-   reg [23:0] antenna_data  = 24'b0;
-   reg [1:0]  pre_state = `PRE_EMPTY;
-   reg        data_sent = 0;
-
-   // Data-prefetch state machine.
-   // NOTE: There should never be more than two words being stored or fetched.
-   always @(posedge clk)
-     if (rst)
-       pre_state <= `PRE_EMPTY;
-     else
-       case (pre_state)
-         `PRE_EMPTY: pre_state <= data_ready ? `PRE_WORD1 : pre_state ;
-         `PRE_WORD1: pre_state <= data_ready && !data_sent ? `PRE_WORD2 :
-                                  !data_ready && data_sent ? `PRE_EMPTY : pre_state ;
-         `PRE_WORD2: pre_state <= data_sent  ? `PRE_WORD1 : pre_state ;
-       endcase // case (pre_state)
+   wire [23:0]          antenna_data;
+   reg                  data_sent = 0;
+   wire                 sent_w = tart_state == `TART_READ && wrap_address && byte_arrival && ack;
 
    always @(posedge clk)
-     if (data_ready) begin
-        if (!data_sent && pre_state == `PRE_EMPTY)
-          antenna_data <= data_in;
-        else if (data_sent && pre_state == `PRE_WORD1)
-          antenna_data <= data_in;
-        else if (!data_sent && pre_state == `PRE_WORD1)
-          antenna_data <= prefetch_data;
-        else
-          $error ("%5t: data arrived while in an incompatible state.", $time);
-     end
-     else if (data_sent && pre_state == `PRE_WORD2)
-       antenna_data <= prefetch_data;
+     if (rst) data_sent <= #DELAY 0;
+     else     data_sent <= #DELAY sent_w;
 
-   always @(posedge clk)
-     if (data_ready)
-       prefetch_data <= data_in;
+   dram_prefetch #( .WIDTH(24) ) DRAM_PREFETCH0
+     ( .clk(clk),
+       .rst(rst),
+       .dram_ready(data_ready),
+       .dram_request(data_request),
+       .dram_data(data_in),
+       .data_sent(data_sent),
+       .fetched_data(antenna_data)
+       );
 
-   always @(posedge clk)
-     if (rst)
-       data_sent <= 0;
-     else
-       data_sent <= tart_state == `TART_READ && wrap_address && byte_arrival && ack;
-
-   always @(posedge clk)
-     if (rst || data_request)
-       data_request <= 0;
-     else if (pre_state == `PRE_EMPTY && data_ready)
-       data_request <= 1;
-     else if (pre_state == `PRE_WORD2 && data_sent)
-       data_request <= 1;
-   
 
    //-------------------------------------------------------------------------
    //  
@@ -359,5 +320,5 @@ module tart_spi
        .MISO(MISO)
        );
 
-   
+
 endmodule // tart_spi
