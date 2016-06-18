@@ -3,13 +3,15 @@
 /*
  * SPI slave module using asynchronous FIFO's.
  * 
+ * NOTE:
+ *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
+ * 
  * TODO:
  *  + the design is still preliminary (as of 24/05/2016);
  *  + constrain the input and output OFFSET's;
  *  + can the output-delay be run-time configurable?
- * 
- * NOTE:
- *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
+ *  + change the RX-FIFO to just one bit wide, and deserialise in the bus
+ *    domain? Can this cause problems for slow domains?
  * 
  */
 
@@ -48,6 +50,7 @@ module spi_target
    input            rst_i,
    output reg       cyc_o = 0,
    output reg       stb_o = 0,
+   output           bst_o,
    output reg       we_o = 0,
    input            ack_i,
    input [7:0]      dat_i,
@@ -57,7 +60,7 @@ module spi_target
    output reg       overflow_o = 0,
    output reg       underrun_o = 0,
 
-   input            SCK_pin,    // Raw pin connection, not a global clock
+   input            SCK_pin, // Raw pin connection, not a global clock
    input            SSEL,
    input            MOSI,
    (* IOB = "FORCE" *)
@@ -124,6 +127,7 @@ module spi_target
    reg              sync0 = 0, sync1 = 0;
    reg              tx_rst_n = 1'b0, tx_flg = 1'b0;
    reg              spi_req = 0, dat_req_sync = 1, dat_req = 0;
+   wire             spi_select = sync1;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
@@ -165,12 +169,12 @@ module spi_target
           tx_rst_n <= 1'b0;
           tx_flg <= 1'b0;
        end
-     else if (!sync1 && !tx_flg) // Issue a single reset
+     else if (!spi_select && !tx_flg) // Issue a single reset
        begin
           tx_rst_n <= 1'b0;
           tx_flg <= 1'b1;
        end
-     else if (sync1)
+     else if (spi_select)
        begin
           tx_rst_n <= 1'b1;
           tx_flg <= 1'b0;
@@ -192,16 +196,18 @@ module spi_target
    wire       push_byte = cyc_o && stb_o && !we_o && ack_i;
    reg [2:0]  bus_state = `BUS_IDLE;
 
+   assign bst_o = 1'b0;
+
    always @(posedge clk_i)
      if (rst_i)
        bus_state <= `BUS_IDLE;
      else
        case (bus_state)
          `BUS_IDLE:
-           bus_state <= sync1 && dat_req ? `BUS_READ : bus_state;
+           bus_state <= spi_select && dat_req ? `BUS_READ : bus_state;
          
          `BUS_READ:
-           bus_state <= !sync1 ? `BUS_IDLE : ack_i ? `BUS_WAIT : bus_state;
+           bus_state <= !spi_select ? `BUS_IDLE : ack_i ? `BUS_WAIT : bus_state;
 
          `BUS_WAIT:
            bus_state <= !rx_empty ? `BUS_SEND : bus_state;
@@ -220,19 +226,19 @@ module spi_target
      else
        case (bus_state)
          `BUS_IDLE:             // Prefetch a byte on SPI start
-           if (dat_req && sync1) begin
+           if (dat_req && spi_select) begin
               cyc_o <= 1;
               stb_o <= 1;
               we_o  <= 0;
            end
-           else if (!sync1) begin
+           else if (!spi_select) begin
               cyc_o <= 0;
               stb_o <= 0;
               we_o  <= 0;
            end
          
          `BUS_READ:             // Wait for prefetched byte
-           stb_o <= ~ack_i && sync1;
+           stb_o <= ~ack_i & spi_select;
 
          `BUS_WAIT: begin       // Send any received data
             stb_o <= ~rx_empty;

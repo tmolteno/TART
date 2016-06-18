@@ -66,7 +66,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="90"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="4"/>
     </file>
-    <file xil_pn:name="verilog/spi_target.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="verilog/spi/spi_target.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="91"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
     </file>
@@ -81,6 +81,10 @@
     <file xil_pn:name="verilog/tart_dcm.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="67"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="5"/>
+    </file>
+    <file xil_pn:name="verilog/dram_prefetch.v" xil_pn:type="FILE_VERILOG">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="68"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="68"/>
     </file>
   </files>
 

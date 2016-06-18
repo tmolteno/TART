@@ -1,143 +1,195 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 module spi_slave_tb;
 
-//  SPI master states:
-`define SPI_IDLE 4'b0000
-`define SPI_BUSY 4'b0001
-`define SPI_DONE 4'b1000
+   parameter WIDTH = 8;
+   parameter MSB   = WIDTH-1;
+   parameter ASB   = WIDTH-2;
+   parameter DELAY = 3;
 
-   reg [23:0] data;
-   reg [7:0]  stat;
-   reg        clk = 0;
-   
-   reg        sck = 1'b0;
-   wire       mosi, miso, ssel;
+   // Bus signals:
+   wire [MSB:0] drx;
+   reg [ASB:0]  adr;
+   reg [MSB:0]  dtx;
+   wire         ack, rdy, wat;
+   reg          cyc = 0, stb = 0, we = 0, bst = 0;
 
-   wire       spi_done, spi_reset, spi_start, spi_debug;
-   wire [2:0] sdelay;
+   wire [MSB:0] s_drx;
+   wire [ASB:0] s_adr;
+   reg [MSB:0]  s_dtx;
+   wire         s_cyc, s_stb, s_bst, s_we;
+   reg          s_ack = 0;
 
-   reg        send = 0, done = 0;
-   wire       done_w;
-   reg [7:0]  data_tx, test_data, fpga_data;
-   wire [7:0] data_rx;
-   reg [3:0]  spi_state = `SPI_IDLE;
-   wire       sending   = spi_state != `SPI_IDLE;
-   wire       beginning = send && (spi_state == `SPI_IDLE || spi_state == `SPI_DONE);
+   // System signals:
+   reg          clk = 1, rst = 0;
+   reg          set = 0, get = 0, fin = 0;
+   reg [MSB:0]  stat;
+   wire         oflow, uflow;
 
-   
-   assign mosi    = data_tx[7];
-   assign ssel    = spi_state == `SPI_IDLE;
-
-   assign done_w  = spi_state == `SPI_DONE;
-   assign data_rx = data_tx;
-
-
-   initial begin : SPI_SLAVE_TB
-      $dumpfile ("spi_tb.vcd");
-      $dumpvars;
-
-      data <= $random;
-      stat <= $random;
-
-      // Issue a reset command to the slave device:
-      #30  send <= 1;
-      test_data <= {1'b1, 3'b000, 4'b1111};
-      #120 send <= 0;
-      while (!done) #120 ;
-      
-      send      <= 1;
-      test_data <= 8'b00000001;
-      #120 send <= 0;
-      while (!done) #120 ;
-      
-      // Set to data-aquisition mode:
-      send      <= 1;
-      test_data <= {1'b1, 3'b000, 4'b0001};
-      #120 send <= 0;
-      while (!done) #120 ;
-
-      send      <= 1;
-      test_data <= 8'b00000001;
-      #120 send <= 0;
-      while (!done) #120 ;
-      
-      // Now get some data:
-      send      <= 1;
-      test_data <= {1'b0, 3'b000, 4'b0010};
-      #120 send <= 0;
-      while (!done) #120 ;
-      
-      send      <= 1;
-      test_data <= $random;
-      #120 send <= 0;
-      while (!done) #120 ;
-      
-      send      <= 1;
-      test_data <= {1'b0, 3'b000, 4'b0100};
-      #120 send <= 0;
-      while (!done) #120 ;
-      
-      send      <= 1;
-      test_data <= $random;
-      #120 send <= 0;
-      while (!done) #120 ;
-
-      #120 $finish;
-   end // SPI_SLAVE_TB
-
-
-   //  Clocks:
-   always #5  clk <= ~clk;
-   always #60 sck <= ~sck;
-
-   //  Monitor the incoming data:
-   always @(posedge sck)
-     if (done) begin
-        $display ("%5t: SPI data = %08b", $time, data_rx);
-        fpga_data <= data_rx;
-     end
+   // SPI signals:
+   reg          SCK = 1;
+   wire         MOSI, MISO, SSEL;
+   wire         SCK_pin = SCK_en ? SCK : 1'b0;
 
 
    //-------------------------------------------------------------------------
-   //  
-   //  Simple SPI master device.
-   //  
-   always @(posedge sck)
-     case (spi_state)
-       `SPI_IDLE, `SPI_DONE:
-         spi_state <= send ? `SPI_BUSY : `SPI_IDLE ;
-       default:
-         spi_state <= spi_state + 1;
-     endcase // case spi_state
-
-   always @(posedge sck)
-     if (beginning)
-       data_tx <= test_data;
-     else if (sending)
-       data_tx <= {data_tx[6:0], miso};
-     else
-       data_tx <= data_tx;
-
-   always @(posedge sck)
-     done <= done_w;
+   //  Setup bus clock.
+   always #5  clk <= ~clk;
+   always #5  SCK <= ~SCK;
 
 
-   tart_spi SPI0
-     ( .fpga_clk(clk),
+   //-------------------------------------------------------------------------
+   //  Simulate SRAM accesses.
+   integer      num = 0;
+   reg [ASB:0]  ptr = 0;
+   initial begin : SIM_BLOCK
+      $dumpfile ("spi_tb.vcd");
+      $dumpvars;
+
+      //----------------------------------------------------------------------
+      $display("\n%8t: Issuing reset:\n", $time);
+      #33 rst <= 1; #40 rst <= 0;
+      #10 stat <= $random;
+
+      //----------------------------------------------------------------------
+      $display("\n%8t: Single write:", $time);
+      #40 set <= 1; num <= 2; ptr <= $random;
+      while (!fin) #10;
+
+      $display("\n%8t: Single read:", $time);
+      #10 get <= 1; num <= 3;
+      while (!fin) #10;
+
+      //----------------------------------------------------------------------
+      $display("\n%8t: Burst write:", $time);
+      #40 set <= 1; num <= 16; ptr <= $random;
+      while (!fin) #10;
+
+      $display("\n%8t: Burst read:", $time);
+      #40 get <= 1; num <= 8;
+      while (!fin) #10;
+
+      $display("\n%8t: Burst read:", $time);
+      ptr <= ptr + 8;
+      #10 get <= 1; num <= 8;
+      while (!fin) #10;
+
+      //----------------------------------------------------------------------
+      #40 $display("\n%8t: Simulation finished:", $time);
+      $finish;
+   end
+
+   initial begin : SIM_FAILED
+      #12000 $display ("TIMEOUT!");
+      $finish;
+   end // SIM_FAILED
+
+
+   //-------------------------------------------------------------------------
+   //  Generate write data for both the master and slave SPI devices.
+   always @(posedge clk) begin
+     dtx <= #DELAY set || ack ? $random : dtx;
+     s_dtx <= #DELAY s_cyc && s_stb && !s_we ? $random : s_dtx;
+   end
+
+   always @(negedge cyc)
+     stat <= $random;
+
+
+   //-------------------------------------------------------------------------
+   //  Generate WB-like transactions.
+   //-------------------------------------------------------------------------
+   integer cnt;
+   wire    cyc_n = cyc && cnt == 1 && rdy;
+
+   always @(posedge clk)
+     if (rst) bst <= #DELAY 0;
+     else if ((set || get) && num > 1) bst <= #DELAY 1;
+     else if (bst && num == 1 && !wat) bst <= #DELAY 0;
+
+   always @(posedge clk)
+     if (rst) begin
+        {fin, get, set} <= #DELAY 0;
+        {cyc, stb, we } <= #DELAY 0;
+     end
+     else if (set) begin
+        $display("%8t: write beginning (num = %1d)", $time, num);
+        {fin, get, set} <= #DELAY 0;
+        {cyc, stb, we } <= #DELAY 7;
+     end
+     else if (get) begin
+        $display("%8t: read beginning (num = %1d)", $time, num);
+        {fin, get, set} <= #DELAY 0;
+        {cyc, stb, we } <= #DELAY 6;
+     end
+     else if (cyc) begin
+        if (!stb && ack) $display("%8t: transfer ending", $time);
+        {fin, get, set} <= #DELAY {cyc_n, get, set};
+        {cyc, stb, we } <= #DELAY {!cyc_n, num > 0 && bst, we && num > 0};
+     end
+     else begin
+        {fin, get, set} <= #DELAY 0;
+        {cyc, stb, we } <= #DELAY 0;
+     end
+
+   wire [ASB:0] next_adr = bst && !wat ? adr + 1 : adr;
+
+   always @(posedge clk)
+     if (rst)             adr <= #DELAY 0;
+     else if (set || get) adr <= #DELAY ptr[6:0];
+     else if (cyc)        adr <= #DELAY next_adr;
+
+   always @(posedge clk)
+     if (cyc && stb && !wat) num <= #DELAY num - 1;
+
+   always @(posedge clk)
+     if (set || get) cnt <= #DELAY num;
+     else if (rdy)   cnt <= #DELAY cnt - 1;
+
+
+   //-------------------------------------------------------------------------
+   //  Devices Under Test (DUT's).
+   //-------------------------------------------------------------------------
+   spi_master SPI_MASTER0
+     ( .clk_i(clk),
+       .rst_i(rst),
+       .cyc_i(cyc),
+       .stb_i(stb),
+       .we_i (we ),
+       .bst_i(bst),
+       .ack_o(ack),
+       .rdy_o(rdy),
+       .wat_o(wat),
+       .adr_i(adr),
+       .dat_i(dtx),
+       .dat_o(drx),
        
-       .SCK(sck),
-       .MOSI(mosi),
-       .MISO(miso),
-       .SSEL(ssel),
+       .SCK(SCK),
+       .SCK_enable(SCK_en),
+       .SSEL(SSEL),
+       .MOSI(MOSI),
+       .MISO(MISO)
+       );
+
+   spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
+     ( .clk_i(clk),
+       .rst_i(rst),
+       .cyc_o(s_cyc),
+       .stb_o(s_stb),
+       .bst_o(s_bst),
+       .we_o (s_we),
+       .ack_i(s_ack),
+       .adr_o(s_adr),
+       .dat_i(s_dtx),
+       .dat_o(s_drx),
+
+       .status_i(stat),
+       .overflow_o(oflow),
+       .underrun_o(uflow),
        
-       .antenna_data(data),
-       .spi_status(stat),
-       
-       .spi_buffer_read_complete(spi_done),
-       .data_sample_delay(sdelay),
-       .spi_reset(spi_reset),
-       .spi_start_aq(spi_start),
-       .spi_debug(spi_debug)
+       .SCK_pin(SCK_pin),
+       .SSEL(SSEL),
+       .MOSI(MOSI),
+       .MISO(MISO)
        );
    
 
