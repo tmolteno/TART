@@ -1,9 +1,10 @@
 `timescale 1ns/1ps
-
 /*
  *
  * TODO:
  *  + use a more Wishbone-like interface;
+ *  + automatically break up into separate SPI transactions when the incoming
+ *    addresses aren't sequential?
  * 
  * FIXME:
  *  + the master sends/receives one more byte than intended;
