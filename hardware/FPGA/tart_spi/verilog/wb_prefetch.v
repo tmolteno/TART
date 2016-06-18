@@ -68,7 +68,9 @@ module wb_prefetch
    //-------------------------------------------------------------------------
    //  Port A master Wishbone-like bus interface.
    //-------------------------------------------------------------------------
-   wire                a_cyc = a_stb_o || !a_ack_i;
+   reg [3:0]           wat = 0;
+//    wire                a_cyc = a_stb_o || !a_ack_i;
+   wire                a_cyc = a_stb_o || wat > 1 || !a_ack_i;
    wire                a_stb = a_bst_o;
    wire                a_bst = a_adr_bst && a_cyc_o;
 
@@ -85,7 +87,7 @@ module wb_prefetch
      else
        {a_cyc_o, a_stb_o, a_bst_o} <= #DELAY 3'b000;
 
-   //  Address generation.
+   //  address generation.
    always @(posedge clk_i)
      if (rst_i || begin_i)        a_adr_o <= #DELAY 0;
      else if (a_cyc_o && a_bst_o) a_adr_o <= #DELAY a_adr_nxt;
@@ -96,10 +98,20 @@ module wb_prefetch
      if (rst_i || begin_i)        count <= #DELAY 0;
      else if (a_cyc_o && a_bst_o) count <= #DELAY count + 1;
 
+   //  Count to make sure that all requested data is retransmitted.
+   always @(posedge clk_i)
+     if (rst_i)   wat <= #DELAY 0;
+     else if (a_cyc_o)
+       case ({a_stb_o, a_ack_i})
+         2'b10:   wat <= #DELAY wat + 1;
+         2'b01:   wat <= #DELAY wat - 1;
+         default: wat <= #DELAY wat;
+       endcase // case ({a_stb_o, a_ack_i})
+
    //  Strobe the `ready_o` signal when a prefetch has been completed.
    always @(posedge clk_i)
      if (rst_i || begin_i) ready_o <= #DELAY 0;
-     else                  ready_o <= #DELAY a_cyc_o && a_ack_i && !a_stb_o;
+     else                  ready_o <= #DELAY a_cyc_o && !a_cyc;
        
 
    //-------------------------------------------------------------------------

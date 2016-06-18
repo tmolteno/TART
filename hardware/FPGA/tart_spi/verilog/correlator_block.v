@@ -54,7 +54,10 @@ module correlator_block
    //-------------------------------------------------------------------------
    //  Wishbone-like bus interface.
    //-------------------------------------------------------------------------
-   wire [MSB:0]    dat_0, dat_1, dat_2, dat_3;
+   wire [MSB:0]    dats [0:3];
+   wire [3:0]      stbs, acks;
+   reg [1:0]       dev = 0;
+   reg             stb = 0;
 
    // Address decoders.
    wire            sel0 = adr_i[6:5] == 2'b00;
@@ -63,8 +66,17 @@ module correlator_block
    wire            sel3 = adr_i[6:5] == 2'b11;
 
    // 4:1 multiplexer for returning requested visibilities.
-   assign ack_o = cyc_i & stb_i & (sel0 & ack_0 | sel1 & ack_1 | sel2 & ack_2 | sel3 & ack_3);
-   assign dat_o = adr_i[6] ? (adr_i[5] ? dat_3 : dat_2) : (adr_i[5] ? dat_1 : dat_0) ;
+   assign ack_o = cyc_i && stb && acks[dev];
+   assign dat_o = dats[dev];
+   assign stbs  = {4{stb_i}} & (1 << adr_i[6:5]);
+
+   // TODO: Not really needed?
+   always @(posedge clk_i)
+     if (rst) stb <= #DELAY 0;
+     else     stb <= #DELAY stb_i;
+
+   always @(posedge clk_i)
+     dev <= #DELAY adr_i[6:5];
 
 
    //-------------------------------------------------------------------------
@@ -80,13 +92,13 @@ module correlator_block
 
          .clk_i(clk_i),
          .cyc_i(cyc_i),
-         .stb_i(stb_i && sel0),
+         .stb_i(stbs[0]),
          .we_i (we_i),
          .bst_i(bst_i),
-         .ack_o(ack_0),
+         .ack_o(acks[0]),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
-         .dat_o(dat_0),
+         .dat_o(dats[0]),
 
          .sw(sw),
          .en(en),
@@ -107,13 +119,13 @@ module correlator_block
 
          .clk_i(clk_i),
          .cyc_i(cyc_i),
-         .stb_i(stb_i && sel1),
+         .stb_i(stbs[1]),
          .we_i (we_i),
          .bst_i(bst_i),
-         .ack_o(ack_1),
+         .ack_o(acks[1]),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
-         .dat_o(dat_1),
+         .dat_o(dats[1]),
 
          .sw(sw),
          .en(en),
@@ -134,13 +146,13 @@ module correlator_block
 
          .clk_i(clk_i),
          .cyc_i(cyc_i),
-         .stb_i(stb_i && sel2),
+         .stb_i(stbs[2]),
          .we_i (we_i),
          .bst_i(bst_i),
-         .ack_o(ack_2),
+         .ack_o(acks[2]),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
-         .dat_o(dat_2),
+         .dat_o(dats[2]),
 
          .sw(sw),
          .en(en),
@@ -161,13 +173,13 @@ module correlator_block
 
          .clk_i(clk_i),
          .cyc_i(cyc_i),
-         .stb_i(stb_i && sel3),
+         .stb_i(stbs[3]),
          .we_i (we_i),
          .bst_i(bst_i),
-         .ack_o(ack_3),
+         .ack_o(acks[3]),
          .adr_i(adr_i[4:0]),
          .dat_i(dat_i),
-         .dat_o(dat_3),
+         .dat_o(dats[3]),
 
          .sw(sw),
          .en(en),

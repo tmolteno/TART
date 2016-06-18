@@ -55,6 +55,7 @@ ANTENNA_DATA
 `define TART_READ  2
 `define TART_SEND  4
 `define TART_WRITE 8
+`define TART_BUS   4
 
 // Data prefetcher states.
 `define PRE_EMPTY 0
@@ -62,77 +63,119 @@ ANTENNA_DATA
 `define PRE_WORD2 2
 
 module tart_spi
-  (
-   // System (bus) clock
-   input            clk,
-   input            rst,
+  #( parameter ADDRESS = 12,
+     parameter ASB     = ADDRESS-1,
+     parameter DELAY   = 3)
+   ( // System (bus) clock
+     input              clk,
+     input              rst,
 
-   // Streaming data interface
-   // NOTE: Doesn't need to initiate transfers, but data is valid whenever
-   //   `data_ready` is asserted.
-   input            data_ready,
-   output reg       data_request = 0,
-   input [23:0]     data_in,
+     // Streaming data interface
+     // NOTE: Doesn't need to initiate transfers, but data is valid whenever
+     //   `data_ready` is asserted.
+     input              data_ready,
+     output reg         data_request = 0,
+     input [23:0]       data_in,
 
-   // Indicate whether an overflow or underrun has occurred.
-   output reg       debug_o = 0,
+     // Indicate whether an overflow or underrun has occurred.
+     output reg         debug_o = 0,
 
-   // SPI-transmitter status flags
-   output reg       spi_reset = 0,
-   output reg       spi_debug = 0,
-   input [7:0]      spi_status,
-   output reg       spi_start_aq = 0,
-	 output reg [2:0] data_sample_delay = 0,
+     // SPI-transmitter status flags
+     output reg         spi_reset = 0,
+     output reg         spi_debug = 0,
+     input [7:0]        spi_status,
+     output reg         spi_start_aq = 0,
+	   output reg [2:0]   data_sample_delay = 0,
 
-   // SPI pins
-   input            SCK,
-   input            SSEL,
-   input            MOSI,
-   output           MISO
-   );
+     // Wishbone-like (master) bus interface:
+     output reg         cyc_o = 0,
+     output reg         stb_o = 0,
+     output reg         bst_o = 0,
+     output reg         we_o = 0,
+     input              ack_i,
+     output reg [ASB:0] adr_o,
+     input [7:0]        dat_i,
+     output reg [7:0]   dat_o,
+
+     // SPI pins:
+     input              SCK,
+     input              SSEL,
+     input              MOSI,
+     output             MISO
+    );
 
    // SPECIFIY POSSIBLE REGISTER ADDRESSES
    //             Register                        Function
    parameter      ADDR_STATUS       = 4'b0000; // STATUS ADDR
+
+   // Data aquisition control and read-back registers:
    parameter      ADDR_STARTAQ      = 4'b0001; // START SAMPLING
    parameter      ADDR_READ_DATA1   = 4'b0010; // DATA MSB [23:16]
    parameter      ADDR_READ_DATA2   = 4'b0011; // DATA     [15:8]
    parameter      ADDR_READ_DATA3   = 4'b0100; // DATA LSB [7:0]
+
+   // Visibilities/correlators specific registers:
+   parameter      ADDR_VIS_STATUS   = 4'b1000;
+   parameter      ADDR_VIS_COUNT    = 4'b1001; // log2(#samples/window)
+   parameter      ADDR_VIS_DATA     = 4'b1010; // 1 byte of vis./read
+
+   // Additional system registers:
  	 parameter      ADDR_SAMPLE_DELAY = 4'b1100; //
    parameter      ADDR_DEBUG        = 4'b1000; // DEBUG MODE 
    parameter      ADDR_RESET        = 4'b1111; // RESET
 
    // TART WB <-> SPI interface signals.
-   wire [7:0]       data_from_spi;
-   reg [7:0]        data_to_send;
-   wire             cyc, stb, we;
-   reg              ack = 0;
-   wire             oflow, uflow, debug_w;
+   wire [7:0]           data_from_spi;
+   reg [7:0]            data_to_send;
+   wire                 cyc, stb, we;
+   reg                  ack = 0;
+   wire                 oflow, uflow, debug_w;
 
 
    //-------------------------------------------------------------------------
    //  
-   //  Bus interface for the Wishbone-like bus.
+   //  Wishbone-like interconnect to the `spi_target`.
    //  
    //-------------------------------------------------------------------------
-   wire             byte_request = cyc && stb && !we;
-   wire             byte_arrival = cyc && stb &&  we;
+   wire                 byte_request = cyc && stb && !we;
+   wire                 byte_arrival = cyc && stb &&  we;
 
    // TODO: Properly compute the number of bytes.
    always @(posedge clk)
-     if (rst)
-       ack <= 0;
-     else
-       ack <= !ack && (byte_arrival || byte_request);
+     if (rst) ack <= 0;
+     else     ack <= !ack && (byte_arrival || byte_request);
 
    // Watch for a SPI FIFO overflow, or underrun.
    always @(posedge clk)
+     if (rst)                 debug_o <= 0;
+     else if (oflow || uflow) debug_o <= 1;
+     else                     debug_o <= debug_o;
+
+
+   //-------------------------------------------------------------------------
+   //  
+   //  Wishbone-like interconnect to the TART's internal bus.
+   //  
+   //-------------------------------------------------------------------------
+   reg                  bus_cycle = 0;
+   wire                 bus_range = register_addr[3:0] > 7 && register_addr[3:0] < 11;
+   wire                 bus_begin = byte_arrival && ack && tart_state == `TART_START && bus_range;
+
+   always @(posedge clk)
      if (rst)
-       debug_o <= 0;
-     else if (oflow || uflow)
-       debug_o <= 1;
+       {cyc_o, stb_o, we_o} <= #DELAY 3'b000;
+     else if (bus_begin)
+       {cyc_o, stb_o, we_o} <= #DELAY {2'b11, write_flag};
      else
-       debug_o <= debug_o;
+       {cyc_o, stb_o, we_o} <= #DELAY {cyc_o && ack_i, 1'b0, we_o && !ack_i};
+
+   always @(posedge clk)
+     if (bus_begin)
+        case (register_addr[3:0])
+          ADDR_VIS_STATUS: adr_o <= #DELAY 12'he00;
+          ADDR_VIS_COUNT:  adr_o <= #DELAY 12'he01;
+          ADDR_VIS_DATA:   adr_o <= #DELAY 12'h000;
+        endcase // case (register_addr[3:0])
 
 
    //-------------------------------------------------------------------------
@@ -140,10 +183,10 @@ module tart_spi
    //  TART SPI-mapped register-bank.
    //  
    //-------------------------------------------------------------------------
-   wire             wrap_address = register_addr == ADDR_READ_DATA3;
-   reg [3:0]        register_addr = 4'b0;
-   wire             write_flag = data_from_spi[7];
-   reg [3:0]        tart_state = `TART_IDLE;
+   wire                wrap_address = register_addr == ADDR_READ_DATA3;
+   reg [3:0]           register_addr = 4'b0;
+   wire                write_flag = data_from_spi[7];
+   reg [3:0]           tart_state = `TART_IDLE;
 
    // TART register-mapping state machine.
    always @(posedge clk)
@@ -153,12 +196,19 @@ module tart_spi
        case (tart_state)
          `TART_IDLE:  tart_state <= cyc ? `TART_START : tart_state ;
          `TART_START:
-           if (byte_arrival && ack)
-             tart_state <= write_flag ? `TART_WRITE : `TART_READ ;
+           if (byte_arrival && ack) begin
+              if (bus_range)
+                tart_state <= #DELAY `TART_BUS;
+              else if (write_flag)
+                tart_state <= #DELAY `TART_WRITE;
+              else
+                tart_state <= #DELAY `TART_READ;
+           end
          `TART_READ:  tart_state <= !cyc ? `TART_IDLE : tart_state ;
-//          `TART_READ:  tart_state <= byte_arrival && ack ? `TART_SEND : tart_state ;
-//          `TART_SEND:  tart_state <= tart_state ;
+         //          `TART_READ:  tart_state <= byte_arrival && ack ? `TART_SEND : tart_state ;
+         //          `TART_SEND:  tart_state <= tart_state ;
          `TART_WRITE: tart_state <= !cyc ? `TART_IDLE : tart_state ;
+         `TART_BUS:   tart_state <= cyc_o ? tart_state : `TART_IDLE ;
        endcase // case (tart_state)
 
    // Address latching and wrapping logic, for register reads and streaming
@@ -168,7 +218,7 @@ module tart_spi
        register_addr <= 0;
      else if (byte_arrival && ack && tart_state == `TART_START)
        register_addr <= data_from_spi[3:0];
-//      else if (byte_request && ack && tart_state == `TART_SEND)
+   //      else if (byte_request && ack && tart_state == `TART_SEND)
      else if (byte_arrival && ack && tart_state == `TART_READ)
        begin
           if (wrap_address)
@@ -254,14 +304,14 @@ module tart_spi
 
    always @(posedge clk)
      if (data_ready) begin
-       if (!data_sent && pre_state == `PRE_EMPTY)
-         antenna_data <= data_in;
-       else if (data_sent && pre_state == `PRE_WORD1)
-         antenna_data <= data_in;
-       else if (!data_sent && pre_state == `PRE_WORD1)
-         antenna_data <= prefetch_data;
-       else
-         $error ("%5t: data arrived while in an incompatible state.", $time);
+        if (!data_sent && pre_state == `PRE_EMPTY)
+          antenna_data <= data_in;
+        else if (data_sent && pre_state == `PRE_WORD1)
+          antenna_data <= data_in;
+        else if (!data_sent && pre_state == `PRE_WORD1)
+          antenna_data <= prefetch_data;
+        else
+          $error ("%5t: data arrived while in an incompatible state.", $time);
      end
      else if (data_sent && pre_state == `PRE_WORD2)
        antenna_data <= prefetch_data;
@@ -302,7 +352,7 @@ module tart_spi
 
        .overflow_o(oflow),
        .underrun_o(uflow),
-       
+      
        .SCK_pin(SCK),
        .SSEL(SSEL),
        .MOSI(MOSI),

@@ -148,8 +148,8 @@ module tart_visibilities
        .a_bst_i(p_bst),
        .a_ack_o(p_ack),
        .a_adr_i(p_adr),
-       .a_dat_i(p_val),
-       .a_dat_o(p_dat),
+       .a_dat_i(p_dat),
+       .a_dat_o(p_val),
 
        .b_clk_i(clk_i),    // this port is driven by the TART SPI unit
        .b_cyc_i(cyc_i),

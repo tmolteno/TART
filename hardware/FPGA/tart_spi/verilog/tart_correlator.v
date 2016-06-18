@@ -52,7 +52,8 @@ module tart_correlator
     input [MSB:0]      blocksize, // block size - 1
     input              strobe, // `antenna` data is valid
     input [23:0]       antenna,// the real component from each antenna
-    output reg         switch = 0
+
+    output reg         switch = 0 // NOTE: bus domain
     );
 
    //-------------------------------------------------------------------------
@@ -95,88 +96,74 @@ module tart_correlator
    always @(posedge clk_x)
      delays <= #DELAY {delays[2:0], !rst && strobe && active};
 
+
+   //-------------------------------------------------------------------------
+   //  Synchronise the bank-switching signal to the bus domain.
+   //  NOTE: Keeps `sw_b` asserted until acknowledged.
+   //-------------------------------------------------------------------------
+   reg sw_x = 0, sw_d = 0;      // aquisition domain
+   reg sw_b = 0;                // bus domain
+
    always @(posedge clk_x)
+     if (rst || strobe) sw_x <= #DELAY 0;
+     else if (sw)       sw_x <= #DELAY 1;
+     else               sw_x <= #DELAY sw_x;
+
+   always @(posedge clk_x)
+     if (rst) sw_d <= #DELAY 0;
+     else     sw_d <= #DELAY sw_x && strobe;
+
+   always @(posedge clk_i or posedge sw_d)
+     if (sw_d)               sw_b <= #DELAY 1;
+     else if (rst || switch) sw_b <= #DELAY 0;
+
+   always @(posedge clk_i)
      if (rst) switch <= #DELAY 0;
-     else     switch <= #DELAY sw;
+     else     switch <= #DELAY sw_b && !switch;
+
 
    //-------------------------------------------------------------------------
    //  Bus interface.
    //-------------------------------------------------------------------------
-   reg [2:0]           bus_state = `BUS_IDLE;
-//    reg [7:0]           stbs = 0;
-//    reg [9:0]          adr;
-   reg                 cyc_r = 0; // TODO:
-   wire [MSB:0]        dats [0:7];
-//    wire [7:0]          stbs, acks;
-   wire [7:0]          acks;
-   wire                we_w = 0, ack_w = |acks;
-   wire [2:0]          bus_mode = we_i ? `BUS_WRITE : `BUS_READ ;
+   wire [MSB:0] dats [0:7];
+   reg [7:0]    stbs = 0;
+   reg [2:0]    dev = 0;
+   reg [9:0]    adr = 0;
+   reg          cyc = 0, we = 0, bst = 0; // TODO:
+   wire [7:0]   acks;
+   wire         we_w = 0, ack_w = |acks;
 
-//    assign stbs = {6'b0, stb_i} << adr_i[10:8];
-
-   assign acks[5:2] = 0; // FIXME:
    assign acks[7] = 0;
 
+   //-------------------------------------------------------------------------
+   //  Pass through (and pipeline) the bus transactions.
    always @(posedge clk_i)
-     if (rst)
-       bus_state <= #DELAY `BUS_IDLE;
-     else
-       case (bus_state)
-         `BUS_IDLE:
-           bus_state <= #DELAY cyc_i && stb_i ? bus_mode : bus_state;
+     if (rst)                         cyc <= #DELAY 0;
+     else if (cyc_i && stb_i && !cyc) cyc <= #DELAY 1;
+     else if (cyc)                    cyc <= #DELAY |stbs;
+     else                             cyc <= #DELAY cyc;
 
-         `BUS_WAIT:
-           bus_state <= #DELAY cyc_i ? (stb_i ? bus_mode : bus_state) : `BUS_IDLE ;
-
-         `BUS_READ:
-           bus_state <= #DELAY bst_i ? bus_state : `BUS_WAIT ;
-
-         `BUS_WRITE:
-           bus_state <= #DELAY bst_i ? bus_state : `BUS_WAIT ;
-       endcase // case (bus_state)
-
-   /*
    always @(posedge clk_i)
-     if (rst)
-       cyc_r <= #DELAY 0;
-     else if (cyc_i && bus_state == `BUS_IDLE)
-       cyc_r <= #DELAY 1;
-     else if (bus_state == `BUS_READ || bus_state == `BUS_WRITE)
-       cyc_r <= #DELAY bst_i;
-     else if (!cyc_i && cyc_r)
-       cyc_r <= #DELAY 0;
-     else
-       cyc_r <= #DELAY cyc_r;
-
-   // Set the strobes for the sub-units.
-   always @(posedge clk_i)
-     if (rst) stbs <= #DELAY 0;
-     else if (cyc_i && stb_i) stbs[adr_i[10:8]] <= #DELAY 1;
-     else stbs <= #DELAY 0;
-    */
+     if (rst)        {we, bst}      <= #DELAY 0;
+     else if (cyc_i) {we, bst, adr} <= #DELAY {we_i, bst_i, adr_i};
 
    //-------------------------------------------------------------------------
-   //  Address decoders.
-   reg [7:0]           stbs = 0;
-   reg [2:0]           dev = 0;
-
+   //  Address decoders -- that sets the strobes for each of the sub-units.
    always @(posedge clk_i)
-     if (rst)
-       stbs <= #DELAY 0;
-     else
-       stbs <= #DELAY {8{stb_i}} & (1 << adr_i[9:7]);
+     if (rst) stbs <= #DELAY 0;
+     else     stbs <= #DELAY {8{stb_i}} & (1 << adr_i[9:7]);
 
-   // 8:1 MUX and output-data latch.
-   always @(posedge clk_i)
-     if (cyc_i && !we_i && ack_w)
-       dat_o <= #DELAY dats[dev];
-
-   always @(posedge clk_i)
-     dev <= #DELAY adr_i[10:8];
-
+   //-------------------------------------------------------------------------
+   //  Route throught the acknowledges from the correct device.
    always @(posedge clk_i)
      if (rst) ack_o <= #DELAY 0;
-     else     ack_o <= #DELAY cyc_i && ack_w;
+     else     ack_o <= #DELAY cyc_i && acks[dev];
+
+   // 8:1 MUX and output-data latch.
+   always @(posedge clk_i) begin
+      dev   <= #DELAY adr[9:7];
+      dat_o <= #DELAY cyc_i && !we_i && ack_w ? dats[dev] : dat_o;
+   end
 
 
    //-------------------------------------------------------------------------
@@ -214,12 +201,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[0]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[0]),
-         .adr_i(adr_i[6:0]),
+         .adr_i(adr[6:0]),
          .dat_i(32'bx),
          .dat_o(dats[0]),
 
@@ -244,12 +231,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[1]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[1]),
-         .adr_i(adr_i[6:0]),
+         .adr_i(adr[6:0]),
          .dat_i(32'bx),
          .dat_o(dats[1]),
 
@@ -274,12 +261,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[2]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[2]),
-         .adr_i(adr_i[6:0]),
+         .adr_i(adr[6:0]),
          .dat_i(32'bx),
          .dat_o(dats[2]),
 
@@ -304,12 +291,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[3]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[3]),
-         .adr_i(adr_i[6:0]),
+         .adr_i(adr[6:0]),
          .dat_i(32'bx),
          .dat_o(dats[3]),
 
@@ -334,12 +321,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[4]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[4]),
-         .adr_i(adr_i[6:0]),
+         .adr_i(adr[6:0]),
          .dat_i(32'bx),
          .dat_o(dats[4]),
 
@@ -364,12 +351,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[5]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[5]),
-         .adr_i(adr_i[6:0]),
+         .adr_i(adr[6:0]),
          .dat_i(32'bx),
          .dat_o(dats[5]),
 
@@ -395,12 +382,12 @@ module tart_correlator
          .rst(rst),
 
          .clk_i(clk_i),
-         .cyc_i(cyc_i),
+         .cyc_i(cyc),
          .stb_i(stbs[6]),
          .we_i (we_w),
-         .bst_i(bst_i),
+         .bst_i(bst),
          .ack_o(acks[6]),
-         .adr_i(adr_i[4:0]),
+         .adr_i(adr[4:0]),
          .dat_i(32'bx),
          .dat_o(dats[6]),
 

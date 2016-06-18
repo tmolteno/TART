@@ -94,7 +94,7 @@ module wb_sram_dual_port
 
    // SRAM reads & writes.
    always @(posedge b_clk_i)
-     if (!rst_i && b_cyc_i) begin
+     if (!rst_i && b_cyc_i && b_stb_i) begin
         case (b_adr_i[1:0])
           0: b_dat_o <= #DELAY sram0[b_adr];
           1: b_dat_o <= #DELAY sram1[b_adr];
