@@ -19,7 +19,7 @@
  *  + supports classic, pipelined, and burst transfers;
  * 
  * Changelog:
- *  + 18/06/2016  --  initial file;
+ *  + 20/06/2016  --  initial file;
  * 
  * TODO:
  *  + currently unfinished;

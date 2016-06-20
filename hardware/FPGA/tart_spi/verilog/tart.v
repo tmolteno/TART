@@ -315,20 +315,24 @@ module tart
        .aq_sample_delay(data_sample_delay)
        );
 
+
    //-------------------------------------------------------------------------
-   //  CORRELATOR / VISIBILITIES BLOCK.
+   //     
+   //     CORRELATOR / VISIBILITIES BLOCK.
+   //     
    //-------------------------------------------------------------------------
    //  Correlator functional unit.
+   //-------------------------------------------------------------------------
    tart_correlator
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
          ) TART_CORRELATOR0
-       ( .clk_x(clk_x),
+       ( .clk_x(clk_x),         // 12x data-rate sampling clock
          .rst  (reset),
-
          .clk_i(b_clk),
-         .cyc_i(c_cyc),
-         .stb_i(c_stb),
+
+         .cyc_i(c_cyc),         // the correlator connects to the read-back
+         .stb_i(c_stb),         // unit for the visibilities, via this bus
          .we_i (c_we),
          .bst_i(c_bst),
          .ack_o(c_ack),
@@ -336,14 +340,15 @@ module tart
          .dat_i(c_rdx),
          .dat_o(c_tdx),
 
-         .enable(en),
-         .strobe(strobe),
-         .antenna(antenna),
-         .switch(sw)
+         .enable(en),           // begins correlating once asserted
+         .strobe(strobe),       // indicates arrival of a new sample
+         .antenna(antenna),     // antenna data
+         .switch(sw)            // asserts on bank-switch (sample domain)
          );
 
    //-------------------------------------------------------------------------
    //  Visibilities read-back unit.
+   //-------------------------------------------------------------------------
    tart_visibilities
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
@@ -351,30 +356,31 @@ module tart
        ( .clk_i(b_clk),
          .rst_i(reset),
 
-         .cyc_i(v_cyc),
-         .stb_i(v_stb),
-         .we_i (v_we),
+         .cyc_i(v_cyc),         // this bus accesses the prefetched bank of
+         .stb_i(v_stb),         // visibilities -- which are prefetched after
+         .we_i (v_we),          // every bank-switch
          .bst_i(v_bst),
          .ack_o(v_ack),
          .adr_i(v_adr),
          .dat_i(v_tdx),
          .dat_o(v_rdx),
 
-         .cyc_o(c_cyc),
-         .stb_o(c_stb),
-         .we_o (c_we),
+         .cyc_o(c_cyc),         // master interface that connects to the
+         .stb_o(c_stb),         // correlators, to read back their computed
+         .we_o (c_we),          // visibilities
          .bst_o(c_bst),
          .ack_i(c_ack),
          .adr_o(c_adr),
          .dat_i(c_tdx),
          .dat_o(c_rdx),
 
-         .switched(switched),
-         .accessed(accessed)
+         .switched(switched),   // strobes at every bank-switch (bus domain)
+         .accessed(accessed)    // asserts once visibilities are read back
          );
 
    //-------------------------------------------------------------------------
-   //  Streaming, read-back logic-core.
+   //  Streaming, visibilities-read-back logic-core.
+   //-------------------------------------------------------------------------
    wb_stream
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
@@ -382,8 +388,8 @@ module tart
        ( .clk_i(b_clk),
          .rst_i(reset),
 
-         .m_cyc_o(v_cyc),
-         .m_stb_o(v_stb),
+         .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
+         .m_stb_o(v_stb),       // sequentially
          .m_we_o (v_we),
          .m_bst_o(v_bst),
          .m_ack_i(v_ack),
@@ -391,8 +397,8 @@ module tart
          .m_dat_i(v_tdx),
          .m_dat_o(v_rdx),
 
-         .s_cyc_i(b_cyc),
-         .s_stb_i(s_stb),
+         .s_cyc_i(b_cyc),       // visibilities are streamed from here to the
+         .s_stb_i(s_stb),       // SPI module
          .s_we_i (b_we),
          .s_bst_i(s_bst),
          .s_ack_o(s_ack),
