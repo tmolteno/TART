@@ -67,8 +67,8 @@ module tart
      end
 
    // assign led = debug_o;
-   // assign led = (tart_state>=2);
-   assign led = ~spi_ssel;
+   assign led = (tart_state>=2);
+   // assign led = ~spi_ssel;
 
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
@@ -218,7 +218,103 @@ module tart
    );
 
 
-   /*
+`ifdef __USE_WISHBONE_CORES
+   //-------------------------------------------------------------------------
+   //
+   //  TART's system-wide, Wishbone-like interconnect and peripherals.
+   //
+   //-------------------------------------------------------------------------
+   parameter WIDTH = 8;         // bus parameters
+   parameter MSB   = WIDTH-1;
+   parameter ASB   = WIDTH-2;
+   parameter DELAY = 3;
+
+   parameter ACCUM = 32;        // correlator/visibilities parameters
+   parameter BLOCK = ACCUM;
+   parameter BSB   = BLOCK-1;
+
+   wire [MSB:0] b_dtx, b_drx;   // bus master's signals
+   wire [ASB:0] b_adr;
+   wire         b_clk = fpga_clk;
+   wire         b_rst = 1'b0;
+   wire         b_cyc, b_stb, b_bst, b_we, b_ack;
+
+   wire [MSB:0] r_drx, r_dtx;   // reset handler's signals
+   wire         r_stb, r_ack;
+
+   wire [MSB:0] a_drx, a_dtx;   // data-aquisition controller's signals
+   wire [2:0]   a_adr = b_adr[2:0];
+   wire         a_stb, a_ack;
+
+   assign r_dtx = b_drx;        // redirect output-data to slaves
+   assign a_dtx = b_drx;
+
+   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
+   assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
+
+
+   //-------------------------------------------------------------------------
+   //     TRANSMISSION BLOCK
+   //     SPI SLAVE & WB MASTER
+   //-------------------------------------------------------------------------
+   spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
+     ( .clk_i(b_clk),
+       .rst_i(b_rst),
+       .cyc_o(b_cyc),
+       .stb_o(b_stb),
+       .bst_o(b_bst),
+       .we_o (b_we),
+       .ack_i(b_ack),
+       .adr_o(b_adr),
+       .dat_i(b_dtx),
+       .dat_o(b_drx),
+
+       .status_i(stat),
+       .overflow_o(oflow),
+       .underrun_o(uflow),
+       
+       .SCK_pin(spi_sck),
+       .MOSI(spi_mosi),
+       .MISO(spi_miso),
+       .SSEL(spi_ssel)
+       );
+
+   //-------------------------------------------------------------------------
+   //     RESET HANDLER
+   //-------------------------------------------------------------------------
+   wb_reset #( .WIDTH(WIDTH), .RTIME(4) ) SPI_RESET0
+     ( .clk_i(b_clk),
+       .rst_i(b_rst),
+       .cyc_o(b_cyc),
+       .stb_o(r_stb),
+       .we_o (b_we),
+       .ack_i(r_ack),
+       .dat_i(r_dtx),
+       .dat_o(r_drx),
+
+       .reset_ni(reset_n),
+       .reset_o(reset)
+       );
+
+   //-------------------------------------------------------------------------
+   //     DATA-AQUISITION CONTROL AND READ-BACK.
+   //-------------------------------------------------------------------------
+   wb_aquire #( .WIDTH(WIDTH) ) SPI_AQUIRE0
+     ( .clk_i(b_clk),
+       .rst_i(reset),
+       .cyc_o(b_cyc),
+       .stb_o(a_stb),
+       .we_o (b_we),
+       .ack_i(a_ack),
+       .adr_i(a_adr),
+       .dat_i(a_dtx),
+       .dat_o(a_drx),
+
+       .aq_debug_mode(spi_debug),
+       .aq_enabled(spi_start_aq),
+       .aq_sample_delay(data_sample_delay)
+       );
+
    //-------------------------------------------------------------------------
    //  CORRELATOR / VISIBILITIES BLOCK.
    //-------------------------------------------------------------------------
@@ -228,17 +324,17 @@ module tart
          .DELAY (DELAY)
          ) TART_CORRELATOR0
        ( .clk_x(clk_x),
-         .rst(rst),
+         .rst  (reset),
 
-         .clk_i(clk_b),
-         .cyc_i(cyc),
-         .stb_i(stb),
-         .we_i (we),
-         .bst_i(bst),
-         .ack_o(ack),
-         .adr_i(adr),
-         .dat_i(val),
-         .dat_o(dat),
+         .clk_i(b_clk),
+         .cyc_i(c_cyc),
+         .stb_i(c_stb),
+         .we_i (c_we),
+         .bst_i(c_bst),
+         .ack_o(c_ack),
+         .adr_i(c_adr),
+         .dat_i(c_rdx),
+         .dat_o(c_tdx),
 
          .enable(en),
          .strobe(strobe),
@@ -252,36 +348,65 @@ module tart
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
          ) TART_VISIBILITIES0
-       ( .clk_i(clk_b),
-         .rst_i(rst),
+       ( .clk_i(b_clk),
+         .rst_i(reset),
 
-         .cyc_i(cyc),
-         .stb_i(stb),
-         .we_i (we),
-         .bst_i(bst),
-         .ack_o(ack),
-         .adr_i(adr),
-         .dat_i(val),
-         .dat_o(dat),
+         .cyc_i(v_cyc),
+         .stb_i(v_stb),
+         .we_i (v_we),
+         .bst_i(v_bst),
+         .ack_o(v_ack),
+         .adr_i(v_adr),
+         .dat_i(v_tdx),
+         .dat_o(v_rdx),
 
-         .cyc_o(cyc),
-         .stb_o(stb),
-         .we_o (we),
-         .bst_o(bst),
-         .ack_i(ack),
-         .adr_o(adr),
-         .dat_i(val),
-         .dat_o(dat),
+         .cyc_o(c_cyc),
+         .stb_o(c_stb),
+         .we_o (c_we),
+         .bst_o(c_bst),
+         .ack_i(c_ack),
+         .adr_o(c_adr),
+         .dat_i(c_tdx),
+         .dat_o(c_rdx),
 
          .switched(switched),
          .accessed(accessed)
          );
-    */
 
-   
+   //-------------------------------------------------------------------------
+   //  Streaming, read-back logic-core.
+   wb_stream
+     #(  .BLOCK (BLOCK),
+         .DELAY (DELAY)
+         ) WB_STREAM0
+       ( .clk_i(b_clk),
+         .rst_i(reset),
+
+         .m_cyc_o(v_cyc),
+         .m_stb_o(v_stb),
+         .m_we_o (v_we),
+         .m_bst_o(v_bst),
+         .m_ack_i(v_ack),
+         .m_adr_o(v_adr),
+         .m_dat_i(v_tdx),
+         .m_dat_o(v_rdx),
+
+         .s_cyc_i(b_cyc),
+         .s_stb_i(s_stb),
+         .s_we_i (b_we),
+         .s_bst_i(s_bst),
+         .s_ack_o(s_ack),
+         .s_dat_i(s_tdx),
+         .s_dat_o(s_rdx)
+         );
+
+
+`else // !__USE_WISHBONE_CORES
    //-------------------------------------------------------------------------
    //     TRANSMISSION BLOCK
-   //     SPI SLAVE
+   //     SPI SLAVE & WB MASTER
+   //     
+   //     OBSOLETE: Replacing with individual cores.
    //-------------------------------------------------------------------------
    tart_spi TART_SPI0
      ( .clk(fpga_clk),
@@ -304,6 +429,7 @@ module tart
        .MISO(spi_miso),
        .SSEL(spi_ssel)
        );
-   
-endmodule // tart
+`endif // __USE_WISHBONE_CORES
 
+
+endmodule // tart

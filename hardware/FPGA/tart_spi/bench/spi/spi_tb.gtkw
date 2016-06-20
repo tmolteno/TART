@@ -1,18 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Sat Jun 18 09:47:54 2016
+[*] Mon Jun 20 07:59:52 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/spi/spi_tb.vcd"
-[dumpfile_mtime] "Sat Jun 18 09:46:37 2016"
-[dumpfile_size] 116208
+[dumpfile_mtime] "Mon Jun 20 07:59:42 2016"
+[dumpfile_size] 79231
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/spi/spi_tb.gtkw"
-[timestart] 0
+[timestart] 394500
 [size] 2560 1416
 [pos] -1 -1
-*-18.331121 423000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.747328 680000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] spi_slave_tb.
+[treeopen] spi_slave_tb.SPI_SLAVE0.
+[treeopen] spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.
 [sst_width] 223
-[signals_width] 126
+[signals_width] 142
 [sst_expanded] 1
 [sst_vpaned_height] 731
 @28
@@ -23,10 +25,8 @@ spi_slave_tb.set
 spi_slave_tb.fin
 @22
 spi_slave_tb.stat[7:0]
-@23
 spi_slave_tb.ptr[6:0]
-@22
-spi_slave_tb.num[31:0]
+spi_slave_tb.dat[7:0]
 @200
 -
 -<< BUS >>
@@ -48,13 +48,14 @@ spi_slave_tb.drx[7:0]
 @28
 spi_slave_tb.SPI_MASTER0.tx_empty
 spi_slave_tb.SPI_MASTER0.rx_empty
+spi_slave_tb.SPI_MASTER0.tx_byte
+spi_slave_tb.SPI_MASTER0.next_byte
 @200
 -
 -** Slave **
 @28
 spi_slave_tb.s_cyc
 spi_slave_tb.s_stb
-spi_slave_tb.s_bst
 spi_slave_tb.s_we
 spi_slave_tb.s_ack
 @22
@@ -65,18 +66,37 @@ spi_slave_tb.s_drx[7:0]
 -
 @22
 spi_slave_tb.SPI_SLAVE0.spi[3:0]
+@28
+spi_slave_tb.SPI_SLAVE0.b_pend
 @200
 -
 --- Target --
 @28
 spi_slave_tb.SPI_SLAVE0.t_cyc
 spi_slave_tb.SPI_SLAVE0.t_stb
-spi_slave_tb.SPI_SLAVE0.t_bst
 spi_slave_tb.SPI_SLAVE0.t_we
 spi_slave_tb.SPI_SLAVE0.t_ack
 @22
 spi_slave_tb.SPI_SLAVE0.t_dati[7:0]
 spi_slave_tb.SPI_SLAVE0.t_dato[7:0]
+@200
+-
+@28
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.tx_rst_n
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.tx_empty
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.tx_push
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.tx_pull
+@23
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.tx_data[7:0]
+@28
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.rx_empty
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.rx_push
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.rx_pull
+@22
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.dat_w[7:0]
+@28
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.dat_req
+spi_slave_tb.SPI_SLAVE0.SPI_TARGET0.bus_state[2:0]
 @200
 -
 -** SPI **

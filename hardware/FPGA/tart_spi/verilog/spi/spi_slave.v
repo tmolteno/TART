@@ -37,15 +37,15 @@ module spi_slave
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
      parameter ASB   = WIDTH-2,
-     parameter HEADER_BYTE  = 8'hA7,
-     parameter DELAY = 3) // Pattern to send as the first byte
+     parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
+     parameter DELAY = 3)
    ( // Wishbone-like (bus master) interface:
      input              clk_i,
      input              rst_i,
      output reg         cyc_o = 0,
      output reg         stb_o = 0,
      output reg         bst_o = 0,
-     output reg         we_o = 0,
+     output             we_o,
      input              ack_i,
      output reg [ASB:0] adr_o,
      input [MSB:0]      dat_i,
@@ -68,70 +68,104 @@ module spi_slave
    wire [MSB:0]         t_dato;
    reg                  t_ack = 0;
    reg [MSB:0]          t_dati;
-
+   reg                  we = 0;
+                  
+   assign we_o = cyc_o && we;
+//    assign we_o = we;
 
    //-------------------------------------------------------------------------
    //  SPI to Wishbone state-machine.
    //-------------------------------------------------------------------------
    reg [3:0]            spi = `SPI_IDLE;
+   reg                  t_new = 1;
    wire                 addr = t_cyc & t_stb & t_we;
-   wire [3:0]           mode = t_dato[MSB] ? `SPI_WAIT : `SPI_PULL;
-   wire                 bus_we = spi == `SPI_ADDR && t_dato[MSB];
+   wire [3:0]           mode = b_we ? `SPI_WAIT : `SPI_PULL;
+   wire                 b_we = t_dato[MSB];
+   wire                 b_xfer = !t_new && t_cyc && t_stb && t_we;
+   wire                 b_wait = addr && !b_we;
+   wire                 b_done = t_stb && t_we && !t_ack;
+   reg                  b_pend = 0;
+
+   always @(posedge clk_i)
+     if (rst_i || !t_cyc) t_new <= #DELAY 1;
+     else                 t_new <= #DELAY 0;
 
    always @(posedge clk_i)
      if (rst_i || !t_cyc) spi <= #DELAY `SPI_IDLE;
      else
        case (spi)
-         `SPI_IDLE: spi <= #DELAY t_cyc & t_stb ? `SPI_ADDR : spi;
+         `SPI_IDLE:
+           if (t_cyc && t_stb) begin
+              if (t_new)
+                spi <= #DELAY `SPI_ADDR; // new transaction beginning
+              else if (we && t_we)
+                spi <= #DELAY `SPI_PUSH; // push data onto the WB bus
+              else if (!we && t_we)      // prefetch
+                spi <= #DELAY `SPI_PULL; // pull data from the WB bus
+              else                       // ignore reads when in write-mode,
+                spi <= #DELAY spi;       // and writes when in read-mode
+           end
+
          `SPI_ADDR: spi <= #DELAY addr ? mode : spi;
-         `SPI_WAIT: spi <= #DELAY t_stb & t_we ? `SPI_PULL : spi;
-         `SPI_PULL: spi <= #DELAY ack_i ? `SPI_WAIT : spi;
-         `SPI_PUSH: spi <= #DELAY ack_i ? `SPI_WAIT : spi;
+         `SPI_WAIT: spi <= #DELAY b_done ? `SPI_PUSH : spi;
+         `SPI_PULL: spi <= #DELAY !t_we && t_ack ? `SPI_IDLE : spi;
+         `SPI_PUSH: spi <= #DELAY ack_i ? `SPI_IDLE : spi;
        endcase // case (spi)
 
    always @(posedge clk_i)
-     if (rst_i) cyc_o <= #DELAY 1'b0;
+     if (rst_i)
+       {cyc_o, stb_o} <= #DELAY 2'b00;
      else if (t_cyc)
        case (spi)
-         `SPI_ADDR: cyc_o <= #DELAY addr && !bus_we;
-         `SPI_WAIT: cyc_o <= #DELAY t_stb && t_we;
-         `SPI_PUSH: cyc_o <= #DELAY !ack_i;
+         `SPI_IDLE: {cyc_o, stb_o} <= #DELAY {b_xfer, b_xfer};
+         `SPI_ADDR: {cyc_o, stb_o} <= #DELAY {b_wait, b_wait};
+         `SPI_WAIT: {cyc_o, stb_o} <= #DELAY {b_done, b_done};
+         `SPI_PULL: {cyc_o, stb_o} <= #DELAY {cyc_o && !ack_i, 1'b0};
+         `SPI_PUSH: {cyc_o, stb_o} <= #DELAY {!ack_i, 1'b0};
        endcase // case (spi)
      else
-       cyc_o <= #DELAY 1'b0;
+       {cyc_o, stb_o} <= #DELAY 2'b00;
 
    always @(posedge clk_i)
-     if (rst_i) stb_o <= #DELAY 1'b0;
-     else if (t_cyc)
+     if (rst_i)
+       t_ack <= #DELAY 1'b0;
+     else if (t_cyc && !t_ack)
        case (spi)
-         `SPI_ADDR: stb_o <= #DELAY addr && !bus_we;
-         `SPI_WAIT: stb_o <= #DELAY t_stb && t_we;
-         `SPI_PULL: stb_o <= #DELAY !ack_i; // 1'b0;
-         `SPI_PUSH: stb_o <= #DELAY !ack_i;
+         `SPI_PULL: t_ack <= #DELAY (b_pend || ack_i) && t_stb && !t_we;
+         default:   t_ack <= #DELAY t_stb;
        endcase // case (spi)
-     else
-       stb_o <= #DELAY 1'b0;
-
-   always @(posedge clk_i)
-     if (rst_i) t_ack <= #DELAY 1'b0;
-     else if (t_cyc && t_stb && !t_we && !t_ack)
-       case (spi)
-         `SPI_PULL, `SPI_PUSH: {t_ack, t_dati} <= #DELAY {ack_i, dat_i};
-         default:              {t_ack, t_dati} <= #DELAY {1'b1, status_i};
-       endcase // case (spi)
-     else if (t_cyc && t_stb && !t_ack)
-       t_ack <= #DELAY 1'b1;
      else
        t_ack <= #DELAY 1'b0;
 
-   // `we_o` stores the last-requested bus read#/write mode.
+   //  Data for the next SPI transfer is prefetched, so mark this as "pending"
+   //  until the SPI target requests it.
    always @(posedge clk_i)
-     if (rst_i) we_o <= #DELAY 1'b0;
+     if (rst_i || !t_cyc || t_stb && !t_we)
+       b_pend <= #DELAY 0;
+     else if (spi == `SPI_PULL)
+       b_pend <= #DELAY b_pend ? b_pend : !we && ack_i;
+     else
+       b_pend <= #DELAY 0;
+
+   always @(posedge clk_i)
+     if (t_cyc && !we)
+       case (spi)
+         `SPI_PULL: t_dati <= #DELAY ack_i ? dat_i : t_dati;
+         default:   t_dati <= #DELAY status_i;
+       endcase // case (spi)
+
+   // `we` stores the last-requested bus read#/write mode.
+   always @(posedge clk_i)
+     if (rst_i) we <= #DELAY 1'b0;
      else if (t_cyc && t_stb && t_we && !t_ack)
        case (spi)
-         `SPI_ADDR: {we_o, adr_o} <= #DELAY {t_dato[MSB], t_dato[ASB:0]};
-         default:   {we_o, adr_o} <= #DELAY {we_o, adr_o};
+         `SPI_ADDR: {we, adr_o} <= #DELAY {t_dato[MSB], t_dato[ASB:0]};
+         default:   {we, adr_o} <= #DELAY {we, adr_o};
        endcase // case (spi)
+
+   always @(posedge clk_i)
+     if (t_cyc && t_stb && t_we && !t_ack)
+       dat_o <= #DELAY t_dato;
 
 
    //-------------------------------------------------------------------------

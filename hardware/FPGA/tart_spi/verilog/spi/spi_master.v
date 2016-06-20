@@ -135,7 +135,7 @@ module spi_master
    //  SPI interface.
    //  
    //-------------------------------------------------------------------------
-   wire [7:0] data_tx;
+   wire [7:0] tx_data;
    reg [1:0]  spi_state = `SPI_IDLE;
    reg [7:0]  shift_reg;
    reg [2:0]  bit_count = 0;
@@ -185,7 +185,7 @@ module spi_master
 
    always @(posedge SCK)
      if (next_byte)
-       shift_reg <= #DELAY data_tx;
+       shift_reg <= #DELAY tx_data;
      else if (spi_state == `SPI_SEND)
        shift_reg <= #DELAY {shift_reg[6:0], MISO};
 
@@ -232,17 +232,29 @@ module spi_master
    //
    //-------------------------------------------------------------------------
    // TODO: Clear the FIFO when `cyc_o` deasserts?
-   wire [MSB:0] dat_tx = spi_state == `SPI_IDLE ? {we_i, adr_i} : dat_i;
+   wire [MSB:0] dat_tx = bus_state == `BUS_IDLE ? {we_i, adr_i} : (dat_next ? dat : dat_i);
+   wire         tx_byte = push_byte && !ack_o || dat_next;
+   reg [MSB:0]  dat;
+   reg          dat_next = 0;
+
+   always @(posedge clk_i)
+     if (cyc_i && stb_i) dat <= #DELAY dat_i;
+
+   always @(posedge clk_i)
+     if (rst_i) dat_next <= #DELAY 0;
+     else if (cyc_i && stb_i && bus_state == `BUS_IDLE) dat_next <= #DELAY 1;
+     else dat_next <= #DELAY 0;
+
 
    afifo16 #( .WIDTH(8) ) TX_FIFO1
      ( .reset_ni(!rst_i),
        
        .rd_clk_i(SCK),
        .rd_en_i(next_byte),
-       .rd_data_o(data_tx),
+       .rd_data_o(tx_data),
        
        .wr_clk_i(clk_i),
-       .wr_en_i(push_byte && !ack_o),
+       .wr_en_i(tx_byte),
 //        .wr_data_i(dat_i),
        .wr_data_i(dat_tx),
 

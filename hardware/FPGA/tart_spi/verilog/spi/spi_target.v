@@ -45,29 +45,32 @@
 `define BUS_SEND 4
 
 module spi_target
-  (
-   input            clk_i,
-   input            rst_i,
-   output reg       cyc_o = 0,
-   output reg       stb_o = 0,
-   output           bst_o,
-   output reg       we_o = 0,
-   input            ack_i,
-   input [7:0]      dat_i,
-   output reg [7:0] dat_o,
+  #( parameter WIDTH = 8,       // TODO: currently must be `8`!
+     parameter MSB   = WIDTH-1,
+     parameter ASB   = WIDTH-2,
+     parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
+     parameter DELAY = 3)
+   ( // Wishbone-like (bus master) interface:
+     input            clk_i,
+     input            rst_i,
+     output reg       cyc_o = 0,
+     output reg       stb_o = 0,
+     output           bst_o,
+     output reg       we_o = 0,
+     input            ack_i,
+     input [7:0]      dat_i,
+     output reg [7:0] dat_o,
 
-   // Debug/diagnostic output, for when the recieve FIFO overflows.
-   output reg       overflow_o = 0,
-   output reg       underrun_o = 0,
+     // Debug/diagnostic output, for when the recieve FIFO overflows.
+     output reg       overflow_o = 0,
+     output reg       underrun_o = 0,
 
-   input            SCK_pin, // Raw pin connection, not a global clock
-   input            SSEL,
-   input            MOSI,
-   (* IOB = "FORCE" *)
-   output reg       MISO = HEADER_BYTE[7]
-   );
-
-   parameter HEADER_BYTE  = 8'hA7; // Pattern to send as the first byte
+     input            SCK_pin, // Raw pin connection, not a global clock
+     input            SSEL,
+     input            MOSI,
+     (* IOB = "FORCE" *)
+     output reg       MISO = HEADER_BYTE[7]
+     );
 
    //-------------------------------------------------------------------------
    //  
@@ -135,28 +138,29 @@ module spi_target
    // SSEL is used to generate the bus transaction's framing signal, `cyc_o`,
    // but it must be synchronised across clock domains.
    always @(posedge SCK or posedge SSEL)
-     if (SSEL)  sync0 <= 0;
-     else       sync0 <= !SSEL;
+     if (SSEL)  sync0 <= #DELAY 0;
+     else       sync0 <= #DELAY !SSEL;
 
    always @(posedge clk_i)
-     if (rst_i) sync1 <= 0;
-     else       sync1 <= sync0;
+     if (rst_i) sync1 <= #DELAY 0;
+     else       sync1 <= #DELAY sync0;
 
    //-------------------------------------------------------------------------
    //  SPI transmission data prefetch.
    //-------------------------------------------------------------------------
    // After a bit has been sent/received, issue a prefetch for the next byte.
    always @(posedge SCK or posedge SSEL)
-     if (SSEL)    spi_req <= 0;
-     else         spi_req <= rx_count == 1;
+     if (SSEL)    spi_req <= #DELAY 0;
+     else         spi_req <= #DELAY rx_count == 1;
 
    always @(posedge clk_i or posedge spi_req)
-     if (spi_req) dat_req_sync <= 1;
-     else         dat_req_sync <= 0;
+     if (spi_req) dat_req_sync <= #DELAY 1;
+     else         dat_req_sync <= #DELAY 0;
 
    always @(posedge clk_i)
-     if (rst_i)   dat_req <= 0;
-     else         dat_req <= dat_req_sync;
+     if (rst_i)   dat_req <= #DELAY 0;
+//      else         dat_req <= #DELAY dat_req_sync;
+     else         dat_req <= #DELAY dat_req ? bus_state != `BUS_READ : dat_req_sync;
 
    //-------------------------------------------------------------------------
    //  The TX FIFO reset logic.
@@ -166,23 +170,23 @@ module spi_target
    always @(posedge clk_i)
      if (rst_i)
        begin
-          tx_rst_n <= 1'b0;
-          tx_flg <= 1'b0;
+          tx_rst_n <= #DELAY 1'b0;
+          tx_flg <= #DELAY 1'b0;
        end
      else if (!spi_select && !tx_flg) // Issue a single reset
        begin
-          tx_rst_n <= 1'b0;
-          tx_flg <= 1'b1;
+          tx_rst_n <= #DELAY 1'b0;
+          tx_flg <= #DELAY 1'b1;
        end
      else if (spi_select)
        begin
-          tx_rst_n <= 1'b1;
-          tx_flg <= 1'b0;
+          tx_rst_n <= #DELAY 1'b1;
+          tx_flg <= #DELAY 1'b0;
        end
      else
        begin
-          tx_rst_n <= 1'b1;
-          tx_flg <= tx_flg;
+          tx_rst_n <= #DELAY 1'b1;
+          tx_flg <= #DELAY tx_flg;
        end
 
    
@@ -192,69 +196,81 @@ module spi_target
    //  
    //-------------------------------------------------------------------------
    wire [7:0] dat_w;
-   wire       pop_byte  = !rx_empty && bus_state == `BUS_WAIT;
-   wire       push_byte = cyc_o && stb_o && !we_o && ack_i;
+//    wire       rx_pull  = !rx_empty && bus_state == `BUS_WAIT;
+   wire       rx_pull = cyc_o && !rx_empty && bus_state != `BUS_SEND;
+   wire       tx_push = cyc_o && !we_o && ack_i;
    reg [2:0]  bus_state = `BUS_IDLE;
 
    assign bst_o = 1'b0;
 
    always @(posedge clk_i)
      if (rst_i)
-       bus_state <= `BUS_IDLE;
+       bus_state <= #DELAY `BUS_IDLE;
      else
        case (bus_state)
          `BUS_IDLE:
-           bus_state <= spi_select && dat_req ? `BUS_READ : bus_state;
+           if (spi_select && dat_req)
+             bus_state <= #DELAY `BUS_READ;
+           else if (spi_select && !rx_empty)
+             bus_state <= #DELAY `BUS_SEND;
+           else
+             bus_state <= #DELAY bus_state;
          
          `BUS_READ:
-           bus_state <= !spi_select ? `BUS_IDLE : ack_i ? `BUS_WAIT : bus_state;
+           bus_state <= #DELAY !spi_select ? `BUS_IDLE : ack_i ? `BUS_WAIT : bus_state;
 
          `BUS_WAIT:
-           bus_state <= !rx_empty ? `BUS_SEND : bus_state;
+           bus_state <= #DELAY !rx_empty ? `BUS_SEND : bus_state;
 
          `BUS_SEND:
-           bus_state <= ack_i ? `BUS_IDLE : bus_state;
+           bus_state <= #DELAY ack_i ? (dat_req ? `BUS_READ : `BUS_IDLE) : bus_state;
        endcase // case (bus_state)
 
    // TODO: Better prefetching, and don't use `rx_empty`?
    always @(posedge clk_i)
      if (rst_i) begin
-        cyc_o <= 0;
-        stb_o <= 0;
-        we_o  <= 0;
+        cyc_o <= #DELAY 0;
+        stb_o <= #DELAY 0;
+        we_o  <= #DELAY 0;
      end
      else
        case (bus_state)
          `BUS_IDLE:             // Prefetch a byte on SPI start
            if (dat_req && spi_select) begin
-              cyc_o <= 1;
-              stb_o <= 1;
-              we_o  <= 0;
+              $display("%10t: TARGET -- Requesting status byte", $time);
+              cyc_o <= #DELAY 1;
+              stb_o <= #DELAY 1;
+              we_o  <= #DELAY 0;
            end
            else if (!spi_select) begin
-              cyc_o <= 0;
-              stb_o <= 0;
-              we_o  <= 0;
+              cyc_o <= #DELAY 0;
+              stb_o <= #DELAY 0;
+              we_o  <= #DELAY 0;
+           end
+           else if (!rx_empty) begin
+              cyc_o <= #DELAY 1;
+              stb_o <= #DELAY 1;
+              we_o  <= #DELAY 1;
            end
          
          `BUS_READ:             // Wait for prefetched byte
-           stb_o <= ~ack_i & spi_select;
+           stb_o <= #DELAY 0; // !stb_o && !ack_i && spi_select;
 
          `BUS_WAIT: begin       // Send any received data
-            stb_o <= ~rx_empty;
-            we_o  <= ~rx_empty;
+            stb_o <= #DELAY ~rx_empty;
+            we_o  <= #DELAY ~rx_empty;
          end
 
          `BUS_SEND: begin       // Wait for sent data to be acknowledged
-            stb_o <= ~ack_i;
-            we_o  <= ~ack_i;
+            stb_o <= #DELAY ack_i && dat_req;
+            we_o  <= #DELAY ~ack_i;
          end
        endcase // case (bus_state)
 
    // Dequeue the data to be sent over the system bus.
    always @(posedge clk_i)
-     if (pop_byte) dat_o <= dat_w;
-     else          dat_o <= dat_o;
+     if (rx_pull) dat_o <= #DELAY dat_w;
+     else         dat_o <= #DELAY dat_o;
 
 
    //-------------------------------------------------------------------------
@@ -267,27 +283,27 @@ module spi_target
    reg [6:0]  tx_reg = HEADER_BYTE[6:0];
    reg [6:0]  rx_reg;
    reg [2:0]  rx_count = 0, tx_count = 0;
-   reg        tx_fifo_read = 0;
+   reg        tx_pull = 0;
    wire       tx_next  = tx_count == 7;
-   wire       rx_done  = rx_count == 7;
+   wire       rx_push  = rx_count == 7;
 
    //-------------------------------------------------------------------------
    //  Data-capture is on positive edges.
    //-------------------------------------------------------------------------
    // Deserialise the incoming SPI data, receiving MSB -> LSB.
    always @(posedge SCK)
-     rx_reg <= {rx_reg[5:0], MOSI};
+     rx_reg <= #DELAY {rx_reg[5:0], MOSI};
 
    always @(posedge SCK or posedge SSEL)
-     if (SSEL) rx_count <= 0;
-     else      rx_count <= rx_count + 1;
+     if (SSEL) rx_count <= #DELAY 0;
+     else      rx_count <= #DELAY rx_count + 1;
 
    // RX FIFO overflow detection.
    always @(posedge SCK or posedge rst_i)
      if (rst_i)
-       overflow_o  <= 0;
-     else if (rx_done && rx_full)
-       overflow_o  <= 1;
+       overflow_o  <= #DELAY 0;
+     else if (rx_push && rx_full)
+       overflow_o  <= #DELAY 1;
 
    //-------------------------------------------------------------------------
    //  Transmission logic.
@@ -295,34 +311,32 @@ module spi_target
    // Output the header/status byte on SPI start, else transmit FIFO data.
    // Serialise the SPI data, sending MSB -> LSB.
    always @(`TX_EDGE SCK or posedge SSEL)
-     if (SSEL)         tx_reg <= HEADER_BYTE[6:0];
-     else if (tx_next) tx_reg <= tx_data[6:0];
-     else              tx_reg <= {tx_reg[5:0], 1'bx};
+     if (SSEL)         tx_reg <= #DELAY HEADER_BYTE[6:0];
+     else if (tx_next) tx_reg <= #DELAY tx_data[6:0];
+     else              tx_reg <= #DELAY {tx_reg[5:0], 1'bx};
 
    // Use a local clock for faster source-synchronous transmission.
    always @(`TX_EDGE SCK_miso or posedge SSEL)
-     if (SSEL)         MISO <= HEADER_BYTE[7];
-     else if (tx_next) MISO <= tx_data[7];
-     else              MISO <= tx_reg[6];
+     if (SSEL)         MISO <= #DELAY HEADER_BYTE[7];
+     else if (tx_next) MISO <= #DELAY tx_data[7];
+     else              MISO <= #DELAY tx_reg[6];
 
    always @(`TX_EDGE SCK or posedge SSEL)
-     if (SSEL) tx_count <= 0;
-     else      tx_count <= tx_count + 1;
+     if (SSEL) tx_count <= #DELAY 0;
+     else      tx_count <= #DELAY tx_count + 1;
 
    // Add a cycle of delay, avoiding an additional read just before a SPI
    // transaction completes.
    always @(`TX_EDGE SCK or posedge SSEL)
-     if (SSEL)
-       tx_fifo_read <= 0;
-     else
-       tx_fifo_read <= tx_next && !tx_empty;
+     if (SSEL) tx_pull <= #DELAY 0;
+     else      tx_pull <= #DELAY tx_next && !tx_empty;
 
    // TX FIFO underrun detection.
    always @(`TX_EDGE SCK)
      if (rst_i)
-       underrun_o <= 0;
+       underrun_o <= #DELAY 0;
      else if (tx_next && tx_empty)
-       underrun_o <= 1;
+       underrun_o <= #DELAY 1;
 
 
    //-------------------------------------------------------------------------
@@ -334,11 +348,11 @@ module spi_target
      ( .reset_ni (tx_rst_n),
        
        .rd_clk_i (SCK_tx),
-       .rd_en_i  (tx_fifo_read),
+       .rd_en_i  (tx_pull),
        .rd_data_o(tx_data),
        
        .wr_clk_i (clk_i),
-       .wr_en_i  (push_byte),
+       .wr_en_i  (tx_push),
        .wr_data_i(dat_i),
 
        .rempty_o (tx_empty),
@@ -350,11 +364,11 @@ module spi_target
      ( .reset_ni (!rst_i),
        
        .rd_clk_i (clk_i),
-       .rd_en_i  (pop_byte),
+       .rd_en_i  (rx_pull),
        .rd_data_o(dat_w),
        
        .wr_clk_i (SCK),
-       .wr_en_i  (rx_done),
+       .wr_en_i  (rx_push),
        .wr_data_i(rx_data),
 
        .rempty_o (rx_empty),

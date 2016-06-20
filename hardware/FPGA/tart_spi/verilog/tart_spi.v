@@ -191,7 +191,7 @@ module tart_spi
        case (tart_state)
          `TART_IDLE:  tart_state <= cyc ? `TART_START : tart_state ;
          `TART_START:
-           if (byte_arrival && ack) begin
+           if (byte_arrival) begin
               if (bus_range)
                 tart_state <= #DELAY `TART_BUS;
               else if (write_flag)
@@ -211,10 +211,9 @@ module tart_spi
    always @(posedge clk)
      if (rst)
        register_addr <= 0;
-     else if (byte_arrival && ack && tart_state == `TART_START)
+     else if (byte_arrival && tart_state == `TART_START)
        register_addr <= data_from_spi[3:0];
-   //      else if (byte_request && ack && tart_state == `TART_SEND)
-     else if (byte_arrival && ack && tart_state == `TART_READ)
+     else if (byte_arrival && tart_state == `TART_READ)
        begin
           if (wrap_address)
             register_addr <= ADDR_READ_DATA1;

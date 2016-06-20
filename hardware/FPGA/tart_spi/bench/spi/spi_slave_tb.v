@@ -13,11 +13,11 @@ module spi_slave_tb;
    wire         ack, rdy, wat;
    reg          cyc = 0, stb = 0, we = 0, bst = 0;
 
-   wire [MSB:0] s_drx;
+   wire [MSB:0] s_drx, s_dtx;
    wire [ASB:0] s_adr;
-   reg [MSB:0]  s_dtx;
-   wire         s_cyc, s_stb, s_bst, s_we;
-   reg          s_ack = 0;
+//    reg [MSB:0]  s_dtx;
+   wire         s_cyc, s_stb, s_bst, s_we, s_ack;
+//    reg          s_ack = 0;
 
    // System signals:
    reg          clk = 1, rst = 0;
@@ -35,6 +35,7 @@ module spi_slave_tb;
    //  Setup bus clock.
    always #5  clk <= ~clk;
    always #5  SCK <= ~SCK;
+//    always #10 SCK <= ~SCK;
 
 
    //-------------------------------------------------------------------------
@@ -48,29 +49,29 @@ module spi_slave_tb;
       //----------------------------------------------------------------------
       $display("\n%8t: Issuing reset:\n", $time);
       #33 rst <= 1; #40 rst <= 0;
-      #10 stat <= $random;
+      #10 stat <= 8'hfc; // $random;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Single write:", $time);
-      #40 set <= 1; num <= 2; ptr <= $random;
+      #40 set <= 1; num <= 1; ptr <= 7'h0f; dtx <= 8'h01;
       while (!fin) #10;
 
       $display("\n%8t: Single read:", $time);
-      #10 get <= 1; num <= 3;
+      #80 get <= 1; num <= 2;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Burst write:", $time);
-      #40 set <= 1; num <= 16; ptr <= $random;
+      #40 set <= 1; num <= 4; ptr <= $random;
       while (!fin) #10;
 
       $display("\n%8t: Burst read:", $time);
-      #40 get <= 1; num <= 8;
+      #40 get <= 1; num <= 3;
       while (!fin) #10;
 
       $display("\n%8t: Burst read:", $time);
-      ptr <= ptr + 8;
-      #10 get <= 1; num <= 8;
+      ptr <= ptr + 2;
+      #10 get <= 1; num <= 3;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -87,19 +88,20 @@ module spi_slave_tb;
    //-------------------------------------------------------------------------
    //  Generate write data for both the master and slave SPI devices.
    always @(posedge clk) begin
-     dtx <= #DELAY set || ack ? $random : dtx;
-     s_dtx <= #DELAY s_cyc && s_stb && !s_we ? $random : s_dtx;
+      dtx <= #DELAY ack ? $random : dtx;
+//       s_dtx <= #DELAY s_cyc && s_stb && !s_we ? $random : s_dtx;
+//       s_ack <= #DELAY s_cyc && s_stb && !s_ack;
    end
 
-   always @(negedge cyc)
-     stat <= $random;
+//    always @(negedge cyc)
+//      stat <= $random;
 
 
    //-------------------------------------------------------------------------
    //  Generate WB-like transactions.
    //-------------------------------------------------------------------------
    integer cnt;
-   wire    cyc_n = cyc && cnt == 1 && rdy;
+   wire    cyc_n = cyc && cnt == 0 && rdy;
 
    always @(posedge clk)
      if (rst) bst <= #DELAY 0;
@@ -145,6 +147,13 @@ module spi_slave_tb;
      if (set || get) cnt <= #DELAY num;
      else if (rdy)   cnt <= #DELAY cnt - 1;
 
+   //-------------------------------------------------------------------------
+   //  Display data that has been received from the SPI slave.
+   always @(posedge clk)
+     if (rdy)
+       $display ("%10t: Slave data received: 0x%02x", $time, drx);
+
+   wire [MSB:0] dat = rdy ? drx : 'bx;
 
    //-------------------------------------------------------------------------
    //  Devices Under Test (DUT's).
@@ -191,6 +200,19 @@ module spi_slave_tb;
        .MOSI(MOSI),
        .MISO(MISO)
        );
-   
+
+   wb_sram #( .WIDTH(WIDTH), .SBITS(7) ) SRAM0
+     ( .clk_i(clk),
+       .rst_i(rst),
+       .cyc_i(s_cyc),
+       .stb_i(s_stb),
+       .we_i (s_we),
+       .bst_i(s_bst),
+       .ack_o(s_ack),
+       .adr_i(s_adr),
+       .dat_i(s_drx),
+       .dat_o(s_dtx)
+       );
+
 
 endmodule // spi_slave_tb
