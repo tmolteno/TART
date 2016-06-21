@@ -155,8 +155,8 @@ module tart_spi
    //  
    //-------------------------------------------------------------------------
    reg                  bus_cycle = 0;
-   wire                 bus_range = tart_addr[3:0] > 7 && tart_addr[3:0] < 11;
-   wire                 bus_begin = byte_arrival && ack && tart_state == `TART_START && bus_range;
+   wire                 bus_range = 0; // tart_addr[3:0] > 7 && tart_addr[3:0] < 11;
+   wire                 bus_begin = 0; // byte_arrival && ack && tart_state == `TART_START && bus_range;
 
    always @(posedge clk)
      if (rst)
@@ -180,11 +180,19 @@ module tart_spi
    //  TART SPI-mapped register-bank.
    //  
    //-------------------------------------------------------------------------
-   wire                wrap_addr = tart_addr == ADDR_READ_DATA3;
-   wire [3:0]          next_addr = wrap_addr ? ADDR_READ_DATA1 : tart_addr+1;
-   reg [3:0]           tart_addr = 4'b0;
-   wire                write_flag = drx[7];
-   reg [3:0]           tart_state = `TART_IDLE;
+   wire [3:0]           next_addr = wrap_addr ? ADDR_READ_DATA1 : tart_addr+1;
+   reg [3:0]            tart_addr = 4'b0;
+   wire                 write_flag = drx[7];
+   reg [3:0]            tart_state = `TART_IDLE;
+   //    wire                wrap_addr = tart_addr == ADDR_READ_DATA3;
+   reg                  wrap_addr = 0;
+
+   always @(posedge clk)
+     if (rst) wrap_addr <= #DELAY 0;
+     else if (cyc && !we && ack)
+       wrap_addr <= #DELAY tart_addr == ADDR_READ_DATA3;
+     else if (data_sent)
+       wrap_addr <= #DELAY 0;
 
    // TART register-mapping state machine.
    always @(posedge clk)
@@ -243,23 +251,22 @@ module tart_spi
    
    // TART register reads.
    always @(posedge clk)
-     if (byte_request && !ack)
-       begin
-          if (tart_state == `TART_READ || tart_state == `TART_SEND)
-            case (tart_addr)
-              ADDR_STATUS:       dtx <= #DELAY spi_status;
-              ADDR_STARTAQ:      dtx <= #DELAY spi_start_aq;
-              ADDR_READ_DATA1:   dtx <= #DELAY antenna_data[23:16];
-              ADDR_READ_DATA2:   dtx <= #DELAY antenna_data[15:8];
-              ADDR_READ_DATA3:   dtx <= #DELAY antenna_data[7:0];
-              ADDR_SAMPLE_DELAY: dtx <= #DELAY data_sample_delay;
-              ADDR_DEBUG:        dtx <= #DELAY spi_debug;
-              ADDR_RESET:        dtx <= #DELAY spi_reset;
-              default:           dtx <= #DELAY 8'bx;
-            endcase // case (tart_addr)
-          else
-            dtx <= #DELAY spi_status;
-       end
+     if (byte_request && !ack) begin
+        if (tart_state == `TART_READ || tart_state == `TART_SEND)
+          case (tart_addr)
+            ADDR_STATUS:       dtx <= #DELAY spi_status;
+            ADDR_STARTAQ:      dtx <= #DELAY spi_start_aq;
+            ADDR_READ_DATA1:   dtx <= #DELAY antenna_data[23:16];
+            ADDR_READ_DATA2:   dtx <= #DELAY antenna_data[15:8];
+            ADDR_READ_DATA3:   dtx <= #DELAY antenna_data[7:0];
+            ADDR_SAMPLE_DELAY: dtx <= #DELAY data_sample_delay;
+            ADDR_DEBUG:        dtx <= #DELAY spi_debug;
+            ADDR_RESET:        dtx <= #DELAY spi_reset;
+            default:           dtx <= #DELAY 8'bx;
+          endcase // case (tart_addr)
+        else
+          dtx <= #DELAY spi_status;
+     end
 
    // TART register writes.
    always @(posedge clk)

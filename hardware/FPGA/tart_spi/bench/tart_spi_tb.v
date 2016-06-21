@@ -294,6 +294,7 @@ module tart_spi_tb;
         .ADDR_SAMPLE_DELAY(4'h5),
         .ADDR_DEBUG       (4'h6),
         .ADDR_STARTAQ     (4'h7),
+        .ADDR_STATUS      (4'he),
         .ADDR_RESET       (4'hf)
         ) TART_SPI0
      ( .clk(clk),

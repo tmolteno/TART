@@ -54,8 +54,8 @@ class TartSPI:
   def read_data(self, num_bytes=2**21, blocksize=1000):
     resp2 = []
     for i in range(0,int(num_bytes/blocksize)):
-      resp2.append(spi.transfer((0x03,0xff,) + (0,0,0,)*blocksize)[2:])
-    resp3 = spi.transfer((0x03,0xff,) + (0,0,0,)*(num_bytes%blocksize))[2:]
+      resp2.append(spi.transfer((0x00,0xff,) + (0,0,0,)*blocksize)[2:])
+    resp3 = spi.transfer((0x00,0xff,) + (0,0,0,)*(num_bytes%blocksize))[2:]
     resp2 = np.concatenate(resp2).reshape(-1,3)
     resp3 = resp3.reshape(-1,3)
     ret = np.concatenate((resp2,resp3))
