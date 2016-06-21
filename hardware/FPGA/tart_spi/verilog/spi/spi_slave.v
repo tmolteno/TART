@@ -70,9 +70,9 @@ module spi_slave
    //-------------------------------------------------------------------------
    //  Target interface logic.
    wire                 t_cyc, t_stb, t_bst, t_we;
-   wire [MSB:0]         t_dato;
+   wire [MSB:0]         t_drx;
    reg                  t_ack = 0;
-   reg [MSB:0]          t_dati;
+   reg [MSB:0]          t_dtx;
    reg                  we = 0;
                   
    assign active_o = t_cyc;
@@ -90,7 +90,7 @@ module spi_slave
    reg                  t_new = 1;
    wire                 addr = t_cyc & t_stb & t_we;
    wire [3:0]           mode = b_we ? `SPI_WAIT : `SPI_PULL;
-   wire                 b_we = t_dato[MSB];
+   wire                 b_we = t_drx[MSB];
    wire                 b_xfer = !t_new && t_cyc && t_stb && t_we;
    wire                 b_wait = addr && !b_we;
    wire                 b_done = t_stb && t_we && !t_ack;
@@ -158,24 +158,23 @@ module spi_slave
        b_pend <= #DELAY 0;
 
    always @(posedge clk_i)
-     if (t_cyc && !we)
-       case (spi)
-         `SPI_PULL: t_dati <= #DELAY ack_i ? dat_i : t_dati;
-         default:   t_dati <= #DELAY status_i;
-       endcase // case (spi)
+     if (rst_i || !t_cyc)
+       t_dtx <= #DELAY status_i;
+     else if (t_cyc && !we && spi == `SPI_PULL && ack_i)
+       t_dtx <= #DELAY dat_i;
 
    // `we` stores the last-requested bus read#/write mode.
    always @(posedge clk_i)
      if (rst_i) we <= #DELAY 1'b0;
      else if (t_cyc && t_stb && t_we && !t_ack)
        case (spi)
-         `SPI_ADDR: {we, adr_o} <= #DELAY {t_dato[MSB], t_dato[ASB:0]};
+         `SPI_ADDR: {we, adr_o} <= #DELAY {t_drx[MSB], t_drx[ASB:0]};
          default:   {we, adr_o} <= #DELAY {we, adr_o};
        endcase // case (spi)
 
    always @(posedge clk_i)
      if (t_cyc && t_stb && t_we && !t_ack)
-       dat_o <= #DELAY t_dato;
+       dat_o <= #DELAY t_drx;
 
 
    //-------------------------------------------------------------------------
@@ -189,8 +188,8 @@ module spi_slave
        .bst_o(t_bst),
        .we_o (t_we),
        .ack_i(t_ack),
-       .dat_i(t_dati),
-       .dat_o(t_dato),
+       .dat_i(t_dtx),
+       .dat_o(t_drx),
 
        .overflow_o(overflow_o),
        .underrun_o(underrun_o),

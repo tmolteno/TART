@@ -1,7 +1,6 @@
 `timescale 1ns/1ps
 module tart_spi_tb;
 
-
    parameter WIDTH = 8;
    parameter MSB   = WIDTH-1;
    parameter ASB   = WIDTH-2;
@@ -17,7 +16,7 @@ module tart_spi_tb;
    // System signals:
    reg          clk = 1, rst = 0;
    reg          set = 0, get = 0, fin = 0;
-   reg [MSB:0]  stat;
+   reg [MSB:0]  status;
    wire         oflow, uflow;
 
    // SPI signals:
@@ -33,26 +32,28 @@ module tart_spi_tb;
    reg [23:0]   data [0:(1 << MSB)];
 
 
+   //-------------------------------------------------------------------------
    //  Clocks:
    always #5  clk <= ~clk;
-   always #6  SCK <= ~SCK;
+   always #8  SCK <= ~SCK;
 //    always #10 SCK <= ~SCK;
 
 
-   integer   i;
+   //-------------------------------------------------------------------------
+   //  Simulation sequence:
    integer      num = 0;
    reg [ASB:0]  ptr = 0;
    initial begin : TART_SPI_TB
       $dumpfile ("tart_tb.vcd");
       $dumpvars;
 
-      for (i = 0; i < 16; i = i+1)
-        data[i] <= $random;
+      for (ptr = 0; ptr < 16; ptr = ptr+1)
+        data[ptr] <= $random;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Issuing global reset:\n", $time);
       #33 rst <= 1; #40 rst <= 0;
-      #10 stat <= 8'hfc; // $random;
+      #10 status <= 8'hfc; // $random;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Issuing SPI reset:", $time);
@@ -60,10 +61,24 @@ module tart_spi_tb;
       while (!fin) #10;
 
       $display("\n%8t: Enabling data aquisition:", $time);
-      #120 set <= 1; num <= 1; ptr <= 7'h01; dtx <= 8'h01;
+      #120 set <= 1; num <= 1; ptr <= 7'h07; dtx <= 8'h01;
+      while (!fin) #10;
 
       $display("\n%8t: Read back aquisition status:", $time);
-      #80 get <= 1; num <= 2; ptr <= 7'h01;
+      #60 get <= 1; num <= 2; ptr <= 7'h07;
+      while (!fin) #10;
+
+      //----------------------------------------------------------------------
+      $display("\n%8t: Reading back aquisition data:", $time);
+      #60 get <= 1; num <= 7; ptr <= 7'h00;
+      while (!fin) #10;
+
+      $display("\n%8t: Reading back some more aquisition data:", $time);
+      #60 get <= 1; num <= 7; ptr <= 7'h00;
+      while (!fin) #10;
+
+      $display("\n%8t: Reading back even more aquisition data:", $time);
+      #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
       /*
@@ -139,7 +154,7 @@ module tart_spi_tb;
       */
 
       //----------------------------------------------------------------------
-      #400 $finish;
+      #200 $finish;
    end // SPI_SLAVE_TB
 
    initial begin : SPI_FAILED
@@ -205,7 +220,15 @@ module tart_spi_tb;
      if (set || get) cnt <= #DELAY num;
      else if (rdy)   cnt <= #DELAY cnt - 1;
 
-   wire [MSB:0] dat = rdy ? drx : 'bx;
+
+   //-------------------------------------------------------------------------
+   //  Make the returned data easier to see in GtkWave.
+   wire [MSB:0] dat = |{rdys, rdy} ? drx : 'bz;
+   reg [3:0]    rdys = 0;
+
+   always @(posedge clk)
+     rdys <= #DELAY {rdys[2:0], rdy};
+
 
    //-------------------------------------------------------------------------
    //  Generate fake DRAM contents.
@@ -264,7 +287,15 @@ module tart_spi_tb;
        .MISO(MISO)
        );
    
-   tart_spi TART_SPI0
+   tart_spi
+     #( .ADDR_READ_DATA1  (4'h0),
+        .ADDR_READ_DATA2  (4'h1),
+        .ADDR_READ_DATA3  (4'h2),
+        .ADDR_SAMPLE_DELAY(4'h5),
+        .ADDR_DEBUG       (4'h6),
+        .ADDR_STARTAQ     (4'h7),
+        .ADDR_RESET       (4'hf)
+        ) TART_SPI0
      ( .clk(clk),
        .rst(rst || spi_reset),
        
@@ -276,7 +307,7 @@ module tart_spi_tb;
        
        .spi_reset(spi_reset),
        .spi_debug(spi_debug),
-       .spi_status(stat),
+       .spi_status(status),
        .spi_start_aq(spi_start_aq),
        .data_sample_delay(sdelay),
        
@@ -307,4 +338,3 @@ module tart_spi_tb;
 
 
 endmodule // tart_spi_tb
-

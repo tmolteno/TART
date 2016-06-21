@@ -66,10 +66,10 @@ module tart_aquire
    always @(posedge clk_i)
      if (cyc_i && stb_i && !we_i)
        case (adr_i)
-         0: dat_o <= #DELAY antenna_data[23:16];
-         1: dat_o <= #DELAY antenna_data[15: 8];
-         2: dat_o <= #DELAY antenna_data[ 7: 0];
-         3: dat_o <= #DELAY stream;
+         0: dat_o <= #DELAY stream;
+         1: dat_o <= #DELAY antenna_data[23:16];
+         2: dat_o <= #DELAY antenna_data[15: 8];
+         3: dat_o <= #DELAY antenna_data[ 7: 0];
          5: dat_o <= #DELAY aq_delay;
          6: dat_o <= #DELAY aq_debug;
          7: dat_o <= #DELAY aq_status;
@@ -92,8 +92,7 @@ module tart_aquire
    //-------------------------------------------------------------------------
    wire [23:0]          antenna_data;
    reg                  data_sent = 0;
-   wire                 wrap_adr = adr_i == 3'b010;
-   wire                 send = cyc_i && stb_i && !we_i && adr_i == 3'b011 && !ack_o;
+   wire                 send = cyc_i && stb_i && !we_i && adr_i == 0 && !ack_o;
    wire [7:0]           data [0:2];
    wire [7:0]           stream = data[index];
    reg [1:0]            index = 0;

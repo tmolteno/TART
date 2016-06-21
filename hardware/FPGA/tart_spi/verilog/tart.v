@@ -7,7 +7,8 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 //
 
-`define __USE_WISHBONE_CORES
+// `define __USE_WISHBONE_CORES
+`define __USE_OLD_CORES
 
 module tart
   (
@@ -51,10 +52,12 @@ module tart
 `endif // !`ifdef __512Mb_SDRAM
    parameter SDRAM_STARTUP_CYCLES = 10100; // -- 100us, plus a little more, @ 100MHz
 
+   wire               reset_n, reset;
+
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
    //-------------------------------------------------------------------------
-// `define __USE_OLD_CLOCKS
+`define __USE_OLD_CLOCKS
 `ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
@@ -235,6 +238,9 @@ module tart
    assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
    assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
 
+   assign b_ack = r_ack || a_ack;
+   assign b_dtx = r_stb || r_sel ? r_drx : (a_stb || a_sel ? a_drx : 'bz);
+
    //-------------------------------------------------------------------------
    //  Keep the selected device active until the transaction has been
    //  acknowledged.
@@ -252,6 +258,7 @@ module tart
    //     SPI SLAVE & WB MASTER
    //-------------------------------------------------------------------------
    wire debug_spi = oflow || uflow;
+   wire spi_busy;
    wire spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
                       spi_debug, tart_state[2:0]};
 
@@ -414,12 +421,12 @@ module tart
          );
  `endif // __USE_CORRELATORS
 
+`else //  __USE_WISHBONE_CORES
 
-`else // !__USE_WISHBONE_CORES
    //-------------------------------------------------------------------------
    //     RESET AND STATUS LOGIC
    //-------------------------------------------------------------------------
-   wire               reset, reset_n, spi_reset;
+   wire               spi_reset;
    reg                reset_0 = 0, reset_1 = 0, reset_r = 0;
    wire               debug_o;
 
@@ -447,27 +454,35 @@ module tart
    //-------------------------------------------------------------------------
    wire spi_status = {1'b1, debug_o, request_from_spi, spi_start_aq, spi_debug, tart_state[2:0]};
 
-   tart_spi TART_SPI0
-     ( .clk(fpga_clk),
-       .rst(reset),
-      
-       .data_ready  (data_out_ready),
-       .data_request(request_from_spi),
-       .data_in     (data_out[23:0]),
+   tart_spi
+     #( .ADDR_READ_DATA1  (4'h3),
+        .ADDR_READ_DATA2  (4'h1),
+        .ADDR_READ_DATA3  (4'h2),
+        .ADDR_SAMPLE_DELAY(4'h5),
+        .ADDR_DEBUG       (4'h6),
+        .ADDR_STARTAQ     (4'h7),
+        .ADDR_RESET       (4'hf)
+        ) TART_SPI0
+       (.clk(fpga_clk),
+        .rst(reset),
+        
+        .data_ready  (data_out_ready),
+        .data_request(request_from_spi),
+        .data_in     (data_out[23:0]),
 
-       .debug_o(debug_o),
+        .debug_o(debug_o),
 
-       .spi_status(spi_status),
-			 .data_sample_delay(data_sample_delay),
-       .spi_reset(spi_reset),
-       .spi_start_aq(spi_start_aq),
-       .spi_debug(spi_debug),
-      
-       .SCK (spi_sck),
-       .MOSI(spi_mosi),
-       .MISO(spi_miso),
-       .SSEL(spi_ssel)
-       );
+        .spi_status(spi_status),
+			  .data_sample_delay(data_sample_delay),
+        .spi_reset(spi_reset),
+        .spi_start_aq(spi_start_aq),
+        .spi_debug(spi_debug),
+        
+        .SCK (spi_sck),
+        .MOSI(spi_mosi),
+        .MISO(spi_miso),
+        .SSEL(spi_ssel)
+        );
 `endif // __USE_WISHBONE_CORES
 
 

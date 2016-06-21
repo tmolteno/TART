@@ -37,7 +37,10 @@
 `else
  `define TX_EDGE posedge
 `endif
-  
+
+// Support CLASSIC Wishbone-like bus transactions?
+`define __WB_CLASSIC
+
 // Bus interface states.
 `define BUS_IDLE 0
 `define BUS_READ 1
@@ -168,26 +171,22 @@ module spi_target
    // Any prefetched data needs to be cleared at the end of a SPI transaction.
    // TODO: Clean this up, as it is more complicated than it needs to be.
    always @(posedge clk_i)
-     if (rst_i)
-       begin
-          tx_rst_n <= #DELAY 1'b0;
-          tx_flg <= #DELAY 1'b0;
-       end
-     else if (!spi_select && !tx_flg) // Issue a single reset
-       begin
-          tx_rst_n <= #DELAY 1'b0;
-          tx_flg <= #DELAY 1'b1;
-       end
-     else if (spi_select)
-       begin
-          tx_rst_n <= #DELAY 1'b1;
-          tx_flg <= #DELAY 1'b0;
-       end
-     else
-       begin
-          tx_rst_n <= #DELAY 1'b1;
-          tx_flg <= #DELAY tx_flg;
-       end
+     if (rst_i) begin
+        tx_rst_n <= #DELAY 1'b0;
+        tx_flg   <= #DELAY 1'b0;
+     end
+     else if (!spi_select && !tx_flg) begin // Issue a single reset
+        tx_rst_n <= #DELAY 1'b0;
+        tx_flg   <= #DELAY 1'b1;
+     end
+     else if (spi_select) begin
+        tx_rst_n <= #DELAY 1'b1;
+        tx_flg   <= #DELAY 1'b0;
+     end
+     else begin
+        tx_rst_n <= #DELAY 1'b1;
+        tx_flg   <= #DELAY tx_flg;
+     end
 
    
    //-------------------------------------------------------------------------
@@ -254,7 +253,11 @@ module spi_target
            end
          
          `BUS_READ:             // Wait for prefetched byte
+`ifdef __WB_CLASSIC
+           stb_o <= #DELAY ~ack_i;
+`else
            stb_o <= #DELAY 0; // !stb_o && !ack_i && spi_select;
+`endif //  __WB_CLASSIC
 
          `BUS_WAIT: begin       // Send any received data
             stb_o <= #DELAY ~rx_empty;
@@ -262,7 +265,11 @@ module spi_target
          end
 
          `BUS_SEND: begin       // Wait for sent data to be acknowledged
+`ifdef __WB_CLASSIC
+            stb_o <= #DELAY ~ack_i;
+`else
             stb_o <= #DELAY ack_i && dat_req;
+`endif //  __WB_CLASSIC
             we_o  <= #DELAY ~ack_i;
          end
        endcase // case (bus_state)

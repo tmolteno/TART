@@ -42,21 +42,20 @@ module tart_soc_tb;
    //-------------------------------------------------------------------------
    //  Clocks:
    always #5  clk <= ~clk;
-   always #6  SCK <= ~SCK;
+   always #8  SCK <= ~SCK;
 //    always #10 SCK <= ~SCK;
 
 
    //-------------------------------------------------------------------------
    //  Simulation sequence:
-   integer      i;
    integer      num = 0;
    reg [ASB:0]  ptr = 0;
    initial begin : TART_SPI_TB
       $dumpfile ("soc_tb.vcd");
       $dumpvars;
 
-      for (i = 0; i < 16; i = i+1)
-        data[i] <= $random;
+      for (ptr = 0; ptr < 16; ptr = ptr+1)
+        data[ptr] <= $random;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Issuing global reset:\n", $time);
@@ -78,15 +77,15 @@ module tart_soc_tb;
 
       //----------------------------------------------------------------------
       $display("\n%8t: Reading back aquisition data:", $time);
-      #60 get <= 1; num <= 7; ptr <= 7'h03;
+      #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
       $display("\n%8t: Reading back some more aquisition data:", $time);
-      #60 get <= 1; num <= 7; ptr <= 7'h03;
+      #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
       $display("\n%8t: Reading back even more aquisition data:", $time);
-      #60 get <= 1; num <= 7; ptr <= 7'h03;
+      #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -263,7 +262,7 @@ module tart_soc_tb;
    //-------------------------------------------------------------------------
    //     SPI SLAVE
    //-------------------------------------------------------------------------
-   assign b_ack = r_ack | a_ack;
+   assign b_ack = r_ack || a_ack;
    assign b_dtx = r_stb || r_sel ? r_drx : (a_stb || a_sel ? a_drx : 'bz);
 
    spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
