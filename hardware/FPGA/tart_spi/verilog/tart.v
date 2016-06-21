@@ -5,6 +5,9 @@
 //   | |     / _ \   | |_) |   | |
 //   | |    / ___ \  |  _ <    | |
 //   |_|   /_/   \_\ |_| \_\   |_|
+//
+
+`define __USE_WISHBONE_CORES
 
 module tart
   (
@@ -47,28 +50,6 @@ module tart
    parameter CYCLES_PER_REFRESH   = 1524;  // = (64000*100)/4096-1 Cycled as  (64ms @ 100MHz)/ 4096 rows
 `endif // !`ifdef __512Mb_SDRAM
    parameter SDRAM_STARTUP_CYCLES = 10100; // -- 100us, plus a little more, @ 100MHz
-
-   //-------------------------------------------------------------------------
-   //     RESET AND STATUS LOGIC
-   //-------------------------------------------------------------------------
-   wire               reset, reset_n, spi_reset;
-   reg                reset_0 = 0, reset_1 = 0, reset_r = 0;
-   wire               debug_o;
-
-   // TODO: Remove the unwanted combinational delays.
-   // TODO: Make sure the reset is asserted for several clock-cycles.
-   assign reset = reset_r | ~reset_n;
-
-   always @(posedge fpga_clk)
-     begin
-        reset_0 <= spi_reset;
-        reset_1 <= reset_0;
-        reset_r <= reset_1;
-     end
-
-   // assign led = debug_o;
-   assign led = (tart_state>=2);
-   // assign led = ~spi_ssel;
 
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
@@ -246,17 +227,34 @@ module tart
    wire [2:0]   a_adr = b_adr[2:0];
    wire         a_stb, a_ack;
 
+   reg          r_sel = 0, a_sel = 0;
+
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
 
    assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
    assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
 
+   //-------------------------------------------------------------------------
+   //  Keep the selected device active until the transaction has been
+   //  acknowledged.
+   always @(posedge b_clk)
+     if (b_rst)
+       {a_sel, r_sel} <= #DELAY 2'b00;
+     else begin
+        r_sel <= #DELAY r_sel ? !r_ack || r_stb : r_stb;
+        a_sel <= #DELAY a_sel ? !a_ack || a_stb : a_stb;
+     end
+
 
    //-------------------------------------------------------------------------
    //     TRANSMISSION BLOCK
    //     SPI SLAVE & WB MASTER
    //-------------------------------------------------------------------------
+   wire debug_spi = oflow || uflow;
+   wire spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
+                      spi_debug, tart_state[2:0]};
+
    spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
@@ -269,7 +267,8 @@ module tart
        .dat_i(b_dtx),
        .dat_o(b_drx),
 
-       .status_i(stat),
+       .active_o(spi_busy),
+       .status_i(spi_status),
        .overflow_o(oflow),
        .underrun_o(uflow),
        
@@ -282,13 +281,13 @@ module tart
    //-------------------------------------------------------------------------
    //     RESET HANDLER
    //-------------------------------------------------------------------------
-   wb_reset #( .WIDTH(WIDTH), .RTIME(4) ) SPI_RESET0
+   wb_reset #( .WIDTH(WIDTH), .RTIME(4) ) WB_RESET0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
-       .cyc_o(b_cyc),
-       .stb_o(r_stb),
-       .we_o (b_we),
-       .ack_i(r_ack),
+       .cyc_i(b_cyc),
+       .stb_i(r_stb),
+       .we_i (b_we),
+       .ack_o(r_ack),
        .dat_i(r_dtx),
        .dat_o(r_drx),
 
@@ -299,23 +298,31 @@ module tart
    //-------------------------------------------------------------------------
    //     DATA-AQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-   wb_aquire #( .WIDTH(WIDTH) ) SPI_AQUIRE0
+   assign led = tart_state >= 2; // asserted when data can be read back
+
+   tart_aquire #( .WIDTH(WIDTH) ) TART_AQUIRE0
      ( .clk_i(b_clk),
        .rst_i(reset),
-       .cyc_o(b_cyc),
-       .stb_o(a_stb),
-       .we_o (b_we),
-       .ack_i(a_ack),
+       .cyc_i(b_cyc),
+       .stb_i(a_stb),
+       .we_i (b_we),
+       .ack_o(a_ack),
        .adr_i(a_adr),
        .dat_i(a_dtx),
        .dat_o(a_drx),
 
+       .data_ready(data_out_ready),
+       .data_request(request_from_spi),
+       .data_in(data_out),
+
+       .spi_busy(spi_busy),
        .aq_debug_mode(spi_debug),
        .aq_enabled(spi_start_aq),
        .aq_sample_delay(data_sample_delay)
        );
 
 
+ `ifdef __USE_CORRELATORS
    //-------------------------------------------------------------------------
    //     
    //     CORRELATOR / VISIBILITIES BLOCK.
@@ -405,15 +412,41 @@ module tart
          .s_dat_i(s_tdx),
          .s_dat_o(s_rdx)
          );
+ `endif // __USE_CORRELATORS
 
 
 `else // !__USE_WISHBONE_CORES
+   //-------------------------------------------------------------------------
+   //     RESET AND STATUS LOGIC
+   //-------------------------------------------------------------------------
+   wire               reset, reset_n, spi_reset;
+   reg                reset_0 = 0, reset_1 = 0, reset_r = 0;
+   wire               debug_o;
+
+   // TODO: Remove the unwanted combinational delays.
+   // TODO: Make sure the reset is asserted for several clock-cycles.
+   assign reset = reset_r | ~reset_n;
+
+   always @(posedge fpga_clk)
+     begin
+        reset_0 <= spi_reset;
+        reset_1 <= reset_0;
+        reset_r <= reset_1;
+     end
+
+   // assign led = debug_o;
+   assign led = tart_state >= 2;
+   // assign led = ~spi_ssel;
+
+
    //-------------------------------------------------------------------------
    //     TRANSMISSION BLOCK
    //     SPI SLAVE & WB MASTER
    //     
    //     OBSOLETE: Replacing with individual cores.
    //-------------------------------------------------------------------------
+   wire spi_status = {1'b1, debug_o, request_from_spi, spi_start_aq, spi_debug, tart_state[2:0]};
+
    tart_spi TART_SPI0
      ( .clk(fpga_clk),
        .rst(reset),
@@ -424,7 +457,7 @@ module tart
 
        .debug_o(debug_o),
 
-       .spi_status({1'b1, debug_o, request_from_spi, spi_start_aq, spi_debug, tart_state[2:0]}),
+       .spi_status(spi_status),
 			 .data_sample_delay(data_sample_delay),
        .spi_reset(spi_reset),
        .spi_start_aq(spi_start_aq),

@@ -16,6 +16,9 @@
  * 
  * NOTE:
  *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
+ *  + currently, the SCK frequency has to be slightly lower than that of the
+ *    bus clock's, or else data isn't available early enough, resulting in a
+ *    FIFO underrun;
  * 
  * Changelog:
  *  + 18/06/2016  --  initial file;
@@ -24,6 +27,7 @@
  *  + the design is still preliminary (as of 24/05/2016);
  *  + constrain the input and output OFFSET's;
  *  + can the output-delay be run-time configurable?
+ *  + parameterise the delay for read-requests?
  * 
  */
 
@@ -52,6 +56,7 @@ module spi_slave
      output reg [MSB:0] dat_o,
      
      // Debug/diagnostic output, for when the recieve FIFO overflows.
+     output             active_o,
      input [MSB:0]      status_i,
      output             overflow_o,
      output             underrun_o,
@@ -70,8 +75,13 @@ module spi_slave
    reg [MSB:0]          t_dati;
    reg                  we = 0;
                   
-   assign we_o = cyc_o && we;
-//    assign we_o = we;
+   assign active_o = t_cyc;
+`ifdef __icarus
+   assign we_o     = cyc_o && we; // more convenient in GtkWave
+`else
+   assign we_o = we;
+`endif // __icarus
+
 
    //-------------------------------------------------------------------------
    //  SPI to Wishbone state-machine.

@@ -23,6 +23,8 @@
  * 
  * TODO:
  *  + currently unfinished;
+ *  + needs to support burst-modes?
+ *  + parameter to control whether pipelining is used, or not?
  * 
  */
 
@@ -32,6 +34,9 @@ module wb_stream
     parameter WORDS = 1 << WBITS,
     parameter WBITS = 10,
     parameter ASB   = WBITS-1,
+    parameter START = 0,
+    parameter LAST  = START+WORDS-1,
+    parameter STEP  = 1,
     parameter DELAY = 3)
    (
     // Common system signals:
@@ -39,35 +44,51 @@ module wb_stream
     input              rst_i,
 
     // Prefetching, Wishbone-like (master) bus interface, to block device:
-    output reg         m_cyc_o = 0,
-    output reg         m_stb_o = 0,
+    output             m_cyc_o,
+    output             m_stb_o,
     output             m_we_o,
-    output reg         m_bst_o = 0, // Bulk Sequential Transfer?
+    output             m_bst_o, // Bulk Sequential Transfer?
     input              m_ack_i,
-    output reg [ASB:0] m_adr_o = 0,
+    input              m_wat_i,
+    output reg [ASB:0] m_adr_o = START,
     input [MSB:0]      m_dat_i,
-    output reg [MSB:0] m_dat_o,
+    output [MSB:0]     m_dat_o,
 
     // Streaming/serial, Wishbone-like (slave) bus interface:
     input              s_cyc_i,
     input              s_stb_i,
     input              s_we_i,
     input              s_bst_i,
-    output reg         s_ack_o = 0,
-    output reg         s_wat_o = 0,
+    output             s_ack_o,
+    output             s_wat_o,
     input [MSB:0]      s_dat_i,
-    output reg [MSB:0] s_dat_o = 0
+    output [MSB:0]     s_dat_o
     );
+
+   // TODO: burst-transfer support?
+   wire                inc      = m_cyc_o && m_ack_i;
+   wire                wrap_adr = m_adr_o == LAST;
+   wire                next_adr = wrap_adr ? START : m_adr_o + STEP;
+
+   //-------------------------------------------------------------------------
+   //  Just pass through all of the signals, except for the address, which is
+   //  managed by this logic core.
+   assign m_cyc_o = s_cyc_i;
+   assign m_stb_o = s_stb_i;
+   assign m_we_o  = s_we_i;
+   assign m_bst_o = s_bst_i;
+   assign m_dat_o = s_dat_i;
+
+   assign s_ack_o = m_ack_i;
+   assign s_wat_o = m_wat_i;
+   assign s_dat_o = m_dat_i;
 
 
    //-------------------------------------------------------------------------
-   //  Logic for the Wishbone-like interconnect.
+   //  Address generation.
    always @(posedge clk_i)
-     if (rst_i) s_ack_o <= #DELAY 0;
-     else       s_ack_o <= #DELAY s_cyc_i && s_stb_i && !s_ack_o;
-
-   always @(posedge clk_i)
-     s_dat_o <= #DELAY s_cyc_i && s_stb_i && !s_we_i ? m_dat_i : s_dat_o;
+     if (rst_i)    m_adr_o <= #DELAY START;
+     else if (inc) m_adr_o <= #DELAY next_adr;
 
 
 endmodule // wb_stream
