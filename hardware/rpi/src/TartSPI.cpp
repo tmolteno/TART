@@ -20,6 +20,17 @@
 
 #define SET_SPIDEV(dev) ((dev) ? &spi_cs1_fd : &spi_cs0_fd)
 
+#define REG_STREAM 0x00
+#define REG_DATA0  0x01
+#define REG_DATA1  0x02
+#define REG_DATA2  0x03
+#define REG_DELAY  0x05
+#define REG_DEBUG  0x06
+#define REG_AQUIRE 0x07
+#define REG_RESET  0x0f
+
+#define REG_WRITE  0x80
+
 
 int TartSpiReset (int spi_device)
 {
@@ -28,7 +39,7 @@ int TartSpiReset (int spi_device)
   // const struct spi_ioc_transfer *cmd = &spi;
   int ret = -1;
   int *spi_cs_fd;
-  unsigned char rst_cmd[4] = {0x8f, 0x01, 0, 0};
+  unsigned char rst_cmd[4] = {REG_WRITE | REG_RESET, 0x01, 0, 0};
 
   spi_cs_fd = SET_SPIDEV(spi_device);
 
@@ -59,7 +70,7 @@ int TartSpiAquire (int spi_device)
   struct spi_ioc_transfer spi[1];
   int ret = -1;
   int *spi_cs_fd;
-  unsigned char rst_cmd[4] = {0x81, 0x01, 0, 0};
+  unsigned char rst_cmd[4] = {REG_WRITE | REG_AQUIRE, 0x01, 0, 0};
 
   spi_cs_fd = SET_SPIDEV(spi_device);
   memset(spi, 0, sizeof (spi[0]));
@@ -87,7 +98,7 @@ int TartSpiReadPackets (const int spi_device, unsigned char *data, int packets, 
   struct spi_ioc_transfer spi[++packets];
   int ret = -1;
   int *spi_cs_fd;
-  const unsigned char read_cmd[8] = {0x02, 0xe5, 0, 0, 0, 0, 0, 0};
+  const unsigned char read_cmd[8] = {REG_STREAM, 0xe5, 0, 0, 0, 0, 0, 0};
 
   spi_cs_fd = SET_SPIDEV(spi_device);
   memset(spi, 0, packets*sizeof (spi[0]));
@@ -120,7 +131,7 @@ int TartSpiRead (const int spi_device, unsigned char *data, const int packets, c
   struct spi_ioc_transfer spi[2];
   int ret = -1, tot = 0;
   int *spi_cs_fd;
-  const unsigned char read_cmd[8] = {0x02, 0xe5, 0, 0, 0, 0, 0, 0};
+  const unsigned char read_cmd[8] = {REG_STREAM, 0xe5, 0, 0, 0, 0, 0, 0};
 
   spi_cs_fd = SET_SPIDEV(spi_device);
   memset(spi, 0, 2*sizeof (spi[0]));

@@ -7,8 +7,12 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 //
 
-// `define __USE_WISHBONE_CORES
-`define __USE_OLD_CORES
+`define __USE_WISHBONE_CORES
+`define __USE_OLD_CLOCKS
+// `define __512Mb_SDRAM
+
+// TODO: Not ready yet:
+// `define __USE_CORRELATORS
 
 module tart
   (
@@ -31,10 +35,10 @@ module tart
    inout wire [15:0]  SDRAM_DQ,
   
    // SPI
-   input              spi_sck,
-   input              spi_ssel,
-   input              spi_mosi,
-   output wire        spi_miso,
+   input              SPI_SCK,
+   input              SPI_SSEL,
+   input              SPI_MOSI,
+   output wire        SPI_MISO,
   
    // TELESCOPE
    input              rx_clk_16, // 16.368 MHz receiver master clock
@@ -57,7 +61,6 @@ module tart
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
    //-------------------------------------------------------------------------
-`define __USE_OLD_CLOCKS
 `ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
@@ -232,14 +235,29 @@ module tart
 
    reg          r_sel = 0, a_sel = 0;
 
+
+   //-------------------------------------------------------------------------
+   //     TRANSMISSION BLOCK
+   //     SPI SLAVE & WB MASTER
+   //-------------------------------------------------------------------------
+   wire debug_spi = oflow || uflow;
+   wire spi_busy;
+   wire spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
+                      spi_debug, tart_state[2:0]};
+
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
 
+   //  Address decoders for the Wishbone(-like) bus:
    assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
-   assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
+   assign r_stb = b_adr == 7'h0f && b_stb;     // decoder for reset
 
    assign b_ack = r_ack || a_ack;
+ `ifdef __icarus
    assign b_dtx = r_stb || r_sel ? r_drx : (a_stb || a_sel ? a_drx : 'bz);
+ `else
+   assign b_dtx = r_stb || r_sel ? r_drx : a_drx;
+ `endif
 
    //-------------------------------------------------------------------------
    //  Keep the selected device active until the transaction has been
@@ -254,14 +272,8 @@ module tart
 
 
    //-------------------------------------------------------------------------
-   //     TRANSMISSION BLOCK
-   //     SPI SLAVE & WB MASTER
+   //     SPI SLAVE CORE with a WISHBONE(-like) INTERCONNECT
    //-------------------------------------------------------------------------
-   wire debug_spi = oflow || uflow;
-   wire spi_busy;
-   wire spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
-                      spi_debug, tart_state[2:0]};
-
    spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
@@ -279,10 +291,10 @@ module tart
        .overflow_o(oflow),
        .underrun_o(uflow),
        
-       .SCK_pin(spi_sck),
-       .MOSI(spi_mosi),
-       .MISO(spi_miso),
-       .SSEL(spi_ssel)
+       .SCK_pin(SPI_SCK),
+       .MOSI(SPI_MOSI),
+       .MISO(SPI_MISO),
+       .SSEL(SPI_SSEL)
        );
 
    //-------------------------------------------------------------------------
@@ -318,9 +330,9 @@ module tart
        .dat_i(a_dtx),
        .dat_o(a_drx),
 
-       .data_ready(data_out_ready),
+       .data_ready  (data_out_ready),
        .data_request(request_from_spi),
-       .data_in(data_out),
+       .data_in     (data_out[23:0]),
 
        .spi_busy(spi_busy),
        .aq_debug_mode(spi_debug),
@@ -443,7 +455,7 @@ module tart
 
    // assign led = debug_o;
    assign led = tart_state >= 2;
-   // assign led = ~spi_ssel;
+   // assign led = ~SPI_SSEL;
 
 
    //-------------------------------------------------------------------------
@@ -478,10 +490,10 @@ module tart
         .spi_start_aq(spi_start_aq),
         .spi_debug(spi_debug),
         
-        .SCK (spi_sck),
-        .MOSI(spi_mosi),
-        .MISO(spi_miso),
-        .SSEL(spi_ssel)
+        .SCK (SPI_SCK),
+        .MOSI(SPI_MOSI),
+        .MISO(SPI_MISO),
+        .SSEL(SPI_SSEL)
         );
 `endif // __USE_WISHBONE_CORES
 
