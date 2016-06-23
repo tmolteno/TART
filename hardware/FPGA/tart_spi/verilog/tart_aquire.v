@@ -20,6 +20,10 @@
  * 
  */
 
+// Support CLASSIC Wishbone-like bus transactions?
+`define __WB_CLASSIC
+// `undef __WB_CLASSIC
+
 module tart_aquire
   #(parameter WIDTH = 8,
     parameter MSB   = WIDTH-1,
@@ -64,7 +68,11 @@ module tart_aquire
 
    //  Read back the appropriate register.
    always @(posedge clk_i)
+`ifdef __WB_CLASSIC
+     if (cyc_i && stb_i && !we_i && !ack_o)
+`else
      if (cyc_i && stb_i && !we_i)
+`endif
        case (adr_i)
          0: dat_o <= #DELAY stream;
          1: dat_o <= #DELAY antenna_data[23:16];
@@ -79,7 +87,9 @@ module tart_aquire
 
    //  Write into the appropriate register.
    always @(posedge clk_i)
-     if (!rst_i && cyc_i && stb_i && we_i)
+     if (rst_i)
+       {aq_enabled, aq_debug_mode, aq_sample_delay} <= #DELAY 0;
+     else if (cyc_i && stb_i && we_i)
        case (adr_i)
          5: aq_sample_delay <= #DELAY dat_i[2:0];
          6: aq_debug_mode   <= #DELAY dat_i[0];

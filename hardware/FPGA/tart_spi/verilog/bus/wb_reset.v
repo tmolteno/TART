@@ -47,8 +47,8 @@ module wb_reset
    //  Reset logic.
    always @(posedge clk_i)
      if (rst_i) reset <= #DELAY 0;
-//      else       reset <= #DELAY reset ? ~reset_ni : reset_w;
-     else       reset <= #DELAY !reset_ni || reset_w;
+     else       reset <= #DELAY reset ? ~reset_ni : reset_w;
+//      else       reset <= #DELAY reset || reset_o ? 1'b0 : (!reset_ni || reset_w);
 
    always @(posedge clk_i) begin
       reset_o <= #DELAY |resets;

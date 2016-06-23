@@ -9,10 +9,12 @@
 
 `define __USE_WISHBONE_CORES
 `define __USE_OLD_CLOCKS
-// `define __512Mb_SDRAM
+`define __512Mb_SDRAM
 
 // TODO: Not ready yet:
 // `define __USE_CORRELATORS
+`define __WB_CLASSIC
+// `undef __WB_CLASSIC
 
 module tart
   (
@@ -93,15 +95,13 @@ module tart
    //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
    wire [23:0] fake_antenna;
    //fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
-   fake_telescope fake_tart (.write_clk(rx_clk_16_buffered), .write_data(fake_antenna));
+   fake_telescope #( .WIDTH(24) ) FAKE_TART0
+     ( .write_clk(rx_clk_16_buffered), .write_data(fake_antenna) );
 
-   //     TRI STATE FOR CHOOSING REAL DATA OR FAKE DATA
+   // Antenna source MUX, for choosing real data or fake data
    wire        spi_debug;
-   wire        sel_rx_clk = rx_clk_16_buffered;
-   //wire rx_clk = (spi_debug) ? fake_rx_clk  : rx_clk_16;
-   wire [23:0] sel_antenna_data = (spi_debug) ? fake_antenna : real_antenna;
+   wire [23:0] antenna_data = spi_debug ? fake_antenna : real_antenna;
 
-   wire [23:0] antenna_data;
    wire rx_clk;
    //sync_antennas_to_clock sync_ant_int(
    // .fast_clk(fpga_clk),
@@ -117,11 +117,9 @@ module tart
 		  .data_sample_delay(data_sample_delay),
 		  .slow_clk(rx_clk)
 	    );
+
 	 assign rx_clk_test_pin = rx_clk;
-	
-   // assign rx_clk = sel_rx_clk;
-   
-	assign antenna_data = sel_antenna_data;
+
 
    //-------------------------------------------------------------------------
    //     AQUISITION BLOCK
@@ -153,7 +151,7 @@ module tart
   
    fifo_sdram_fifo_scheduler
      #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
-   scheduler
+   SCHEDULER0
      ( .clk(rx_clk),
        .clk6x(fpga_clk),
        .rst(reset),
@@ -223,7 +221,8 @@ module tart
    wire [MSB:0] b_dtx, b_drx;   // bus master's signals
    wire [ASB:0] b_adr;
    wire         b_clk = fpga_clk;
-   wire         b_rst = 1'b0;
+//    wire         b_rst = 1'b0;
+   wire         b_rst = reset;
    wire         b_cyc, b_stb, b_bst, b_we, b_ack;
 
    wire [MSB:0] r_drx, r_dtx;   // reset handler's signals
@@ -242,15 +241,18 @@ module tart
    //-------------------------------------------------------------------------
    wire debug_spi = oflow || uflow;
    wire spi_busy;
-   wire spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
-                      spi_debug, tart_state[2:0]};
+   wire [7:0] spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
+                            spi_debug, tart_state[2:0]};
+//    wire [7:0] spi_status = {1'b1, debug_spi, 1'b1, spi_start_aq, spi_debug, 3'b101};
+//    wire [7:0] spi_status = 8'hbe;
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
 
    //  Address decoders for the Wishbone(-like) bus:
    assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
-   assign r_stb = b_adr == 7'h0f && b_stb;     // decoder for reset
+//    assign r_stb = b_adr == 7'h0f && b_stb;     // decoder for reset
+   assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
 
    assign b_ack = r_ack || a_ack;
  `ifdef __icarus
@@ -263,7 +265,7 @@ module tart
    //  Keep the selected device active until the transaction has been
    //  acknowledged.
    always @(posedge b_clk)
-     if (b_rst)
+     if (b_rst || !b_cyc)
        {a_sel, r_sel} <= #DELAY 2'b00;
      else begin
         r_sel <= #DELAY r_sel ? !r_ack || r_stb : r_stb;
@@ -300,6 +302,26 @@ module tart
    //-------------------------------------------------------------------------
    //     RESET HANDLER
    //-------------------------------------------------------------------------
+//    wb_reset #( .WIDTH(WIDTH) ) WB_RESET0
+   tart_control #( .WIDTH(WIDTH), .RTIME(4) ) WB_RESET0
+     ( .clk_i(b_clk),
+       .rst_i(b_rst),
+       .cyc_i(b_cyc),
+       .stb_i(r_stb),
+       .we_i (b_we),
+       .ack_o(r_ack),
+       .adr_i(b_adr[1:0]),
+       .dat_i(r_dtx),
+       .dat_o(r_drx),
+
+       .status_i(spi_status),
+       .overflow_i(oflow),
+       .underrun_i(uflow),
+       .reset_ni(reset_n),
+       .reset_o (reset)
+       );
+
+   /*
    wb_reset #( .WIDTH(WIDTH), .RTIME(4) ) WB_RESET0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
@@ -313,11 +335,14 @@ module tart
        .reset_ni(reset_n),
        .reset_o(reset)
        );
+    */
+
 
    //-------------------------------------------------------------------------
    //     DATA-AQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-   assign led = tart_state >= 2; // asserted when data can be read back
+//    assign led = tart_state >= 2; // asserted when data can be read back
+   assign led = tart_state >= 2 || reset; // asserted when data can be read back
 
    tart_aquire #( .WIDTH(WIDTH) ) TART_AQUIRE0
      ( .clk_i(b_clk),
@@ -467,12 +492,13 @@ module tart
    wire spi_status = {1'b1, debug_o, request_from_spi, spi_start_aq, spi_debug, tart_state[2:0]};
 
    tart_spi
-     #( .ADDR_READ_DATA1  (4'h3),
+     #( .ADDR_READ_DATA1  (4'h0),
         .ADDR_READ_DATA2  (4'h1),
         .ADDR_READ_DATA3  (4'h2),
         .ADDR_SAMPLE_DELAY(4'h5),
         .ADDR_DEBUG       (4'h6),
         .ADDR_STARTAQ     (4'h7),
+        .ADDR_STATUS      (4'he),
         .ADDR_RESET       (4'hf)
         ) TART_SPI0
        (.clk(fpga_clk),
@@ -495,7 +521,7 @@ module tart
         .MISO(SPI_MISO),
         .SSEL(SPI_SSEL)
         );
-`endif // __USE_WISHBONE_CORES
+`endif // !__USE_WISHBONE_CORES
 
 
 endmodule // tart

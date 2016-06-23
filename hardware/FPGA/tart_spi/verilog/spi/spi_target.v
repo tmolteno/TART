@@ -40,6 +40,7 @@
 
 // Support CLASSIC Wishbone-like bus transactions?
 `define __WB_CLASSIC
+// `undef __WB_CLASSIC
 
 // Bus interface states.
 `define BUS_IDLE 0
@@ -56,11 +57,12 @@ module spi_target
    ( // Wishbone-like (bus master) interface:
      input            clk_i,
      input            rst_i,
-     output reg       cyc_o = 0,
+     output           cyc_o,
      output reg       stb_o = 0,
      output           bst_o,
      output reg       we_o = 0,
      input            ack_i,
+     input            rdy_i,
      input [7:0]      dat_i,
      output reg [7:0] dat_o,
 
@@ -130,16 +132,18 @@ module spi_target
    //  Cross-domain synchronisation.
    //
    //-------------------------------------------------------------------------
-   reg              sync0 = 0, sync1 = 0;
    reg              tx_rst_n = 1'b0, tx_flg = 1'b0;
    reg              spi_req = 0, dat_req_sync = 1, dat_req = 0;
-   wire             spi_select = sync1;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
    //-------------------------------------------------------------------------
    // SSEL is used to generate the bus transaction's framing signal, `cyc_o`,
    // but it must be synchronised across clock domains.
+`ifdef __USE_OLD_SSEL
+   reg              sync0 = 0, sync1 = 0;
+   wire             spi_select = sync1;
+
    always @(posedge SCK or posedge SSEL)
      if (SSEL)  sync0 <= #DELAY 0;
      else       sync0 <= #DELAY !SSEL;
@@ -148,22 +152,93 @@ module spi_target
      if (rst_i) sync1 <= #DELAY 0;
      else       sync1 <= #DELAY sync0;
 
+
    //-------------------------------------------------------------------------
    //  SPI transmission data prefetch.
    //-------------------------------------------------------------------------
    // After a bit has been sent/received, issue a prefetch for the next byte.
    always @(posedge SCK or posedge SSEL)
      if (SSEL)    spi_req <= #DELAY 0;
-     else         spi_req <= #DELAY rx_count == 1;
+     else         spi_req <= #DELAY rx_count == 0;
 
    always @(posedge clk_i or posedge spi_req)
-     if (spi_req) dat_req_sync <= #DELAY 1;
-     else         dat_req_sync <= #DELAY 0;
+     if (spi_req)           dat_req_sync <= #DELAY 1;
+     else if (dat_req_sync) dat_req_sync <= #DELAY 0;
+     else                   dat_req_sync <= #DELAY dat_req_sync;
 
    always @(posedge clk_i)
      if (rst_i)   dat_req <= #DELAY 0;
 //      else         dat_req <= #DELAY dat_req_sync;
      else         dat_req <= #DELAY dat_req ? bus_state != `BUS_READ : dat_req_sync;
+
+   /*
+   reg              spi_selreg = 0;
+   always @(posedge clk_i)
+     if (rst_i) spi_selreg <= #DELAY 0;
+     else spi_selreg <= #DELAY spi_selreg;
+    */
+
+`else
+   reg              ssel_pos, ssel_neg;
+   reg              spi_select = 0, old_select = 0;
+
+   assign cyc_o = spi_select;
+
+   //  SPI transaction beginning.
+   always @(posedge clk_i or negedge SSEL)
+     if (!SSEL) ssel_neg <= #DELAY 1;
+     else       ssel_neg <= #DELAY 0;
+
+   //  End of SPI transaction.
+   always @(posedge clk_i or posedge SSEL)
+     if (SSEL)  ssel_pos <= #DELAY 1;
+     else       ssel_pos <= #DELAY 0;
+
+   always @(posedge clk_i)
+     if (rst_i)         spi_select <= #DELAY 0;
+     else if (ssel_neg) spi_select <= #DELAY 1;
+     else if (ssel_pos) spi_select <= #DELAY 0;
+     else               spi_select <= #DELAY spi_select;
+
+   always @(posedge clk_i)
+     old_select <= #DELAY spi_select;
+
+
+   //-------------------------------------------------------------------------
+   //  SPI transmission data prefetch.
+   //-------------------------------------------------------------------------
+   // After a bit has been sent/received, issue a prefetch for the next byte.
+   always @(posedge SCK or posedge SSEL)
+     if (SSEL)    spi_req <= #DELAY 0;
+     else         spi_req <= #DELAY rx_count == 0;
+
+   always @(posedge clk_i or posedge spi_req)
+     if (spi_req)           dat_req_sync <= #DELAY 1;
+//      else if (dat_req_sync) dat_req_sync <= #DELAY 0;
+     else if (dat_req_sync) dat_req_sync <= #DELAY !dat_req;
+     else                   dat_req_sync <= #DELAY dat_req_sync;
+
+   always @(posedge clk_i)
+     if (rst_i)
+       dat_req <= #DELAY 0;
+     else if (dat_req && stb_o && !we_o)
+       dat_req <= #DELAY 0;
+     else if (!dat_req)
+       dat_req <= #DELAY dat_req_sync; // || spi_select && !old_select && bus_state == `BUS_IDLE;
+     else
+       dat_req <= #DELAY dat_req;
+
+//      else         dat_req <= #DELAY dat_req_sync && !dat_req;
+//      else         dat_req <= #DELAY dat_req ? bus_state != `BUS_READ : dat_req_sync;
+
+   /*
+   reg              spi_selreg = 0;
+   always @(posedge clk_i)
+     if (rst_i) spi_selreg <= #DELAY 0;
+     else spi_selreg <= #DELAY spi_selreg;
+    */
+`endif
+
 
    //-------------------------------------------------------------------------
    //  The TX FIFO reset logic.
@@ -228,7 +303,6 @@ module spi_target
    // TODO: Better prefetching, and don't use `rx_empty`?
    always @(posedge clk_i)
      if (rst_i) begin
-        cyc_o <= #DELAY 0;
         stb_o <= #DELAY 0;
         we_o  <= #DELAY 0;
      end
@@ -237,17 +311,14 @@ module spi_target
          `BUS_IDLE:             // Prefetch a byte on SPI start
            if (dat_req && spi_select) begin
               $display("%10t: TARGET -- Requesting status byte", $time);
-              cyc_o <= #DELAY 1;
               stb_o <= #DELAY 1;
               we_o  <= #DELAY 0;
            end
            else if (!spi_select) begin
-              cyc_o <= #DELAY 0;
               stb_o <= #DELAY 0;
               we_o  <= #DELAY 0;
            end
            else if (!rx_empty) begin
-              cyc_o <= #DELAY 1;
               stb_o <= #DELAY 1;
               we_o  <= #DELAY 1;
            end
@@ -359,6 +430,7 @@ module spi_target
        .rd_data_o(tx_data),
        
        .wr_clk_i (clk_i),
+//        .wr_en_i  (rdy_i),
        .wr_en_i  (tx_push),
        .wr_data_i(dat_i),
 

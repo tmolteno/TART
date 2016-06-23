@@ -1,4 +1,9 @@
 `timescale 1ns/1ps
+
+// Support CLASSIC Wishbone-like bus transactions?
+`define __WB_CLASSIC
+// `undef __WB_CLASSIC
+
 module tart_soc_tb;
 
    parameter WIDTH = 8;         // bus parameters
@@ -245,13 +250,14 @@ module tart_soc_tb;
    assign a_dtx = b_drx;
 
    assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
-   assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
+//    assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
+   assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
 
    //-------------------------------------------------------------------------
    //  Keep the selected device active until the transaction has been
    //  acknowledged.
    always @(posedge b_clk)
-     if (b_rst)
+     if (b_rst || !b_cyc)
        {a_sel, r_sel} <= #DELAY 2'b00;
      else begin
         r_sel <= #DELAY r_sel ? !r_ack || r_stb : r_stb;
@@ -263,7 +269,11 @@ module tart_soc_tb;
    //     SPI SLAVE
    //-------------------------------------------------------------------------
    assign b_ack = r_ack || a_ack;
+`ifdef __WB_CLASSIC
+   assign b_dtx = r_stb ? r_drx : (a_stb ? a_drx : 'bz);
+`else
    assign b_dtx = r_stb || r_sel ? r_drx : (a_stb || a_sel ? a_drx : 'bz);
+`endif
 
    spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
      ( .clk_i(b_clk),
@@ -294,16 +304,21 @@ module tart_soc_tb;
    wire         reset;
    wire         reset_n = 1'b1;
 
-   wb_reset #( .WIDTH(WIDTH) ) WB_RESET0
+//    wb_reset #( .WIDTH(WIDTH) ) WB_RESET0
+   tart_control #( .WIDTH(WIDTH) ) WB_RESET0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
        .cyc_i(b_cyc),
        .stb_i(r_stb),
        .we_i (b_we),
        .ack_o(r_ack),
+       .adr_i(b_adr[1:0]),
        .dat_i(r_dtx),
        .dat_o(r_drx),
 
+       .status_i(spi_status),
+       .overflow_i(oflow),
+       .underrun_i(uflow),
        .reset_ni(reset_n),
        .reset_o (reset)
        );

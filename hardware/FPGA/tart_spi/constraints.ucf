@@ -42,6 +42,7 @@ NET "led" LOC = P112 | IOSTANDARD = "LVTTL" | DRIVE = 8 | SLEW = SLOW;          
 
 NET SPI_SSEL      LOC = P79 | IOSTANDARD = "LVTTL";                               # A8
 NET SPI_SSEL      PULLUP = TRUE ; # Useful with RPi3?
+NET SPI_SSEL      CLOCK_DEDICATED_ROUTE = FALSE;
 NET SPI_MISO      LOC = P81 | IOSTANDARD = "LVTTL" | DRIVE = 12 | SLEW = FAST;    # A9
 NET SPI_MISO      OFFSET = OUT 8.0 ns AFTER "spi_sck" REFERENCE_PIN "spi_sck" RISING;
 NET SPI_MOSI      LOC = P83 | IOSTANDARD = "LVTTL";                               # A10
