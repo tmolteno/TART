@@ -48,33 +48,32 @@
 `define BUS_WAIT 2
 `define BUS_SEND 4
 
-module spi_target
+module spi_layer
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
      parameter ASB   = WIDTH-2,
      parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
      parameter DELAY = 3)
    ( // Wishbone-like (bus master) interface:
-     input            clk_i,
-     input            rst_i,
-     output           cyc_o,
-     output reg       stb_o = 0,
-     output           bst_o,
-     output reg       we_o = 0,
-     input            ack_i,
-     input            rdy_i,
-     input [7:0]      dat_i,
-     output reg [7:0] dat_o,
+     input        clk_i,
+     input        rst_i,
+     output       cyc_o,
+     output       get_o,
+     input        rdy_i,
+     output       wat_o,
+     input        ack_i,
+     input [7:0]  dat_i,
+     output [7:0] dat_o,
 
      // Debug/diagnostic output, for when the recieve FIFO overflows.
-     output reg       overflow_o = 0,
-     output reg       underrun_o = 0,
+     output reg   overflow_o = 0,
+     output reg   underrun_o = 0,
 
-     input            SCK_pin, // Raw pin connection, not a global clock
-     input            SSEL,
-     input            MOSI,
+     input        SCK_pin, // Raw pin connection, not a global clock
+     input        SSEL,
+     input        MOSI,
      (* IOB = "FORCE" *)
-     output reg       MISO = HEADER_BYTE[7]
+     output reg   MISO = HEADER_BYTE[7]
      );
 
    //-------------------------------------------------------------------------
@@ -89,11 +88,11 @@ module spi_target
    //-------------------------------------------------------------------------
    // TODO: Better configuration options.
 `ifdef __LEGACY_MODE
-   wire             SCK      = SCK_pin;
-   wire             SCK_miso = SCK_pin;
-   wire             SCK_tx   = ~SCK_pin;
+   wire           SCK      = SCK_pin;
+   wire           SCK_miso = SCK_pin;
+   wire           SCK_tx   = ~SCK_pin;
 `elsif __icarus
-   wire             SCK, SCK_miso, SCK_tx;
+   wire           SCK, SCK_miso, SCK_tx;
 
    assign SCK      = SCK_pin;
    assign SCK_miso = SCK_pin;
@@ -103,7 +102,7 @@ module spi_target
    //    SCK -> IBUFG -> fabric -> BUFGMUX -> fabric -> OBUF -> MISO
    // is too long for high speed implementations, so a local I/O clock is
    // used to drive MISO.
-   wire             SCK_buf, SCK_bufg, SCK_miso, SCK_tx, SCK;
+   wire           SCK_buf, SCK_bufg, SCK_miso, SCK_tx, SCK;
 
    assign SCK    = SCK_bufg;    // Main SPI-domain clock
    assign SCK_tx = SCK_bufg;    // TX FIFO clock
@@ -132,50 +131,21 @@ module spi_target
    //  Cross-domain synchronisation.
    //
    //-------------------------------------------------------------------------
-   reg              tx_rst_n = 1'b0, tx_flg = 1'b0;
-   reg              spi_req = 0, dat_req_sync = 1, dat_req = 0;
+   reg            tx_rst_n = 1'b0, tx_flg = 1'b0;
+   reg            spi_req = 0, dat_req_sync = 1, dat_req = 0;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
    //-------------------------------------------------------------------------
    // SSEL is used to generate the bus transaction's framing signal, `cyc_o`,
    // but it must be synchronised across clock domains.
-`ifdef __USE_OLD_SSEL
-   reg              sync0 = 0, sync1 = 0;
-   wire             spi_select = sync1;
-
-   always @(posedge SCK or posedge SSEL)
-     if (SSEL)  sync0 <= #DELAY 0;
-     else       sync0 <= #DELAY !SSEL;
-
-   always @(posedge clk_i)
-     if (rst_i) sync1 <= #DELAY 0;
-     else       sync1 <= #DELAY sync0;
-
-
-   //-------------------------------------------------------------------------
-   //  SPI transmission data prefetch.
-   //-------------------------------------------------------------------------
-   // After a bit has been sent/received, issue a prefetch for the next byte.
-   always @(posedge SCK or posedge SSEL)
-     if (SSEL)    spi_req <= #DELAY 0;
-     else         spi_req <= #DELAY rx_count == 0;
-
-   always @(posedge clk_i or posedge spi_req)
-     if (spi_req)           dat_req_sync <= #DELAY 1;
-     else if (dat_req_sync) dat_req_sync <= #DELAY 0;
-     else                   dat_req_sync <= #DELAY dat_req_sync;
-
-   always @(posedge clk_i)
-     if (rst_i)   dat_req <= #DELAY 0;
-//      else         dat_req <= #DELAY dat_req_sync;
-     else         dat_req <= #DELAY dat_req ? bus_state != `BUS_READ : dat_req_sync;
-
-`else
-   reg              ssel_pos, ssel_neg;
-   reg              spi_select = 0, old_select = 0;
+   reg            ssel_pos, ssel_neg;
+   reg            spi_select = 0, old_select = 0;
 
    assign cyc_o = spi_select;
+   assign get_o = dat_req;
+   assign wat_o = rx_empty;
+
 
    //  SPI transaction beginning.
    always @(posedge clk_i or negedge SSEL)
@@ -193,9 +163,6 @@ module spi_target
      else if (ssel_pos) spi_select <= #DELAY 0;
      else               spi_select <= #DELAY spi_select;
 
-   always @(posedge clk_i)
-     old_select <= #DELAY spi_select;
-
 
    //-------------------------------------------------------------------------
    //  SPI transmission data prefetch.
@@ -207,20 +174,18 @@ module spi_target
 
    always @(posedge clk_i or posedge spi_req)
      if (spi_req)           dat_req_sync <= #DELAY 1;
-//      else if (dat_req_sync) dat_req_sync <= #DELAY 0;
      else if (dat_req_sync) dat_req_sync <= #DELAY !dat_req;
      else                   dat_req_sync <= #DELAY dat_req_sync;
 
    always @(posedge clk_i)
      if (rst_i)
        dat_req <= #DELAY 0;
-     else if (dat_req && stb_o && !we_o)
+     else if (dat_req && rdy_i)
        dat_req <= #DELAY 0;
      else if (!dat_req)
        dat_req <= #DELAY dat_req_sync;
      else
        dat_req <= #DELAY dat_req;
-`endif
 
 
    //-------------------------------------------------------------------------
@@ -245,93 +210,6 @@ module spi_target
         tx_rst_n <= #DELAY 1'b1;
         tx_flg   <= #DELAY tx_flg;
      end
-
-   
-   //-------------------------------------------------------------------------
-   //
-   //  Wishbone-like interface.
-   //  
-   //-------------------------------------------------------------------------
-   wire [7:0] dat_w;
-//    wire       rx_pull  = !rx_empty && bus_state == `BUS_WAIT;
-   wire       rx_pull = cyc_o && !rx_empty && bus_state != `BUS_SEND;
-   wire       tx_push = cyc_o && !we_o && ack_i;
-   reg [2:0]  bus_state = `BUS_IDLE;
-
-   assign bst_o = 1'b0;
-
-   always @(posedge clk_i)
-     if (rst_i)
-       bus_state <= #DELAY `BUS_IDLE;
-     else
-       case (bus_state)
-         `BUS_IDLE:
-           if (spi_select && dat_req)
-             bus_state <= #DELAY `BUS_READ;
-           else if (spi_select && !rx_empty)
-             bus_state <= #DELAY `BUS_SEND;
-           else
-             bus_state <= #DELAY bus_state;
-         
-         `BUS_READ:
-           bus_state <= #DELAY !spi_select ? `BUS_IDLE : ack_i ? `BUS_WAIT : bus_state;
-
-         `BUS_WAIT:
-           bus_state <= #DELAY !rx_empty ? `BUS_SEND : bus_state;
-
-         `BUS_SEND:
-           bus_state <= #DELAY ack_i ? (dat_req ? `BUS_READ : `BUS_IDLE) : bus_state;
-       endcase // case (bus_state)
-
-   // TODO: Better prefetching, and don't use `rx_empty`?
-   always @(posedge clk_i)
-     if (rst_i) begin
-        stb_o <= #DELAY 0;
-        we_o  <= #DELAY 0;
-     end
-     else
-       case (bus_state)
-         `BUS_IDLE:             // Prefetch a byte on SPI start
-           if (dat_req && spi_select) begin
-              $display("%10t: TARGET -- Requesting status byte", $time);
-              stb_o <= #DELAY 1;
-              we_o  <= #DELAY 0;
-           end
-           else if (!spi_select) begin
-              stb_o <= #DELAY 0;
-              we_o  <= #DELAY 0;
-           end
-           else if (!rx_empty) begin
-              stb_o <= #DELAY 1;
-              we_o  <= #DELAY 1;
-           end
-         
-         `BUS_READ:             // Wait for prefetched byte
-`ifdef __WB_CLASSIC
-           stb_o <= #DELAY ~ack_i;
-`else
-           stb_o <= #DELAY 0; // !stb_o && !ack_i && spi_select;
-`endif //  __WB_CLASSIC
-
-         `BUS_WAIT: begin       // Send any received data
-            stb_o <= #DELAY ~rx_empty;
-            we_o  <= #DELAY ~rx_empty;
-         end
-
-         `BUS_SEND: begin       // Wait for sent data to be acknowledged
-`ifdef __WB_CLASSIC
-            stb_o <= #DELAY ~ack_i;
-`else
-            stb_o <= #DELAY ack_i && dat_req;
-`endif //  __WB_CLASSIC
-            we_o  <= #DELAY ~ack_i;
-         end
-       endcase // case (bus_state)
-
-   // Dequeue the data to be sent over the system bus.
-   always @(posedge clk_i)
-     if (rx_pull) dat_o <= #DELAY dat_w;
-     else         dat_o <= #DELAY dat_o;
 
 
    //-------------------------------------------------------------------------
@@ -390,14 +268,12 @@ module spi_target
    // transaction completes.
    always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL) tx_pull <= #DELAY 0;
-//      else      tx_pull <= #DELAY tx_next && !tx_empty;
      else      tx_pull <= #DELAY tx_next;
 
    // TX FIFO underrun detection.
    always @(`TX_EDGE SCK)
      if (rst_i)
        underrun_o <= #DELAY 0;
-//      else if (tx_next && tx_empty)
      else if (tx_pull && tx_empty)
        underrun_o <= #DELAY 1;
 
@@ -407,12 +283,6 @@ module spi_target
    //  Asynchronous FIFO's for transmitting and receiving.
    //
    //-------------------------------------------------------------------------
-   reg        tx_wait = 0;
-
-   always @(posedge clk_i)
-     if (rst_i) tx_wait <= #DELAY 0;
-     else       tx_wait <= #DELAY tx_push;
-
    afifo16 #( .WIDTH(8) ) TX_FIFO0
      ( .reset_ni (tx_rst_n),
        
@@ -421,9 +291,7 @@ module spi_target
        .rd_data_o(tx_data),
        
        .wr_clk_i (clk_i),
-//        .wr_en_i  (rdy_i),
-       .wr_en_i  (tx_push),
-//        .wr_en_i  (tx_wait),
+       .wr_en_i  (rdy_i),
        .wr_data_i(dat_i),
 
        .rempty_o (tx_empty),
@@ -435,8 +303,8 @@ module spi_target
      ( .reset_ni (!rst_i),
        
        .rd_clk_i (clk_i),
-       .rd_en_i  (rx_pull),
-       .rd_data_o(dat_w),
+       .rd_en_i  (ack_i),
+       .rd_data_o(dat_o),
        
        .wr_clk_i (SCK),
        .wr_en_i  (rx_push),
@@ -447,4 +315,4 @@ module spi_target
        );
 
    
-endmodule // spi_target
+endmodule // spi_layer

@@ -168,7 +168,7 @@ output	[1:0]		rd_level;
 reg	[aw:0]		wp_bin, wp_gray;
 reg	[aw:0]		rp_bin, rp_gray;
 reg	[aw:0]		wp_s, rp_s;
-reg			full, empty;
+reg			full = 0, empty = 1;
 
 wire	[aw:0]		wp_bin_next, wp_gray_next;
 wire	[aw:0]		rp_bin_next, rp_gray_next;
@@ -299,11 +299,11 @@ assign wp_bin_x = wp_s ^ {1'b0, wp_bin_x[aw:1]};	// convert gray to binary
 assign rp_bin_x = rp_s ^ {1'b0, rp_bin_x[aw:1]};	// convert gray to binary
 
 always @(posedge rd_clk)
-        empty <= (wp_s == rp_gray) | (re & (wp_s == rp_gray_next));
+  empty <= (wp_s == rp_gray) | (re & (wp_s == rp_gray_next));
 
 always @(posedge wr_clk)
-        full <= ((wp_bin[aw-1:0] == rp_bin_x[aw-1:0]) & (wp_bin[aw] != rp_bin_x[aw])) |
-        (we & (wp_bin_next[aw-1:0] == rp_bin_x[aw-1:0]) & (wp_bin_next[aw] != rp_bin_x[aw]));
+  full <= ((wp_bin[aw-1:0] == rp_bin_x[aw-1:0]) & (wp_bin[aw] != rp_bin_x[aw])) |
+          (we & (wp_bin_next[aw-1:0] == rp_bin_x[aw-1:0]) & (wp_bin_next[aw] != rp_bin_x[aw]));
 
 ////////////////////////////////////////////////////////////////////
 //

@@ -47,7 +47,7 @@ module tart_soc_tb;
    //-------------------------------------------------------------------------
    //  Clocks:
    always #5  clk <= ~clk;
-   always #8  SCK <= ~SCK;
+   always #6  SCK <= ~SCK;
 //    always #10 SCK <= ~SCK;
 
 
