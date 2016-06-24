@@ -74,11 +74,11 @@ module spi_slave
    //-------------------------------------------------------------------------
    //  SPI to Wishbone state-machine.
    //-------------------------------------------------------------------------
+   wire [7:0]           l_drx;
    reg [3:0]            spi = `SPI_IDLE;
    wire                 b_we = l_drx[MSB];
    wire [3:0]           mode = b_we ? `SPI_BUSY : `SPI_PULL;
-   wire [7:0]           l_drx;
-   wire                 l_cyc, l_get, l_wat, l_overflow, l_underrun, l_MISO;
+   wire                 l_cyc, l_get, l_wat;
    wire                 l_put = ~l_wat;
    reg                  we = 0, l_ack = 0;
 
@@ -99,7 +99,7 @@ module spi_slave
      else
        case (spi)
          // new SPI transaction beginning?
-         `SPI_IDLE: spi <= #DELAY l_cyc && l_get && r_rdy ? `SPI_ADDR : spi;
+         `SPI_IDLE: spi <= #DELAY l_get && r_rdy ? `SPI_ADDR : spi;
 
          // first byte from SPI is the write-mode and address?
          `SPI_ADDR: spi <= #DELAY l_put ? (b_we || !l_get ? `SPI_BUSY : `SPI_PULL) : spi;
@@ -117,9 +117,7 @@ module spi_slave
          `SPI_PULL: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
        endcase // case (spi)
 
-   wire                 a_xfer = a_pull || a_push;
    wire                 a_pull = l_get && !b_we && !r_rdy;
-   wire                 a_push = l_put &&  b_we && !l_ack;
 
    wire                 b_xfer = b_pull || b_push;
    wire                 b_pull = l_get && !we && !r_rdy;
@@ -151,7 +149,7 @@ module spi_slave
    // `we` stores the last-requested bus read#/write mode.
    always @(posedge clk_i)
      if (rst_i) we <= #DELAY 1'b0;
-     else if (l_cyc && l_put && !l_ack)
+     else if (l_put && !l_ack)
        case (spi)
          `SPI_ADDR: {we, adr_o} <= #DELAY {l_drx[MSB], l_drx[ASB:0]};
          default:   {we, adr_o} <= #DELAY {we, adr_o};
@@ -173,13 +171,13 @@ module spi_slave
    //-------------------------------------------------------------------------
    //  Set up the readies so that WB ACK's fall right through, without
    //  being registered first.
-   wire [MSB:0] w_dtx = spi == `SPI_IDLE ? status_i : dat_i;
+   wire [MSB:0] w_dtx = spi == `SPI_IDLE || spi == `SPI_ADDR ? status_i : dat_i;
    reg [MSB:0]  l_dtx;
    reg          r_rdy = 0, r_wat = 0;
    wire         w_rdy = rdy_status || rdy_ignore;
    wire         x_rdy = r_rdy || r_wat && ack_i;
    wire         rdy_status = spi == `SPI_IDLE && l_get;
-   wire         rdy_ignore = l_get && b_we && (spi == `SPI_ADDR || spi == `SPI_BUSY);
+   wire         rdy_ignore = l_get && (b_we && spi == `SPI_ADDR || we && spi == `SPI_BUSY);
 
    always @(posedge clk_i)
      if (rst_i || r_rdy)
@@ -189,11 +187,11 @@ module spi_slave
 
    always @(posedge clk_i)
      if (rst_i || r_rdy) r_wat <= #DELAY 0;
-     else                r_wat <= #DELAY cyc_o && !we_o && !ack_i;
+     else                r_wat <= #DELAY cyc_o && !we && !ack_i;
 
    //  TODO: Unnecessary?
    always @(posedge clk_i)
-     if (!rst_i && l_cyc && l_put && we && !l_ack && spi == `SPI_BUSY)
+     if (l_put && we && !l_ack && spi == `SPI_BUSY)
        dat_o <= #DELAY l_drx;
 
 
