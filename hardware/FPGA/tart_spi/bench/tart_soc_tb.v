@@ -232,8 +232,8 @@ module tart_soc_tb;
    wire [MSB:0] b_dtx, b_drx;   // bus master's signals
    wire [ASB:0] b_adr;
    wire         b_clk = clk;
-   wire         b_rst = rst;
-   wire         b_cyc, b_stb, b_bst, b_we, b_ack;
+   wire         b_rst = rst || reset;
+   wire         b_cyc, b_stb, b_we, b_ack;
 
    wire [MSB:0] r_drx, r_dtx;   // reset handler's signals
    wire         r_stb, r_ack;
@@ -280,7 +280,6 @@ module tart_soc_tb;
        .rst_i(b_rst),
        .cyc_o(b_cyc),
        .stb_o(b_stb),
-       .bst_o(b_bst),
        .we_o (b_we),
        .ack_i(b_ack),
        .adr_o(b_adr),

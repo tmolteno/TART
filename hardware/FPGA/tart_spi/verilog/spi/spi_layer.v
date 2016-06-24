@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 
 /*
- * SPI slave module using asynchronous FIFO's.
+ * SPI clock-domain circuitry, plus the cross-domain synchronisers and
+ * asynchronous FIFO's.
  * 
  * NOTE:
  *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
@@ -96,7 +97,7 @@ module spi_layer
 
    assign SCK      = SCK_pin;
    assign SCK_miso = SCK_pin;
-   assign SCK_tx   = SCK_pin;
+   assign SCK_tx   = ~SCK_pin;
 `else
    // The clock path:
    //    SCK -> IBUFG -> fabric -> BUFGMUX -> fabric -> OBUF -> MISO
@@ -131,7 +132,7 @@ module spi_layer
    //  Cross-domain synchronisation.
    //
    //-------------------------------------------------------------------------
-   reg            tx_rst_n = 1'b0, tx_flg = 1'b0;
+   reg            tx_rst = 1'b1, tx_flg = 1'b0;
    reg            spi_req = 0, dat_req_sync = 1, dat_req = 0;
 
    //-------------------------------------------------------------------------
@@ -195,20 +196,20 @@ module spi_layer
    // TODO: Clean this up, as it is more complicated than it needs to be.
    always @(posedge clk_i)
      if (rst_i) begin
-        tx_rst_n <= #DELAY 1'b0;
-        tx_flg   <= #DELAY 1'b0;
+        tx_rst <= #DELAY 1'b1;
+        tx_flg <= #DELAY 1'b0;
      end
      else if (!spi_select && !tx_flg) begin // Issue a single reset
-        tx_rst_n <= #DELAY 1'b0;
-        tx_flg   <= #DELAY 1'b1;
+        tx_rst <= #DELAY 1'b1;
+        tx_flg <= #DELAY 1'b1;
      end
      else if (spi_select) begin
-        tx_rst_n <= #DELAY 1'b1;
-        tx_flg   <= #DELAY 1'b0;
+        tx_rst <= #DELAY 1'b0;
+        tx_flg <= #DELAY 1'b0;
      end
      else begin
-        tx_rst_n <= #DELAY 1'b1;
-        tx_flg   <= #DELAY tx_flg;
+        tx_rst <= #DELAY 1'b0;
+        tx_flg <= #DELAY tx_flg;
      end
 
 
@@ -271,11 +272,11 @@ module spi_layer
      else      tx_pull <= #DELAY tx_next;
 
    // TX FIFO underrun detection.
-   always @(`TX_EDGE SCK)
+   always @(`TX_EDGE SCK or posedge rst_i)
      if (rst_i)
-       underrun_o <= #DELAY 0;
+       underrun_o <= #DELAY 1'b0;
      else if (tx_pull && tx_empty)
-       underrun_o <= #DELAY 1;
+       underrun_o <= #DELAY 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -283,8 +284,10 @@ module spi_layer
    //  Asynchronous FIFO's for transmitting and receiving.
    //
    //-------------------------------------------------------------------------
-   afifo16 #( .WIDTH(8) ) TX_FIFO0
-     ( .reset_ni (tx_rst_n),
+   afifo_gray #( .WIDTH(8), .ABITS(4) ) TX_FIFO0
+     ( .rst_i    (tx_rst),
+//    afifo16 #( .WIDTH(8) ) TX_FIFO0
+//      ( .reset_ni (tx_rst_n),
        
        .rd_clk_i (SCK_tx),
        .rd_en_i  (tx_pull),
@@ -299,8 +302,10 @@ module spi_layer
        );
 
    // TODO: Not useful? Just use a synchroniser?
-   afifo16 #( .WIDTH(8) ) RX_FIFO0
-     ( .reset_ni (!rst_i),
+   afifo_gray #( .WIDTH(8), .ABITS(4) ) RX_FIFO0
+     ( .rst_i    (rst_i),
+//    afifo16 #( .WIDTH(8) ) RX_FIFO0
+//      ( .reset_ni (!rst_i),
        
        .rd_clk_i (clk_i),
        .rd_en_i  (ack_i),

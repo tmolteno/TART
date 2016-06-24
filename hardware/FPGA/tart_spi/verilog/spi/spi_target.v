@@ -97,7 +97,7 @@ module spi_target
 
    assign SCK      = SCK_pin;
    assign SCK_miso = SCK_pin;
-   assign SCK_tx   = SCK_pin;
+   assign SCK_tx   = ~SCK_pin;
 `else
    // The clock path:
    //    SCK -> IBUFG -> fabric -> BUFGMUX -> fabric -> OBUF -> MISO
@@ -394,10 +394,9 @@ module spi_target
      else      tx_pull <= #DELAY tx_next;
 
    // TX FIFO underrun detection.
-   always @(`TX_EDGE SCK)
+   always @(`TX_EDGE SCK or posedge rst_i)
      if (rst_i)
        underrun_o <= #DELAY 0;
-//      else if (tx_next && tx_empty)
      else if (tx_pull && tx_empty)
        underrun_o <= #DELAY 1;
 
