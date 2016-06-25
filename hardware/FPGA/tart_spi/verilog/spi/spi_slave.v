@@ -11,23 +11,21 @@
  * Stability   : Experimental
  * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
- * This SPI slave module wraps `spi_target` to give address support to the
- * (pipelined Wishbone-like) bus interface.
+ * This SPI slave module wraps `spi_layer` to give address support to the
+ * (pipelined, Wishbone-like) bus interface.
  * 
  * NOTE:
- *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
- *  + currently, the SCK frequency has to be slightly lower than that of the
- *    bus clock's, or else data isn't available early enough, resulting in a
- *    FIFO underrun;
+ *  + XST synthesis achieves about 250 MHz on a Spartan VI;
+ *  + currently, the SCK frequency can be slightly higher than that of the bus
+ *    bus clock, or else data isn't available early enough, resulting in FIFO
+ *    underruns -- but this could be solved by using an additional prefetch,
+ *    though this hasn't been implemented;
  * 
  * Changelog:
  *  + 18/06/2016  --  initial file;
  * 
  * TODO:
  *  + the design is still preliminary (as of 24/05/2016);
- *  + constrain the input and output OFFSET's;
- *  + can the output-delay be run-time configurable?
- *  + parameterise the delay for read-requests?
  * 
  */
 
@@ -117,13 +115,13 @@ module spi_slave
          `SPI_PULL: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
        endcase // case (spi)
 
+   //-------------------------------------------------------------------------
+   //  Generate the Wishbone-like flow-control signals.
    wire                 a_pull = l_get && !b_we && !r_rdy;
-
    wire                 b_xfer = b_pull || b_push;
    wire                 b_pull = l_get && !we && !r_rdy;
    wire                 b_push = l_put &&  we && !l_ack;
 
-   //  Generate the Wishbone-like flow-control signals.
    always @(posedge clk_i)
      if (rst_i)
        {cyc_o, stb_o} <= #DELAY 2'b00;
@@ -146,7 +144,10 @@ module spi_slave
      else
        {cyc_o, stb_o} <= #DELAY 2'b00;
 
-   // `we` stores the last-requested bus read#/write mode.
+   //-------------------------------------------------------------------------
+   //  Gets the read#/write mode, and address, from the first byte of the SPI
+   //  transaction.
+   //  NOTE: `we` stores the last-requested bus read#/write mode.
    always @(posedge clk_i)
      if (rst_i) we <= #DELAY 1'b0;
      else if (l_put && !l_ack)
@@ -155,22 +156,23 @@ module spi_slave
          default:   {we, adr_o} <= #DELAY {we, adr_o};
        endcase // case (spi)
 
+   //-------------------------------------------------------------------------
+   //  Data received from `spi_layer` needs to be acknowledged.
    always @(posedge clk_i)
-     if (rst_i || !l_cyc)
-       l_ack <= #DELAY 0;
-     else if (l_put && !l_ack)
+     if (!rst_i && l_cyc && l_put && !l_ack)
        case (spi)
          `SPI_ADDR: l_ack <= #DELAY 1;
-         `SPI_BUSY: l_ack <= #DELAY 1; // !we;
+         `SPI_BUSY: l_ack <= #DELAY 1;
          `SPI_PUSH: l_ack <= #DELAY ack_i;
        endcase // case (spi)
      else
        l_ack <= #DELAY 0;
 
-
    //-------------------------------------------------------------------------
-   //  Set up the readies so that WB ACK's fall right through, without
-   //  being registered first.
+   //  Data requested by `spi_layer` needs to be flagged as ready.
+   //  NOTE: Readies from the Wishbone-like SoC bus (which are just `ack_i`,
+   //    when is asserted, for bus read cycles), fall right through, without
+   //    being registered first, saving a cycle of latency.
    wire [MSB:0] w_dtx = spi == `SPI_IDLE || spi == `SPI_ADDR ? status_i : dat_i;
    reg [MSB:0]  l_dtx;
    reg          r_rdy = 0, r_wat = 0;
@@ -189,11 +191,13 @@ module spi_slave
      if (rst_i || r_rdy) r_wat <= #DELAY 0;
      else                r_wat <= #DELAY cyc_o && !we && !ack_i;
 
-   //  TODO: Unnecessary?
+   //-------------------------------------------------------------------------
+   //  Hold the data from `spi_layer` constant until the end of a `spi_layer`
+   //  bus write cycle.
+   //  TODO: Unnecessary? Just pass the WB-like acknowledge through?
    always @(posedge clk_i)
      if (l_put && we && !l_ack && spi == `SPI_BUSY)
        dat_o <= #DELAY l_drx;
-
 
    //-------------------------------------------------------------------------
    //  SPI-layer, and the domain-crossing subcircuits, of the interface.
@@ -203,11 +207,9 @@ module spi_slave
        .rst_i(rst_i),
        .cyc_o(l_cyc),
        .get_o(l_get),
-//        .rdy_i(l_rdy),
        .rdy_i(x_rdy),
        .wat_o(l_wat),
        .ack_i(l_ack),
-//        .dat_i(l_dtx),
        .dat_i(w_dtx),
        .dat_o(l_drx),
 

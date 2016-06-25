@@ -285,11 +285,7 @@ module spi_layer
    //
    //-------------------------------------------------------------------------
    afifo_gray #( .WIDTH(8), .ABITS(4) ) TX_FIFO0
-     ( .rst_i    (tx_rst),
-//    afifo16 #( .WIDTH(8) ) TX_FIFO0
-//      ( .reset_ni (tx_rst_n),
-       
-       .rd_clk_i (SCK_tx),
+     ( .rd_clk_i (SCK_tx),
        .rd_en_i  (tx_pull),
        .rd_data_o(tx_data),
        
@@ -297,17 +293,15 @@ module spi_layer
        .wr_en_i  (rdy_i),
        .wr_data_i(dat_i),
 
+       .rst_i    (tx_rst),
        .rempty_o (tx_empty),
        .wfull_o  (tx_full)
        );
 
-   // TODO: Not useful? Just use a synchroniser?
+   // TODO: There is never more than one and a bit bytes stored within this
+   //   FIFO, so should there be something more efficient?
    afifo_gray #( .WIDTH(8), .ABITS(4) ) RX_FIFO0
-     ( .rst_i    (rst_i),
-//    afifo16 #( .WIDTH(8) ) RX_FIFO0
-//      ( .reset_ni (!rst_i),
-       
-       .rd_clk_i (clk_i),
+     ( .rd_clk_i (clk_i),
        .rd_en_i  (ack_i),
        .rd_data_o(dat_o),
        
@@ -315,6 +309,7 @@ module spi_layer
        .wr_en_i  (rx_push),
        .wr_data_i(rx_data),
 
+       .rst_i    (rst_i),
        .rempty_o (rx_empty),
        .wfull_o  (rx_full)
        );

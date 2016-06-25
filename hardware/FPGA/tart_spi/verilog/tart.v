@@ -301,8 +301,7 @@ module tart
    //-------------------------------------------------------------------------
    //     RESET HANDLER
    //-------------------------------------------------------------------------
-//    wb_reset #( .WIDTH(WIDTH) ) WB_RESET0
-   tart_control #( .WIDTH(WIDTH), .RTIME(4) ) WB_RESET0
+   tart_control #( .WIDTH(WIDTH), .RTIME(4) ) TART_CONTROL0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
        .cyc_i(b_cyc),
@@ -320,28 +319,11 @@ module tart
        .reset_o (reset)
        );
 
-   /*
-   wb_reset #( .WIDTH(WIDTH), .RTIME(4) ) WB_RESET0
-     ( .clk_i(b_clk),
-       .rst_i(b_rst),
-       .cyc_i(b_cyc),
-       .stb_i(r_stb),
-       .we_i (b_we),
-       .ack_o(r_ack),
-       .dat_i(r_dtx),
-       .dat_o(r_drx),
-
-       .reset_ni(reset_n),
-       .reset_o(reset)
-       );
-    */
-
 
    //-------------------------------------------------------------------------
    //     DATA-AQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-//    assign led = tart_state >= 2; // asserted when data can be read back
-   assign led = tart_state >= 2 || reset; // asserted when data can be read back
+   assign led = tart_state >= 2; // asserted when data can be read back
 
    tart_aquire #( .WIDTH(WIDTH) ) TART_AQUIRE0
      ( .clk_i(b_clk),
