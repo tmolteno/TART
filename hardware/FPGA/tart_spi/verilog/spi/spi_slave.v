@@ -25,7 +25,8 @@
  *  + 18/06/2016  --  initial file;
  * 
  * TODO:
- *  + the design is still preliminary (as of 24/05/2016);
+ *  + the design is still preliminary (as of 24/06/2016);
+ *  + reduce the fanout of `rst_i`;
  * 
  */
 
@@ -68,29 +69,30 @@ module spi_slave
      output             MISO
      );
 
-
-   //-------------------------------------------------------------------------
-   //  SPI to Wishbone state-machine.
-   //-------------------------------------------------------------------------
-   wire [7:0]           l_drx;
+   //  FSM state register, and some state-bit aliases:
    reg [3:0]            spi = `SPI_IDLE;
-   wire                 b_we = l_drx[MSB];
-   wire [3:0]           mode = b_we ? `SPI_BUSY : `SPI_PULL;
+   wire                 a_spi = spi[0];
+   wire                 b_spi = spi[1];
+   wire                 i_spi = spi == `SPI_IDLE;
+
+   //  Signals to/from the SPI layer:
+   wire [7:0]           l_drx;
+   wire                 a_we = l_drx[MSB];   // address-mode WE
+   reg                  b_we = 0, l_ack = 0; // bus-mode WE
    wire                 l_cyc, l_get, l_wat;
-   wire                 l_put = ~l_wat;
-   reg                  we = 0, l_ack = 0;
 
 
 `ifdef __icarus
-   assign we_o     = cyc_o && we; // more convenient in GtkWave
+   assign we_o     = cyc_o && b_we; // more convenient in GtkWave
 `else
-   assign we_o = we;
+   assign we_o     = b_we;
 `endif // __icarus
    assign active_o = l_cyc;
 
 
    //-------------------------------------------------------------------------
    //  FSM for the Wishbone-like bus (master) interface.
+   //-------------------------------------------------------------------------
    always @(posedge clk_i)
      if (rst_i || !l_cyc)
        spi <= #DELAY `SPI_IDLE;
@@ -100,12 +102,16 @@ module spi_slave
          `SPI_IDLE: spi <= #DELAY l_get && r_rdy ? `SPI_ADDR : spi;
 
          // first byte from SPI is the write-mode and address?
-         `SPI_ADDR: spi <= #DELAY l_put ? (b_we || !l_get ? `SPI_BUSY : `SPI_PULL) : spi;
+         `SPI_ADDR:
+           if (!l_wat) begin
+              spi <= #DELAY a_we || !l_get ? `SPI_BUSY : `SPI_PULL;
+           end
 
          `SPI_BUSY: begin
-            if (l_get && !we && !x_rdy)
+            if (l_get && !b_we && !r_rdy) // TODO: verify that this is OK!?
+//             if (l_get && !b_we && !x_rdy)
               spi <= #DELAY `SPI_PULL; // pull data from the WB bus
-            else if (l_put && we && !l_ack)
+            else if (!l_wat && b_we && !l_ack)
               spi <= #DELAY `SPI_PUSH; // push data onto the WB bus
             else                       // ignore reads when in write-mode,
               spi <= #DELAY spi;       // and writes when in read-mode
@@ -113,14 +119,15 @@ module spi_slave
 
          `SPI_PUSH: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
          `SPI_PULL: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
+         default:   spi <= #DELAY 'bx;
        endcase // case (spi)
 
    //-------------------------------------------------------------------------
    //  Generate the Wishbone-like flow-control signals.
-   wire                 a_pull = l_get && !b_we && !r_rdy;
+   wire                 a_pull = l_get && !a_we && !r_rdy;
    wire                 b_xfer = b_pull || b_push;
-   wire                 b_pull = l_get && !we && !r_rdy;
-   wire                 b_push = l_put &&  we && !l_ack;
+   wire                 b_pull = l_get && !b_we && !r_rdy;
+   wire                 b_push = !l_wat && b_we && !l_ack;
 
    always @(posedge clk_i)
      if (rst_i)
@@ -131,7 +138,7 @@ module spi_slave
 `ifdef __WB_CLASSIC
          `SPI_ADDR: {cyc_o, stb_o} <= #DELAY {a_pull, a_pull};
          `SPI_BUSY: {cyc_o, stb_o} <= #DELAY {b_xfer, b_xfer};
-         `SPI_PULL: {cyc_o, stb_o} <= #DELAY {cyc_o && !ack_i, cyc_o && !ack_i};
+         `SPI_PULL: {cyc_o, stb_o} <= #DELAY {!ack_i, !ack_i};
          `SPI_PUSH: {cyc_o, stb_o} <= #DELAY {!ack_i, !ack_i};
 `else
          `SPI_ADDR: {cyc_o, stb_o} <= #DELAY {a_pull || cyc_o && !ack_i, a_pull};
@@ -147,23 +154,20 @@ module spi_slave
    //-------------------------------------------------------------------------
    //  Gets the read#/write mode, and address, from the first byte of the SPI
    //  transaction.
-   //  NOTE: `we` stores the last-requested bus read#/write mode.
+   //  NOTE: `b_we` stores the last-requested bus read#/write mode.
    always @(posedge clk_i)
-     if (rst_i) we <= #DELAY 1'b0;
-     else if (l_put && !l_ack)
-       case (spi)
-         `SPI_ADDR: {we, adr_o} <= #DELAY {l_drx[MSB], l_drx[ASB:0]};
-         default:   {we, adr_o} <= #DELAY {we, adr_o};
-       endcase // case (spi)
+     if (!l_wat && !l_ack && a_spi)
+       {b_we, adr_o} <= #DELAY {l_drx[MSB], l_drx[ASB:0]};
 
    //-------------------------------------------------------------------------
    //  Data received from `spi_layer` needs to be acknowledged.
    always @(posedge clk_i)
-     if (!rst_i && l_cyc && l_put && !l_ack)
+     if (!rst_i && !l_wat && !l_ack)
        case (spi)
          `SPI_ADDR: l_ack <= #DELAY 1;
          `SPI_BUSY: l_ack <= #DELAY 1;
          `SPI_PUSH: l_ack <= #DELAY ack_i;
+         default:   l_ack <= #DELAY 0;
        endcase // case (spi)
      else
        l_ack <= #DELAY 0;
@@ -171,38 +175,35 @@ module spi_slave
    //-------------------------------------------------------------------------
    //  Data requested by `spi_layer` needs to be flagged as ready.
    //  NOTE: Readies from the Wishbone-like SoC bus (which are just `ack_i`,
-   //    when is asserted, for bus read cycles), fall right through, without
-   //    being registered first, saving a cycle of latency.
-   wire [MSB:0] w_dtx = spi == `SPI_IDLE || spi == `SPI_ADDR ? status_i : dat_i;
-   reg [MSB:0]  l_dtx;
-   reg          r_rdy = 0, r_wat = 0;
-   wire         w_rdy = rdy_status || rdy_ignore;
-   wire         x_rdy = r_rdy || r_wat && ack_i;
-   wire         rdy_status = spi == `SPI_IDLE && l_get;
-   wire         rdy_ignore = l_get && (b_we && spi == `SPI_ADDR || we && spi == `SPI_BUSY);
+   //    when `cyc_o` is asserted, for bus read cycles), fall right through,
+   //    without being registered first, saving a cycle of latency.
+   reg                  r_rdy = 0, r_wat = 0;
+   wire                 x_rdy = r_rdy || r_wat && ack_i;
+   wire                 i_rdy = i_spi || a_we && a_spi || b_we && b_spi;
 
-   always @(posedge clk_i)
-     if (rst_i || r_rdy)
-       r_rdy <= #DELAY 0;
-     else
-       {r_rdy, l_dtx} <= #DELAY {w_rdy, r_wat && ack_i ? w_dtx : l_dtx};
+   //  Internal readies are registered.
+   //  `r_wat` is asserted when waiting for data from the bus.
+   always @(posedge clk_i) begin
+     r_rdy <= #DELAY rst_i || r_rdy ? 1'b0 : l_get && i_rdy;
+     r_wat <= #DELAY rst_i || ack_i ? 1'b0 : cyc_o && !b_we;
+   end
 
-   always @(posedge clk_i)
-     if (rst_i || r_rdy) r_wat <= #DELAY 0;
-     else                r_wat <= #DELAY cyc_o && !we && !ack_i;
+   //-------------------------------------------------------------------------
+   //  Data MUX to select between the status and bus data-sources.
+   wire [MSB:0]         x_dtx = i_spi || a_spi ? status_i : dat_i;
 
    //-------------------------------------------------------------------------
    //  Hold the data from `spi_layer` constant until the end of a `spi_layer`
    //  bus write cycle.
-   //  TODO: Unnecessary? Just pass the WB-like acknowledge through?
    always @(posedge clk_i)
-     if (l_put && we && !l_ack && spi == `SPI_BUSY)
-       dat_o <= #DELAY l_drx;
+     dat_o <= #DELAY !l_wat && !l_ack ? l_drx : dat_o;
+
 
    //-------------------------------------------------------------------------
    //  SPI-layer, and the domain-crossing subcircuits, of the interface.
    //-------------------------------------------------------------------------
-   spi_layer #( .WIDTH(WIDTH), .HEADER_BYTE(HEADER_BYTE) ) SPI_LAYER0
+   spi_layer #( .WIDTH(WIDTH), .FSIZE(2), .HEADER_BYTE(HEADER_BYTE)
+                ) SPI_LAYER0
      ( .clk_i(clk_i),
        .rst_i(rst_i),
        .cyc_o(l_cyc),
@@ -210,7 +211,7 @@ module spi_slave
        .rdy_i(x_rdy),
        .wat_o(l_wat),
        .ack_i(l_ack),
-       .dat_i(w_dtx),
+       .dat_i(x_dtx),
        .dat_o(l_drx),
 
        .overflow_o(overflow_o),

@@ -13,6 +13,7 @@
  *  + can the output-delay be run-time configurable?
  *  + change the RX-FIFO to just one bit wide, and deserialise in the bus
  *    domain? Can this cause problems for slow domains?
+ *  + check the timings of the various TX & RX edge configurations;
  * 
  */
 
@@ -53,6 +54,7 @@ module spi_layer
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
      parameter ASB   = WIDTH-2,
+     parameter FSIZE = 2,            // FIFO size (log2)
      parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
      parameter DELAY = 3)
    ( // Wishbone-like (bus master) interface:
@@ -133,7 +135,7 @@ module spi_layer
    //
    //-------------------------------------------------------------------------
    reg            tx_rst = 1'b1, tx_flg = 1'b0;
-   reg            spi_req = 0, dat_req_sync = 1, dat_req = 0;
+   reg            spi_req = 0, dat_req_sync = 1, dat_req_done = 0, dat_req = 0;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
@@ -187,6 +189,29 @@ module spi_layer
        dat_req <= #DELAY dat_req_sync;
      else
        dat_req <= #DELAY dat_req;
+
+   /*
+   always @(posedge clk_i or posedge spi_req)
+     if (spi_req)           dat_req_sync <= #DELAY 1;
+     else if (dat_req_sync) dat_req_sync <= #DELAY !dat_req_done;
+     else                   dat_req_sync <= #DELAY dat_req_sync;
+
+   always @(posedge clk_i)
+     if (rst_i || !spi_select || !dat_req_sync)
+       dat_req_done <= #DELAY 0;
+     else
+       dat_req_done <= #DELAY dat_req && rdy_i;
+
+   always @(posedge clk_i)
+     if (rst_i || !spi_select)
+       dat_req <= #DELAY 0;
+     else if (dat_req && rdy_i)
+       dat_req <= #DELAY 0;
+     else if (!dat_req)
+       dat_req <= #DELAY dat_req_sync && !dat_req_done;
+     else
+       dat_req <= #DELAY dat_req;
+    */
 
 
    //-------------------------------------------------------------------------
@@ -284,7 +309,7 @@ module spi_layer
    //  Asynchronous FIFO's for transmitting and receiving.
    //
    //-------------------------------------------------------------------------
-   afifo_gray #( .WIDTH(8), .ABITS(4) ) TX_FIFO0
+   afifo_gray #( .WIDTH(8), .ABITS(FSIZE) ) TX_FIFO0
      ( .rd_clk_i (SCK_tx),
        .rd_en_i  (tx_pull),
        .rd_data_o(tx_data),
@@ -300,7 +325,7 @@ module spi_layer
 
    // TODO: There is never more than one and a bit bytes stored within this
    //   FIFO, so should there be something more efficient?
-   afifo_gray #( .WIDTH(8), .ABITS(4) ) RX_FIFO0
+   afifo_gray #( .WIDTH(8), .ABITS(FSIZE) ) RX_FIFO0
      ( .rd_clk_i (clk_i),
        .rd_en_i  (ack_i),
        .rd_data_o(dat_o),

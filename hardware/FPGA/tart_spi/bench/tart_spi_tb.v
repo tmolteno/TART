@@ -35,10 +35,10 @@ module tart_spi_tb;
    //-------------------------------------------------------------------------
    //  Clocks:
    always #5  clk <= ~clk;
-//    always #4  SCK <= ~SCK;      // Fastest without warnings or errors
-   always #6  SCK <= ~SCK;
+   always #6  SCK <= ~SCK;      // Fastest without warnings or errors
 //    always #8  SCK <= ~SCK;
 //    always #10 SCK <= ~SCK;
+//    always #20 SCK <= ~SCK;
 
 
    //-------------------------------------------------------------------------

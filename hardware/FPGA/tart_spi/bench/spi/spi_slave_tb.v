@@ -155,6 +155,9 @@ module spi_slave_tb;
 
    wire [MSB:0] dat = rdy ? drx : 'bx;
 
+   assign s_bst = 1'b0;
+
+
    //-------------------------------------------------------------------------
    //  Devices Under Test (DUT's).
    //-------------------------------------------------------------------------
@@ -184,7 +187,6 @@ module spi_slave_tb;
        .rst_i(rst),
        .cyc_o(s_cyc),
        .stb_o(s_stb),
-       .bst_o(s_bst),
        .we_o (s_we),
        .ack_i(s_ack),
        .adr_o(s_adr),
