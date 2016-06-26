@@ -170,48 +170,28 @@ module spi_layer
    //-------------------------------------------------------------------------
    //  SPI transmission data prefetch.
    //-------------------------------------------------------------------------
-   // After a bit has been sent/received, issue a prefetch for the next byte.
+   //  After a bit has been sent/received, issue a prefetch for the next byte.
    always @(posedge SCK or posedge SSEL)
      if (SSEL)    spi_req <= #DELAY 0;
      else         spi_req <= #DELAY rx_count == 0;
 
    always @(posedge clk_i or posedge spi_req)
      if (spi_req)           dat_req_sync <= #DELAY 1;
-     else if (dat_req_sync) dat_req_sync <= #DELAY !dat_req;
-     else                   dat_req_sync <= #DELAY dat_req_sync;
-
-   always @(posedge clk_i)
-     if (rst_i)
-       dat_req <= #DELAY 0;
-     else if (dat_req && rdy_i)
-       dat_req <= #DELAY 0;
-     else if (!dat_req)
-       dat_req <= #DELAY dat_req_sync;
-     else
-       dat_req <= #DELAY dat_req;
-
-   /*
-   always @(posedge clk_i or posedge spi_req)
-     if (spi_req)           dat_req_sync <= #DELAY 1;
      else if (dat_req_sync) dat_req_sync <= #DELAY !dat_req_done;
      else                   dat_req_sync <= #DELAY dat_req_sync;
 
+   //-------------------------------------------------------------------------
+   //  Request more data when a new SPI byte transfer begins, but prevent
+   //  multiple requests for slow SPI clocks, using a one-shot.
    always @(posedge clk_i)
-     if (rst_i || !spi_select || !dat_req_sync)
+     if (rst_i) begin
        dat_req_done <= #DELAY 0;
-     else
-       dat_req_done <= #DELAY dat_req && rdy_i;
-
-   always @(posedge clk_i)
-     if (rst_i || !spi_select)
-       dat_req <= #DELAY 0;
-     else if (dat_req && rdy_i)
-       dat_req <= #DELAY 0;
-     else if (!dat_req)
-       dat_req <= #DELAY dat_req_sync && !dat_req_done;
-     else
-       dat_req <= #DELAY dat_req;
-    */
+       dat_req      <= #DELAY 0;
+     end
+     else begin
+        dat_req_done <= #DELAY dat_req_done ? dat_req_sync : dat_req && rdy_i;
+        dat_req      <= #DELAY dat_req_sync && !dat_req_done && !rdy_i;
+     end
 
 
    //-------------------------------------------------------------------------
