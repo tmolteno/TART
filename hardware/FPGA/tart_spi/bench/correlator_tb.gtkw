@@ -1,0 +1,241 @@
+[*]
+[*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
+[*] Mon Jun 27 05:00:30 2016
+[*]
+[dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.vcd"
+[dumpfile_mtime] "Mon Jun 27 05:00:21 2016"
+[dumpfile_size] 692649
+[savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.gtkw"
+[timestart] 0
+[size] 2560 1416
+[pos] -1 -1
+*-17.919212 1500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tart_correlator_tb.
+[treeopen] tart_correlator_tb.TART_CORRELATOR0.
+[treeopen] tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.
+[treeopen] tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.
+[treeopen] tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.
+[treeopen] tart_correlator_tb.TART_VISIBILITIES0.
+[sst_width] 223
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 447
+@800200
+-TOP
+@28
+tart_correlator_tb.clk_x
+tart_correlator_tb.rst
+tart_correlator_tb.get
+tart_correlator_tb.set
+tart_correlator_tb.fin
+@22
+tart_correlator_tb.val[7:0]
+tart_correlator_tb.dat[7:0]
+@c00200
+-SYS
+@28
+tart_correlator_tb.en
+tart_correlator_tb.strobe
+@22
+tart_correlator_tb.antenna[23:0]
+@28
+tart_correlator_tb.switching
+tart_correlator_tb.available
+@22
+tart_correlator_tb.blocksize[31:0]
+tart_correlator_tb.ptr[31:0]
+tart_correlator_tb.num[31:0]
+@1401200
+-SYS
+@800200
+-Bus
+@28
+tart_correlator_tb.cyc
+tart_correlator_tb.stb
+tart_correlator_tb.bst
+tart_correlator_tb.we
+tart_correlator_tb.ack
+tart_correlator_tb.wat
+tart_correlator_tb.adr[2:0]
+@22
+tart_correlator_tb.val[7:0]
+@c00022
+tart_correlator_tb.dat[7:0]
+@28
+(0)tart_correlator_tb.dat[7:0]
+(1)tart_correlator_tb.dat[7:0]
+(2)tart_correlator_tb.dat[7:0]
+(3)tart_correlator_tb.dat[7:0]
+(4)tart_correlator_tb.dat[7:0]
+(5)tart_correlator_tb.dat[7:0]
+(6)tart_correlator_tb.dat[7:0]
+(7)tart_correlator_tb.dat[7:0]
+@1401200
+-group_end
+@800200
+-Stream
+@28
+tart_correlator_tb.s_stb
+tart_correlator_tb.s_ack
+@1000200
+-Stream
+@28
+tart_correlator_tb.v_cyc
+tart_correlator_tb.v_stb
+tart_correlator_tb.v_bst
+tart_correlator_tb.v_we
+tart_correlator_tb.v_ack
+tart_correlator_tb.v_wat
+@22
+tart_correlator_tb.v_adr[11:0]
+tart_correlator_tb.v_drx[7:0]
+tart_correlator_tb.v_dtx[7:0]
+@200
+-
+@28
+tart_correlator_tb.WB_STREAM0.wrap_adr
+@23
+tart_correlator_tb.WB_STREAM0.next_adr[11:0]
+@1000200
+-Bus
+-TOP
+@c00200
+-Cor Bus
+@28
+tart_correlator_tb.c_cyc
+tart_correlator_tb.c_stb
+tart_correlator_tb.c_bst
+tart_correlator_tb.c_we
+tart_correlator_tb.c_ack
+@22
+tart_correlator_tb.c_adr[9:0]
+@1401200
+-Cor Bus
+@800200
+-TART
+@28
+tart_correlator_tb.TART_CORRELATOR0.cyc_i
+tart_correlator_tb.TART_CORRELATOR0.stb_i
+tart_correlator_tb.TART_CORRELATOR0.bst_i
+tart_correlator_tb.TART_CORRELATOR0.ack_o
+@22
+tart_correlator_tb.TART_CORRELATOR0.adr_i[9:0]
+@200
+-
+@22
+tart_correlator_tb.TART_CORRELATOR0.stbs[7:0]
+@28
+tart_correlator_tb.TART_CORRELATOR0.ack_w
+tart_correlator_tb.TART_CORRELATOR0.dev[2:0]
+@c00200
+-SYS
+@28
+tart_correlator_tb.TART_CORRELATOR0.active
+tart_correlator_tb.TART_CORRELATOR0.go
+tart_correlator_tb.TART_CORRELATOR0.wrap_blk
+@1401200
+-SYS
+@1000200
+-TART
+@c00200
+-Prefetch
+@28
+tart_correlator_tb.TART_VISIBILITIES0.PREFETCH0.a_cyc_o
+tart_correlator_tb.TART_VISIBILITIES0.PREFETCH0.a_stb_o
+tart_correlator_tb.TART_VISIBILITIES0.PREFETCH0.a_bst_o
+tart_correlator_tb.TART_VISIBILITIES0.PREFETCH0.a_we_o
+tart_correlator_tb.TART_VISIBILITIES0.PREFETCH0.a_ack_i
+@22
+tart_correlator_tb.TART_VISIBILITIES0.PREFETCH0.a_adr_o[9:0]
+@200
+-
+@1401200
+-Prefetch
+@c00200
+-SRAM
+@28
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_cyc_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_stb_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_bst_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_we_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_ack_o
+@22
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_adr_i[9:0]
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_dat_i[31:0]
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.a_dat_o[31:0]
+@200
+-
+@28
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_cyc_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_stb_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_bst_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_we_i
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_ack_o
+@22
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_adr_i[11:0]
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_dat_i[7:0]
+tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_dat_o[7:0]
+@1401200
+-SRAM
+@200
+-== Cors ==
+@c00200
+-Block0
+@28
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.cyc_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.stb_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.bst_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.ack_o
+@22
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.adr_i[6:0]
+@c00200
+-Corr00
+@28
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.cyc_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.stb_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.bst_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.we_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.ack_o
+@22
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.adr_i[4:0]
+@200
+-
+@28
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.en
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.sw
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.wrap_x_rd_adr
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.bank
+@22
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.adr_w[4:0]
+@1401200
+-Corr00
+@c00200
+-Corr01
+@28
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.cyc_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.stb_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.bst_i
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.ack_o
+@22
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.adr_i[4:0]
+@1401200
+-Corr01
+-Block0
+@c00200
+-Ones
+@28
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.cyc_i
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.stb_i
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.bst_i
+@200
+-
+@28
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.enable
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.switch
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.valid
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.wrap_x_rd_adr
+tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.bank
+@1401200
+-Ones
+[pattern_trace] 1
+[pattern_trace] 0

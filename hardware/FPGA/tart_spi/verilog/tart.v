@@ -373,9 +373,10 @@ module tart
          .dat_o(c_tdx),
 
          .enable(en),           // begins correlating once asserted
+         .blocksize(blocksize), // number of samples per visibility sum
          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
-         .switch(sw)            // asserts on bank-switch (sample domain)
+         .switch(switching)     // asserts on bank-switch (sample domain)
          );
 
    //-------------------------------------------------------------------------

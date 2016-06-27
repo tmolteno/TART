@@ -1,14 +1,14 @@
 `timescale 1ns/100ps
 /*
  * 
- * Manages the correlators, including its flags and settings.
- * Transfers visibilities from the correlators to a SRAM after each bank-swap.
+ * Manages fetching visibilities data from the correlators -- transferring
+ * visibilities from the correlators to a SRAM after each bank-swap.
  * 
  * NOTE:
  *  + 8-bit bus to the SPI interface, and 32-bit bus to the correlators;
  * 
  * TODO:
- *  + redirection ROM;
+ *  + redirection ROM?
  * 
  */
 
@@ -33,6 +33,7 @@ module tart_visibilities
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
     output             ack_o,
+    output             wat_o,
     input [CSB+2:0]    adr_i, // upper address-space for registers
     input [7:0]        byt_i,
     output [7:0]       byt_o,
@@ -49,7 +50,6 @@ module tart_visibilities
 
     // Status flags for the correlators and visibilities.
     input              switching, // inicates that banks have switched
-    output reg [MSB:0] blocksize = 0, // block size - 1
     output             available // asserted when a window is accessed
     );
 
@@ -72,31 +72,6 @@ module tart_visibilities
 
 
    //-------------------------------------------------------------------------
-   //  System registers.
-   //  NOTE: Addressed by `{3'b111, reg#}`.
-   //  TODO:
-   //-------------------------------------------------------------------------
-   //  Register#:
-   //    00  --  status register;
-   //    01  --  logarithm of the bit-width of the visibilities counter;
-   //
-   wire [7:0]          status = {available, 2'b00, count_log[4:0]};
-   reg [7:0]           count_log = 0;
-
-   // TODO: Should be computed from `count_log`, and synchronised across
-   //   domains.
-   always @(posedge clk_i)
-     if (rst_i) begin
-        count_log <= #DELAY 0;
-        blocksize <= #DELAY 0;
-     end
-     else if (cyc_i && stb_i && we_i && adr_i == 12'he01) begin
-        count_log <= #DELAY byt_i;
-        blocksize <= #DELAY (1 << byt_i[4:0]) - 1;
-     end
-
-
-   //-------------------------------------------------------------------------
    //  Cores that prefetch and store visibility data, to be transferred off-
    //  board via SPI.
    //-------------------------------------------------------------------------
@@ -107,6 +82,7 @@ module tart_visibilities
    //  Swap the LSB with the real/complex bank-select signal, so that real +
    //  complex pairs are read out together.
    assign adr_o = {adr_w[CSB:BBITS], adr_w[0], adr_w[BSB:1]};
+   assign wat_o = 1'b0;
 
    //  Prefetches data from the various correlators after each bank-switch,
    //  and then sends it on to a block SRAM.

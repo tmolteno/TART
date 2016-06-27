@@ -38,7 +38,7 @@ module tart_soc_tb;
    wire         spi_busy, aq_request;
    reg [7:0]    aq_count = 0;
    reg          aq_start = 0, aq_done = 1;
-   reg [23:0]   data [0:(1 << MSB)];
+   reg [23:0]   data [0:(1 << MSB)-1];
 
    wire         aq_debug_mode, aq_enabled;
    wire [2:0]   aq_sample_delay;
@@ -306,7 +306,6 @@ module tart_soc_tb;
    wire         reset;
    wire         reset_n = 1'b1;
 
-//    wb_reset #( .WIDTH(WIDTH) ) WB_RESET0
    tart_control #( .WIDTH(WIDTH) ) WB_RESET0
      ( .clk_i(b_clk),
        .rst_i(b_rst),

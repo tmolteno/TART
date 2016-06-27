@@ -28,11 +28,14 @@
  * 
  */
 
+`define __WB_CLASSIC
+// `undef  __WB_CLASSIC
+
 module wb_stream
   #(parameter WIDTH = 8,
     parameter MSB   = WIDTH-1,
-    parameter WORDS = 1 << WBITS,
     parameter WBITS = 10,
+    parameter WORDS = 1 << WBITS,
     parameter ASB   = WBITS-1,
     parameter START = 0,
     parameter LAST  = START+WORDS-1,
@@ -66,9 +69,13 @@ module wb_stream
     );
 
    // TODO: burst-transfer support?
+`ifdef __WB_CLASSIC
    wire                inc      = m_cyc_o && m_ack_i;
+`else
+   wire                inc      = m_cyc_o && m_stb_o && !m_wat_i;
+`endif
    wire                wrap_adr = m_adr_o == LAST;
-   wire                next_adr = wrap_adr ? START : m_adr_o + STEP;
+   wire [ASB:0]        next_adr = wrap_adr ? START : m_adr_o + STEP;
 
    //-------------------------------------------------------------------------
    //  Just pass through all of the signals, except for the address, which is
