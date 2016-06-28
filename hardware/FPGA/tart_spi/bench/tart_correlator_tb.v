@@ -1,4 +1,7 @@
 `timescale 1ns/100ps
+
+`include "../include/tartcfg.v"
+
 module tart_correlator_tb;
 
    parameter BLOCK = 32;        // Number of bits of a block

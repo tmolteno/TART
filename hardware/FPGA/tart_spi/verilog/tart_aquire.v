@@ -20,13 +20,11 @@
  * 
  */
 
-// Support CLASSIC Wishbone-like bus transactions?
-`define __WB_CLASSIC
-// `undef __WB_CLASSIC
-
+`include "tartcfg.v"
 
 //----------------------------------------------------------------------------
 //  TART DATA-AQUISITION UNIT REGISTERS
+//  TODO: Move into the above configuration file?
 //----------------------------------------------------------------------------
 // Raw antenna-data, read-back registers:
 `define AX_STREAM 0

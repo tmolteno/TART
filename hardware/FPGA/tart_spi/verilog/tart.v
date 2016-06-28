@@ -7,14 +7,7 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 //
 
-`define __USE_WISHBONE_CORES
-`define __USE_OLD_CLOCKS
-`define __512Mb_SDRAM
-
-// TODO: Not ready yet:
-// `define __USE_CORRELATORS
-`define __WB_CLASSIC
-// `undef __WB_CLASSIC
+`include "tartcfg.v"
 
 module tart
   (

@@ -28,8 +28,8 @@
  * 
  */
 
-`define __WB_CLASSIC
-// `undef  __WB_CLASSIC
+// TODO: Not very modular, as the rest of this module is not TART-specific.
+`include "tartcfg.v"
 
 module wb_stream
   #(parameter WIDTH = 8,

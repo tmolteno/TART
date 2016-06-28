@@ -22,6 +22,8 @@
  * 
  */
 
+`include "../include/tartcfg.v"
+
 // Bus transaction states.
 `define BUS_IDLE  0
 `define BUS_WAIT  1

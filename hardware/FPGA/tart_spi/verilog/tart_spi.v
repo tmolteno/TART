@@ -49,6 +49,8 @@ ANTENNA_DATA
  * 
  */
 
+`include "../include/tartcfg.v"
+
 // TART SPI-mapped IO states.
 `define TART_IDLE  0
 `define TART_START 1
@@ -56,8 +58,6 @@ ANTENNA_DATA
 `define TART_SEND  4
 `define TART_WRITE 8
 `define TART_BUS   4
-
-`define __WB_CLASSIC
 
 module tart_spi
   #( parameter ADDRESS = 12,

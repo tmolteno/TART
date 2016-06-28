@@ -17,6 +17,9 @@
  * 
  */
 
+// TODO: Not very modular, as the rest of this module is not TART-specific.
+`include "tartcfg.v"
+
 //----------------------------------------------------------------------------
 //
 //  Configuration options.
@@ -32,6 +35,7 @@
 // mode:
 // `define __LEGACY_MODE
 
+// TODO: Move these into the above configuration file?
 `ifdef __LEGACY_MODE
  `define TX_EDGE negedge
 `elsif __icarus
@@ -39,10 +43,6 @@
 `else
  `define TX_EDGE posedge
 `endif
-
-// Support CLASSIC Wishbone-like bus transactions?
-`define __WB_CLASSIC
-// `undef __WB_CLASSIC
 
 // Bus interface states.
 `define BUS_IDLE 0

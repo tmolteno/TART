@@ -1,5 +1,6 @@
 IVC=iverilog
-OPT=-D__icarus
+INC=../include/
+OPT=-D__icarus -I$(INC)
 
 OUT=../build
 

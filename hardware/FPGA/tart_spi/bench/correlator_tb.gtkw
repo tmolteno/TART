@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Mon Jun 27 05:00:30 2016
+[*] Tue Jun 28 02:02:15 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.vcd"
-[dumpfile_mtime] "Mon Jun 27 05:00:21 2016"
+[dumpfile_mtime] "Tue Jun 28 02:02:00 2016"
 [dumpfile_size] 692649
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
-[pos] -1 -1
-*-17.919212 1500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1281 -1
+*-17.935177 1500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_correlator_tb.
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.

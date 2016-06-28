@@ -17,9 +17,7 @@
  * 
  */
 
-// Support CLASSIC Wishbone-like bus transactions?
-`define __WB_CLASSIC
-// `undef __WB_CLASSIC
+`include "tartcfg.v"
 
 module tart_control
   #(parameter WIDTH = 8,

@@ -30,15 +30,14 @@
  * 
  */
 
+// TODO: Not very modular, as the rest of this module is not TART-specific.
+`include "tartcfg.v"
+
 `define SPI_IDLE 0
 `define SPI_ADDR 1
 `define SPI_BUSY 2
 `define SPI_PUSH 4
 `define SPI_PULL 8
-
-// Support CLASSIC Wishbone-like bus transactions?
-`define __WB_CLASSIC
-// `undef __WB_CLASSIC
 
 module spi_slave
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
