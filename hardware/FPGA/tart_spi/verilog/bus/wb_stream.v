@@ -1,6 +1,5 @@
 `timescale 1ns/100ps
 /*
- *
  * Module      : verilog/bus/wb_stream.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
@@ -70,7 +69,7 @@ module wb_stream
 
    // TODO: burst-transfer support?
 `ifdef __WB_CLASSIC
-   wire                inc      = m_cyc_o && m_ack_i;
+   wire                inc      = m_cyc_o && m_stb_o && m_ack_i;
 `else
    wire                inc      = m_cyc_o && m_stb_o && !m_wat_i;
 `endif

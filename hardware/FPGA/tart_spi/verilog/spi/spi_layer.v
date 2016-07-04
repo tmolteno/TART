@@ -1,6 +1,15 @@
 `timescale 1ns/1ps
-
 /*
+ * Module      : verilog/spi/spi_layer.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
  * SPI clock-domain circuitry, plus the cross-domain synchronisers and
  * asynchronous FIFO's.
  * 

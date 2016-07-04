@@ -7,7 +7,7 @@ module tart_correlator_tb;
    parameter BLOCK = 32;        // Number of bits of a block
    parameter MSB   = BLOCK-1;
    parameter ACCUM = BLOCK;     // Bit-width of the accumulators
-   parameter ABITS = 12;
+   parameter ABITS = 12;        // Address bit-width
    parameter ASB   = ABITS-1;
    parameter BBITS = 8;
    parameter BSB   = BBITS-1;
@@ -16,7 +16,7 @@ module tart_correlator_tb;
    parameter COUNT = 3; // (1 << 3) - 1;
    parameter NREAD = 8;
 
-   wire [MSB:0] c_dat, c_val, blocksize;
+   wire [MSB:0] c_dat, c_val, blocksize, checksum;
    wire [9:0]   c_adr;
    wire [BSB:0] dat, val, drx;
    reg          clk_x = 1, b_clk = 1, rst = 0, en = 0;
@@ -67,9 +67,14 @@ module tart_correlator_tb;
       while (!switching) #10;
       while (switching) #10;
 
-      $display("%8t: Reading back visibilities (bank 0):", $time);
-      while (!available) #10;
-      #10 get <= 1; num <= NREAD; ptr <= 3'h4;
+      $display("\n%8t: Reading back a single visibility byte (bank 0):", $time);
+      while (!newblock) #10;
+      #10 get <= 1; num <= 1; ptr <= 3'h4;
+      while (!fin) #10;
+
+      $display("\n%8t: Reading back more visibilities (bank 0):", $time);
+      while (fin) #10;
+      #10 get <= 1; num <= NREAD-1; ptr <= 3'h4;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -79,8 +84,8 @@ module tart_correlator_tb;
       #10 en <= 0;
 
       //----------------------------------------------------------------------
-      $display("%8t: Reading back visibilities (bank 1):", $time);
-      while (!available) #10;
+      $display("\n%8t: Reading back visibilities (bank 1):", $time);
+      while (!newblock) #10;
       #10 get <= 1; num <= NREAD; ptr <= 3'h4;
       while (!fin) #10;
 
@@ -106,7 +111,6 @@ module tart_correlator_tb;
    wire       cyc_n = cyc && rxd == 1 && ack;
    integer    rxd = 0;
 
-`undef  __WB_CLASSIC
 `ifndef __WB_CLASSIC
    always @(posedge b_clk)
      if (rst) bst <= #DELAY 0;
@@ -133,10 +137,10 @@ module tart_correlator_tb;
         if (!stb && ack) $display("%8t: transfer ending", $time);
 `ifdef __WB_CLASSIC
         {fin, get, set} <= #DELAY { cyc_n, get, set};
-        {cyc, stb, we } <= #DELAY {!cyc_n, bst || wat, we && num > 0};
+        {cyc, stb, we } <= #DELAY {!cyc_n, !cyc_n, we && !cyc_n};
 `else
         {fin, get, set} <= #DELAY { cyc_n, get, set};
-        {cyc, stb, we } <= #DELAY {!cyc_n, bst || wat, we && num > 0};
+        {cyc, stb, we } <= #DELAY {!cyc_n, bst || wat, we && !cyc_n};
 `endif
      end
      else begin
@@ -147,8 +151,13 @@ module tart_correlator_tb;
    always @(posedge b_clk)
      if (set || get) adr <= #DELAY ptr;
 
+`ifdef __WB_CLASSIC
+   always @(posedge b_clk)
+     if (cyc && stb && ack) num <= #DELAY num - 1;
+`else
    always @(posedge b_clk)
      if (cyc && stb && !wat) num <= #DELAY num - 1;
+`endif // __WB_CLASSIC
 
    always @(posedge b_clk)
      if (get || set) rxd <= num;
@@ -241,9 +250,9 @@ module tart_correlator_tb;
    //-------------------------------------------------------------------------
    //     DATA-AQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-   wire [7:0] s_dat;
-   wire       s_cyc, s_stb, s_we, s_ack;
-   reg        wat = 0;
+   wire [BSB:0] s_dat;
+   wire         s_cyc, s_stb, s_we, s_ack;
+   reg          wat = 0;
 
    always @(posedge b_clk)
      wat <= #DELAY stb && bst && !ack;
@@ -270,8 +279,10 @@ module tart_correlator_tb;
        .vx_we_o (s_we ),
        .vx_ack_i(s_ack),
        .vx_dat_i(s_dat),
-       .available(available),
+       .newblock(newblock),
        .accessed(accessed),
+       .available(available),
+       .checksum(checksum),
        .blocksize(blocksize),
 
        .aq_debug_mode(aq_debug_mode),
@@ -288,7 +299,7 @@ module tart_correlator_tb;
 
    wb_stream
      #(  .WIDTH (BBITS),
-         .WORDS (NREAD),
+         .WORDS (NREAD << 2),
          .WBITS (ABITS),
          .DELAY (DELAY)
          ) WB_STREAM0
@@ -319,7 +330,7 @@ module tart_correlator_tb;
    //-------------------------------------------------------------------------
    tart_visibilities
      #(  .BLOCK (BLOCK),
-         .COUNT (24),
+         .COUNT (NREAD),
          .MRATE (MRATE),
          .DELAY (DELAY)
          ) TART_VISIBILITIES0
@@ -346,7 +357,8 @@ module tart_correlator_tb;
          .dat_o(c_val),
 
          .switching(switching),
-         .available(available)
+         .available(newblock),
+         .checksum (checksum)
          );
 
    //-------------------------------------------------------------------------
@@ -357,12 +369,12 @@ module tart_correlator_tb;
          .DELAY (DELAY)
          ) TART_CORRELATOR0
        ( .clk_x(clk_x),
-         .rst(rst),
-
+         .rst  (rst),
          .clk_i(b_clk),
+
          .cyc_i(c_cyc),
          .stb_i(c_stb),
-         .we_i (c_we),
+         .we_i (c_we ),
          .bst_i(c_bst),
          .ack_o(c_ack),
          .adr_i(c_adr),

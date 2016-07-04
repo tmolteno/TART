@@ -1,7 +1,19 @@
 `timescale 1ns/100ps
 /*
- *
+ * Module      : verilog/tart_aquire.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
  * Time-multiplexed correlator block.
+ * 
+ * This version operates the Xilinx SRAM's in Simple Dual-Port mode, to make
+ * better use of the available SRAM resources.
  * 
  * NOTE:
  *  + typically several of these would be attached to a common set of antenna
@@ -15,14 +27,24 @@
  *  + potentially uses quite a lot of the FPGA's distributed-RAM resources;
  *  + ignores write-attempts, but still generates acknowledges;
  * 
+ * Changelog:
+ *  + 04/07/2016  --  initial file (refactored from `correlator`);
+ * 
  */
 
-module correlator
-  #(parameter ACCUM = 32,
-    //      parameter 
+module correlator_sdp
+  #(parameter ACCUM = 32,            // Re/Im accumulator bit-widths
+    parameter MSB   = ACCUM - 1,
+    parameter WIDTH = ACCUM + ACCUM, // Combined Re & Im components
+    parameter WSB   = WIDTH - 1,
+    parameter BADDR = 8,        // Buffer address bit-width
+    parameter ASB   = BADDR - 1,
+    parameter BSIZE = 1 << BADDR,
+    parameter MRATE = 12,       // Time-multiplexing rate
+    parameter MBITS = 4,
+    parameter TSB   = MBITS - 1,
     // Pairs of antennas to correlate:
     parameter PAIRS = 120'hb1a191817161b0a090807060,
-    parameter MSB   = ACCUM - 1,
     parameter DELAY = 3)
    (
     input              clk_x, // correlator clock
@@ -51,23 +73,32 @@ module correlator
 
 
    //-------------------------------------------------------------------------
-   //  Distributed RAM's for the accumulators.
+   //  Xilinx Distributed & Block RAM's for the accumulators & visibilities.
    //-------------------------------------------------------------------------
-   // For Xilinx FPGA's, this should be two `RAM32M's.
-   reg [MSB:0]         cosram[0:31];
-   reg [MSB:0]         sinram[0:31];
+   // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
+   // mode.
+   reg [MSB:0]         cosram[0:MRATE-1];
+   reg [MSB:0]         sinram[0:MRATE-1];
 
    reg [MSB:0]         dcos, dsin;
    wire [MSB:0]        qcos, qsin;
    //    wire [MSB:0]    dcos = cosram[{bank, x_rd_adr}];
    //    wire [MSB:0]    dsin = sinram[{bank, x_rd_adr}];
 
-   reg                 bank = 0, swap = 0, clear = 0;
-   reg [3:0]           x_rd_adr = 0;
-   reg [4:0]           x_wt_adr = 0, x_wr_adr = 0;
-   wire                wrap_x_rd_adr = x_rd_adr == 11;
-   wire [3:0]          next_x_rd_adr = wrap_x_rd_adr ? 0 : x_rd_adr + 1 ;
+   // Xilinx Block RAM for the buffered, visibilities data.
+   reg [WSB:0]         visram[0:BSIZE-1];
+   reg [ASB:0]         vaddr = 0;
 
+   reg                 bank = 0, swap = 0, clear = 0;
+   reg [TSB:0]         x_rd_adr = 0;
+   reg [4:0]           x_wt_adr = 0, x_wr_adr = 0;
+   wire                wrap_x_rd_adr = x_rd_adr == MRATE-1;
+   wire [TSB:0]        next_x_rd_adr = wrap_x_rd_adr ? 0 : x_rd_adr + 1 ;
+
+
+   //-------------------------------------------------------------------------
+   //  Correlator memories.
+   //-------------------------------------------------------------------------
    // Pipelined correlator requires cycles for:
    //   { read, MAC, write } .
    always @(posedge clk_x)
@@ -136,7 +167,18 @@ module correlator
    always @(posedge clk_i)
      if (rst) bank_n <= #DELAY 1;
      else     bank_n <= #DELAY ~bank;
-   
+
+
+   //-------------------------------------------------------------------------
+   //  WB-connected visibilites buffer.
+   //-------------------------------------------------------------------------
+   //  Write the current sums to the BRAM, so when a bank-switch occurs, the
+   //  buffer already contains the desired visibilities.
+   wire       vis_adr;
+
+   always @(posedge clk_x)
+     if (valid) visram[vaddr] <= #DELAY {qsin, qcos};
+
 
    //-------------------------------------------------------------------------
    //  Select pairs of antenna to correlate.
@@ -145,7 +187,6 @@ module correlator
    wire [9:0]  pairs_index = pairs[x_rd_adr];
    wire [4:0]  a_index = pairs_index[4:0];
    wire [4:0]  b_index = pairs_index[9:5];
-//    reg [9:0]   pairs[0:11];
    wire [9:0]  pairs[0:11];
    reg         go = 0, ar, br, bi;
 
@@ -161,36 +202,6 @@ module correlator
    assign pairs[09] = pairs_wide[ 99: 90];
    assign pairs[10] = pairs_wide[109:100];
    assign pairs[11] = pairs_wide[119:110];
-
-      /*
-   initial begin : PAIRS_ROM
-      pairs[00] = pairs_wide[  9:  0];
-      pairs[01] = pairs_wide[ 19: 10];
-      pairs[02] = pairs_wide[ 29: 20];
-      pairs[03] = pairs_wide[ 39: 30];
-      pairs[04] = pairs_wide[ 49: 40];
-      pairs[05] = pairs_wide[ 59: 50];
-      pairs[06] = pairs_wide[ 69: 60];
-      pairs[07] = pairs_wide[ 79: 70];
-      pairs[08] = pairs_wide[ 89: 80];
-      pairs[09] = pairs_wide[ 99: 90];
-      pairs[10] = pairs_wide[109:100];
-      pairs[11] = pairs_wide[119:110];
-
-      pairs[00] = pairs_wide[ 7: 0];
-      pairs[01] = pairs_wide[15: 8];
-      pairs[02] = pairs_wide[23:16];
-      pairs[03] = pairs_wide[31:24];
-      pairs[04] = pairs_wide[39:32];
-      pairs[05] = pairs_wide[47:40];
-      pairs[06] = pairs_wide[55:48];
-      pairs[07] = pairs_wide[63:56];
-      pairs[08] = pairs_wide[71:64];
-      pairs[09] = pairs_wide[79:72];
-      pairs[10] = pairs_wide[87:80];
-      pairs[11] = pairs_wide[95:88];
-   end // block: PAIRS_ROM
-       */
 
    // Add a cycle of latency to wait for the RAM read.
    always @(posedge clk_x) begin
@@ -228,4 +239,4 @@ module correlator
          );
 
 
-endmodule // correlator
+endmodule // correlator_sdp

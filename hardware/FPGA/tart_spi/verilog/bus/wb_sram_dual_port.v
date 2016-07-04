@@ -72,7 +72,11 @@ module wb_sram_dual_port
    //-------------------------------------------------------------------------
    always @(posedge a_clk_i)
      if (rst_i) a_ack_o <= #DELAY 0;
+`ifdef __WB_CLASSIC
+     else       a_ack_o <= #DELAY a_cyc_i && a_stb_i && !a_ack_o;
+`else
      else       a_ack_o <= #DELAY a_cyc_i && a_stb_i;
+`endif
 
    // SRAM reads & writes.
    always @(posedge a_clk_i)
@@ -90,7 +94,11 @@ module wb_sram_dual_port
 
    always @(posedge b_clk_i)
      if (rst_i) b_ack_o <= #DELAY 0;
+`ifdef __WB_CLASSIC
+     else       b_ack_o <= #DELAY b_cyc_i && b_stb_i && !b_ack_o;
+`else
      else       b_ack_o <= #DELAY b_cyc_i && b_stb_i;
+`endif
 
    // SRAM reads & writes.
    always @(posedge b_clk_i)

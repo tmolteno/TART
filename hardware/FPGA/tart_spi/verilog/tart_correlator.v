@@ -1,6 +1,15 @@
 `timescale 1ns/100ps
 /*
- *
+ * Module      : verilog/tart_correlator.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
  * Top-level of the TART, time-multiplexed block of correlator-blocks.
  * 
  * NOTE:

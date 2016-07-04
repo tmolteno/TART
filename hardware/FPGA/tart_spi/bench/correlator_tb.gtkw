@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Tue Jun 28 02:02:15 2016
+[*] Wed Jun 29 04:53:42 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.vcd"
-[dumpfile_mtime] "Tue Jun 28 02:02:00 2016"
-[dumpfile_size] 692649
+[dumpfile_mtime] "Wed Jun 29 04:52:17 2016"
+[dumpfile_size] 673847
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
-[pos] -1281 -1
-*-17.935177 1500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-17.852507 1513000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_correlator_tb.
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.
@@ -17,7 +17,7 @@
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.ONES_COUNT0.
 [treeopen] tart_correlator_tb.TART_VISIBILITIES0.
 [sst_width] 223
-[signals_width] 142
+[signals_width] 150
 [sst_expanded] 1
 [sst_vpaned_height] 447
 @800200
@@ -31,7 +31,7 @@ tart_correlator_tb.fin
 @22
 tart_correlator_tb.val[7:0]
 tart_correlator_tb.dat[7:0]
-@c00200
+@800200
 -SYS
 @28
 tart_correlator_tb.en
@@ -40,12 +40,17 @@ tart_correlator_tb.strobe
 tart_correlator_tb.antenna[23:0]
 @28
 tart_correlator_tb.switching
+@29
+tart_correlator_tb.newblock
+@28
 tart_correlator_tb.available
+tart_correlator_tb.accessed
 @22
+tart_correlator_tb.checksum[31:0]
 tart_correlator_tb.blocksize[31:0]
 tart_correlator_tb.ptr[31:0]
 tart_correlator_tb.num[31:0]
-@1401200
+@1000200
 -SYS
 @800200
 -Bus
@@ -94,7 +99,7 @@ tart_correlator_tb.v_dtx[7:0]
 -
 @28
 tart_correlator_tb.WB_STREAM0.wrap_adr
-@23
+@22
 tart_correlator_tb.WB_STREAM0.next_adr[11:0]
 @1000200
 -Bus

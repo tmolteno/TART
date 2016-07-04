@@ -1,6 +1,5 @@
 `timescale 1ns/1ps
 /*
- *
  * Module      : verilog/spi/spi_slave.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016

@@ -1,4 +1,20 @@
 `timescale 1ns/100ps
+/*
+ * Module      : verilog/dram_prefetch.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * Prefetches streaming data from the SDRAM controller.
+ * 
+ * TODO:
+ * 
+ */
 
 // Data prefetcher states.
 `define PRE_EMPTY 0

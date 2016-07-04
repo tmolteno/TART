@@ -1,5 +1,14 @@
 `timescale 1ns/100ps
 /*
+ * Module      : verilog/tart_aquire.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
  * TART's data-aquisition control subcircuit, connected via a Wishbone-like
  * interconnect.
@@ -31,10 +40,12 @@
 `define AX_DATA1  1
 `define AX_DATA2  2
 `define AX_DATA3  3
+// `define AX_CHKSUM 1
 
 // Visibilities access, status, and control:
 `define VX_STREAM 4
 `define VX_STATUS 5
+// `define VX_CHKSUM 2
 
 // Data-aquisition status, and control:
 `define AQ_DEBUG  6
@@ -74,8 +85,10 @@ module tart_aquire
     output             vx_we_o,
     input              vx_ack_i,
     input [MSB:0]      vx_dat_i,
-    input              available,
-    input              accessed,
+    input              newblock,
+    input [ACCUM-1:0]  checksum,
+    output reg         accessed = 0,
+    output reg         available = 0,
     output [ACCUM-1:0] blocksize,
 
     output reg         aq_debug_mode = 0,
@@ -95,6 +108,22 @@ module tart_aquire
 
    wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
+
+
+   //-------------------------------------------------------------------------
+   //  Manage system flags.
+   //-------------------------------------------------------------------------
+   assign x_ack = cyc_i && stb_i && !we_i && !ack_o &&
+                  adr_i == `VX_STREAM && vx_ack_i;
+
+   always @(posedge clk_i)
+     if (newblock) accessed <= #DELAY 0;
+     else          accessed <= #DELAY accessed || x_ack;
+
+   always @(posedge clk_i)
+     if (rst_i)         available <= #DELAY 0;
+     else if (newblock) available <= #DELAY 1;
+     else if (x_ack)    available <= #DELAY 0;
 
 
    //-------------------------------------------------------------------------

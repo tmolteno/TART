@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 
 // Support CLASSIC Wishbone-like bus transactions?
 `define __WB_CLASSIC

@@ -37,4 +37,4 @@ dir:
 
 .PHONY: clean
 clean:
-	rm -f *~ tart.out
+	rm -f *~ $(OUT)/tart.out

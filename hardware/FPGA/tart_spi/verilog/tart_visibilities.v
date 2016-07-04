@@ -12,6 +12,8 @@
  * 
  */
 
+`include "tartcfg.v"
+
 module tart_visibilities
   #(parameter BLOCK = 32,
     parameter MSB   = BLOCK-1,
@@ -44,13 +46,15 @@ module tart_visibilities
     output             we_o, // writes only work for system registers
     output             bst_o, // Bulk Sequential Transfer?
     input              ack_i,
+    input              wat_i, // TODO
     output [CSB:0]     adr_o, // upper address-space for registers
     input [MSB:0]      dat_i,
     output [MSB:0]     dat_o,
 
     // Status flags for the correlators and visibilities.
     input              switching, // inicates that banks have switched
-    output             available // asserted when a window is accessed
+    output             available, // asserted when a window is accessed
+    output reg [MSB:0] checksum = 0
     );
 
    //-------------------------------------------------------------------------
@@ -69,6 +73,17 @@ module tart_visibilities
    reg [7:0]           sram1 [0:COUNT-1];
    reg [7:0]           sram2 [0:COUNT-1];
    reg [7:0]           sram3 [0:COUNT-1];
+
+
+   //-------------------------------------------------------------------------
+   //  Compute checksums, to be used to verify off-chip transfers.
+   //-------------------------------------------------------------------------
+   //  TODO: Just use XOR?
+   always @(posedge clk_i)
+     if (switching)
+       checksum <= #DELAY 0;
+     else if (cyc_o && ack_i)
+       checksum <= #DELAY checksum + dat_i;
 
 
    //-------------------------------------------------------------------------
@@ -99,6 +114,7 @@ module tart_visibilities
        .a_we_o (we_o),
        .a_bst_o(bst_o),
        .a_ack_i(ack_i),
+//        .a_wat_i(wat_i), // TODO:
        .a_adr_o(adr_w),
        .a_dat_i(dat_i),
        .a_dat_o(dat_o),
@@ -108,6 +124,7 @@ module tart_visibilities
        .b_we_o (p_we),
        .b_bst_o(p_bst),
        .b_ack_i(p_ack),
+//        .b_wat_i(p_wat), // TODO:
        .b_adr_o(p_adr),
        .b_dat_i(p_val),
        .b_dat_o(p_dat)

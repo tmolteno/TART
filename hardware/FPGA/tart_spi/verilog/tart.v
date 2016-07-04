@@ -51,7 +51,13 @@ module tart
 `endif // !`ifdef __512Mb_SDRAM
    parameter SDRAM_STARTUP_CYCLES = 10100; // -- 100us, plus a little more, @ 100MHz
 
+   //  Simulation settings:
+   parameter DELAY = 3;
+
    wire               reset_n, reset;
+
+   assign led = tart_state >= 2; // asserted when data can be read back
+
 
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
@@ -72,7 +78,8 @@ module tart
        .clk(rx_clk_16_buffered), // 16.368 MHZ buffered
        .reset_n(reset_n),
        .status_n(status_n),
-       .clk6x(fpga_clk)         // 16.368x6 = 98.208 MHz
+       .clk6x(fpga_clk),         // 16.368x6 = 98.208 MHz
+       .clk12x(clk_x)         // 16.368x6 = 98.208 MHz
        );
 `endif // __USE_OLD_CLOCKS
 
@@ -202,30 +209,48 @@ module tart
    //  TART's system-wide, Wishbone-like interconnect and peripherals.
    //
    //-------------------------------------------------------------------------
-   parameter WIDTH = 8;         // bus parameters
-   parameter MSB   = WIDTH-1;
-   parameter ASB   = WIDTH-2;
-   parameter DELAY = 3;
+   //  Visibilities/correlator settings.
+   parameter ACCUM = `ACCUM_BITS; // Bit-width of the accumulators
+   parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
+   parameter MSB   = BLOCK-1;     // Data transfer MSB
+   parameter MRATE = `TMUX_RATE;  // Time-multiplexing rate
+   parameter COUNT = `VISB_LOG2;  // (1 << 3) - 1;
+   parameter NREAD = `READ_COUNT; // Number of visibilities to read back
+   parameter RBITS = `READ_BITS;  // = ceiling{log2(NREAD)};
+   parameter RSB   = RBITS-1;     // MSB of read-back address
 
-   parameter ACCUM = 32;        // correlator/visibilities parameters
-   parameter BLOCK = ACCUM;
-   parameter BSB   = BLOCK-1;
+   //  Wishbone settings.
+   parameter BBITS = `WBBUS_BITS; // Bit-width of the SoC Wishbone bus
+   parameter BSB   = BBITS-1;     // Bus data MSB
+   parameter WSB   = BBITS-2;     // SPI -> WB bus address-width
+   parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
+   parameter ASB   = ABITS-1;     // Address MSB
 
-   wire [MSB:0] b_dtx, b_drx;   // bus master's signals
-   wire [ASB:0] b_adr;
-   wire         b_clk = fpga_clk;
-//    wire         b_rst = 1'b0;
-   wire         b_rst = reset;
+   //  SPI -> WB bus signals.
+   wire [BSB:0] b_dtx, b_drx;   // bus master's signals
+   wire [WSB:0] b_adr;
    wire         b_cyc, b_stb, b_we, b_ack;
 
-   wire [MSB:0] r_drx, r_dtx;   // reset handler's signals
+   wire [BSB:0] r_drx, r_dtx;   // reset handler's signals
    wire         r_stb, r_ack;
 
-   wire [MSB:0] a_drx, a_dtx;   // data-aquisition controller's signals
+   wire [BSB:0] a_drx, a_dtx;   // data-aquisition controller's signals
    wire [2:0]   a_adr = b_adr[2:0];
    wire         a_stb, a_ack;
 
    reg          r_sel = 0, a_sel = 0;
+
+   //  WB signals for the streaming interface to the visibilities data.
+   wire [BSB:0] s_dat;
+   wire         s_cyc, s_stb, s_we, s_ack;
+
+   //  Aquisition-unit signals.
+   wire         newblock, accessed, available;
+   wire [MSB:0] checksum, blocksize;
+
+   //  Remap system signals to WB signals.
+   assign b_clk = fpga_clk;
+   assign b_rst = reset;
 
 
    //-------------------------------------------------------------------------
@@ -236,15 +261,12 @@ module tart
    wire spi_busy;
    wire [7:0] spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
                             spi_debug, tart_state[2:0]};
-//    wire [7:0] spi_status = {1'b1, debug_spi, 1'b1, spi_start_aq, spi_debug, 3'b101};
-//    wire [7:0] spi_status = 8'hbe;
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
 
    //  Address decoders for the Wishbone(-like) bus:
    assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
-//    assign r_stb = b_adr == 7'h0f && b_stb;     // decoder for reset
    assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
 
    assign b_ack = r_ack || a_ack;
@@ -269,7 +291,7 @@ module tart
    //-------------------------------------------------------------------------
    //     SPI SLAVE CORE with a WISHBONE(-like) INTERCONNECT
    //-------------------------------------------------------------------------
-   spi_slave #( .WIDTH(WIDTH) ) SPI_SLAVE0
+   spi_slave #( .WIDTH(BBITS) ) SPI_SLAVE0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
        .cyc_o(b_cyc),
@@ -294,7 +316,7 @@ module tart
    //-------------------------------------------------------------------------
    //     RESET HANDLER
    //-------------------------------------------------------------------------
-   tart_control #( .WIDTH(WIDTH), .RTIME(4) ) TART_CONTROL0
+   tart_control #( .WIDTH(BBITS), .RTIME(4) ) TART_CONTROL0
      ( .clk_i(b_clk),
        .rst_i(b_rst),
        .cyc_i(b_cyc),
@@ -316,10 +338,9 @@ module tart
    //-------------------------------------------------------------------------
    //     DATA-AQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-   assign led = tart_state >= 2; // asserted when data can be read back
-
-   tart_aquire #( .WIDTH(WIDTH) ) TART_AQUIRE0
-     ( .clk_i(b_clk),
+   tart_aquire #( .WIDTH(BBITS), .ACCUM(ACCUM) ) TART_AQUIRE0
+     ( // WB-like bus between SPI and TART's data:
+       .clk_i(b_clk),
        .rst_i(reset),
        .cyc_i(b_cyc),
        .stb_i(a_stb),
@@ -329,11 +350,26 @@ module tart
        .dat_i(a_dtx),
        .dat_o(a_drx),
 
+       //  DRAM (streaming) read-back signals:
        .data_ready  (data_out_ready),
        .data_request(request_from_spi),
        .data_in     (data_out[23:0]),
 
        .spi_busy(spi_busy),
+
+       //  Visibilities status & data access:
+       .vx_cyc_o(s_cyc),     // WB-like bus for visibilities read-back
+       .vx_stb_o(s_stb),
+       .vx_we_o (s_we ),
+       .vx_ack_i(s_ack),
+       .vx_dat_i(s_dat),
+       .newblock(newblock), // strobes when new block ready
+       .accessed(accessed), // asserts once visibilities are read back
+       .available(available),
+       .checksum(checksum),
+       .blocksize(blocksize),
+
+       //  Antenna capture & aquisition controls:
        .aq_debug_mode(spi_debug),
        .aq_enabled(spi_start_aq),
        .aq_sample_delay(data_sample_delay)
@@ -346,8 +382,101 @@ module tart
    //     CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
-   //  Correlator functional unit.
+
+   //  WB signals to access the prefetched visibilities (that have been
+   //  stored within a block SRAM).
+   wire [MSB:0] v_drx, v_dtx;
+   wire [RSB:0] v_adr;
+   wire         v_cyc, v_stb, v_bst, v_we, v_ack, v_wat;
+
+   //  WB signals between the visibilities-prefetch logic-core and the block
+   //  of correlators.
+   wire [MSB:0] c_drx, c_dtx;
+   wire [RSB:0] c_adr;
+   wire         c_cyc, c_stb, c_bst, c_we, c_ack, c_wat;
+
+
    //-------------------------------------------------------------------------
+   //  Streaming, visibilities-read-back logic-core.
+   //-------------------------------------------------------------------------
+   wb_stream
+     #(  .WIDTH (BLOCK),
+         .WORDS (NREAD << 2),
+         .WBITS (ABITS),
+         .DELAY (DELAY)
+         ) WB_STREAM0
+       ( .clk_i(b_clk),
+         .rst_i(reset),
+
+         .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
+         .m_stb_o(v_stb),       // sequentially
+         .m_we_o (v_we),
+         .m_bst_o(v_bst),
+         .m_ack_i(v_ack),
+         .m_wat_i(v_wat),
+         .m_adr_o(v_adr),
+         .m_dat_i(v_drx),
+         .m_dat_o(v_dtx),
+
+         .s_cyc_i(s_cyc),       // visibilities are streamed from here to the
+         .s_stb_i(s_stb),       // SPI module
+         .s_we_i (s_we),
+         .s_bst_i(1'b0),
+         .s_ack_o(s_ack),
+         .s_dat_i('bx),
+         .s_dat_o(s_dat)
+         );
+
+   //-------------------------------------------------------------------------
+   //  Visibilities read-back unit.
+   //-------------------------------------------------------------------------
+   tart_visibilities
+     #(  .BLOCK (BLOCK),
+         .COUNT (NREAD),
+         .MRATE (MRATE),
+         .DELAY (DELAY)
+         ) TART_VISIBILITIES0
+       ( .clk_i(b_clk),
+         .rst_i(reset),
+
+         .cyc_i(v_cyc),         // this bus accesses the prefetched bank of
+         .stb_i(v_stb),         // visibilities -- which are prefetched after
+         .we_i (v_we),          // every bank-switch
+         .bst_i(v_bst),
+         .ack_o(v_ack),
+         .wat_o(v_wat),
+         .adr_i(v_adr),
+         .byt_i(v_dtx),
+         .byt_o(v_drx),
+
+         .cyc_o(c_cyc),         // master interface that connects to the
+         .stb_o(c_stb),         // correlators, to read back their computed
+         .we_o (c_we),          // visibilities
+         .bst_o(c_bst),
+         .ack_i(c_ack),
+//          .wat_i(c_wat),
+         .adr_o(c_adr),
+         .dat_i(c_drx),
+         .dat_o(c_dtx),
+
+         .switching(switching), // strobes at every bank-switch (bus domain)
+         .available(newblock),  // strobes when new block is available
+         .checksum (checksum)   // computed checksum of block
+         );
+
+   //-------------------------------------------------------------------------
+   //     TOP-LEVEL CORRELATORS-BLOCK FUNCTIONAL UNIT.
+   //-------------------------------------------------------------------------
+   reg [3:0]    q_cnt = 0;
+   reg          strobe = 0;
+
+   always @(posedge clk_x)
+     if (reset) q_cnt <= #DELAY 0;
+     else       q_cnt <= #DELAY q_cnt == MRATE-1 ? 0 : q_cnt + 1;
+
+   always @(posedge clk_x)
+     strobe <= #DELAY q_cnt == MRATE >> 1;
+
    tart_correlator
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
@@ -362,74 +491,14 @@ module tart
          .bst_i(c_bst),
          .ack_o(c_ack),
          .adr_i(c_adr),
-         .dat_i(c_rdx),
-         .dat_o(c_tdx),
+         .dat_i(c_dtx),
+         .dat_o(c_drx),
 
-         .enable(en),           // begins correlating once asserted
+         .enable(spi_start_aq), // begins correlating once asserted
          .blocksize(blocksize), // number of samples per visibility sum
          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
          .switch(switching)     // asserts on bank-switch (sample domain)
-         );
-
-   //-------------------------------------------------------------------------
-   //  Visibilities read-back unit.
-   //-------------------------------------------------------------------------
-   tart_visibilities
-     #(  .BLOCK (BLOCK),
-         .DELAY (DELAY)
-         ) TART_VISIBILITIES0
-       ( .clk_i(b_clk),
-         .rst_i(reset),
-
-         .cyc_i(v_cyc),         // this bus accesses the prefetched bank of
-         .stb_i(v_stb),         // visibilities -- which are prefetched after
-         .we_i (v_we),          // every bank-switch
-         .bst_i(v_bst),
-         .ack_o(v_ack),
-         .adr_i(v_adr),
-         .dat_i(v_tdx),
-         .dat_o(v_rdx),
-
-         .cyc_o(c_cyc),         // master interface that connects to the
-         .stb_o(c_stb),         // correlators, to read back their computed
-         .we_o (c_we),          // visibilities
-         .bst_o(c_bst),
-         .ack_i(c_ack),
-         .adr_o(c_adr),
-         .dat_i(c_tdx),
-         .dat_o(c_rdx),
-
-         .switched(switched),   // strobes at every bank-switch (bus domain)
-         .accessed(accessed)    // asserts once visibilities are read back
-         );
-
-   //-------------------------------------------------------------------------
-   //  Streaming, visibilities-read-back logic-core.
-   //-------------------------------------------------------------------------
-   wb_stream
-     #(  .BLOCK (BLOCK),
-         .DELAY (DELAY)
-         ) WB_STREAM0
-       ( .clk_i(b_clk),
-         .rst_i(reset),
-
-         .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
-         .m_stb_o(v_stb),       // sequentially
-         .m_we_o (v_we),
-         .m_bst_o(v_bst),
-         .m_ack_i(v_ack),
-         .m_adr_o(v_adr),
-         .m_dat_i(v_tdx),
-         .m_dat_o(v_rdx),
-
-         .s_cyc_i(b_cyc),       // visibilities are streamed from here to the
-         .s_stb_i(s_stb),       // SPI module
-         .s_we_i (b_we),
-         .s_bst_i(s_bst),
-         .s_ack_o(s_ack),
-         .s_dat_i(s_tdx),
-         .s_dat_o(s_rdx)
          );
  `endif // __USE_CORRELATORS
 
