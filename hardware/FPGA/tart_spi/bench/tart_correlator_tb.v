@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 
-`include "../include/tartcfg.v"
+`include "tartcfg.v"
 
 module tart_correlator_tb;
 
@@ -15,9 +15,18 @@ module tart_correlator_tb;
    parameter DELAY = 3;
    parameter COUNT = 3; // (1 << 3) - 1;
    parameter NREAD = 8;
+   parameter BREAD = NREAD << 2;
+   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
+   parameter XSB   = XBITS-1;     // MSB of the block-counter
+`ifdef __USE_SDP_DSRAM
+   parameter CBITS = 15;
+`else
+   parameter CBITS = 10;
+`endif
+   parameter CSB   = CBITS-1;
 
    wire [MSB:0] c_dat, c_val, blocksize, checksum;
-   wire [9:0]   c_adr;
+   wire [CSB:0] c_adr;
    wire [BSB:0] dat, val, drx;
    reg          clk_x = 1, b_clk = 1, rst = 0, en = 0;
    reg          cyc = 0, stb = 0, we = 0, bst = 0;
@@ -74,7 +83,7 @@ module tart_correlator_tb;
 
       $display("\n%8t: Reading back more visibilities (bank 0):", $time);
       while (fin) #10;
-      #10 get <= 1; num <= NREAD-1; ptr <= 3'h4;
+      #10 get <= 1; num <= BREAD-1; ptr <= 3'h4;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -86,7 +95,7 @@ module tart_correlator_tb;
       //----------------------------------------------------------------------
       $display("\n%8t: Reading back visibilities (bank 1):", $time);
       while (!newblock) #10;
-      #10 get <= 1; num <= NREAD; ptr <= 3'h4;
+      #10 get <= 1; num <= BREAD; ptr <= 3'h4;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -251,8 +260,11 @@ module tart_correlator_tb;
    //     DATA-AQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
    wire [BSB:0] s_dat;
+   wire [XSB:0] v_blk;
    wire         s_cyc, s_stb, s_we, s_ack;
    reg          wat = 0;
+   wire         newblock, streamed, accessed, available, switching;
+   wire         aq_debug_mode, aq_enabled;
 
    always @(posedge b_clk)
      wat <= #DELAY stb && bst && !ack;
@@ -278,8 +290,10 @@ module tart_correlator_tb;
        .vx_stb_o(s_stb),
        .vx_we_o (s_we ),
        .vx_ack_i(s_ack),
+       .vx_blk_o(v_blk),
        .vx_dat_i(s_dat),
        .newblock(newblock),
+       .streamed(streamed), // has an entire block finished streaming?
        .accessed(accessed),
        .available(available),
        .checksum(checksum),
@@ -304,7 +318,7 @@ module tart_correlator_tb;
          .DELAY (DELAY)
          ) WB_STREAM0
        ( .clk_i(b_clk),
-         .rst_i(reset),
+         .rst_i(rst),
 
          .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
          .m_stb_o(v_stb),       // sequentially
@@ -322,7 +336,9 @@ module tart_correlator_tb;
          .s_bst_i(1'b0),
          .s_ack_o(s_ack),
          .s_dat_i('bx),
-         .s_dat_o(s_dat)
+         .s_dat_o(s_dat),
+
+         .wrapped(streamed)     // strobes when block has been streamed
          );
 
    //-------------------------------------------------------------------------
@@ -343,7 +359,11 @@ module tart_correlator_tb;
          .we_i (v_we),
          .ack_o(v_ack),
          .wat_o(v_wat),
+  `ifdef __USE_SDP_DSRAM
+         .adr_i({v_blk, v_adr}),
+  `else
          .adr_i(v_adr),
+  `endif
          .byt_i(v_dtx),
          .byt_o(v_drx),
 

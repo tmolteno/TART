@@ -369,6 +369,9 @@ module spi_target
    //-------------------------------------------------------------------------
    //  Transmission logic.
    //-------------------------------------------------------------------------
+   wire               tx_empty, tx_full;
+   wire               rx_empty, rx_full;
+
    // Output the header/status byte on SPI start, else transmit FIFO data.
    // Serialise the SPI data, sending MSB -> LSB.
    always @(`TX_EDGE SCK or posedge SSEL)

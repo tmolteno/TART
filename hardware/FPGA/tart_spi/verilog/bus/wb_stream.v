@@ -64,7 +64,9 @@ module wb_stream
     output             s_ack_o,
     output             s_wat_o,
     input [MSB:0]      s_dat_i,
-    output [MSB:0]     s_dat_o
+    output [MSB:0]     s_dat_o,
+
+    output reg         wrapped = 0
     );
 
    // TODO: burst-transfer support?
@@ -95,6 +97,11 @@ module wb_stream
    always @(posedge clk_i)
      if (rst_i)    m_adr_o <= #DELAY START;
      else if (inc) m_adr_o <= #DELAY next_adr;
+
+   //  Strobe the `wrapped` signal after each complete transfer.
+   always @(posedge clk_i)
+     if (!rst_i && inc) wrapped <= #DELAY wrap_adr;
+     else               wrapped <= #DELAY 0;
 
 
 endmodule // wb_stream

@@ -63,6 +63,7 @@ module correlator
    //    wire [MSB:0]    dsin = sinram[{bank, x_rd_adr}];
 
    reg                 bank = 0, swap = 0, clear = 0;
+   wire                oc, os, valid;
    reg [3:0]           x_rd_adr = 0;
    reg [4:0]           x_wt_adr = 0, x_wr_adr = 0;
    wire                wrap_x_rd_adr = x_rd_adr == 11;

@@ -225,6 +225,8 @@ module tart
    parameter WSB   = BBITS-2;     // SPI -> WB bus address-width
    parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
    parameter ASB   = ABITS-1;     // Address MSB
+   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
+   parameter XSB   = XBITS-1;     // MSB of the block-counter
 
    //  SPI -> WB bus signals.
    wire [BSB:0] b_dtx, b_drx;   // bus master's signals
@@ -242,10 +244,11 @@ module tart
 
    //  WB signals for the streaming interface to the visibilities data.
    wire [BSB:0] s_dat;
+   wire [XSB:0] v_blk;
    wire         s_cyc, s_stb, s_we, s_ack;
 
    //  Aquisition-unit signals.
-   wire         newblock, accessed, available;
+   wire         newblock, streamed, accessed, available;
    wire [MSB:0] checksum, blocksize;
 
    //  Remap system signals to WB signals.
@@ -362,8 +365,10 @@ module tart
        .vx_stb_o(s_stb),
        .vx_we_o (s_we ),
        .vx_ack_i(s_ack),
+       .vx_blk_o(v_blk),
        .vx_dat_i(s_dat),
        .newblock(newblock), // strobes when new block ready
+       .streamed(streamed), // has an entire block finished streaming?
        .accessed(accessed), // asserts once visibilities are read back
        .available(available),
        .checksum(checksum),
@@ -385,22 +390,22 @@ module tart
 
    //  WB signals to access the prefetched visibilities (that have been
    //  stored within a block SRAM).
-   wire [MSB:0] v_drx, v_dtx;
-   wire [RSB:0] v_adr;
+   wire [BSB:0] v_drx, v_dtx;
+   wire [ASB:0] v_adr;
    wire         v_cyc, v_stb, v_bst, v_we, v_ack, v_wat;
 
    //  WB signals between the visibilities-prefetch logic-core and the block
    //  of correlators.
-   wire [MSB:0] c_drx, c_dtx;
-   wire [RSB:0] c_adr;
-   wire         c_cyc, c_stb, c_bst, c_we, c_ack, c_wat;
+   wire [RSB+XBITS:0] c_adr;
+   wire [MSB:0]       c_drx, c_dtx;
+   wire               c_cyc, c_stb, c_bst, c_we, c_ack, c_wat;
 
 
    //-------------------------------------------------------------------------
    //  Streaming, visibilities-read-back logic-core.
    //-------------------------------------------------------------------------
    wb_stream
-     #(  .WIDTH (BLOCK),
+     #(  .WIDTH (BBITS),
          .WORDS (NREAD << 2),
          .WBITS (ABITS),
          .DELAY (DELAY)
@@ -424,7 +429,9 @@ module tart
          .s_bst_i(1'b0),
          .s_ack_o(s_ack),
          .s_dat_i('bx),
-         .s_dat_o(s_dat)
+         .s_dat_o(s_dat),
+
+         .wrapped(streamed)     // strobes when block has been streamed
          );
 
    //-------------------------------------------------------------------------
@@ -445,7 +452,11 @@ module tart
          .bst_i(v_bst),
          .ack_o(v_ack),
          .wat_o(v_wat),
+  `ifdef __USE_SDP_DSRAM
+         .adr_i({v_blk, v_adr}),
+  `else
          .adr_i(v_adr),
+  `endif
          .byt_i(v_dtx),
          .byt_o(v_drx),
 

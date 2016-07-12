@@ -1,3 +1,4 @@
+`timescale 1ns/100ps
 /*************************** TART OPERATION REGISTERS ***********************
    by Tim Molteno. tim@elec.ac.nz
    & Max Scheel   max@max.ac.nz

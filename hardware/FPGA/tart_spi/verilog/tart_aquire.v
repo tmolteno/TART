@@ -26,6 +26,9 @@
  *  + supports both classic and pipelined transfers;
  * 
  * TODO:
+ *  + the block-access mechanism is currently not very flexible -- ideally,
+ *    the block-counter would increment once all visibilities have been read
+ *    back from the current block?
  * 
  */
 
@@ -56,6 +59,8 @@ module tart_aquire
   #(parameter WIDTH = 8,        // WB-like bus data-width
     parameter MSB   = WIDTH-1,
     parameter ACCUM = 32,       // #bits of the viz accumulators
+    parameter BBITS = 5,
+    parameter BSB   = BBITS-1,
     parameter DELAY = 3)
    (
     // Wishbone-like bus interface:
@@ -84,8 +89,10 @@ module tart_aquire
     output             vx_stb_o, // for reading back visibilities
     output             vx_we_o,
     input              vx_ack_i,
+    output reg [BSB:0] vx_blk_o = 0, // Visibilities block to access
     input [MSB:0]      vx_dat_i,
     input              newblock,
+    input              streamed,
     input [ACCUM-1:0]  checksum,
     output reg         accessed = 0,
     output reg         available = 0,
@@ -108,6 +115,7 @@ module tart_aquire
 
    wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
+   wire                x_ack;
 
 
    //-------------------------------------------------------------------------
@@ -194,6 +202,16 @@ module tart_aquire
    always @(posedge clk_i)
      if (bs_new)
        blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
+
+   //-------------------------------------------------------------------------
+   //  When using correlators in SDP-mode, there are `2^5 == 32` blocks of
+   //  stored visibilities that can be read back. Every time a new block
+   //  becomes available, the block-counter is incremented.
+   //  TODO: Should there be some mechanism for controlling which block is to
+   //    be accessed?
+   always @(posedge clk_i)
+     if (rst_i) vx_blk_o <= #DELAY 0;
+     else       vx_blk_o <= #DELAY streamed ? vx_blk_o + 1 : vx_blk_o;
 
 
    //-------------------------------------------------------------------------

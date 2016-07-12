@@ -31,7 +31,7 @@
  * 
  */
 
-`include "../include/tartcfg.v"
+`include "tartcfg.v"
 
 // Bus transaction states.
 `define BUS_IDLE  0
@@ -42,6 +42,12 @@
 module tart_correlator
   #( parameter BLOCK = 32,
      parameter MSB   = BLOCK-1,
+`ifdef __USE_SDP_DSRAM
+     parameter ABITS = 15,
+`else
+     parameter ABITS = 10,
+`endif
+     parameter ASB   = ABITS - 1,
      parameter DELAY = 3)
    (
     input              clk_x,
@@ -54,7 +60,7 @@ module tart_correlator
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
     output reg         ack_o = 0,
-    input [9:0]        adr_i, // upper address-space for registers
+    input [ASB:0]      adr_i, // upper address-space for registers
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
 
@@ -139,7 +145,7 @@ module tart_correlator
    wire [MSB:0] dats [0:7];
    reg [7:0]    stbs = 0;
    reg [2:0]    dev = 0;
-   reg [9:0]    adr = 0;
+   reg [ASB:0]  adr = 0;
    reg          cyc = 0, we = 0, bst = 0; // TODO:
    wire [7:0]   acks;
    wire         we_w = 0, ack_w = |acks;
@@ -199,6 +205,12 @@ module tart_correlator
    //  antennas.
    //-------------------------------------------------------------------------
    wire [5:0]          oc, os;  // overflows
+`ifdef __USE_SDP_DSRAM
+   //  Compose address:     UNIT       BLOCK       VALUE
+   wire [ASB-3:0] c_adr = {adr[6:5], adr[ASB:10], adr[4:0]};
+`else
+   wire [ASB-3:0] c_adr = adr[6:0];
+`endif
 
    correlator_block
      #(  .ACCUM (BLOCK),
@@ -217,7 +229,7 @@ module tart_correlator
          .we_i (we_w),
          .bst_i(bst),
          .ack_o(acks[0]),
-         .adr_i(adr[6:0]),
+         .adr_i(c_adr),
          .dat_i(32'bx),
          .dat_o(dats[0]),
 
@@ -247,7 +259,7 @@ module tart_correlator
          .we_i (we_w),
          .bst_i(bst),
          .ack_o(acks[1]),
-         .adr_i(adr[6:0]),
+         .adr_i(c_adr),
          .dat_i(32'bx),
          .dat_o(dats[1]),
 
@@ -277,7 +289,7 @@ module tart_correlator
          .we_i (we_w),
          .bst_i(bst),
          .ack_o(acks[2]),
-         .adr_i(adr[6:0]),
+         .adr_i(c_adr),
          .dat_i(32'bx),
          .dat_o(dats[2]),
 
@@ -307,7 +319,7 @@ module tart_correlator
          .we_i (we_w),
          .bst_i(bst),
          .ack_o(acks[3]),
-         .adr_i(adr[6:0]),
+         .adr_i(c_adr),
          .dat_i(32'bx),
          .dat_o(dats[3]),
 
@@ -337,7 +349,7 @@ module tart_correlator
          .we_i (we_w),
          .bst_i(bst),
          .ack_o(acks[4]),
-         .adr_i(adr[6:0]),
+         .adr_i(c_adr),
          .dat_i(32'bx),
          .dat_o(dats[4]),
 
@@ -367,7 +379,7 @@ module tart_correlator
          .we_i (we_w),
          .bst_i(bst),
          .ack_o(acks[5]),
-         .adr_i(adr[6:0]),
+         .adr_i(c_adr),
          .dat_i(32'bx),
          .dat_o(dats[5]),
 

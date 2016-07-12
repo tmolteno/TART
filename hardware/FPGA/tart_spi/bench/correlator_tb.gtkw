@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Wed Jun 29 04:53:42 2016
+[*] Thu Jul  7 04:29:54 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.vcd"
-[dumpfile_mtime] "Wed Jun 29 04:52:17 2016"
-[dumpfile_size] 673847
+[dumpfile_mtime] "Thu Jul  7 04:17:40 2016"
+[dumpfile_size] 679634
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/correlator_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
 [pos] -1 -1
-*-17.852507 1513000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.101957 2010000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_correlator_tb.
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.
 [treeopen] tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.
@@ -40,9 +40,8 @@ tart_correlator_tb.strobe
 tart_correlator_tb.antenna[23:0]
 @28
 tart_correlator_tb.switching
-@29
 tart_correlator_tb.newblock
-@28
+tart_correlator_tb.streamed
 tart_correlator_tb.available
 tart_correlator_tb.accessed
 @22
@@ -93,6 +92,7 @@ tart_correlator_tb.v_ack
 tart_correlator_tb.v_wat
 @22
 tart_correlator_tb.v_adr[11:0]
+tart_correlator_tb.v_blk[4:0]
 tart_correlator_tb.v_drx[7:0]
 tart_correlator_tb.v_dtx[7:0]
 @200
@@ -104,7 +104,7 @@ tart_correlator_tb.WB_STREAM0.next_adr[11:0]
 @1000200
 -Bus
 -TOP
-@c00200
+@800200
 -Cor Bus
 @28
 tart_correlator_tb.c_cyc
@@ -112,9 +112,9 @@ tart_correlator_tb.c_stb
 tart_correlator_tb.c_bst
 tart_correlator_tb.c_we
 tart_correlator_tb.c_ack
-@22
-tart_correlator_tb.c_adr[9:0]
-@1401200
+@23
+tart_correlator_tb.TART_CORRELATOR0.c_adr[11:0]
+@1000200
 -Cor Bus
 @800200
 -TART
@@ -123,8 +123,6 @@ tart_correlator_tb.TART_CORRELATOR0.cyc_i
 tart_correlator_tb.TART_CORRELATOR0.stb_i
 tart_correlator_tb.TART_CORRELATOR0.bst_i
 tart_correlator_tb.TART_CORRELATOR0.ack_o
-@22
-tart_correlator_tb.TART_CORRELATOR0.adr_i[9:0]
 @200
 -
 @22
@@ -184,7 +182,7 @@ tart_correlator_tb.TART_VISIBILITIES0.SRAM0.b_dat_o[7:0]
 -SRAM
 @200
 -== Cors ==
-@c00200
+@800200
 -Block0
 @28
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.cyc_i
@@ -192,8 +190,8 @@ tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.stb_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.bst_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.ack_o
 @22
-tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.adr_i[6:0]
-@c00200
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.adr_i[11:0]
+@800200
 -Corr00
 @28
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.cyc_i
@@ -202,17 +200,22 @@ tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.bst_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.we_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.ack_o
 @22
-tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.adr_i[4:0]
-@200
--
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.adr_i[9:0]
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.dat_o[31:0]
+@800200
+-Internal
 @28
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.en
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.sw
-tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.wrap_x_rd_adr
-tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.bank
 @22
-tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.adr_w[4:0]
-@1401200
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.block[4:0]
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.x_wr_adr[3:0]
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.qcos[31:0]
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.qsin[31:0]
+@28
+tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR0.wrap_x_rd_adr
+@1000200
+-Internal
 -Corr00
 @c00200
 -Corr01
@@ -221,10 +224,9 @@ tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.cyc_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.stb_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.bst_i
 tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.ack_o
-@22
-tart_correlator_tb.TART_CORRELATOR0.CORRELATOR_BLOCK0.CORRELATOR1.adr_i[4:0]
 @1401200
 -Corr01
+@1000200
 -Block0
 @c00200
 -Ones

@@ -65,9 +65,24 @@
 
 //----------------------------------------------------------------------------
 //  The Wishbone bus also has some correlators.
+//----------------------------------------------------------------------------
 `define __USE_CORRELATORS
 
 //----------------------------------------------------------------------------
-//  Wishbone bus settings.
+//  The correlators can be set to use only distributed SRAM's, or a mix of
+//  distributed SRAM's and block SRAM's. The latter uses few resources (if
+//  there are enough block SRAM's), but imposes additional placement
+//  constraints, potentially leading to lower circuit performance.
+`define __USE_SDP_DSRAM
+
+`ifdef  __USE_SDP_DSRAM
+ `define CORRELATOR correlator_sdp
+`else
+ `define CORRELATOR correlator
+`endif
+
+//----------------------------------------------------------------------------
+//  Wishbone bus settings for reading back the visibilities.
 `define WBADR_BITS 12           // Address bit-width
 `define WBBUS_BITS  8           // Bit-width of the SoC data bus
+`define BLOCK_BITS  5           // Bit-width of the block-counter

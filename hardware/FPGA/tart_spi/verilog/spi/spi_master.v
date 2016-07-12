@@ -48,6 +48,8 @@ module spi_master
      );
 
    reg                sync0, sync1; // synchronise `cyc_i` across domains.
+   wire               tx_empty, tx_full;
+   wire               rx_empty, rx_full;
 
 
    // Synchronise bus cycles across clock domains.

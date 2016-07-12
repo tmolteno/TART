@@ -18,6 +18,12 @@ module tart_visibilities
   #(parameter BLOCK = 32,
     parameter MSB   = BLOCK-1,
     parameter COUNT = 576,     // TODO: correlators and averages
+`ifdef __USE_SDP_DSRAM
+    parameter ABITS = 15,
+`else
+    parameter ABITS = 10,
+`endif
+    parameter ASB   = ABITS-1,
     parameter CBITS = 10,
     parameter CSB   = CBITS-1,
     parameter MRATE = 12,       // time-multiplexing rate
@@ -36,7 +42,7 @@ module tart_visibilities
     input              bst_i, // Bulk Sequential Transfer?
     output             ack_o,
     output             wat_o,
-    input [CSB+2:0]    adr_i, // upper address-space for registers
+    input [ASB+2:0]    adr_i, // upper address-space for registers
     input [7:0]        byt_i,
     output [7:0]       byt_o,
 
@@ -47,7 +53,7 @@ module tart_visibilities
     output             bst_o, // Bulk Sequential Transfer?
     input              ack_i,
     input              wat_i, // TODO
-    output [CSB:0]     adr_o, // upper address-space for registers
+    output [ASB:0]     adr_o, // upper address-space for registers
     input [MSB:0]      dat_i,
     output [MSB:0]     dat_o,
 
@@ -96,7 +102,11 @@ module tart_visibilities
 
    //  Swap the LSB with the real/complex bank-select signal, so that real +
    //  complex pairs are read out together.
+`ifdef __USE_SDP_DSRAM
+   assign adr_o = {adr_i[ASB+2:CBITS+2], adr_w};
+`else
    assign adr_o = {adr_w[CSB:BBITS], adr_w[0], adr_w[BSB:1]};
+`endif
    assign wat_o = 1'b0;
 
    //  Prefetches data from the various correlators after each bank-switch,
@@ -150,7 +160,7 @@ module tart_visibilities
        .b_we_i (we_i),
        .b_bst_i(bst_i),
        .b_ack_o(ack_o),
-       .b_adr_i(adr_i),
+       .b_adr_i(adr_i[CSB+2:0]),
        .b_dat_i(byt_i),
        .b_dat_o(byt_o)
        );

@@ -138,6 +138,11 @@ module spi_layer
          );
 `endif
 
+   //  FIFO status signals:
+   wire               tx_empty, tx_full;
+   wire               rx_empty, rx_full;
+
+
    //-------------------------------------------------------------------------
    //
    //  Cross-domain synchronisation.

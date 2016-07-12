@@ -32,8 +32,8 @@
  * 
  */
 
-module correlator_sdp
-  #(parameter ACCUM = 32,            // Re/Im accumulator bit-widths
+module correlator_DSP
+  #(parameter ACCUM = 24,            // Re/Im accumulator bit-widths
     parameter MSB   = ACCUM - 1,
     parameter WIDTH = ACCUM + ACCUM, // Combined Re & Im components
     parameter WSB   = WIDTH - 1,
@@ -80,7 +80,6 @@ module correlator_sdp
    reg [MSB:0]         cosram[0:MRATE-1];
    reg [MSB:0]         sinram[0:MRATE-1];
 
-   reg [MSB:0]         dcos, dsin;
    wire [MSB:0]        qcos, qsin;
 
    // Xilinx Block RAM for the buffered, visibilities data.
@@ -91,12 +90,30 @@ module correlator_sdp
    wire                wrap_x_rd_adr = x_rd_adr == MRATE - 1;
    wire [TSB:0]        next_x_rd_adr = wrap_x_rd_adr ? 0 : x_rd_adr + 1 ;
    wire                valid, oc, os;
+   reg                 go = 0, valid = 0;
+
+   wire [MSB:0]        dcos = cosram[x_rd_adr];
+   wire [MSB:0]        dsin = sinram[x_rd_adr];
+
+
+   //-------------------------------------------------------------------------
+   //  Control signals.
+   //-------------------------------------------------------------------------
+   //  Add a cycle of latency to wait for the RAM read.
+   always @(posedge clk_x)
+     go <= #DELAY en;
+
+   //  Add another cycle of latency, to wait for the DSP addition.
+   //  TODO: Is the reset needed?
+   always @(posedge clk)
+     if (rst) valid <= #DELAY 0;
+     else     valid <= #DELAY en;
 
 
    //-------------------------------------------------------------------------
    //  Wishbone-like bus interface logic.
    //-------------------------------------------------------------------------
-   wire [MSB:0] vis_cos, vis_sin;
+   wire [MSB:0]        vis_cos, vis_sin;
 
    assign {vis_sin, vis_cos} = visram[adr_i[BADDR:1]];
 
@@ -129,28 +146,6 @@ module correlator_sdp
         x_wr_adr <= #DELAY valid ? x_wt_adr      : x_wr_adr;
      end
 
-   /*
-   //  Banks are switched at the next address-wrap event.
-   always @(posedge clk_x)
-     if (rst) begin : RAM_RESET_LOGIC
-        swap  <= #DELAY 0;
-        block <= #DELAY 0;
-        clear <= #DELAY 1;
-     end
-//      else if (wrap_x_rd_adr && swap) begin // swap banks
-     else if (wrap_x_rd_adr && (sw || swap)) begin // swap banks
-        swap  <= #DELAY 0;
-        block <= #DELAY block + 1;
-        clear <= #DELAY 1;
-     end
-     else if (sw && !swap) begin // swap banks @next wrap
-        swap  <= #DELAY 1;
-     end
-     else if (en && wrap_x_rd_adr && clear) begin // finished restarting counters
-        clear <= #DELAY 0;
-     end
-    */
-
    //  Banks are switched at the next address-wrap event.
    always @(posedge clk_x)
      if (rst) begin : RAM_RESET_LOGIC
@@ -177,16 +172,11 @@ module correlator_sdp
 
    //  Read and write RAM contents for the correlator.
    //  TODO: Verify that this uses RAM32M's in SDP mode.
-   always @(posedge clk_x) begin : RAM_READ_WRITE
-     if (!rst && en) begin
-        dcos <= #DELAY clear ? 0 : cosram[x_rd_adr] ;
-        dsin <= #DELAY clear ? 0 : sinram[x_rd_adr] ;
-     end
+   always @(posedge clk_x)
      if (!rst && valid) begin
         cosram[x_wr_adr] <= #DELAY qcos;
         sinram[x_wr_adr] <= #DELAY qsin;
      end
-   end
 
    //  Write the current sums to the BRAM, so when a block-switch occurs, the
    //  buffer already contains the desired visibilities.
@@ -204,7 +194,6 @@ module correlator_sdp
    wire [4:0]   a_index = pairs_index[4:0];
    wire [4:0]   b_index = pairs_index[9:5];
    wire [9:0]   pairs[0:11];
-   reg          go = 0, ar, br, bi;
 
    assign pairs[00] = pairs_wide[  9:  0];
    assign pairs[01] = pairs_wide[ 19: 10];
@@ -219,25 +208,22 @@ module correlator_sdp
    assign pairs[10] = pairs_wide[109:100];
    assign pairs[11] = pairs_wide[119:110];
 
-   //  Add a cycle of latency to wait for the RAM read.
-   always @(posedge clk_x) begin
-      go <= #DELAY en;
-      ar <= #DELAY re[a_index];
-      br <= #DELAY re[b_index];
-      bi <= #DELAY im[b_index];
-   end
+   wire         ar = re[a_index];
+   wire         br = re[b_index];
+   wire         bi = im[b_index];
 
 
    //-------------------------------------------------------------------------
    //  Time-multiplexed correlator.
    //-------------------------------------------------------------------------
-   correlate_cos_sin
+   correlate_cos_sin_DSP
      #(  .ACCUM(ACCUM), .DELAY(DELAY) ) CORR_COS_SIN0
        ( .clk(clk_x),
          .rst(rst),
+         .clr(clear),
 
          // Antenna enables and inputs:
-         .en(go),
+         .en(en),
          .ar(ar),
          .br(br),
          .bi(bi),
@@ -245,7 +231,6 @@ module correlator_sdp
          // Accumulator inputs and outputs:
          .dcos(dcos),
          .dsin(dsin),
-         .valid(valid),
          .qcos(qcos),
          .qsin(qsin),
 
@@ -255,4 +240,4 @@ module correlator_sdp
          );
 
 
-endmodule // correlator_sdp
+endmodule // correlator_DSP
