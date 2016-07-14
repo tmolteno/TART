@@ -110,20 +110,15 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .clk_i(clk_i),
-         .cyc_i(cyc_i),
-         .stb_i(stbs[0]),
-         .we_i (we_i),
-         .bst_i(bst_i),
-         .ack_o(acks[0]),
-         .adr_i(adr_i[ASB-2:0]),
-         .dat_i(dat_i),
-         .dat_o(dats[0]),
-
-         .sw(sw),
+         .sw(clear),
          .en(en),
          .re(re),
          .im(im),
+         .rd(x_rd_adr),
+         .wr(x_wr_adr),
+
+         .vld(vld),
+         .vis(vis[WSB:0]),
 
          .overflow_cos(oc[0]),
          .overflow_sin(os[0])
@@ -137,20 +132,15 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .clk_i(clk_i),
-         .cyc_i(cyc_i),
-         .stb_i(stbs[1]),
-         .we_i (we_i),
-         .bst_i(bst_i),
-         .ack_o(acks[1]),
-         .adr_i(adr_i[ASB-2:0]),
-         .dat_i(dat_i),
-         .dat_o(dats[1]),
-
-         .sw(sw),
+         .sw(clear),
          .en(en),
          .re(re),
          .im(im),
+         .rd(x_rd_adr),
+         .wr(x_wr_adr),
+
+         .vld(),
+         .vis(vis[WIDTH+WSB:WIDTH]),
 
          .overflow_cos(oc[1]),
          .overflow_sin(os[1])
@@ -164,20 +154,15 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .clk_i(clk_i),
-         .cyc_i(cyc_i),
-         .stb_i(stbs[2]),
-         .we_i (we_i),
-         .bst_i(bst_i),
-         .ack_o(acks[2]),
-         .adr_i(adr_i[ASB-2:0]),
-         .dat_i(dat_i),
-         .dat_o(dats[2]),
-
-         .sw(sw),
+         .sw(clear),
          .en(en),
          .re(re),
          .im(im),
+         .rd(x_rd_adr),
+         .wr(x_wr_adr),
+
+         .vld(),
+         .vis(vis[WIDTH+WIDTH+WSB:WIDTH+WIDTH]),
 
          .overflow_cos(oc[2]),
          .overflow_sin(os[2])
@@ -191,20 +176,15 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .clk_i(clk_i),
-         .cyc_i(cyc_i),
-         .stb_i(stbs[3]),
-         .we_i (we_i),
-         .bst_i(bst_i),
-         .ack_o(acks[3]),
-         .adr_i(adr_i[ASB-2:0]),
-         .dat_i(dat_i),
-         .dat_o(dats[3]),
-
-         .sw(sw),
+         .sw(clear),
          .en(en),
          .re(re),
          .im(im),
+         .rd(x_rd_adr),
+         .wr(x_wr_adr),
+
+         .vld(),
+         .vis(vis[WIDTH+WIDTH+WIDTH+WSB:WIDTH+WIDTH+WIDTH]),
 
          .overflow_cos(oc[3]),
          .overflow_sin(os[3])
