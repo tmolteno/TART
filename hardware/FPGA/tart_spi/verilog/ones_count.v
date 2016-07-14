@@ -13,14 +13,19 @@
  * 
  */
 
+`include "tartcfg.v"
+
 // Bus transaction states.
 `define BUS_IDLE 0
 `define BUS_READ 1
 `define BUS_WAIT 2
 
 module ones_count
-  #( parameter ACCUM = 32,
+  #( parameter ACCUM = `ACCUM_BITS,
      parameter MSB   = ACCUM-1,
+     parameter MRATE = 12,       // Time-multiplexing rate
+     parameter MBITS = 4,
+     parameter MSIZE = (2<<MBITS)-1,
      parameter DELAY = 3)
    (
     input              clk_x,   // correlator clock
@@ -48,8 +53,8 @@ module ones_count
    //  Distributed RAM for the accumulators.
    //-------------------------------------------------------------------------
    // Should use RAM32M primitives (on Xilinx FPGA's).
-   reg [MSB:0]         counts0[0:31];
-   reg [MSB:0]         counts1[0:31];
+   reg [MSB:0]         counts0[0:MSIZE];
+   reg [MSB:0]         counts1[0:MSIZE];
 
    reg [MSB:0]         dcnt0, dcnt1, qcnt0, qcnt1;
    reg                 bank = 0, swap = 0, clear = 0;

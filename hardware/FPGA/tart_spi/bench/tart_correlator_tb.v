@@ -4,7 +4,7 @@
 
 module tart_correlator_tb;
 
-   parameter BLOCK = 32;        // Number of bits of a block
+   parameter BLOCK = `ACCUM_BITS;        // Number of bits of a block
    parameter MSB   = BLOCK-1;
    parameter ACCUM = BLOCK;     // Bit-width of the accumulators
    parameter ABITS = 12;        // Address bit-width

@@ -100,7 +100,33 @@ module wb_sram_dual_port
      else       b_ack_o <= #DELAY b_cyc_i && b_stb_i;
 `endif
 
-   // SRAM reads & writes.
+   //-------------------------------------------------------------------------
+   //  SRAM reads & writes.
+   reg [1:0]    m_reg = 0;
+   reg [31:0]   d_reg;
+
+   always @*
+     case (m_reg)
+       0: b_dat_o <= d_reg[ 7: 0];
+       1: b_dat_o <= d_reg[15: 8];
+       2: b_dat_o <= d_reg[23:16];
+       3: b_dat_o <= d_reg[31:24];
+     endcase // case (m_reg)
+
+   always @(posedge b_clk_i)
+     if (b_cyc_i && b_stb_i) begin
+        m_reg <= #DELAY b_adr_i[1:0];
+        d_reg <= #DELAY {sram3[b_adr], sram2[b_adr], sram1[b_adr], sram0[b_adr]};
+        if (b_we_i)
+          case (b_adr_i[1:0])
+            0: sram0[b_adr] <= #DELAY b_dat_i;
+            1: sram1[b_adr] <= #DELAY b_dat_i;
+            2: sram2[b_adr] <= #DELAY b_dat_i;
+            3: sram3[b_adr] <= #DELAY b_dat_i;
+          endcase // case (adr_i[1:0])
+     end
+
+   /*
    always @(posedge b_clk_i)
      if (!rst_i && b_cyc_i && b_stb_i) begin
         case (b_adr_i[1:0])
@@ -117,6 +143,7 @@ module wb_sram_dual_port
             3: sram3[b_adr] <= #DELAY b_dat_i;
           endcase // case (adr_i[1:0])
      end
+    */
 
 
 endmodule // wb_sram_dual_port

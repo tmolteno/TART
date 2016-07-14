@@ -18,23 +18,24 @@ module correlate_cos_sin_DSP
      parameter XSB   = ACCUM+MSB,
      parameter DELAY = 3)
    (
-    input              clk,
-    input              rst,
-    input              clr,
-    input              en,
+    input          clk,
+    input          rst,
+    input          clr,
+    input          en,
+    input          vld,
 
-    input              ar,
+    input          ar,
     // input                  ai,
-    input              br,
-    input              bi,
+    input          br,
+    input          bi,
 
-    input [MSB:0]      dcos,
-    input [MSB:0]      dsin,
+    input [MSB:0]  dcos,
+    input [MSB:0]  dsin,
 
-    output reg         oc = 0, // cosine overflow
-    output             os, // sine overflow
-    output reg [MSB:0] qcos = 0,
-    output reg [MSB:0] qsin = 0
+    output reg     oc = 0, // cosine overflow
+    output         os, // sine overflow
+    output [MSB:0] qcos,
+    output [MSB:0] qsin
     );
 
    //  Operate the DSP48A1 as a 48-bit adder only.
@@ -63,12 +64,14 @@ module correlate_cos_sin_DSP
        ) DSP_COS_SIN0
        ( .CLK(clk),
          .RSTOPMODE(1'b0),
+         .RSTCARRYIN(1'b0),
          .RSTM(1'b0),
 
-         .PCIN('b0),
-         .CECARRYIN(1'b1),
+         .CECARRYIN(vld),
          .CEOPMODE(1'b0),
          .CEM(1'b0),
+         .CARRYIN(1'b0),
+         .PCIN(48'b0),
 
          .OPMODE(opmode),
 
@@ -83,14 +86,14 @@ module correlate_cos_sin_DSP
          .CED(en),
          .D(d),
 
-         .RSTC(rst),              // second 48-bit input
+         .RSTC(1'b0),              // second 48-bit input
          .CEC(en),
          .C(c),
 
          .CARRYOUTF(os),          // sine overflow
          .RSTP(rst),              // output register
-         .CEP(valid),
-         .P(x)
+         .CEP(vld),
+         .P({qsin, qcos})
          );
 
 

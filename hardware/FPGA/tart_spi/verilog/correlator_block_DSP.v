@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/correlator_block.v
+ * Module      : verilog/correlator_block_DSP.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -10,7 +10,8 @@
  * Stability   : Experimental
  * Portability : only tested with Icarus Verilog
  * 
- * Time-multiplexed block of correlator-blocks.
+ * Time-multiplexed block of correlator-blocks, and this version uses the
+ * Xilinx DSP48A1 primitives (of Spartan 6's).
  * 
  * NOTE:
  *  + typically several of these would be attached to a common set of antenna
@@ -24,13 +25,13 @@
  *  + potentially uses quite a lot of the FPGA's distributed-RAM resources;
  * 
  * Changelog:
- *  + ??/06/2016  --  initial file;
+ *  + 14/07/2016  --  initial file (rebuilt from `correlator_block.v`);
  * 
  */
 
 `include "tartcfg.v"
 
-module correlator_block
+module correlator_block_DSP
   #( parameter ACCUM = `ACCUM_BITS,
      // Pairs of antennas to correlate, for each block.
      parameter PAIRS0 = 120'hb1a191817161b0a090807060,
@@ -101,7 +102,7 @@ module correlator_block
    //-------------------------------------------------------------------------
    //  Correlator instances.
    //-------------------------------------------------------------------------
-   `CORRELATOR
+   correlator_DSP
      #(  .ACCUM(ACCUM),
          .PAIRS(PAIRS0),
          .DELAY(DELAY)
@@ -128,7 +129,7 @@ module correlator_block
          .overflow_sin(os[0])
          );
 
-   `CORRELATOR
+   correlator_DSP
      #(  .ACCUM(ACCUM),
          .PAIRS(PAIRS1),
          .DELAY(DELAY)
@@ -155,7 +156,7 @@ module correlator_block
          .overflow_sin(os[1])
          );
 
-   `CORRELATOR
+   correlator_DSP
      #(  .ACCUM(ACCUM),
          .PAIRS(PAIRS2),
          .DELAY(DELAY)
@@ -182,7 +183,7 @@ module correlator_block
          .overflow_sin(os[2])
          );
 
-   `CORRELATOR
+   correlator_DSP
      #(  .ACCUM(ACCUM),
          .PAIRS(PAIRS3),
          .DELAY(DELAY)
@@ -210,4 +211,4 @@ module correlator_block
          );
 
    
-endmodule // correlator_block
+endmodule // correlator_block_DSP

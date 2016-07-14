@@ -40,7 +40,7 @@
 `define BUS_WRITE 4
 
 module tart_correlator
-  #( parameter BLOCK = 32,
+  #( parameter BLOCK = `ACCUM_BITS,
      parameter MSB   = BLOCK-1,
 `ifdef __USE_SDP_DSRAM
      parameter ABITS = 15,
@@ -212,7 +212,8 @@ module tart_correlator
    wire [ASB-3:0] c_adr = adr[6:0];
 `endif
 
-   correlator_block
+   correlator_block_DSP
+//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
@@ -242,7 +243,8 @@ module tart_correlator
          .overflow_sin(os[0])
          );
 
-   correlator_block
+   correlator_block_DSP
+//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS01_00),
          .PAIRS1(PAIRS01_01),
@@ -272,7 +274,8 @@ module tart_correlator
          .overflow_sin(os[1])
          );
 
-   correlator_block
+   correlator_block_DSP
+//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS02_00),
          .PAIRS1(PAIRS02_01),
@@ -302,7 +305,8 @@ module tart_correlator
          .overflow_sin(os[2])
          );
 
-   correlator_block
+   correlator_block_DSP
+//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),

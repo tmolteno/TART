@@ -32,8 +32,10 @@
  * 
  */
 
+`include "tartcfg.v"
+
 module correlator_sdp
-  #(parameter ACCUM = 32,            // Re/Im accumulator bit-widths
+  #(parameter ACCUM = `ACCUM_BITS,            // Re/Im accumulator bit-widths
     parameter MSB   = ACCUM - 1,
     parameter WIDTH = ACCUM + ACCUM, // Combined Re & Im components
     parameter WSB   = WIDTH - 1,
@@ -47,28 +49,31 @@ module correlator_sdp
     parameter PAIRS = 120'hb1a191817161b0a090807060,
     parameter DELAY = 3)
    (
-    input              clk_x,   // correlator clock
-    input              rst,
+    input           clk_x, // correlator clock
+    input           rst,
 
     // Wishbone-like bus interface for reading visibilities.
-    input              clk_i,   // bus clock
-    input              cyc_i,
-    input              stb_i,
-    input              we_i,    // writes are ignored
-    input              bst_i,   // burst-mode transfer?
-    output reg         ack_o = 0,
-    input [BADDR:0]    adr_i,
-    input [MSB:0]      dat_i,
-    output reg [MSB:0] dat_o,
+    input           clk_i, // bus clock
+    input           cyc_i,
+    input           stb_i,
+    input           we_i, // writes are ignored
+    input           bst_i, // burst-mode transfer?
+    output reg      ack_o = 0,
+    input [BADDR:0] adr_i,
+    input [MSB:0]   dat_i,
+    output [MSB:0]  dat_o,
 
     // Real and imaginary components from the antennas.
-    input              sw,      // switch banks
-    input              en,      // data is valid
-    input [23:0]       re,
-    input [23:0]       im,
+    input           sw, // switch banks
+    input           en, // data is valid
+    input [23:0]    re,
+    input [23:0]    im,
+    output          vld,
+    output [ASB:0]  adr,
+    output [WSB:0]  vis,
 
-    output reg         overflow_cos = 0,
-    output reg         overflow_sin = 0
+    output reg      overflow_cos = 0,
+    output reg      overflow_sin = 0
     );
 
 
@@ -77,11 +82,8 @@ module correlator_sdp
    //-------------------------------------------------------------------------
    // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
    // mode.
-   reg [MSB:0]         cosram[0:MRATE-1];
-   reg [MSB:0]         sinram[0:MRATE-1];
-
+   wire [MSB:0]        dcos_w, dsin_w, qcos, qsin;
    reg [MSB:0]         dcos, dsin;
-   wire [MSB:0]        qcos, qsin;
 
    // Xilinx Block RAM for the buffered, visibilities data.
    reg [WSB:0]         visram[0:BSIZE-1];
@@ -94,22 +96,44 @@ module correlator_sdp
 
 
    //-------------------------------------------------------------------------
+   //  Signals to a wide, external SRAM.
+   //-------------------------------------------------------------------------
+   assign vld = valid;
+   assign adr = {block, x_wr_adr};
+   assign vis = {qsin, qcos};
+
+
+   //-------------------------------------------------------------------------
    //  Wishbone-like bus interface logic.
    //-------------------------------------------------------------------------
-   wire [MSB:0] vis_cos, vis_sin;
+   /*
+   wire [MSB:0]        vis_cos, vis_sin;
 
    assign {vis_sin, vis_cos} = visram[adr_i[BADDR:1]];
-
-   //  Acknowledge any request, even if ignored.
-   always @(posedge clk_i)
-     if (rst) ack_o <= #DELAY 0;
-     else     ack_o <= #DELAY cyc_i && stb_i;
 
    //  Read only from the addressed block, and the LSB determines whether to
    //  return the sine or cosine component.
    always @(posedge clk_i)
      if (cyc_i && stb_i)
        dat_o <= #DELAY adr_i[0] ? vis_sin : vis_cos;
+    */
+
+   //-------------------------------------------------------------------------
+   reg [WSB:0]         d_reg = 0;
+   reg                 m_reg = 0;
+
+   assign dat_o = m_reg ? d_reg[WSB:ACCUM] : d_reg[MSB:0];
+
+   always @(posedge clk_i)
+     if (cyc_i && stb_i) begin
+        m_reg <= #DELAY adr_i[0];
+        d_reg <= #DELAY visram[adr_i[BADDR:1]];
+     end
+
+   //  Acknowledge any request, even if ignored.
+   always @(posedge clk_i)
+     if (rst) ack_o <= #DELAY 0;
+     else     ack_o <= #DELAY cyc_i && stb_i;
 
 
    //-------------------------------------------------------------------------
@@ -153,7 +177,7 @@ module correlator_sdp
 
    //  Banks are switched at the next address-wrap event.
    always @(posedge clk_x)
-     if (rst) begin : RAM_RESET_LOGIC
+     if (rst) begin
         swap  <= #DELAY 0;
         block <= #DELAY 0;
      end
@@ -175,18 +199,11 @@ module correlator_sdp
      else if (wrap_x_rd_adr && clear) // finished restarting counters
         clear <= #DELAY 0;
 
-   //  Read and write RAM contents for the correlator.
-   //  TODO: Verify that this uses RAM32M's in SDP mode.
-   always @(posedge clk_x) begin : RAM_READ_WRITE
-     if (!rst && en) begin
-        dcos <= #DELAY clear ? 0 : cosram[x_rd_adr] ;
-        dsin <= #DELAY clear ? 0 : sinram[x_rd_adr] ;
+   always @(posedge clk_x)
+     if (en) begin : RAM_READ
+        dcos <= #DELAY clear ? 0 : dcos_w;
+        dsin <= #DELAY clear ? 0 : dsin_w;
      end
-     if (!rst && valid) begin
-        cosram[x_wr_adr] <= #DELAY qcos;
-        sinram[x_wr_adr] <= #DELAY qsin;
-     end
-   end
 
    //  Write the current sums to the BRAM, so when a block-switch occurs, the
    //  buffer already contains the desired visibilities.
@@ -199,25 +216,47 @@ module correlator_sdp
    //  Select pairs of antenna to correlate.
    //-------------------------------------------------------------------------
    //  TODO: Can more of this be parameterised?
-   wire [119:0] pairs_wide = PAIRS;
+   parameter PAIRS00 = (PAIRS >>   0) & 10'h3ff;
+   parameter PAIRS01 = (PAIRS >>  10) & 10'h3ff;
+   parameter PAIRS02 = (PAIRS >>  20) & 10'h3ff;
+   parameter PAIRS03 = (PAIRS >>  30) & 10'h3ff;
+   parameter PAIRS04 = (PAIRS >>  40) & 10'h3ff;
+   parameter PAIRS05 = (PAIRS >>  50) & 10'h3ff;
+   parameter PAIRS06 = (PAIRS >>  60) & 10'h3ff;
+   parameter PAIRS07 = (PAIRS >>  70) & 10'h3ff;
+   parameter PAIRS08 = (PAIRS >>  80) & 10'h3ff;
+   parameter PAIRS09 = (PAIRS >>  90) & 10'h3ff;
+   parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
+   parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
+
+`ifdef __icarus
+   // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
+   //   the wire values;
+   wire [9:0]   pairs[0:11];
+
+   assign pairs[00] = PAIRS00;
+   assign pairs[01] = PAIRS01;
+   assign pairs[02] = PAIRS02;
+   assign pairs[03] = PAIRS03;
+   assign pairs[04] = PAIRS04;
+   assign pairs[05] = PAIRS05;
+   assign pairs[06] = PAIRS06;
+   assign pairs[07] = PAIRS07;
+   assign pairs[08] = PAIRS08;
+   assign pairs[09] = PAIRS09;
+   assign pairs[10] = PAIRS0A;
+   assign pairs[11] = PAIRS0B;
+`else
+   wire [9:0]   pairs[0:11] = {PAIRS00, PAIRS01, PAIRS02, PAIRS03,
+                               PAIRS04, PAIRS05, PAIRS06, PAIRS07,
+                               PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
+`endif
+
    wire [9:0]   pairs_index = pairs[x_rd_adr];
    wire [4:0]   a_index = pairs_index[4:0];
    wire [4:0]   b_index = pairs_index[9:5];
-   wire [9:0]   pairs[0:11];
-   reg          go = 0, ar, br, bi;
 
-   assign pairs[00] = pairs_wide[  9:  0];
-   assign pairs[01] = pairs_wide[ 19: 10];
-   assign pairs[02] = pairs_wide[ 29: 20];
-   assign pairs[03] = pairs_wide[ 39: 30];
-   assign pairs[04] = pairs_wide[ 49: 40];
-   assign pairs[05] = pairs_wide[ 59: 50];
-   assign pairs[06] = pairs_wide[ 69: 60];
-   assign pairs[07] = pairs_wide[ 79: 70];
-   assign pairs[08] = pairs_wide[ 89: 80];
-   assign pairs[09] = pairs_wide[ 99: 90];
-   assign pairs[10] = pairs_wide[109:100];
-   assign pairs[11] = pairs_wide[119:110];
+   reg          go = 0, ar, br, bi;
 
    //  Add a cycle of latency to wait for the RAM read.
    always @(posedge clk_x) begin
@@ -254,5 +293,103 @@ module correlator_sdp
          .os(os)
          );
 
+   
+   //-------------------------------------------------------------------------
+   //  RAM32M's implemented the nerdy way.
+   //-------------------------------------------------------------------------
+   RAM32X6_SDP
+     #( .INITA(64'h0),
+        .INITB(64'h0),
+        .INITC(64'h0),
+        .INITD(64'h0),
+        .DELAY(3)
+        ) RAM32X6_SDP_COS0 [3:0]
+       (.WCLK(clk_x),
+        .WE(valid),
+        .WADDR({1'b0, x_wr_adr}),
+        .DI(qcos),
+        .RADDR({1'b0, x_rd_adr}),
+        .DO(dcos_w)
+        );
+
+   RAM32X6_SDP
+     #( .INITA(64'h0),
+        .INITB(64'h0),
+        .INITC(64'h0),
+        .INITD(64'h0),
+        .DELAY(3)
+        ) RAM32X6_SDP_SIN0 [3:0]
+       (.WCLK(clk_x),
+        .WE(valid),
+        .WADDR({1'b0, x_wr_adr}),
+        .DI(qsin),
+        .RADDR({1'b0, x_rd_adr}),
+        .DO(dsin_w)
+        );
+
+
+/*
+   //-------------------------------------------------------------------------
+   //  Explicit instantiation, because XST sometimes gets it wrong.
+   //-------------------------------------------------------------------------
+`ifndef __icarus
+   wire [13:0]      ADDRA = {read_address , {14-ADDR_WIDTH{1'b0}}};
+   wire [13:0]      ADDRB = {write_address, {14-ADDR_WIDTH{1'b0}}};
+
+   RAMB8BWER
+     #( // DATA_WIDTH_A/DATA_WIDTH_B: 'If RAM_MODE="TDP": 0, 1, 2, 4, 9 or 18; If RAM_MODE="SDP": 36'
+        .DATA_WIDTH_A(36),
+        .DATA_WIDTH_B(36),
+        .DOA_REG(0),
+        .DOB_REG(0),
+        .EN_RSTRAM_A("FALSE"),
+        .EN_RSTRAM_B("FALSE"),
+        .INIT_A(18'h00000),
+        .INIT_B(18'h00000),
+        .INIT_FILE("NONE"),
+        .RAM_MODE("SDP"),
+        .RSTTYPE("SYNC"),
+        .RST_PRIORITY_A("CE"),
+        .RST_PRIORITY_B("CE"),
+        .SIM_COLLISION_CHECK("NONE"),
+        .SRVAL_A(18'h00000),
+        .SRVAL_B(18'h00000),
+        // WRITE_MODE_A/WRITE_MODE_B: "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
+        .WRITE_MODE_A("WRITE_FIRST"),
+        .WRITE_MODE_B("WRITE_FIRST") 
+   )
+   VISRAM1 (
+      // Port A Data: 16-bit (each) output: Port A data
+      .DOADO(DOADO),             // 16-bit output: A port data/LSB data output
+      .DOPADOP(DOPADOP),         // 2-bit output: A port parity/LSB parity output
+      // Port B Data: 16-bit (each) output: Port B data
+      .DOBDO(DOBDO),             // 16-bit output: B port data/MSB data output
+      .DOPBDOP(DOPBDOP),         // 2-bit output: B port parity/MSB parity output
+            
+      // Port A Address/Control Signals: 13-bit (each) input: Port A address and control signals (write port
+      // when RAM_MODE="SDP")
+      .ADDRAWRADDR(ADDRAWRADDR), // 13-bit input: A port address/Write address input
+      .CLKAWRCLK(CLKAWRCLK),     // 1-bit input: A port clock/Write clock input
+      .ENAWREN(ENAWREN),         // 1-bit input: A port enable/Write enable input
+      .REGCEA(REGCEA),           // 1-bit input: A port register enable input
+      .RSTA(RSTA),               // 1-bit input: A port set/reset input
+      .WEAWEL(WEAWEL),           // 2-bit input: A port write enable input
+      // Port A Data: 16-bit (each) input: Port A data
+      .DIADI(DIADI),             // 16-bit input: A port data/LSB data input
+      .DIPADIP(DIPADIP),         // 2-bit input: A port parity/LSB parity input
+      // Port B Address/Control Signals: 13-bit (each) input: Port B address and control signals (read port
+      // when RAM_MODE="SDP")
+      .ADDRBRDADDR(ADDRBRDADDR), // 13-bit input: B port address/Read address input
+      .CLKBRDCLK(CLKBRDCLK),     // 1-bit input: B port clock/Read clock input
+      .ENBRDEN(ENBRDEN),         // 1-bit input: B port enable/Read enable input
+      .REGCEBREGCE(REGCEBREGCE), // 1-bit input: B port register enable/Register enable input
+      .RSTBRST(RSTBRST),         // 1-bit input: B port set/reset input
+      .WEBWEU(WEBWEU),           // 2-bit input: B port write enable input
+      // Port B Data: 16-bit (each) input: Port B data
+      .DIBDI(DIBDI),             // 16-bit input: B port data/MSB data input
+      .DIPBDIP(DIPBDIP)          // 2-bit input: B port parity/MSB parity input
+   );
+`endif // `ifndef __icarus
+*/
 
 endmodule // correlator_sdp

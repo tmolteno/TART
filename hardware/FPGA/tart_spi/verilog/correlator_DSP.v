@@ -32,8 +32,12 @@
  * 
  */
 
+`include "tartcfg.v"
+
+`define __NERDY
+
 module correlator_DSP
-  #(parameter ACCUM = 24,            // Re/Im accumulator bit-widths
+  #(parameter ACCUM = `ACCUM_BITS,            // Re/Im accumulator bit-widths
     parameter MSB   = ACCUM - 1,
     parameter WIDTH = ACCUM + ACCUM, // Combined Re & Im components
     parameter WSB   = WIDTH - 1,
@@ -42,33 +46,35 @@ module correlator_DSP
     parameter BSIZE = 1 << BADDR,
     parameter MRATE = 12,       // Time-multiplexing rate
     parameter MBITS = 4,
+    parameter MSIZE = (2<<MBITS)-1,
     parameter TSB   = MBITS - 1,
     // Pairs of antennas to correlate:
     parameter PAIRS = 120'hb1a191817161b0a090807060,
     parameter DELAY = 3)
    (
-    input              clk_x,   // correlator clock
-    input              rst,
+    input           clk_x, // correlator clock
+    input           rst,
 
     // Wishbone-like bus interface for reading visibilities.
-    input              clk_i,   // bus clock
-    input              cyc_i,
-    input              stb_i,
-    input              we_i,    // writes are ignored
-    input              bst_i,   // burst-mode transfer?
-    output reg         ack_o = 0,
-    input [BADDR:0]    adr_i,
-    input [MSB:0]      dat_i,
-    output reg [MSB:0] dat_o,
+    input           clk_i, // bus clock
+    input           cyc_i,
+    input           stb_i,
+    input           we_i, // writes are ignored
+    input           bst_i, // burst-mode transfer?
+    output reg      ack_o = 0,
+    input [BADDR:0] adr_i,
+    input [MSB:0]   dat_i,
+//     output reg [MSB:0] dat_o,
+    output [MSB:0]  dat_o,
 
     // Real and imaginary components from the antennas.
-    input              sw,      // switch banks
-    input              en,      // data is valid
-    input [23:0]       re,
-    input [23:0]       im,
+    input           sw, // switch banks
+    input           en, // data is valid
+    input [23:0]    re,
+    input [23:0]    im,
 
-    output reg         overflow_cos = 0,
-    output reg         overflow_sin = 0
+    output reg      overflow_cos = 0,
+    output reg      overflow_sin = 0
     );
 
 
@@ -77,10 +83,14 @@ module correlator_DSP
    //-------------------------------------------------------------------------
    // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
    // mode.
-   reg [MSB:0]         cosram[0:MRATE-1];
-   reg [MSB:0]         sinram[0:MRATE-1];
+   wire [MSB:0]        dcos, dsin, qcos, qsin;
+`ifndef __NERDY
+   reg [MSB:0]         cosram[0:MSIZE];
+   reg [MSB:0]         sinram[0:MSIZE];
 
-   wire [MSB:0]        qcos, qsin;
+   assign dcos = cosram[x_rd_adr];
+   assign dsin = sinram[x_rd_adr];
+`endif
 
    // Xilinx Block RAM for the buffered, visibilities data.
    reg [WSB:0]         visram[0:BSIZE-1];
@@ -89,44 +99,37 @@ module correlator_DSP
    reg [TSB:0]         x_rd_adr = 0, x_wt_adr = 0, x_wr_adr = 0;
    wire                wrap_x_rd_adr = x_rd_adr == MRATE - 1;
    wire [TSB:0]        next_x_rd_adr = wrap_x_rd_adr ? 0 : x_rd_adr + 1 ;
-   wire                valid, oc, os;
+   wire                oc, os;
    reg                 go = 0, valid = 0;
-
-   wire [MSB:0]        dcos = cosram[x_rd_adr];
-   wire [MSB:0]        dsin = sinram[x_rd_adr];
 
 
    //-------------------------------------------------------------------------
    //  Control signals.
    //-------------------------------------------------------------------------
    //  Add a cycle of latency to wait for the RAM read.
-   always @(posedge clk_x)
-     go <= #DELAY en;
-
    //  Add another cycle of latency, to wait for the DSP addition.
-   //  TODO: Is the reset needed?
-   always @(posedge clk)
-     if (rst) valid <= #DELAY 0;
-     else     valid <= #DELAY en;
+   always @(posedge clk_x)
+     {valid, go} <= #DELAY {go, en};
 
 
    //-------------------------------------------------------------------------
    //  Wishbone-like bus interface logic.
    //-------------------------------------------------------------------------
-   wire [MSB:0]        vis_cos, vis_sin;
+   reg [WSB:0]         d_reg = 0;
+   reg                 m_reg = 0;
 
-   assign {vis_sin, vis_cos} = visram[adr_i[BADDR:1]];
+   assign dat_o = m_reg ? d_reg[WSB:ACCUM] : d_reg[MSB:0];
+
+   always @(posedge clk_i)
+     if (cyc_i && stb_i) begin
+        m_reg <= #DELAY adr_i[0];
+        d_reg <= #DELAY visram[adr_i[BADDR:1]];
+     end
 
    //  Acknowledge any request, even if ignored.
    always @(posedge clk_i)
      if (rst) ack_o <= #DELAY 0;
      else     ack_o <= #DELAY cyc_i && stb_i;
-
-   //  Read only from the addressed block, and the LSB determines whether to
-   //  return the sine or cosine component.
-   always @(posedge clk_i)
-     if (cyc_i && stb_i)
-       dat_o <= #DELAY adr_i[0] ? vis_sin : vis_cos;
 
 
    //-------------------------------------------------------------------------
@@ -148,7 +151,7 @@ module correlator_DSP
 
    //  Banks are switched at the next address-wrap event.
    always @(posedge clk_x)
-     if (rst) begin : RAM_RESET_LOGIC
+     if (rst) begin
         swap  <= #DELAY 0;
         block <= #DELAY 0;
      end
@@ -170,13 +173,15 @@ module correlator_DSP
      else if (wrap_x_rd_adr && clear) // finished restarting counters
         clear <= #DELAY 0;
 
+`ifndef __NERDY
    //  Read and write RAM contents for the correlator.
    //  TODO: Verify that this uses RAM32M's in SDP mode.
    always @(posedge clk_x)
-     if (!rst && valid) begin
+     if (valid) begin
         cosram[x_wr_adr] <= #DELAY qcos;
         sinram[x_wr_adr] <= #DELAY qsin;
      end
+`endif
 
    //  Write the current sums to the BRAM, so when a block-switch occurs, the
    //  buffer already contains the desired visibilities.
@@ -189,10 +194,48 @@ module correlator_DSP
    //  Select pairs of antenna to correlate.
    //-------------------------------------------------------------------------
    //  TODO: Can more of this be parameterised?
-   wire [119:0] pairs_wide = PAIRS;
+   parameter PAIRS00 = (PAIRS >>   0) & 10'h3ff;
+   parameter PAIRS01 = (PAIRS >>  10) & 10'h3ff;
+   parameter PAIRS02 = (PAIRS >>  20) & 10'h3ff;
+   parameter PAIRS03 = (PAIRS >>  30) & 10'h3ff;
+   parameter PAIRS04 = (PAIRS >>  40) & 10'h3ff;
+   parameter PAIRS05 = (PAIRS >>  50) & 10'h3ff;
+   parameter PAIRS06 = (PAIRS >>  60) & 10'h3ff;
+   parameter PAIRS07 = (PAIRS >>  70) & 10'h3ff;
+   parameter PAIRS08 = (PAIRS >>  80) & 10'h3ff;
+   parameter PAIRS09 = (PAIRS >>  90) & 10'h3ff;
+   parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
+   parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
+
+`ifdef __icarus
+   // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
+   //   the wire values;
+   wire [9:0]   pairs[0:11];
+
+   assign pairs[00] = PAIRS00;
+   assign pairs[01] = PAIRS01;
+   assign pairs[02] = PAIRS02;
+   assign pairs[03] = PAIRS03;
+   assign pairs[04] = PAIRS04;
+   assign pairs[05] = PAIRS05;
+   assign pairs[06] = PAIRS06;
+   assign pairs[07] = PAIRS07;
+   assign pairs[08] = PAIRS08;
+   assign pairs[09] = PAIRS09;
+   assign pairs[10] = PAIRS0A;
+   assign pairs[11] = PAIRS0B;
+`else
+   wire [9:0]   pairs[0:11] = {PAIRS00, PAIRS01, PAIRS02, PAIRS03,
+                               PAIRS04, PAIRS05, PAIRS06, PAIRS07,
+                               PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
+`endif
+
    wire [9:0]   pairs_index = pairs[x_rd_adr];
    wire [4:0]   a_index = pairs_index[4:0];
    wire [4:0]   b_index = pairs_index[9:5];
+
+   /*
+   wire [119:0] pairs_wide = PAIRS;
    wire [9:0]   pairs[0:11];
 
    assign pairs[00] = pairs_wide[  9:  0];
@@ -207,6 +250,7 @@ module correlator_DSP
    assign pairs[09] = pairs_wide[ 99: 90];
    assign pairs[10] = pairs_wide[109:100];
    assign pairs[11] = pairs_wide[119:110];
+    */
 
    wire         ar = re[a_index];
    wire         br = re[b_index];
@@ -224,6 +268,7 @@ module correlator_DSP
 
          // Antenna enables and inputs:
          .en(en),
+         .vld(go),
          .ar(ar),
          .br(br),
          .bi(bi),
@@ -238,6 +283,41 @@ module correlator_DSP
          .oc(oc),
          .os(os)
          );
+
+`ifdef __NERDY
+   //-------------------------------------------------------------------------
+   //  RAM32M's implemented the nerdy way.
+   //-------------------------------------------------------------------------
+   RAM32X6_SDP
+     #( .INITA(64'h0),
+        .INITB(64'h0),
+        .INITC(64'h0),
+        .INITD(64'h0),
+        .DELAY(3)
+        ) RAM32X6_SDP_COS0 [3:0]
+       (.WCLK(clk_x),
+        .WE(valid),
+        .WADDR({1'b0, x_wr_adr}),
+        .DI(qcos),
+        .RADDR({1'b0, x_rd_adr}),
+        .DO(dcos)
+        );
+
+   RAM32X6_SDP
+     #( .INITA(64'h0),
+        .INITB(64'h0),
+        .INITC(64'h0),
+        .INITD(64'h0),
+        .DELAY(3)
+        ) RAM32X6_SDP_SIN0 [3:0]
+       (.WCLK(clk_x),
+        .WE(valid),
+        .WADDR({1'b0, x_wr_adr}),
+        .DI(qsin),
+        .RADDR({1'b0, x_rd_adr}),
+        .DO(dsin)
+        );
+`endif //  `ifdef __NERDY
 
 
 endmodule // correlator_DSP

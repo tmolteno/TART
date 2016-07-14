@@ -22,7 +22,8 @@
 
 //----------------------------------------------------------------------------
 //  Visibilities and correlator settings.
-`define ACCUM_BITS  32          // Bit-width of the accumulators
+`define ACCUM_BITS  24          // Bit-width of the accumulators
+// `define ACCUM_BITS  32          // Bit-width of the accumulators
 `define TMUX_RATE   12          // Time-multiplexing rate
 `define VISB_LOG2   20          // = 2^20 samples/block;
 `define READ_COUNT 576          // Number of visibilities to read back
