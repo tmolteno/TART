@@ -215,7 +215,6 @@ module tart_correlator
 `endif
 
    correlator_block_DSP
-//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
@@ -246,7 +245,6 @@ module tart_correlator
          );
 
    correlator_block_DSP
-//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS01_00),
          .PAIRS1(PAIRS01_01),
@@ -277,7 +275,6 @@ module tart_correlator
          );
 
    correlator_block_DSP
-//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS02_00),
          .PAIRS1(PAIRS02_01),
@@ -308,7 +305,6 @@ module tart_correlator
          );
 
    correlator_block_DSP
-//    correlator_block
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),
@@ -338,7 +334,7 @@ module tart_correlator
          .overflow_sin(os[3])
          );
 
-   correlator_block
+   correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS04_00),
          .PAIRS1(PAIRS04_01),
@@ -368,7 +364,7 @@ module tart_correlator
          .overflow_sin(os[4])
          );
 
-   correlator_block
+   correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS05_00),
          .PAIRS1(PAIRS05_01),

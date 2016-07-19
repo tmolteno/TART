@@ -62,6 +62,9 @@ module tart
    //-------------------------------------------------------------------------
    //     GENERATE DIFFERENT CLOCK DOMAINS
    //-------------------------------------------------------------------------
+   (* PERIOD = "10.18 ns" *)
+   wire               fpga_clk;
+
 `ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
@@ -71,6 +74,9 @@ module tart
       .reset_n(reset_n)
       );
 `else
+   (* PERIOD = "5.091 ns" *)
+   wire               clk_x;
+
    tart_dcm TART_DCM0
      ( .clk_pin(rx_clk_16),               // 16.368 MHZ
        .clk_rst(0),
@@ -213,7 +219,7 @@ module tart
    parameter ACCUM = `ACCUM_BITS; // Bit-width of the accumulators
    parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
    parameter MSB   = BLOCK-1;     // Data transfer MSB
-   parameter MRATE = `TMUX_RATE;  // Time-multiplexing rate
+   parameter TRATE = `TMUX_RATE;  // Time-multiplexing rate
    parameter COUNT = `VISB_LOG2;  // (1 << 3) - 1;
    parameter NREAD = `READ_COUNT; // Number of visibilities to read back
    parameter RBITS = `READ_BITS;  // = ceiling{log2(NREAD)};
@@ -440,7 +446,7 @@ module tart
    tart_visibilities
      #(  .BLOCK (BLOCK),
          .COUNT (NREAD),
-         .MRATE (MRATE),
+         .TRATE (TRATE),
          .DELAY (DELAY)
          ) TART_VISIBILITIES0
        ( .clk_i(b_clk),
@@ -483,10 +489,10 @@ module tart
 
    always @(posedge clk_x)
      if (reset) q_cnt <= #DELAY 0;
-     else       q_cnt <= #DELAY q_cnt == MRATE-1 ? 0 : q_cnt + 1;
+     else       q_cnt <= #DELAY q_cnt == TRATE-1 ? 0 : q_cnt + 1;
 
    always @(posedge clk_x)
-     strobe <= #DELAY q_cnt == MRATE >> 1;
+     strobe <= #DELAY q_cnt == TRATE >> 1;
 
    tart_correlator
      #(  .BLOCK (BLOCK),

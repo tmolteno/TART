@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/correlator_block_DSP.v
+ * Module      : verilog/correlator_block.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -10,8 +10,7 @@
  * Stability   : Experimental
  * Portability : only tested with Icarus Verilog
  * 
- * Time-multiplexed block of correlator-blocks, and this version uses the
- * Xilinx DSP48A1 primitives (of Spartan 6's).
+ * Time-multiplexed block of correlator-blocks.
  * 
  * NOTE:
  *  + typically several of these would be attached to a common set of antenna
@@ -22,16 +21,19 @@
  *    port SRAM's are used;
  *  + bus transactions read from the currently-innactive bank, to prevent
  *    possible metastability/corruption;
- *  + potentially uses quite a lot of the FPGA's distributed-RAM resources;
+ * 
+ * TODO:
+ *  + parameterise the number of block SRAM's;
  * 
  * Changelog:
- *  + 14/07/2016  --  initial file (rebuilt from `correlator_block.v`);
+ *  + ??/06/2016  --  initial file;
+ *  + 19/07/2016  --  refactored to explicitly instantiate Xilinx SRAM's;
  * 
  */
 
 `include "tartcfg.v"
 
-module correlator_block_DSP
+module correlator_block_SDP
   #( parameter ACCUM = `ACCUM_BITS,
      parameter IBITS = `NUM_ANTENNA,
      // Pairs of antennas to correlate, for each block:
@@ -84,17 +86,17 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    //  Visibilities buffer.
    //-------------------------------------------------------------------------
-   reg [3:0]           block = 0;
-   wire [XSB:0]        vis, dat;
+   reg [3:0]       block = 0;
+   wire [XSB:0]    vis, dat;
 
 
    //-------------------------------------------------------------------------
    //  Wishbone-like bus interface.
    //-------------------------------------------------------------------------
-   wire [3:0]          oc, os;
-   reg                 ack = 0;
-   reg [2:0]           adr = 0;
-   wire                vld;
+   wire [3:0]      oc, os;
+   reg             ack = 0;
+   reg [2:0]       adr = 0;
+   wire            vld;
 
    //  Acknowledge any request, even if ignored.
    always @(posedge clk_i)
@@ -153,7 +155,7 @@ module correlator_block_DSP
    always @(posedge clk_x)
      if (rst)
        swap  <= #DELAY 0;
-     else if (w_swp)       // swap banks
+     else if (w_swp) // swap banks
        swap  <= #DELAY 0;
      else if (sw && !swap) // swap banks @next wrap
        swap  <= #DELAY 1;
@@ -178,7 +180,7 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    //  Correlator instances.
    //-------------------------------------------------------------------------
-   correlator_DSP
+   correlator_SDP
      #(  .ACCUM(ACCUM),
          .TBITS(TBITS),
          .PAIRS(PAIRS0),
@@ -201,7 +203,7 @@ module correlator_block_DSP
          .overflow_sin(os[0])
          );
 
-   correlator_DSP
+   correlator_SDP
      #(  .ACCUM(ACCUM),
          .TBITS(TBITS),
          .PAIRS(PAIRS1),
@@ -224,7 +226,7 @@ module correlator_block_DSP
          .overflow_sin(os[1])
          );
 
-   correlator_DSP
+   correlator_SDP
      #(  .ACCUM(ACCUM),
          .TBITS(TBITS),
          .PAIRS(PAIRS2),
@@ -247,7 +249,7 @@ module correlator_block_DSP
          .overflow_sin(os[2])
          );
 
-   correlator_DSP
+   correlator_SDP
      #(  .ACCUM(ACCUM),
          .TBITS(TBITS),
          .PAIRS(PAIRS3),
@@ -274,6 +276,7 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    //  Explicit instantiation, because XST sometimes gets it wrong.
    //-------------------------------------------------------------------------
+   //  TODO: Parameterise the number of block SRAM's.
    RAMB8X32_SDP #(.DELAY(DELAY)) VISRAM [NSRAM-1:0]
      ( .WCLK(clk_i),
        .WE(vld),
@@ -286,4 +289,4 @@ module correlator_block_DSP
        );
 
    
-endmodule // correlator_block_DSP
+endmodule // correlator_block_SDP

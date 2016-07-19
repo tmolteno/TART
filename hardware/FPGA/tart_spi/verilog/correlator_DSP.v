@@ -41,9 +41,9 @@ module correlator_DSP
     parameter WSB   = WIDTH - 1,
     // Pairs of antennas to correlate:
     parameter PAIRS = 120'hb1a191817161b0a090807060,
-    parameter MRATE = 12,       // Time-multiplexing rate
-    parameter MBITS = 4,
-    parameter TSB   = MBITS - 1,
+    parameter TRATE = 12,       // Time-multiplexing rate
+    parameter TBITS = 4,
+    parameter TSB   = TBITS - 1,
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
@@ -125,14 +125,12 @@ module correlator_DSP
                                PAIRS04, PAIRS05, PAIRS06, PAIRS07,
                                PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
 `endif
-
-   wire [9:0]   pairs_index = pairs[rd];
-   wire [4:0]   a_index = pairs_index[4:0];
-   wire [4:0]   b_index = pairs_index[9:5];
-
+   wire [4:0]   a_index, b_index;
    wire         ar = re[a_index];
    wire         br = re[b_index];
    wire         bi = im[b_index];
+
+   assign {b_index, a_index} = pairs[rd];
 
 
    //-------------------------------------------------------------------------
@@ -176,9 +174,9 @@ module correlator_DSP
         ) RAM32X6_SDP_COS0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR({{5-MBITS{1'b0}}, wr}),
+        .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qcos),
-        .RADDR({{5-MBITS{1'b0}}, rd}),
+        .RADDR({{5-TBITS{1'b0}}, rd}),
         .DO(dcos)
         );
 
@@ -191,9 +189,9 @@ module correlator_DSP
         ) RAM32X6_SDP_SIN0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR({{5-MBITS{1'b0}}, wr}),
+        .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qsin),
-        .RADDR({{5-MBITS{1'b0}}, rd}),
+        .RADDR({{5-TBITS{1'b0}}, rd}),
         .DO(dsin)
         );
 

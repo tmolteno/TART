@@ -26,10 +26,10 @@ module tart_visibilities
     parameter ASB   = ABITS-1,
     parameter CBITS = 10,
     parameter CSB   = CBITS-1,
-    parameter MRATE = 12,       // time-multiplexing rate
-    parameter MBITS = 4,
-    parameter MSKIP = (1 << MBITS) - MRATE + 1,
-    parameter RSB   = MBITS-1,
+    parameter TRATE = 12,       // time-multiplexing rate
+    parameter TBITS = 4,
+    parameter MSKIP = (1 << TBITS) - TRATE + 1,
+    parameter RSB   = TBITS-1,
     parameter DELAY = 3)
    (
     input              clk_i, // bus clock
@@ -65,10 +65,10 @@ module tart_visibilities
 
    //-------------------------------------------------------------------------
    //  The time-multiplexing ratio determines how many values are stored
-   //  within each correlator. E.g., for `MRATE = 12`, there are 12 real and
+   //  within each correlator. E.g., for `TRATE = 12`, there are 12 real and
    //  12 complex values within each of the correlator's SRAM's.
-   parameter BSIZE = MRATE*2-1;
-   parameter BBITS = MBITS+1;
+   parameter BSIZE = TRATE*2-1;
+   parameter BBITS = TBITS+1;
    parameter BSB   = BBITS-1;
 
 

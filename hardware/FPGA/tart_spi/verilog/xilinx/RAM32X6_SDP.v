@@ -75,13 +75,15 @@ module RAM32X6_SDP
    //-------------------------------------------------------------------------
    //  Xilinx RAM32M primitive, and in SDP mode.
    //-------------------------------------------------------------------------
+   wire [1:0]    dod;
+
    RAM32M
      #(  .INIT_A(INITA), .INIT_B(INITB), .INIT_C(INITC), .INIT_D(INITD)
          ) RAM32M0
        ( .DOA(DO[1:0]),
          .DOB(DO[3:2]),
          .DOC(DO[5:4]),
-         .DOD(),
+         .DOD(dod),
 
          .ADDRA(RADDR),
          .ADDRB(RADDR),
@@ -93,7 +95,7 @@ module RAM32X6_SDP
          .DIA(DI[1:0]),
          .DIB(DI[3:2]),
          .DIC(DI[5:4]),
-         .DID(2'bx)
+         .DID(2'b0)
          );
 `endif // !`ifdef __icarus
 

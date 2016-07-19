@@ -22,6 +22,7 @@
 
 //----------------------------------------------------------------------------
 //  Visibilities and correlator settings.
+`define NUM_ANTENNA 24
 `define ACCUM_BITS  24          // Bit-width of the accumulators
 // `define ACCUM_BITS  32          // Bit-width of the accumulators
 `define TMUX_RATE   12          // Time-multiplexing rate
@@ -44,7 +45,7 @@
 //
 //----------------------------------------------------------------------------
 // `define __USE_OLD_CLOCKS
-
+`define __USE_DCM_CLKGEN
 
 //----------------------------------------------------------------------------
 //
@@ -75,12 +76,6 @@
 //  there are enough block SRAM's), but imposes additional placement
 //  constraints, potentially leading to lower circuit performance.
 `define __USE_SDP_DSRAM
-
-`ifdef  __USE_SDP_DSRAM
- `define CORRELATOR correlator_sdp
-`else
- `define CORRELATOR correlator
-`endif
 
 //----------------------------------------------------------------------------
 //  Wishbone bus settings for reading back the visibilities.

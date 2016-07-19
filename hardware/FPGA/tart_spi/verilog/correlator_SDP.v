@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/tart_aquire.v
+ * Module      : verilog/correlator_SDP.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -34,16 +34,16 @@
 
 `include "tartcfg.v"
 
-module correlator_sdp
+module correlator_SDP
   #(parameter ACCUM = `ACCUM_BITS, // Re/Im accumulator bit-widths
     parameter MSB   = ACCUM-1,
     parameter WIDTH = ACCUM+ACCUM, // Combined Re & Im components
     parameter WSB   = WIDTH-1,
     // Pairs of antennas to correlate:
     parameter PAIRS = 120'hb1a191817161b0a090807060,
-    parameter MRATE = 12,       // Time-multiplexing rate
-    parameter MBITS = 4,
-    parameter TSB   = MBITS - 1,
+    parameter TRATE = 12,       // Time-multiplexing rate
+    parameter TBITS = 4,
+    parameter TSB   = TBITS - 1,
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
@@ -116,11 +116,10 @@ module correlator_sdp
                                PAIRS04, PAIRS05, PAIRS06, PAIRS07,
                                PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
 `endif
-
-   wire [9:0]   pairs_index = pairs[rd];
-   wire [4:0]   a_index = pairs_index[4:0];
-   wire [4:0]   b_index = pairs_index[9:5];
+   wire [4:0]   a_index, b_index;
    reg          go = 0, ar, br, bi;
+
+   assign {b_index, a_index} = pairs[rd];
 
    //  Add a cycle of latency to wait for the RAM read.
    always @(posedge clk_x) begin
@@ -177,9 +176,9 @@ module correlator_sdp
         ) RAM32X6_SDP_COS0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR({{5-MBITS{1'b0}}, wr}),
+        .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qcos),
-        .RADDR({{5-MBITS{1'b0}}, rd}),
+        .RADDR({{5-TBITS{1'b0}}, rd}),
         .DO(dcos_w)
         );
 
@@ -192,11 +191,11 @@ module correlator_sdp
         ) RAM32X6_SDP_SIN0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR({{5-MBITS{1'b0}}, wr}),
+        .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qsin),
-        .RADDR({{5-MBITS{1'b0}}, rd}),
+        .RADDR({{5-TBITS{1'b0}}, rd}),
         .DO(dsin_w)
         );
 
 
-endmodule // correlator_sdp
+endmodule // correlator_SDP

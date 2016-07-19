@@ -86,14 +86,7 @@ module correlator_block
    //  Visibilities buffer.
    //-------------------------------------------------------------------------
    reg [3:0]       block = 0;
-   wire [XSB:0]    vis;
-`ifdef __icarus
-   reg [XSB:0]     visram[0:VSIZE-1];
-   reg [XSB:0]     dat;
-
-   always @(posedge clk_x)
-     if (vld) visram[{block, x_wr_adr}] <= #DELAY vis;
-`endif
+   wire [XSB:0]    vis, dat;
 
 
    //-------------------------------------------------------------------------
@@ -111,12 +104,7 @@ module correlator_block
 
    //  Put data onto the WB bus, in two steps.
    always @(posedge clk_i) begin
-      if (cyc_i && stb_i) begin
-`ifdef __icarus
-         dat <= #DELAY visram[adr_i[ASB:3]];
-`endif
-         adr <= #DELAY adr_i[2:0];
-      end
+      if (cyc_i && stb_i) adr <= #DELAY adr_i[2:0];
       case (adr) // 8:1 MUX to select the desired word:
         0: dat_o <= #DELAY dat[ACCUM*1-1:ACCUM*0];
         1: dat_o <= #DELAY dat[ACCUM*2-1:ACCUM*1];
@@ -287,62 +275,16 @@ module correlator_block
    //-------------------------------------------------------------------------
    //  Explicit instantiation, because XST sometimes gets it wrong.
    //-------------------------------------------------------------------------
-`ifndef __icarus
-   wire [12:0]      rd_adr = {adr_i[ASB:3], {13-ABITS+3{1'b0}}};
-   wire [12:0]      wr_adr = {block, x_wr_adr, {13-MBITS-BADDR{1'b0}}};
-
-   wire [SSB:0]     cmsb, clsb, vmsb, vlsb;
-   wire [XSB:0]     dat = {vmsb, vlsb};
-
-   assign {cmsb, clsb} = vis;
-
-   RAMB8BWER
-     #(.DATA_WIDTH_A(36),
-       .DATA_WIDTH_B(36),
-       .DOA_REG(0),
-       .DOB_REG(0),
-       .EN_RSTRAM_A("FALSE"),
-       .EN_RSTRAM_B("FALSE"),
-       .INIT_A(18'h00000),
-       .INIT_B(18'h00000),
-       .INIT_FILE("NONE"),
-       .RAM_MODE("SDP"),
-       .RSTTYPE("SYNC"),
-       .RST_PRIORITY_A("CE"),
-       .RST_PRIORITY_B("CE"),
-       .SIM_COLLISION_CHECK("NONE"),
-       .SRVAL_A(18'h00000),
-       .SRVAL_B(18'h00000),
-       // WRITE_MODE_A/WRITE_MODE_B: "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
-       .WRITE_MODE_A("WRITE_FIRST"),
-       .WRITE_MODE_B("WRITE_FIRST") 
-   )
-   VISRAM0 [5:0]
-     ( // Write port:
-       .CLKAWRCLK(clk_i),    // 1-bit input: Write clock
-       .ENAWREN(vld),        // 1-bit input: Write enable
-       .ADDRAWRADDR(wr_adr), // 13-bit input: Write address
-       .DIADI(clsb),         // 16-bit input: LSB data
-       .DIPADIP(2'b0),       // 2-bit input: LSB parity
-       .DIBDI(cmsb),         // 16-bit input: MSB data
-       .DIPBDIP(2'b0),       // 2-bit input: MSB parity
-       // Read port:
-       .CLKBRDCLK(clk_i),    // 1-bit input: Read clock
-       .ENBRDEN(1'b1),       // 1-bit input: Read enable
-       .ADDRBRDADDR(rd_adr), // 13-bit input: Read address
-       .DOADO(vlsb),         // 16-bit output: LSB data
-       .DOPADOP(),           // 2-bit output: LSB parity
-       .DOBDO(vmsb),         // 16-bit output: MSB data
-       .DOPBDOP(),           // 2-bit output: MSB parity
-       // Not used in SDP-mode or with the output registers disabled:
-       .REGCEA(1'b0),        // 1-bit input: A port register enable
-       .RSTA(1'b0),          // 1-bit input: A port set/reset
-       .WEAWEL(2'b0),        // 2-bit input: A port write enable
-       .REGCEBREGCE(1'b0),   // 1-bit input: Register enable
-       .RSTBRST(1'b0),       // 1-bit input: B port set/reset
-       .WEBWEU(2'b0)         // 2-bit input: B port write enable
-   );
-`endif // `ifndef __icarus
+   RAMB8X32_SDP #(.DELAY(DELAY)) VISRAM [5:0]
+     ( .WCLK(clk_i),
+       .WE(vld),
+       .WADDR({block, x_wr_adr}),
+       .DI(vis),
+       .RCLK(clk_i),
+       .CE(1'b1),
+       .RADDR(adr_i[ASB:3]),
+       .DO(dat)
+       );
 
    
 endmodule // correlator_block
