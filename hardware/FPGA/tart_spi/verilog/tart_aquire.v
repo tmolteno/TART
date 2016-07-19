@@ -59,7 +59,8 @@ module tart_aquire
   #(parameter WIDTH = 8,        // WB-like bus data-width
     parameter MSB   = WIDTH-1,
     parameter ACCUM = 32,       // #bits of the viz accumulators
-    parameter BBITS = 5,
+    parameter XSB   = ACCUM-1,
+    parameter BBITS = `BLOCK_BITS,
     parameter BSB   = BBITS-1,
     parameter DELAY = 3)
    (
@@ -93,10 +94,10 @@ module tart_aquire
     input [MSB:0]      vx_dat_i,
     input              newblock,
     input              streamed,
-    input [ACCUM-1:0]  checksum,
+    input [XSB:0]      checksum, // TODO:
     output reg         accessed = 0,
     output reg         available = 0,
-    output [ACCUM-1:0] blocksize,
+    output reg [XSB:0] blocksize = 0, // = #viz/block - 1;
 
     output reg         aq_debug_mode = 0,
     output reg         aq_enabled = 0,
@@ -110,7 +111,6 @@ module tart_aquire
    wire [23:0]         ax_data;
 
    reg [4:0]           log_block = 0; // = log2(#viz/block);
-   reg [ACCUM-1:0]     blocksize = 0; // = #viz/block - 1;
    wire [MSB:0]        vx_status = {available, accessed, 1'b0, log_block};
 
    wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};

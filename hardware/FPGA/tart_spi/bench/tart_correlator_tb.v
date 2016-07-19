@@ -19,7 +19,7 @@ module tart_correlator_tb;
    parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 `ifdef __USE_SDP_DSRAM
-   parameter CBITS = 15;
+   parameter CBITS = 14;
 `else
    parameter CBITS = 10;
 `endif
@@ -269,7 +269,9 @@ module tart_correlator_tb;
    always @(posedge b_clk)
      wat <= #DELAY stb && bst && !ack;
 
-   tart_aquire #( .WIDTH(BBITS), .ACCUM(ACCUM) ) TART_AQUIRE0
+   tart_aquire
+     #( .WIDTH(BBITS), .ACCUM(ACCUM), .BBITS(XBITS)
+        ) TART_AQUIRE0
      ( .clk_i(b_clk),
        .rst_i(rst),
        .cyc_i(cyc),

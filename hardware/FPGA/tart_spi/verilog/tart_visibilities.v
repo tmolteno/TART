@@ -19,7 +19,7 @@ module tart_visibilities
     parameter MSB   = BLOCK-1,
     parameter COUNT = 576,     // TODO: correlators and averages
 `ifdef __USE_SDP_DSRAM
-    parameter ABITS = 15,
+    parameter ABITS = 14,
 `else
     parameter ABITS = 10,
 `endif
@@ -141,6 +141,9 @@ module tart_visibilities
        );
 
    //  Buffers the visibility data until ready via the TART SPI interface.
+   wire [31:0]  w_dat_o;
+   assign p_val = w_dat_o[MSB:0];
+
    wb_sram_dual_port #( .SBITS(CBITS) ) SRAM0
      ( .rst_i(rst_i),
 
@@ -151,8 +154,8 @@ module tart_visibilities
        .a_bst_i(p_bst),
        .a_ack_o(p_ack),
        .a_adr_i(p_adr),
-       .a_dat_i(p_dat),
-       .a_dat_o(p_val),
+       .a_dat_i({{32-BLOCK{1'b0}}, p_dat}),
+       .a_dat_o(w_dat_o),
 
        .b_clk_i(clk_i),    // this port is driven by the TART SPI unit
        .b_cyc_i(cyc_i),

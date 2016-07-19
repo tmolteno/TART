@@ -41,6 +41,9 @@ module correlator_sdp
     parameter WSB   = WIDTH-1,
     // Pairs of antennas to correlate:
     parameter PAIRS = 120'hb1a191817161b0a090807060,
+    parameter MRATE = 12,       // Time-multiplexing rate
+    parameter MBITS = 4,
+    parameter TSB   = MBITS - 1,
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
@@ -51,8 +54,8 @@ module correlator_sdp
     input          en, // data is valid
     input [23:0]   re,
     input [23:0]   im,
-    input [4:0]    rd,
-    input [4:0]    wr,
+    input [TSB:0]  rd,
+    input [TSB:0]  wr,
 
     output         vld,
     output [WSB:0] vis,
@@ -174,9 +177,9 @@ module correlator_sdp
         ) RAM32X6_SDP_COS0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR(wr),
+        .WADDR({{5-MBITS{1'b0}}, wr}),
         .DI(qcos),
-        .RADDR(rd),
+        .RADDR({{5-MBITS{1'b0}}, rd}),
         .DO(dcos_w)
         );
 
@@ -189,9 +192,9 @@ module correlator_sdp
         ) RAM32X6_SDP_SIN0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR(wr),
+        .WADDR({{5-MBITS{1'b0}}, wr}),
         .DI(qsin),
-        .RADDR(rd),
+        .RADDR({{5-MBITS{1'b0}}, rd}),
         .DO(dsin_w)
         );
 

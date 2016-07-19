@@ -20,9 +20,9 @@ module tart_dcm
 
    wire [7:0] STATUS;
    wire       clk_ibufg, clk_buf, clk_dcm, clk6x_dcm, clk12x_dcm;
-   wire       status_n = STATUS[2];
 
-   assign reset_n = reset0_n && reset1_n;
+   assign status_n = STATUS[2];
+   assign reset_n  = reset0_n && reset1_n;
 
    //-------------------------------------------------------------------------
    //  Local I/O clock resources.

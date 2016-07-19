@@ -86,4 +86,4 @@
 //  Wishbone bus settings for reading back the visibilities.
 `define WBADR_BITS 12           // Address bit-width
 `define WBBUS_BITS  8           // Bit-width of the SoC data bus
-`define BLOCK_BITS  5           // Bit-width of the block-counter
+`define BLOCK_BITS  4           // Bit-width of the block-counter

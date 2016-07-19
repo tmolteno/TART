@@ -78,7 +78,7 @@ module block_buffer
          .WEB(4'b0000),         // Port B byte-wide write enable input
          // Port B Data:
          .DIB(DIB),             // 32-bit input: B port data input
-         .DIPB(DIPB)            // 4-bit input: B port parity input
+         .DIPB(DIPB),           // 4-bit input: B port parity input
          .DOB(DOB),             // 32-bit output: B port data output
          .DOPB(DOPB)            // 4-bit output: B port parity output
          );

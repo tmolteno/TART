@@ -43,7 +43,7 @@ module tart_correlator
   #( parameter BLOCK = `ACCUM_BITS,
      parameter MSB   = BLOCK-1,
 `ifdef __USE_SDP_DSRAM
-     parameter ABITS = 15,
+     parameter ABITS = 14,
 `else
      parameter ABITS = 10,
 `endif
@@ -207,7 +207,9 @@ module tart_correlator
    wire [5:0]          oc, os;  // overflows
 `ifdef __USE_SDP_DSRAM
    //  Compose address:     UNIT       BLOCK       VALUE
-   wire [ASB-3:0] c_adr = {adr[6:5], adr[ASB:10], adr[4:0]};
+   wire [ASB-3:0] c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
+   //  Compose address:     UNIT       BLOCK       VALUE
+//    wire [ASB-3:0] c_adr = {adr[6:5], adr[ASB:10], adr[4:0]};
 `else
    wire [ASB-3:0] c_adr = adr[6:0];
 `endif

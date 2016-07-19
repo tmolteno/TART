@@ -41,18 +41,21 @@ module correlator_DSP
     parameter WSB   = WIDTH - 1,
     // Pairs of antennas to correlate:
     parameter PAIRS = 120'hb1a191817161b0a090807060,
+    parameter MRATE = 12,       // Time-multiplexing rate
+    parameter MBITS = 4,
+    parameter TSB   = MBITS - 1,
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
     input          rst,
 
     // Real and imaginary components from the antennas.
-    input          sw, // switch banks
+    input          sw, // switched banks
     input          en, // data is valid
     input [23:0]   re,
     input [23:0]   im,
-    input [4:0]    rd,
-    input [4:0]    wr,
+    input [TSB:0]  rd,
+    input [TSB:0]  wr,
 
     output reg     vld = 0,
     output [WSB:0] vis,
@@ -68,10 +71,10 @@ module correlator_DSP
    // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
    // mode.
    wire [MSB:0]        dcos, dsin, qcos, qsin;
-
-   // Xilinx Block RAM for the buffered, visibilities data.
    wire                oc, os;
    reg                 go = 0;
+
+   assign vis = {qsin, qcos};
 
 
    //-------------------------------------------------------------------------
@@ -123,7 +126,7 @@ module correlator_DSP
                                PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
 `endif
 
-   wire [9:0]   pairs_index = pairs[x_rd_adr];
+   wire [9:0]   pairs_index = pairs[rd];
    wire [4:0]   a_index = pairs_index[4:0];
    wire [4:0]   b_index = pairs_index[9:5];
 
@@ -139,7 +142,7 @@ module correlator_DSP
      #(  .ACCUM(ACCUM), .DELAY(DELAY) ) CORR_COS_SIN0
        ( .clk(clk_x),
          .rst(rst),
-         .clr(clear),
+         .clr(sw),
 
          // Antenna enables and inputs:
          .en(en),
@@ -173,10 +176,10 @@ module correlator_DSP
         ) RAM32X6_SDP_COS0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR(wr),
+        .WADDR({{5-MBITS{1'b0}}, wr}),
         .DI(qcos),
-        .RADDR(rd),
-        .DO(dcos_w)
+        .RADDR({{5-MBITS{1'b0}}, rd}),
+        .DO(dcos)
         );
 
    RAM32X6_SDP
@@ -188,10 +191,10 @@ module correlator_DSP
         ) RAM32X6_SDP_SIN0 [3:0]
        (.WCLK(clk_x),
         .WE(vld),
-        .WADDR(wr),
+        .WADDR({{5-MBITS{1'b0}}, wr}),
         .DI(qsin),
-        .RADDR(rd),
-        .DO(dsin_w)
+        .RADDR({{5-MBITS{1'b0}}, rd}),
+        .DO(dsin)
         );
 
 
