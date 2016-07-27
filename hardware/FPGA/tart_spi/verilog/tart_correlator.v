@@ -304,7 +304,8 @@ module tart_correlator
          .overflow_sin(os[2])
          );
 
-   correlator_block_DSP
+   correlator_block_SDP
+//    correlator_block_DSP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),
