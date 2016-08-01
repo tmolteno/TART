@@ -142,7 +142,10 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
+// `define __USE_OLD_SCHOOL
+`ifdef  __USE_OLD_SCHOOL
    reg [TSB:0]         x_rd_adr = 0, x_wt_adr = 0, x_wr_adr = 0;
+   reg                 go = 0;
    wire [TSB:0]        next_x_rd_adr = wrap_x_rd_adr ? 0 : x_rd_adr + 1 ;
    wire                wrap_x_rd_adr = x_rd_adr == TRATE - 1;
    wire                wrap_x_wr_adr = x_wr_adr == TRATE - 1;
@@ -164,11 +167,29 @@ module correlator_block_DSP
         x_wr_adr <= #DELAY vld ? x_wt_adr      : x_wr_adr;
      end
 
+`else // !`ifdef __USE_OLD_SCHOOL
+   wire [TSB:0] x_rd_adr, x_wr_adr;
+   wire         wrap_x_rd_adr, wrap_x_wr_adr;
+
+   rmw_address_unit
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .STEPS(3)
+         ) RMW0
+       ( .clk_i(clk_x),
+         .rst_i(rst),
+         .ce_i(en),
+//          .vld_o(vld),
+         .rd_adr_o(x_rd_adr),
+         .rd_wrap_o(wrap_x_rd_adr),
+         .wr_adr_o(x_wr_adr),
+         .wr_wrap_o(wrap_x_wr_adr)
+         );
+`endif // !`ifdef __USE_OLD_SCHOOL
+
 
    //-------------------------------------------------------------------------
    //  Banks are switched at the next address-wrap event.
    //-------------------------------------------------------------------------
-   reg                 go = 0, swap = 0, clear = 1;
+   reg                 swap = 0, clear = 1;
    wire                w_swp = wrap_x_rd_adr && (sw || swap);
    wire                w_inc = wrap_x_wr_adr && clear;
                 
