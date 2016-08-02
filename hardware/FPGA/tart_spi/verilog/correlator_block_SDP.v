@@ -104,6 +104,27 @@ module correlator_block_SDP
      else     {ack_o, ack} <= #DELAY {cyc_i && ack, cyc_i && stb_i};
 
    //  Put data onto the WB bus, in two steps.
+   wire [MSB:0]        dat_w;        
+   always @(posedge clk_i) begin
+      if (cyc_i && stb_i) adr <= #DELAY adr_i[2:0];
+      dat_o <= #DELAY dat_w;
+   end
+
+   MUX8 #( .WIDTH(ACCUM) ) MUXDAT0
+     ( .a(dat[ACCUM*1-1:ACCUM*0]),
+       .b(dat[ACCUM*2-1:ACCUM*1]),
+       .c(dat[ACCUM*3-1:ACCUM*2]),
+       .d(dat[ACCUM*4-1:ACCUM*3]),
+       .e(dat[ACCUM*5-1:ACCUM*4]),
+       .f(dat[ACCUM*6-1:ACCUM*5]),
+       .g(dat[ACCUM*7-1:ACCUM*6]),
+       .h(dat[ACCUM*8-1:ACCUM*7]),
+       .s(adr),
+       .x(dat_w)
+       );
+
+   /*
+   //  Put data onto the WB bus, in two steps.
    always @(posedge clk_i) begin
       if (cyc_i && stb_i) adr <= #DELAY adr_i[2:0];
       case (adr) // 8:1 MUX to select the desired word:
@@ -117,11 +138,7 @@ module correlator_block_SDP
         7: dat_o <= #DELAY dat[ACCUM*8-1:ACCUM*7];
       endcase // case (adr_i[2:0])
    end
-
-
-   //-------------------------------------------------------------------------
-   //  Correlator memory pointers.
-   //-------------------------------------------------------------------------
+   */
 
 
    //-------------------------------------------------------------------------
@@ -303,7 +320,7 @@ module correlator_block_SDP
    //-------------------------------------------------------------------------
    //  TODO: Parameterise the number of block SRAM's.
    RAMB8X32_SDP #(.DELAY(DELAY)) VISRAM [NSRAM-1:0]
-     ( .WCLK(clk_i),
+     ( .WCLK(clk_x),
        .WE(vld),
        .WADDR({block, x_wr_adr}),
        .DI(vis),

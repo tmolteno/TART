@@ -171,7 +171,7 @@ module correlator_DSP
         .INITC(64'h0),
         .INITD(64'h0),
         .DELAY(3)
-        ) RAM32X6_SDP_COS0 [3:0]
+        ) RAM32X6_SDP_COS [3:0]
        (.WCLK(clk_x),
         .WE(vld),
         .WADDR({{5-TBITS{1'b0}}, wr}),
@@ -186,7 +186,7 @@ module correlator_DSP
         .INITC(64'h0),
         .INITD(64'h0),
         .DELAY(3)
-        ) RAM32X6_SDP_SIN0 [3:0]
+        ) RAM32X6_SDP_SIN [3:0]
        (.WCLK(clk_x),
         .WE(vld),
         .WADDR({{5-TBITS{1'b0}}, wr}),

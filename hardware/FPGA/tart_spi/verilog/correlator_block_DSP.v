@@ -318,7 +318,7 @@ module correlator_block_DSP
    //  Explicit instantiation, because XST sometimes gets it wrong.
    //-------------------------------------------------------------------------
    RAMB8X32_SDP #(.DELAY(DELAY)) VISRAM [NSRAM-1:0]
-     ( .WCLK(clk_i),
+     ( .WCLK(clk_x),
        .WE(vld),
        .WADDR({block, x_wr_adr}),
        .DI(vis),

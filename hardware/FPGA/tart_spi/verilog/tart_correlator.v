@@ -177,9 +177,24 @@ module tart_correlator
      else     ack_o <= #DELAY cyc_i && acks[dev];
 
    // 8:1 MUX and output-data latch.
+   wire [MSB:0] dat_w;
+   MUX8 #( .WIDTH(BLOCK) ) MUXDAT0
+     ( .a(dats[0]),
+       .b(dats[1]),
+       .c(dats[2]),
+       .d(dats[3]),
+       .e(dats[4]),
+       .f(dats[5]),
+       .g(dats[6]),
+       .h(dats[7]),
+       .s(dev),
+       .x(dat_w)
+       );
+
    always @(posedge clk_i) begin
       dev   <= #DELAY adr[9:7];
-      dat_o <= #DELAY cyc_i && !we_i && ack_w ? dats[dev] : dat_o;
+//       dat_o <= #DELAY cyc_i && !we_i && ack_w ? dats[dev] : dat_o;
+      dat_o <= #DELAY cyc_i && !we_i && ack_w ? dat_w : dat_o;
    end
 
 
@@ -304,8 +319,8 @@ module tart_correlator
          .overflow_sin(os[2])
          );
 
-   correlator_block_SDP
-//    correlator_block_DSP
+//    correlator_block_SDP
+   correlator_block_DSP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),
@@ -395,7 +410,7 @@ module tart_correlator
          .overflow_sin(os[5])
          );
 
-   
+   /*
    //-------------------------------------------------------------------------
    //  Count the number of ones, from each antenna.
    //  NOTE: Used to compute their means, as their gains are unknown.
@@ -421,6 +436,6 @@ module tart_correlator
          .enable(go),
          .antenna(re)
          );
-
+    */
 
 endmodule // tart_correlator    
