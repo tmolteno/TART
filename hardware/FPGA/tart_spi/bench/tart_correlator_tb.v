@@ -349,7 +349,7 @@ module tart_correlator_tb;
    tart_visibilities
      #(  .BLOCK (BLOCK),
          .COUNT (NREAD),
-         .MRATE (MRATE),
+         .TRATE (MRATE),
          .DELAY (DELAY)
          ) TART_VISIBILITIES0
        ( .clk_i(b_clk),
@@ -374,6 +374,7 @@ module tart_correlator_tb;
          .we_o (c_we ),
          .bst_o(c_bst),
          .ack_i(c_ack),
+         .wat_i(1'b0),          // TODO: Need something here?
          .adr_o(c_adr),
          .dat_i(c_dat),
          .dat_o(c_val),

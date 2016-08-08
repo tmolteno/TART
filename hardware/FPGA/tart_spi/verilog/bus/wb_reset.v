@@ -27,11 +27,13 @@ module wb_reset
     output reg [MSB:0] dat_o = 0,
 
     input              reset_ni, // from optional external source
+    (* ASYNC_REG = "TRUE" *)
     output reg         reset_o = 0
     );
 
+    (* ASYNC_REG = "TRUE" *)
+   reg                 reset  = 0;
    reg [RTIME-1:0]     resets = 0;
-   reg                 reset = 0;
    wire                reset_w = cyc_i && stb_i && we_i && !ack_o && dat_i[0];
 
    //-------------------------------------------------------------------------

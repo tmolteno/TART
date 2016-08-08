@@ -494,6 +494,24 @@ module tart
    always @(posedge clk_x)
      strobe <= #DELAY q_cnt == TRATE >> 1;
 
+   //-------------------------------------------------------------------------
+   //  Synchronise signals from the WB clock domain.
+   (* KEEP = "TRUE" *) reg [MSB:0]  block_x  = 0;
+   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
+
+   (* KEEP = "TRUE" *) reg          enable_x = 0;
+   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg          enable_s = 0;
+
+   always @(posedge clk_x) begin
+      block_s  <= #DELAY blocksize;
+      enable_s <= #DELAY spi_start_aq;
+   end
+
+   always @(posedge clk_x) begin
+      block_x  <= #DELAY block_s;
+      enable_x <= #DELAY enable_s;
+   end
+
    tart_correlator
      #(  .BLOCK (BLOCK),
          .DELAY (DELAY)
@@ -511,8 +529,8 @@ module tart
          .dat_i(c_dtx),
          .dat_o(c_drx),
 
-         .enable(spi_start_aq), // begins correlating once asserted
-         .blocksize(blocksize), // number of samples per visibility sum
+         .enable(enable_x),     // begins correlating once asserted
+         .blocksize(block_x),   // number of samples per visibility sum
          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
          .switch(switching)     // asserts on bank-switch (sample domain)

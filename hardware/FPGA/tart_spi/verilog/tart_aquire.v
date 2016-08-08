@@ -97,10 +97,13 @@ module tart_aquire
     input [XSB:0]      checksum, // TODO:
     output reg         accessed = 0,
     output reg         available = 0,
+
+    (* ASYNC_REG = "TRUE" *)
     output reg [XSB:0] blocksize = 0, // = #viz/block - 1;
 
-    output reg         aq_debug_mode = 0,
+    (* ASYNC_REG = "TRUE" *)
     output reg         aq_enabled = 0,
+    output reg         aq_debug_mode = 0,
 	  output reg [2:0]   aq_sample_delay = 0
     );
 
@@ -198,10 +201,52 @@ module tart_aquire
    assign vx_stb_o = stb_i && adr_i == `VX_STREAM;
    assign vx_we_o  = 1'b0;
 
+   /*
    //  TODO: How slow is computing the new block-size?
    always @(posedge clk_i)
      if (bs_new)
        blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
+    */
+
+   reg                 bs_upd = 0, bs_dec = 0;
+   reg [XSB:0]         bs_shift = 0;
+
+   always @(posedge clk_i) begin
+      bs_upd <= #DELAY bs_new && !bs_upd;
+//       bs_dec <= #DELAY bs_upd;
+      if (bs_upd)
+        case (log_block)
+          0:  blocksize <= #DELAY        0;
+          1:  blocksize <= #DELAY        1;
+          2:  blocksize <= #DELAY        3;
+          3:  blocksize <= #DELAY        7;
+          4:  blocksize <= #DELAY       15;
+          5:  blocksize <= #DELAY       31;
+          6:  blocksize <= #DELAY       63;
+          7:  blocksize <= #DELAY      127;
+          8:  blocksize <= #DELAY      255;
+          9:  blocksize <= #DELAY      511;
+          10: blocksize <= #DELAY     1023;
+          11: blocksize <= #DELAY     2047;
+          12: blocksize <= #DELAY     4095;
+          13: blocksize <= #DELAY     8191;
+          14: blocksize <= #DELAY    16383;
+          15: blocksize <= #DELAY    32767;
+          16: blocksize <= #DELAY    65535;
+          17: blocksize <= #DELAY   131071;
+          18: blocksize <= #DELAY   262143;
+          19: blocksize <= #DELAY   524287;
+          20: blocksize <= #DELAY  1048575;
+          21: blocksize <= #DELAY  2097151;
+          22: blocksize <= #DELAY  4194303;
+          23: blocksize <= #DELAY  8388607;
+          default:
+            blocksize   <= #DELAY 16777215;
+        endcase
+//         bs_shift  <= #DELAY (1 << log_block);
+//       if (bs_upd)
+//         blocksize <= #DELAY bs_shift - 1;
+   end
 
    //-------------------------------------------------------------------------
    //  When using correlators in SDP-mode, there are `2^5 == 32` blocks of

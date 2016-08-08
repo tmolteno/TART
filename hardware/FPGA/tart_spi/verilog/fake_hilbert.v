@@ -21,7 +21,10 @@ module fake_hilbert
     input                  en,
     input [WIDTH-1:0]      d,
     output reg             valid = 0,
+
+    (* KEEP = "TRUE", IOB = "FALSE" *)
     output reg [WIDTH-1:0] re = 0,
+    (* KEEP = "TRUE", IOB = "FALSE" *)
     output reg [WIDTH-1:0] im = 0
     );
 

@@ -97,12 +97,23 @@ placeX :: Prefix -> LOC -> Label -> String
 placeX p loc lab = "INST " ++ show (p ++ '/':lab) ++ showLOC loc
 
 rangeX :: Prefix -> Label -> LOC -> LOC -> String
-rangeX p lab l0 l1 =
-  let loc = ' ':showLOC l0 ++ ':':drop 4 (showLOC l1)
---   in  "INST " ++ show (p ++ '/':lab ++ "[*]") ++ loc
-  in  "INST " ++ show (p ++ '/':lab ++ "<*>") ++ loc
---   in  "INST " ++ show (p ++ '/':lab ++ "<0>") ++ loc
+rangeX p lab l0 l1
+  | l0 == l1  = placeX p l0 l'
+  | otherwise = "INST " ++ show (p ++ '/':l') ++ loc
+  where
+    loc = ' ':showLOC l0 ++ ':':drop 4 (showLOC l1)
+    l'  = lab ++ "<*>"
 
+-- | Constrain to use two FD's (per LE) from the same SLICE.
+dblFD :: Z -> Prefix -> LOC -> [String]
+dblFD w p l@(SLICE x y) =
+  let (w', u ) = (pred w `shiftR` 2, SLICE x (y+w'))
+      (l0, l1) = ("DBL_FD0/FD0", "DBL_FD0/FD1")
+  in  [rangeX p l0 l u, rangeX p l1 l u]
+
+
+-- * Multi-place functions.
+------------------------------------------------------------------------------
 placeMUX :: Width -> LOC -> Prefix -> String
 placeMUX w (SLICE x y) p = toUCF $ zipWith (++) ix ls
   where
@@ -149,8 +160,11 @@ floorDSP p n =
       dx = zipWith (\i -> placeDSP48 (DSP48 0 i)) ix ps
       rx = zipWith (\i -> let y = i `shiftL` 4 + o
                           in  \q -> floorRAMD q (SLICE 4 y)) bs ps
-  in  concat $ dx `mix` rx
+      ax = zipWith floorAddr ps [SLICE 5 i | i <- [8,16..]]
+  in  concat (dx `mix` rx)
+--   in  concat (dx `mix` rx) ++ concat ax
 
+------------------------------------------------------------------------------
 -- | Floorplans the (standard) correlators.
 --   NOTE: Needs to know the number of DSP48's that are being used.
 floorSDP :: Prefix -> Z -> String
@@ -159,7 +173,8 @@ floorSDP p d =
 --       ps = [ p ++ show i ++ "/CORRELATOR" ++ show j | i <- [d..5], j <- [0..3] ]
       ps = [ p ++ show i ++ "/CORRELATOR" ++ show j ++ "/CORR_COS_SIN0" | i <- [d..5], j <- [0..3] ]
       ls = [ SLICE 18 (i*6+2) | i <- [0..4*n-1] ]
-      ax = zipWith floorADD  ps ls
+--       ax = zipWith floorADD  ps ls
+      ax = [""]
       ds = [ SLICE 16 (i*4+2) | i <- [0..3] ]
       qs = [ p ++ show i | i <- [d..5] ]
       rs = zipWith floorRAMD qs ds
@@ -172,13 +187,12 @@ floorADD :: Prefix -> LOC -> String
 floorADD p (SLICE x y) =
   let cx = (SLICE  x    y, SLICE  x    (y+5))
       sx = (SLICE (x+4) y, SLICE (x+4) (y+5))
---       fd = zipWith (\l (a, b) -> rangeX p l a b) ["r_cos", "r_sin"] [cx, sx]
       fd = zipWith (\l (a, b) -> rangeX p l a b) ["RCOS", "RSIN"] [cx, sx]
+--       sd = map (++ " SOFT") fd
+--   in  toUCF sd
   in  toUCF fd
 
-col :: Z -> LOC -> [LOC]
-col n (SLICE x y) = SLICE x . (y+) <$> [0..pred n]
-
+------------------------------------------------------------------------------
 -- | Needs to know the number of DSP48's that are being used?
 --   TODO: Needs to support non-DSP correlators?
 floorRAMD :: Prefix -> LOC -> String
@@ -188,6 +202,23 @@ floorRAMD p (SLICE x y) =
       ci = zipWith3 (placeRAM32M 24 "RAM32X6_SDP_COS") cx bs $ repeat p
       si = zipWith3 (placeRAM32M 24 "RAM32X6_SDP_SIN") sx bs $ repeat p
   in  concat $ ci `mix` si
+
+-- | Place an address-generation unit at the given (origin) location.
+floorAddr :: Prefix -> LOC -> String
+floorAddr p l@(SLICE x y) =
+  let (y', p') = (y + pred 4 `shiftR` 2, p ++ "/RMW0")
+      rs = rangeX p' "FD0" l (SLICE x y')
+      ds = dblFD 4 p' (SLICE (x+2) y)
+  in  toUCF $ rs:ds
+
+------------------------------------------------------------------------------
+-- | Places block RAM's, and their output MUX's, at locations that are
+--   determined from the inputs.
+floorBLK :: Prefix -> LOC -> LOC -> String
+floorBLK p ram mux = bx ++ mx
+  where
+    bx = placeRAMB8 24 ram $ p ++ "/VISRAM"
+    mx = floorMUX p mux
 
 -- | Needs to know the number of DSP48's that are being used.
 floorRAMB :: Prefix -> Z -> String
@@ -202,14 +233,6 @@ floorRAMB p n = concat $ bi ++ mi
     mi = zipWith (placeMUX 24) mx ps
     bs = [0..n-1]
 
--- | Places block RAM's, and their output MUX's, at locations that are
---   determined from the inputs.
-floorBLK :: Prefix -> LOC -> LOC -> String
-floorBLK p ram mux = bx ++ mx
-  where
-    bx = placeRAMB8 24 ram $ p ++ "/VISRAM"
-    mx = floorMUX p mux
-
 -- | Needs to know the number of DSP48's that are being used.
 floorMUX :: Prefix -> LOC -> String
 floorMUX p loc = placeMUX 24 loc p
@@ -223,8 +246,8 @@ floorplan p d =
   floorDSP  p d ++
   "# RAM Placement:\n" ++
   floorRAMB p d ++
-  "# Standard adder-based correlator layout:\n" ++
-  floorSDP  p d ++
+--   "# Standard adder-based correlator layout:\n" ++
+--   floorSDP  p d ++
   []
 
 floortest :: String
@@ -248,6 +271,9 @@ mix :: [a] -> [a] -> [a]
 mix (l:ls) (r:rs) = l:r:mix ls rs
 mix    []     rs  = rs
 mix    ls     []  = ls
+
+col :: Z -> LOC -> [LOC]
+col n (SLICE x y) = SLICE x . (y+) <$> [0..pred n]
 
 -- | Convert a string to a `String`.
 toString :: Show a => a -> String

@@ -119,7 +119,7 @@ module tart_correlator
    //  NOTE: Keeps `sw_b` asserted until acknowledged.
    //-------------------------------------------------------------------------
    reg sw_x = 0, sw_d = 0;      // aquisition domain
-   reg sw_b = 0;                // bus domain
+   (* ASYNC_REG = "TRUE" *) reg sw_b = 0; // bus domain
 
    always @(posedge clk_x)
      if (rst || strobe) sw_x <= #DELAY 0;
@@ -204,6 +204,12 @@ module tart_correlator
    wire                go;
    wire [23:0]         re, im;
 
+   (* KEEP = "TRUE", IOB = "TRUE" *)
+   reg                 a_reg = 24'b0;
+
+   always @(posedge clk_x)
+     a_reg <= #DELAY antenna;
+
    fake_hilbert #( .WIDTH(24) ) HILB0
      (  .clk(clk_x),
         .rst(rst),
@@ -229,6 +235,7 @@ module tart_correlator
    wire [ASB-3:0] c_adr = adr[6:0];
 `endif
 
+   (* AREA_GROUP = "cblk0" *)
    correlator_block_DSP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
@@ -259,6 +266,7 @@ module tart_correlator
          .overflow_sin(os[0])
          );
 
+   (* AREA_GROUP = "cblk1" *)
    correlator_block_DSP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS01_00),
@@ -289,6 +297,7 @@ module tart_correlator
          .overflow_sin(os[1])
          );
 
+   (* AREA_GROUP = "cblk2" *)
    correlator_block_DSP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS02_00),
@@ -319,6 +328,7 @@ module tart_correlator
          .overflow_sin(os[2])
          );
 
+   (* AREA_GROUP = "cblk3" *)
 //    correlator_block_SDP
    correlator_block_DSP
      #(  .ACCUM (BLOCK),
@@ -350,6 +360,7 @@ module tart_correlator
          .overflow_sin(os[3])
          );
 
+   (* AREA_GROUP = "cblk4" *)
    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS04_00),
@@ -380,6 +391,7 @@ module tart_correlator
          .overflow_sin(os[4])
          );
 
+   (* AREA_GROUP = "cblk5" *)
    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS05_00),
