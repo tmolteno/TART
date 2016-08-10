@@ -1,4 +1,5 @@
-import spinumpy as spi
+#!/usr/bin/env python
+import spidev
 import numpy as np
 import time
 
@@ -6,56 +7,78 @@ def tobin(arr):
   return [bin(i) for i in arr]
 
 class TartSPI:
-  def __init__(self, speed=8000000):
-    spi.openSPI(speed=int(speed))
+
+  # TART SPI control and status registers:
+  AX_STREAM = 0x00
+  AX_DATA1  = 0x01
+  AX_DATA2  = 0x02
+  AX_DATA3  = 0x03
+
+  VX_STREAM = 0x04
+  VX_STATUS = 0x05
+
+  AQ_DEBUG  = 0x06
+  AQ_STATUS = 0x07
+
+  SPI_RESET = 0x0F
+
+  WRITE_CMD = 0x80
+
+  def __init__(self, speed=32000000):
+    self.spi = spidev.SpiDev()
+    self.spi.open(0, 0)
+    self.spi.mode = 0b00
+    self.spi.bits_per_word = 8
+    self.spi.max_speed_hz = int(speed)
 
   def reset(self):
-    ret = spi.transfer((0x8f,0x01))
-    print tobin(ret)
+    ret = self.spi.xfer([WRITE_CMD | SPI_RESET, 0x01])
+#     print tobin(ret)
     time.sleep(0.005)
-    print 'device now resetted'
+    print 'reset command has been sent to the device'
     return 1
  
   def read_sample_delay(self):
-    ret = spi.transfer((0x5,0x0,0x0))
-    print tobin(ret)
+    ret = self.spi.xfer([AQ_STATUS, 0x0, 0x0])
+#     print tobin(ret)
     delay = ret[1]
     time.sleep(0.005)
     return delay
- 
+
+  # TODO: Read the debug register, and update the delay, and then write back
+  #   the new debug register value.
   def set_sample_delay(self, n_fast_clk_cycles=0):
     if ((n_fast_clk_cycles<6) and (n_fast_clk_cycles>=0)):
-      spi.transfer((0x85,n_fast_clk_cycles))
+      self.spi.xfer([WRITE_CMD | AQ_DEBUG, n_fast_clk_cycles])
       time.sleep(0.005)
       return 1
     else:
       return 0
 
-
+  # TODO: Read the debug register, and update the debug-mode flag, and then
+  #   write back the new debug register value.
   def debug(self,on=1):
     if on:
-      ret = spi.transfer((0x86,0x01))
-      print tobin(ret)
-      print 'debug now on'
+      ret = self.spi.xfer([WRITE_CMD | AQ_DEBUG, 0x80])
+#       print tobin(ret)
+      print 'debug now ON'
     else:
-      ret = spi.transfer((0x86,0x00))
-      print tobin(ret)
-      print 'debug now off'
+      ret = self.spi.xfer([WRITE_CMD | AQ_DEBUG, 0x00])
+#       print tobin(ret)
+      print 'debug now OFF'
     time.sleep(0.005)
     return 1
 
   def start_acquisition(self,sleeptime=0.2):
-    spi.transfer((0x87,0x01))
-    #print sleeptime
+    self.spi.xfer([WRITE_CMD | AQ_STATUS, 0x01])
     time.sleep(sleeptime)
-    #print 'acquision done'
     return 1
 
   def read_data(self, num_bytes=2**21, blocksize=1000):
     resp2 = []
     for i in range(0,int(num_bytes/blocksize)):
-      resp2.append(spi.transfer((0x03,0xff,) + (0,0,0,)*blocksize)[2:])
-    resp3 = spi.transfer((0x03,0xff,) + (0,0,0,)*(num_bytes%blocksize))[2:]
+      resp2.append(self.spi.xfer([AX_STREAM, 0xff,] + [0,0,0,]*blocksize)[2:])
+    resp3 = self.spi.xfer([AX_STREAM, 0xff,] + [0,0,0,]*(num_bytes%blocksize))[2:]
     resp2 = np.concatenate(resp2).reshape(-1,3)
     resp3 = resp3.reshape(-1,3)
     ret = np.concatenate((resp2,resp3))
@@ -63,7 +86,7 @@ class TartSPI:
     return ret
 
   def close(self):
-    spi.closeSPI()
+    self.spi.close()
     return 1
 
 def lags(a,b,lag_max=10):
@@ -96,4 +119,3 @@ if __name__ == '__main__':
   t_SPI.start_acquisition()
   time.sleep(1)
   print t_SPI.read_data(num_bytes=2**10)
-  
