@@ -16,6 +16,7 @@ module correlate_cos_sin_DSP
   #( parameter ACCUM = 24,      // 24-bit is the maximum for this module
      parameter MSB   = ACCUM-1,
      parameter XSB   = ACCUM+MSB,
+     parameter SUMHI = 0,       // is "ones-counting" needed?
      parameter DELAY = 3)
    (
     input          clk,
@@ -24,6 +25,7 @@ module correlate_cos_sin_DSP
     input          en,
     input          vld,
 
+    input          hi,
     input          ar,
     // input                  ai,
     input          br,
@@ -45,8 +47,10 @@ module correlate_cos_sin_DSP
    wire [17:0] d = {6'b0, dsin[23:12]};
    wire [17:0] a = {dsin[11:0], dcos[23:18]};
    wire [17:0] b = dcos[17:0];
-
-   wire [XSB:0] c = {{MSB{1'b0}}, ar == bi, {MSB{1'b0}}, ar == br};
+   
+   wire        c0 = SUMHI && hi ? br == 1'b1 : ar == br;
+   wire        c1 = SUMHI && hi ? ar == 1'b1 : ar == bi;
+   wire [XSB:0] c = {{MSB{1'b0}}, c1, {MSB{1'b0}}, c0};
 
 
    //-------------------------------------------------------------------------

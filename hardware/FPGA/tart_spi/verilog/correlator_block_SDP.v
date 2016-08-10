@@ -293,6 +293,7 @@ module correlator_block_SDP
 
    correlator_SDP
      #(  .ACCUM(ACCUM),
+         .SUMHI(1'b1),          // also count #ones
          .TBITS(TBITS),
          .PAIRS(PAIRS3),
          .DELAY(DELAY)

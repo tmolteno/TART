@@ -42,6 +42,9 @@ AREA_GROUP "cblk5" RANGE=SLICE_X14Y18:SLICE_X23Y33;
 # AREA_GROUP "cblk4" RANGE=RAMB8_X1Y0:RAMB8_X1Y7;
 # AREA_GROUP "cblk5" RANGE=RAMB8_X1Y8:RAMB8_X1Y13;
 
+# INST "DSP/CORRELATOR/CXBLOCK6" AREA_GROUP="cblk6";
+# AREA_GROUP "cblk6" RANGE=SLICE_X12Y50:SLICE_X23Y61;
+
 
 ##############################################################################
 # UCF file for the Papilio Pro board

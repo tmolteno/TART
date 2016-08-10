@@ -36,6 +36,7 @@
 
 module correlator_SDP
   #(parameter ACCUM = `ACCUM_BITS, // Re/Im accumulator bit-widths
+    parameter SUMHI = 0,       // is "ones-counting" needed?
     parameter MSB   = ACCUM-1,
     parameter WIDTH = ACCUM+ACCUM, // Combined Re & Im components
     parameter WSB   = WIDTH-1,
@@ -119,13 +120,15 @@ module correlator_SDP
                                PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
 `endif
    wire [4:0]   a_index, b_index;
-   reg          go = 0, ar, br, bi;
+   reg          go = 0, ar, br, bi, hi;
+   wire         sum = SUMHI && rd[3:1] == 3'b101;
 
    assign {b_index, a_index} = pairs[rd];
 
    //  Add a cycle of latency to wait for the RAM read.
    always @(posedge clk_x) begin
       go <= #DELAY en;
+      hi <= #DELAY sum;
       ar <= #DELAY re[a_index];
       br <= #DELAY re[b_index];
       bi <= #DELAY im[b_index];
@@ -148,6 +151,7 @@ module correlator_SDP
 
          // Antenna enables and inputs:
          .en(go),
+         .hi(hi),
          .ar(ar),
          .br(br),
          .bi(bi),
@@ -181,7 +185,9 @@ module correlator_SDP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qcos),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dcos_w)
+        .DO(dcos_w),
+        .DID(2'b0),
+        .DOD()
         );
 
    RAM32X6_SDP
@@ -196,7 +202,9 @@ module correlator_SDP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qsin),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dsin_w)
+        .DO(dsin_w),
+        .DID(2'b0),
+        .DOD()
         );
 
 

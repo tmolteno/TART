@@ -13,12 +13,14 @@
 module correlate_cos_sin
   #( parameter ACCUM = 32,
      parameter MSB   = ACCUM-1,
+     parameter SUMHI = 0,       // is "ones-counting" needed?
      parameter DELAY = 3)
    (
     input          clk,
     input          rst,
     input          en,
 
+    input          hi,
     input          ar,
     // input                  ai,
     input          br,
@@ -34,6 +36,9 @@ module correlate_cos_sin
     output [MSB:0] qsin
     );
    
+   wire        c0 = SUMHI && hi ? br == 1'b1 : ar == br;
+   wire        c1 = SUMHI && hi ? ar == 1'b1 : ar == bi;
+
    always @(posedge clk)
      if (rst) valid <= #DELAY 0;
      else     valid <= #DELAY en;
@@ -53,13 +58,13 @@ module correlate_cos_sin
         {os, r_sin} <= #DELAY 0;
      end
      else if (en) begin
-        {oc, r_cos} <= #DELAY ar == br ? dcos + 1 : dcos ;
-        {os, r_sin} <= #DELAY ar == bi ? dsin + 1 : dsin ;
+        {oc, r_cos} <= #DELAY c0 ? dcos + 1 : dcos ;
+        {os, r_sin} <= #DELAY c1 ? dsin + 1 : dsin ;
      end
 
 `else // !`ifdef __icarus
-   wire [MSB:0] w_cos = ar == br ? dcos + 1 : dcos;
-   wire [MSB:0] w_sin = ar == bi ? dsin + 1 : dsin;
+   wire [MSB:0] w_cos = c0 ? dcos + 1 : dcos;
+   wire [MSB:0] w_sin = c1 ? dsin + 1 : dsin;
 
    FDRE #( .INIT(0)) RCOS [MSB:0]
      ( .D(w_cos), .C(clk), .R(rst), .CE(en), .Q(qcos));

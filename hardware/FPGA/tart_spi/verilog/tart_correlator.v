@@ -423,10 +423,11 @@ module tart_correlator
    //  Count the number of ones, from each antenna.
    //  NOTE: Used to compute their means, as their gains are unknown.
    //-------------------------------------------------------------------------
+   (* AREA_GROUP = "cblk6" *)
    ones_count
      #(  .ACCUM (BLOCK),
          .DELAY (DELAY)
-         ) ONES_COUNT0
+         ) CXBLOCK6
        ( .clk_x(clk_x),
          .rst(rst),
 

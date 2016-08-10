@@ -292,6 +292,7 @@ module correlator_block_DSP
 
    correlator_DSP
      #(  .ACCUM(ACCUM),
+         .SUMHI(1'b1),          // also count #ones
          .TBITS(TBITS),
          .PAIRS(PAIRS3),
          .DELAY(DELAY)

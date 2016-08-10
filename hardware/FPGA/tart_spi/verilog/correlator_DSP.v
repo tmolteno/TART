@@ -36,6 +36,7 @@
 
 module correlator_DSP
   #(parameter ACCUM = `ACCUM_BITS,            // Re/Im accumulator bit-widths
+    parameter SUMHI = 0,       // is "ones-counting" needed?
     parameter MSB   = ACCUM - 1,
     parameter WIDTH = ACCUM + ACCUM, // Combined Re & Im components
     parameter WSB   = WIDTH - 1,
@@ -128,6 +129,7 @@ module correlator_DSP
                                PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
 `endif
    wire [4:0]   a_index, b_index;
+   wire         hi = SUMHI && rd[3:2] == 2'b11;
    wire         ar = re[a_index];
    wire         br = re[b_index];
    wire         bi = im[b_index];
@@ -147,6 +149,7 @@ module correlator_DSP
          // Antenna enables and inputs:
          .en(en),
          .vld(go),
+         .hi(hi),
          .ar(ar),
          .br(br),
          .bi(bi),
@@ -179,7 +182,9 @@ module correlator_DSP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qcos),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dcos)
+        .DO(dcos),
+        .DID(2'b0),
+        .DOD()
         );
 
    RAM32X6_SDP
@@ -194,7 +199,9 @@ module correlator_DSP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qsin),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dsin)
+        .DO(dsin),
+        .DID(2'b0),
+        .DOD()
         );
 
 
