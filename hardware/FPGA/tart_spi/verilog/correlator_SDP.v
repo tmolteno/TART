@@ -94,6 +94,8 @@ module correlator_SDP
    parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
    parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
 
+// `define __licarus
+// `ifdef  __licarus
 `ifdef __icarus
    // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
    //   the wire values;

@@ -67,7 +67,7 @@ module tart_correlator
     // The real component of the signal from the antennas.
     input              enable, // data aquisition is active
     input [MSB:0]      blocksize, // block size - 1
-    input              strobe, // `antenna` data is valid
+    output             strobe, // `antenna` data is valid
     input [23:0]       antenna,// the real component from each antenna
 
     output reg         switch = 0 // NOTE: bus domain
@@ -79,7 +79,6 @@ module tart_correlator
    //  Fill a block with visibilities, and then switch banks.
    wire [MSB:0]        next_blk = wrap_blk ? 0 : blk + 1 ;
    wire                wrap_blk = blk == blocksize;
-   reg                 active = 0;
    reg                 sw = 0, strobe_r = 0;
    reg [MSB:0]         blk = 0;
    reg [3:0]           delays = 0;
@@ -91,11 +90,6 @@ module tart_correlator
 
    // Activate the Hilbert transform and correlators once this module has been
    // enabled, and when the first valid data arrives.
-   always @(posedge clk_x)
-     if (rst || !enable)        active <= #DELAY 0;
-     else if (enable && strobe) active <= #DELAY 1;
-     else                       active <= #DELAY active;
-
    always @(posedge clk_x)
      if (rst) begin
         sw  <= #DELAY 0;
@@ -111,7 +105,7 @@ module tart_correlator
      end
 
    always @(posedge clk_x)
-     delays <= #DELAY {delays[2:0], !rst && strobe && active};
+     delays <= #DELAY {delays[2:0], !rst && strobe};
 
 
    //-------------------------------------------------------------------------
@@ -213,9 +207,10 @@ module tart_correlator
    fake_hilbert #( .WIDTH(24) ) HILB0
      (  .clk(clk_x),
         .rst(rst),
-        .en(active),
+        .en(enable),
         .d(antenna),
         .valid(go),
+        .strobe(strobe), // `antenna` data is valid
         .re(re),
         .im(im)
         );
@@ -237,13 +232,14 @@ module tart_correlator
 
    (* AREA_GROUP = "cblk0" *)
    correlator_block_DSP
+//    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
          .PAIRS2(PAIRS00_02),
          .PAIRS3(PAIRS00_03),
          .DELAY (DELAY)
-         ) CORRELATOR_BLOCK0
+         ) CXBLOCK0
        ( .clk_x(clk_x),
          .rst(rst),
 
@@ -274,7 +270,7 @@ module tart_correlator
          .PAIRS2(PAIRS01_02),
          .PAIRS3(PAIRS01_03),
          .DELAY (DELAY)
-         ) CORRELATOR_BLOCK1
+         ) CXBLOCK1
        ( .clk_x(clk_x),
          .rst(rst),
 
@@ -305,7 +301,7 @@ module tart_correlator
          .PAIRS2(PAIRS02_02),
          .PAIRS3(PAIRS02_03),
          .DELAY (DELAY)
-         ) CORRELATOR_BLOCK2
+         ) CXBLOCK2
        ( .clk_x(clk_x),
          .rst(rst),
 
@@ -329,15 +325,15 @@ module tart_correlator
          );
 
    (* AREA_GROUP = "cblk3" *)
-//    correlator_block_SDP
    correlator_block_DSP
+//    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),
          .PAIRS2(PAIRS03_02),
          .PAIRS3(PAIRS03_03),
          .DELAY (DELAY)
-         ) CORRELATOR_BLOCK3
+         ) CXBLOCK3
        ( .clk_x(clk_x),
          .rst(rst),
 
@@ -368,7 +364,7 @@ module tart_correlator
          .PAIRS2(PAIRS04_02),
          .PAIRS3(PAIRS04_03),
          .DELAY (DELAY)
-         ) CORRELATOR_BLOCK4
+         ) CXBLOCK4
        ( .clk_x(clk_x),
          .rst(rst),
 
@@ -399,7 +395,7 @@ module tart_correlator
          .PAIRS2(PAIRS05_02),
          .PAIRS3(PAIRS05_03),
          .DELAY (DELAY)
-         ) CORRELATOR_BLOCK5
+         ) CXBLOCK5
        ( .clk_x(clk_x),
          .rst(rst),
 

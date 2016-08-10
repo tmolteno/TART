@@ -172,10 +172,10 @@ floorSDP p d =
   let n  = 6 - d
 --       ps = [ p ++ show i ++ "/CORRELATOR" ++ show j | i <- [d..5], j <- [0..3] ]
       ps = [ p ++ show i ++ "/CORRELATOR" ++ show j ++ "/CORR_COS_SIN0" | i <- [d..5], j <- [0..3] ]
-      ls = [ SLICE 18 (i*6+2) | i <- [0..4*n-1] ]
+--       ls = [ SLICE 18 (i*6+2) | i <- [0..4*n-1] ]
 --       ax = zipWith floorADD  ps ls
       ax = [""]
-      ds = [ SLICE 16 (i*4+2) | i <- [0..3] ]
+      ds = [ SLICE 16 (i*16+2) | i <- [0..pred n] ]
       qs = [ p ++ show i | i <- [d..5] ]
       rs = zipWith floorRAMD qs ds
       bx = [ floorBLK (p ++ show (d+i)) (RAMB8 1 (i*8+2)) (SLICE 22 (i*16+2)) | i <- [0..n-1] ]
@@ -246,8 +246,8 @@ floorplan p d =
   floorDSP  p d ++
   "# RAM Placement:\n" ++
   floorRAMB p d ++
---   "# Standard adder-based correlator layout:\n" ++
---   floorSDP  p d ++
+  "# Standard adder-based correlator layout:\n" ++
+  floorSDP  p d ++
   []
 
 floortest :: String
@@ -300,7 +300,7 @@ main  = do
 --   stdout " == TART floorplanner for the hardware correlators =="
   Settings md mp mo <- options "" parser
 --   stdout "\nCorrelator block parameters:"
-  let p = maybe "TART_CORRELATOR0/CORRELATOR_BLOCK" toString mp
+  let p = maybe "DSP/CORRELATOR/CXBLOCK" toString mp
       d = fromMaybe 4 md
       u = fromString $ floorplan p d
   maybe (stdout u) (`output` u) mo

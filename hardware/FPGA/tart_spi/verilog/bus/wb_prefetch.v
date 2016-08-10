@@ -41,6 +41,7 @@ module wb_prefetch
     output             a_we_o,
     output reg         a_bst_o = 0, // Bulk Sequential Transfer?
     input              a_ack_i,
+    input              a_wat_i,
     output reg [ASB:0] a_adr_o = 0,
     input [MSB:0]      a_dat_i,
     output reg [MSB:0] a_dat_o,
@@ -51,6 +52,7 @@ module wb_prefetch
     output             b_we_o,
     output reg         b_bst_o = 0, // Bulk Sequential Transfer?
     input              b_ack_i,
+    input              b_wat_i,
     output reg [ASB:0] b_adr_o = 0,
     input [MSB:0]      b_dat_i,
     output reg [MSB:0] b_dat_o
@@ -90,13 +92,15 @@ module wb_prefetch
    //  address generation.
    always @(posedge clk_i)
      if (rst_i || begin_i)        a_adr_o <= #DELAY 0;
-     else if (a_cyc_o && a_bst_o) a_adr_o <= #DELAY a_adr_nxt;
+//      else if (a_cyc_o && a_bst_o) a_adr_o <= #DELAY a_adr_nxt;
+     else if (a_cyc_o && a_bst_o && !a_wat_i) a_adr_o <= #DELAY a_adr_nxt;
 
    //-------------------------------------------------------------------------
    //  Count the requested number of transfers.
+   wire [SBITS:0]      count_next = count + 1;
    always @(posedge clk_i)
      if (rst_i || begin_i)        count <= #DELAY 0;
-     else if (a_cyc_o && a_bst_o) count <= #DELAY count + 1;
+     else if (a_cyc_o && a_bst_o) count <= #DELAY count_next[ASB:0];
 
    //  Count to make sure that all requested data is retransmitted.
    always @(posedge clk_i)
@@ -138,7 +142,8 @@ module wb_prefetch
    //  Address generation.
    always @(posedge clk_i)
      if (rst_i || b_begin)        b_adr_o <= #DELAY 0;
-     else if (b_cyc_o && b_bst_o) b_adr_o <= #DELAY b_adr_o + 1;
+//      else if (b_cyc_o && b_bst_o) b_adr_o <= #DELAY b_adr_o + 1;
+     else if (b_cyc_o && b_bst_o && !b_wat_i) b_adr_o <= #DELAY b_adr_o + 1;
 
    //  Transfer incoming data to the output bus.
    always @(posedge clk_i)

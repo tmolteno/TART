@@ -52,7 +52,7 @@ module tart_visibilities
     output             we_o, // writes only work for system registers
     output             bst_o, // Bulk Sequential Transfer?
     input              ack_i,
-    input              wat_i, // TODO
+    input              wat_i,
     output [ASB:0]     adr_o, // upper address-space for registers
     input [MSB:0]      dat_i,
     output [MSB:0]     dat_o,
@@ -98,7 +98,7 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    wire [MSB:0] p_val, p_dat;
    wire [CSB:0] p_adr, adr_w;
-   wire         p_cyc, p_stb, p_we, p_bst, p_ack;
+   wire         p_cyc, p_stb, p_we, p_bst, p_ack, p_wat;
 
    //  Swap the LSB with the real/complex bank-select signal, so that real +
    //  complex pairs are read out together.
@@ -124,7 +124,7 @@ module tart_visibilities
        .a_we_o (we_o),
        .a_bst_o(bst_o),
        .a_ack_i(ack_i),
-//        .a_wat_i(wat_i), // TODO:
+       .a_wat_i(wat_i),
        .a_adr_o(adr_w),
        .a_dat_i(dat_i),
        .a_dat_o(dat_o),
@@ -134,7 +134,7 @@ module tart_visibilities
        .b_we_o (p_we),
        .b_bst_o(p_bst),
        .b_ack_i(p_ack),
-//        .b_wat_i(p_wat), // TODO:
+       .b_wat_i(p_wat),
        .b_adr_o(p_adr),
        .b_dat_i(p_val),
        .b_dat_o(p_dat)
@@ -153,6 +153,7 @@ module tart_visibilities
        .a_we_i (p_we),
        .a_bst_i(p_bst),
        .a_ack_o(p_ack),
+       .a_wat_o(p_wat),
        .a_adr_i(p_adr),
        .a_dat_i({{32-BLOCK{1'b0}}, p_dat}),
        .a_dat_o(w_dat_o),
@@ -163,6 +164,7 @@ module tart_visibilities
        .b_we_i (we_i),
        .b_bst_i(bst_i),
        .b_ack_o(ack_o),
+       .b_wat_o(),
        .b_adr_i(adr_i[CSB+2:0]),
        .b_dat_i(byt_i),
        .b_dat_o(byt_o)

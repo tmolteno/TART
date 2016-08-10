@@ -39,20 +39,20 @@
 //  TODO: Move into the above configuration file?
 //----------------------------------------------------------------------------
 // Raw antenna-data, read-back registers:
-`define AX_STREAM 0
-`define AX_DATA1  1
-`define AX_DATA2  2
-`define AX_DATA3  3
+`define AX_STREAM 3'h0
+`define AX_DATA1  3'h1
+`define AX_DATA2  3'h2
+`define AX_DATA3  3'h3
 // `define AX_CHKSUM 1
 
 // Visibilities access, status, and control:
-`define VX_STREAM 4
-`define VX_STATUS 5
+`define VX_STREAM 3'h4
+`define VX_STATUS 3'h5
 // `define VX_CHKSUM 2
 
 // Data-aquisition status, and control:
-`define AQ_DEBUG  6
-`define AQ_STATUS 7
+`define AQ_DEBUG  3'h6
+`define AQ_STATUS 3'h7
 
 
 module tart_aquire
@@ -175,7 +175,7 @@ module tart_aquire
          `AQ_DEBUG:  dat_o <= #DELAY aq_debug;
          `AQ_STATUS: dat_o <= #DELAY aq_status;
 
-         default:    dat_o <= #DELAY 'bx;
+         default:    dat_o <= #DELAY 8'bx;
        endcase // case (adr_i)
 
    //-------------------------------------------------------------------------
@@ -254,9 +254,11 @@ module tart_aquire
    //  becomes available, the block-counter is incremented.
    //  TODO: Should there be some mechanism for controlling which block is to
    //    be accessed?
+   wire [BBITS:0] vx_next = vx_blk_o + 1;
+
    always @(posedge clk_i)
      if (rst_i) vx_blk_o <= #DELAY 0;
-     else       vx_blk_o <= #DELAY streamed ? vx_blk_o + 1 : vx_blk_o;
+     else       vx_blk_o <= #DELAY streamed ? vx_next[BSB:0] : vx_blk_o;
 
 
    //-------------------------------------------------------------------------

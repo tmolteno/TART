@@ -44,16 +44,15 @@ module rmw_address_unit
     );
 
    wire [ASB:0]    next_rd_adr, next_adr;
-   wire            rd_wrap_o = rd_adr_o == UPPER;
-   wire            wr_wrap_o = wr_adr_o == UPPER;
+
+   assign rd_wrap_o = rd_adr_o == UPPER;
+   assign wr_wrap_o = wr_adr_o == UPPER;
 
    assign next_adr[0] = ~rd_adr_o[0];
    assign next_adr[1] = rd_adr_o  [0] == 1'b1   ? ~rd_adr_o[1] : rd_adr_o[1];
    assign next_adr[2] = rd_adr_o[1:0] == 2'b11  ? ~rd_adr_o[2] : rd_adr_o[2];
    assign next_adr[3] = rd_adr_o[2:0] == 3'b111 ? ~rd_adr_o[3] : rd_adr_o[3];
-
    assign next_rd_adr = rd_wrap_o ? LOWER : next_adr;
-//    assign next_rd_adr = rd_wrap_o ? LOWER : {rd_adr_o + 1}[ASB:0];
 
 
    //-------------------------------------------------------------------------

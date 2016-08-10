@@ -32,11 +32,11 @@
 // TODO: Not very modular, as the rest of this module is not TART-specific.
 `include "tartcfg.v"
 
-`define SPI_IDLE 0
-`define SPI_ADDR 1
-`define SPI_BUSY 2
-`define SPI_PUSH 4
-`define SPI_PULL 8
+`define SPI_IDLE 4'h0
+`define SPI_ADDR 4'h1
+`define SPI_BUSY 4'h2
+`define SPI_PUSH 4'h4
+`define SPI_PULL 4'h8
 
 module spi_slave
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
@@ -117,7 +117,7 @@ module spi_slave
 
          `SPI_PUSH: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
          `SPI_PULL: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
-         default:   spi <= #DELAY 'bx;
+         default:   spi <= #DELAY 4'bx;
        endcase // case (spi)
 
    //-------------------------------------------------------------------------

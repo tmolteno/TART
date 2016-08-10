@@ -10,10 +10,17 @@
  *    asserted at the beginning of a transaction, and deasserted one cycle
  *    before the final (pipelined) `ack_o`;
  * 
+ * FIXME:
+ *  + `bst_i` doesn't work?
+ * 
  * TODO:
- *  + this is not currently synthesisable, so use RAMBxx primitives;
+ *  + how does this currently synthesise? Use RAMBxx primitives?
  * 
  */
+
+// Uncomment this, or set `-D__WB_SRAM_CLASSIC`, if classic (two-cycle) bus
+// transactions are desired:
+// `define __WB_SRAM_CLASSIC
 
 module wb_sram_dual_port
   #(parameter SBITS = 10,
@@ -31,6 +38,7 @@ module wb_sram_dual_port
     input             a_we_i,
     input             a_bst_i, // Bulk Sequential Transfer?
     output reg        a_ack_o = 0,
+    output reg        a_wat_o = 0,
     input [ASB:0]     a_adr_i,
     input [31:0]      a_dat_i,
     output reg [31:0] a_dat_o,
@@ -42,6 +50,7 @@ module wb_sram_dual_port
     input             b_we_i,
     input             b_bst_i, // Bulk Sequential Transfer?
     output reg        b_ack_o = 0,
+    output reg        b_wat_o = 0,
     input [BSB:0]     b_adr_i,
     input [7:0]       b_dat_i,
     output reg [7:0]  b_dat_o
@@ -70,12 +79,24 @@ module wb_sram_dual_port
    //-------------------------------------------------------------------------
    //  Port A Wishbone-like bus interface.
    //-------------------------------------------------------------------------
-   always @(posedge a_clk_i)
-     if (rst_i) a_ack_o <= #DELAY 0;
-`ifdef __WB_CLASSIC
-     else       a_ack_o <= #DELAY a_cyc_i && a_stb_i && !a_ack_o;
+`ifdef __WB_SRAM_CLASSIC
+   wire a_ack_cls = a_cyc_i && a_stb_i && !a_ack_o;
+   wire a_wat_cls = a_cyc_i && a_stb_i && a_bst_i && !a_ack_o;
 `else
-     else       a_ack_o <= #DELAY a_cyc_i && a_stb_i;
+   reg  a_bst_dly = 0;
+   wire a_wat_bst = 1'b0;
+   wire a_ack_bst = a_cyc_i && a_stb_i && (!a_ack_o || a_bst_dly);
+
+   always @(posedge a_cyc_i)
+     a_bst_dly <= #DELAY a_bst_i;
+`endif
+
+   always @(posedge a_clk_i)
+     if (rst_i) {a_wat_o, a_ack_o} <= #DELAY 2'b0;
+`ifdef __WB_SRAM_CLASSIC
+     else       {a_wat_o, a_ack_o} <= #DELAY {a_wat_cls, a_ack_cls};
+`else
+     else       {a_wat_o, a_ack_o} <= #DELAY {a_wat_bst, a_ack_bst};
 `endif
 
    // SRAM reads & writes.
@@ -92,12 +113,20 @@ module wb_sram_dual_port
    //-------------------------------------------------------------------------
    wire [ASB:0] b_adr = b_adr_i[BSB:2];
 
-   always @(posedge b_clk_i)
-     if (rst_i) b_ack_o <= #DELAY 0;
-`ifdef __WB_CLASSIC
-     else       b_ack_o <= #DELAY b_cyc_i && b_stb_i && !b_ack_o;
+`ifdef __WB_SRAM_CLASSIC
+   wire b_ack_cls = b_cyc_i && b_stb_i && !b_ack_o;
+   wire b_wat_cls = b_cyc_i && b_stb_i && b_bst_i && !b_ack_o;
 `else
-     else       b_ack_o <= #DELAY b_cyc_i && b_stb_i;
+   wire b_wat_bst = 1'b0;
+   wire b_ack_bst = b_cyc_i && b_stb_i && (b_bst_i || !b_ack_o);
+`endif
+
+   always @(posedge b_clk_i)
+     if (rst_i) {b_wat_o, b_ack_o} <= #DELAY 2'b0;
+`ifdef __WB_SRAM_CLASSIC
+     else       {b_wat_o, b_ack_o} <= #DELAY {b_wat_cls, b_ack_cls};
+`else
+     else       {b_wat_o, b_ack_o} <= #DELAY {b_wat_bst, b_ack_bst};
 `endif
 
    //-------------------------------------------------------------------------

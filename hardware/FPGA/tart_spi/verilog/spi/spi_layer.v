@@ -53,12 +53,6 @@
  `define TX_EDGE posedge
 `endif
 
-// Bus interface states.
-`define BUS_IDLE 0
-`define BUS_READ 1
-`define BUS_WAIT 2
-`define BUS_SEND 4
-
 module spi_layer
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
@@ -131,15 +125,15 @@ module spi_layer
          .I_INVERT("FALSE"),
          .USE_DOUBLER("FALSE")
          ) BUFIO2_MISO0
-       ( .DIVCLK(DIVCLK),       // unused
+       ( .DIVCLK(),       // unused
          .IOCLK(SCK_miso),
-         .SERDESSTROBE(SERDESSTROBE), // unused
+         .SERDESSTROBE(), // unused
          .I(SCK_buf)
          );
 `endif
 
    //  FIFO status signals:
-   wire               tx_empty, tx_full;
+   wire               tx_empty;
    wire               rx_empty, rx_full;
 
 
@@ -238,12 +232,9 @@ module spi_layer
    //  
    //-------------------------------------------------------------------------
    wire [7:0] rx_data  = {rx_reg[6:0], MOSI};
-   wire [7:0] tx_data;
-   reg [6:0]  tx_reg = HEADER_BYTE[6:0];
+   wire [3:0] rx_inc = rx_count + 1;
+   reg [2:0]  rx_count = 0;
    reg [6:0]  rx_reg;
-   reg [2:0]  rx_count = 0, tx_count = 0;
-   reg        tx_pull = 0;
-   wire       tx_next  = tx_count == 7;
    wire       rx_push  = rx_count == 7;
 
    //-------------------------------------------------------------------------
@@ -255,7 +246,7 @@ module spi_layer
 
    always @(posedge SCK or posedge SSEL)
      if (SSEL) rx_count <= #DELAY 0;
-     else      rx_count <= #DELAY rx_count + 1;
+     else      rx_count <= #DELAY rx_inc[2:0];
 
    // RX FIFO overflow detection.
    always @(posedge SCK or posedge rst_i)
@@ -267,6 +258,13 @@ module spi_layer
    //-------------------------------------------------------------------------
    //  Transmission logic.
    //-------------------------------------------------------------------------
+   wire [7:0] tx_data;
+   reg [6:0]  tx_reg = HEADER_BYTE[6:0];
+   reg [2:0]  tx_count = 0;
+   reg        tx_pull = 0;
+   wire       tx_next  = tx_count == 7;
+   wire [3:0] tx_inc = tx_count + 1;
+
    // Output the header/status byte on SPI start, else transmit FIFO data.
    // Serialise the SPI data, sending MSB -> LSB.
    always @(`TX_EDGE SCK or posedge SSEL)
@@ -282,7 +280,7 @@ module spi_layer
 
    always @(`TX_EDGE SCK or posedge SSEL)
      if (SSEL) tx_count <= #DELAY 0;
-     else      tx_count <= #DELAY tx_count + 1;
+     else      tx_count <= #DELAY tx_inc[2:0];
 
    // Add a cycle of delay, avoiding an additional read just before a SPI
    // transaction completes.
@@ -314,7 +312,7 @@ module spi_layer
 
        .rst_i    (tx_rst),
        .rempty_o (tx_empty),
-       .wfull_o  (tx_full)
+       .wfull_o  ()
        );
 
    // TODO: There is never more than one and a bit bytes stored within this

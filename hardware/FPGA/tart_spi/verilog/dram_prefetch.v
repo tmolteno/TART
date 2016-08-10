@@ -17,9 +17,9 @@
  */
 
 // Data prefetcher states.
-`define PRE_EMPTY 0
-`define PRE_WORD1 1
-`define PRE_WORD2 2
+`define PRE_EMPTY 2'h0
+`define PRE_WORD1 2'h1
+`define PRE_WORD2 2'h2
    
 module dram_prefetch
   #( parameter WIDTH = 24,
@@ -68,8 +68,10 @@ module dram_prefetch
           fetched_data <= dram_data;
         else if (!data_sent && pre_state == `PRE_WORD1)
           fetched_data <= prefetch_data;
+`ifdef __icarus
         else
           $error ("%5t: data arrived while in an incompatible state.", $time);
+`endif
      end
      else if (data_sent && pre_state == `PRE_WORD2)
        fetched_data <= prefetch_data;

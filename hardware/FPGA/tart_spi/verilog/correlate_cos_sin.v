@@ -38,7 +38,9 @@ module correlate_cos_sin
      if (rst) valid <= #DELAY 0;
      else     valid <= #DELAY en;
 
-`ifdef __icarus
+`define __licarus
+`ifdef  __licarus
+// `ifdef __icarus
    reg [MSB:0]     r_cos = 0;
    reg [MSB:0]     r_sin = 0;
 

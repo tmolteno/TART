@@ -153,7 +153,8 @@ module tart
    wire [31:0] cmd_data_in;
    wire [31:0] data_out;
 
-   wire request_from_spi;
+   wire        request_from_spi;
+   (* KEEP = "TRUE" *) wire        aq_enabled;
   
    fifo_sdram_fifo_scheduler
      #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
@@ -166,7 +167,7 @@ module tart
        .aq_bb_rd_address(aq_bb_rd_address),
        .aq_read_data(aq_read_data),
 
-       .spi_start_aq(spi_start_aq),
+       .spi_start_aq(aq_enabled),
        .spi_buffer_read_complete(request_from_spi),
 
        .cmd_data_in(cmd_data_in),
@@ -268,7 +269,7 @@ module tart
    //-------------------------------------------------------------------------
    wire debug_spi = oflow || uflow;
    wire spi_busy;
-   wire [7:0] spi_status = {1'b1, debug_spi, request_from_spi, spi_start_aq,
+   wire [7:0] spi_status = {1'b1, debug_spi, request_from_spi, aq_enabled,
                             spi_debug, tart_state[2:0]};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
@@ -373,16 +374,17 @@ module tart
        .vx_ack_i(s_ack),
        .vx_blk_o(v_blk),
        .vx_dat_i(s_dat),
-       .newblock(newblock), // strobes when new block ready
-       .streamed(streamed), // has an entire block finished streaming?
-       .accessed(accessed), // asserts once visibilities are read back
+
+       .newblock (newblock), // strobes when new block ready
+       .streamed (streamed), // has an entire block finished streaming?
+       .accessed (accessed), // asserts once visibilities are read back
        .available(available),
-       .checksum(checksum),
+       .checksum (checksum),
        .blocksize(blocksize),
 
        //  Antenna capture & aquisition controls:
        .aq_debug_mode(spi_debug),
-       .aq_enabled(spi_start_aq),
+       .aq_enabled(aq_enabled),
        .aq_sample_delay(data_sample_delay)
        );
 
@@ -393,6 +395,34 @@ module tart
    //     CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
+   wire switching;
+
+   tart_dsp
+     #(.NREAD(NREAD)
+       ) DSP
+     ( .clk_x(clk_x),
+       .rst_i(reset),
+       .aq_clk_i(b_clk),        // Bus between DSP and aquisition unit
+       .aq_cyc_i(s_cyc),
+       .aq_stb_i(s_stb),
+       .aq_we_i (s_we),
+       .aq_bst_i(1'b0),
+       .aq_ack_o(s_ack),
+       .aq_blk_i(v_blk),
+       .aq_dat_i('bx),
+       .aq_dat_o(s_dat),
+
+       .aq_enable(aq_enabled),
+       .antenna  (antenna),
+       .blocksize(blocksize),
+       .switching(switching),
+       .newblock (newblock),
+       .checksum (checksum),
+       .streamed (streamed)
+       );
+
+
+  `ifdef __USE_OLD_SCHOOL_CORRELATORS
 
    //  WB signals to access the prefetched visibilities (that have been
    //  stored within a block SRAM).
@@ -504,7 +534,7 @@ module tart
 
    always @(posedge clk_x) begin
       block_s  <= #DELAY blocksize;
-      enable_s <= #DELAY spi_start_aq;
+      enable_s <= #DELAY aq_enabled;
    end
 
    always @(posedge clk_x) begin
@@ -535,7 +565,8 @@ module tart
          .antenna(antenna),     // antenna data
          .switch(switching)     // asserts on bank-switch (sample domain)
          );
- `endif // __USE_CORRELATORS
+ `endif //  `ifdef __USE_OLD_SCHOOL_CORRELATORS
+`endif // __USE_CORRELATORS
 
 `else //  __USE_WISHBONE_CORES
 
@@ -568,7 +599,7 @@ module tart
    //     
    //     OBSOLETE: Replacing with individual cores.
    //-------------------------------------------------------------------------
-   wire spi_status = {1'b1, debug_o, request_from_spi, spi_start_aq, spi_debug, tart_state[2:0]};
+   wire spi_status = {1'b1, debug_o, request_from_spi, aq_enabled, spi_debug, tart_state[2:0]};
 
    tart_spi
      #( .ADDR_READ_DATA1  (4'h0),
@@ -592,7 +623,7 @@ module tart
         .spi_status(spi_status),
 			  .data_sample_delay(data_sample_delay),
         .spi_reset(spi_reset),
-        .spi_start_aq(spi_start_aq),
+        .aq_enabled(aq_enabled),
         .spi_debug(spi_debug),
         
         .SCK (SPI_SCK),

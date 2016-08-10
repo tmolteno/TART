@@ -76,10 +76,10 @@ module tart_dcm
          .LOCKED(reset0_n), // 1-bit output: DCM_SP Lock Output
          .CLKFB(clk),       // 1-bit input: Clock feedback input
          .CLKIN(clk_buf),   // 1-bit input: Clock input
-         .DSSEN(0),         // 1-bit input: Unsupported, specify to GND.
-         .PSCLK(0),         // 1-bit input: Phase shift clock input
-         .PSEN(0),          // 1-bit input: Phase shift enable
-         .PSINCDEC(0),      // 1-bit input: Phase shift increment/decrement input
+         .DSSEN(1'b0),      // 1-bit input: Unsupported, specify to GND.
+         .PSCLK(1'b0),      // 1-bit input: Phase shift clock input
+         .PSEN(1'b0),       // 1-bit input: Phase shift enable
+         .PSINCDEC(1'b0),   // 1-bit input: Phase shift inc/dec input
          .RST(clk_rst)      // 1-bit input: Active high reset input
          );
 
