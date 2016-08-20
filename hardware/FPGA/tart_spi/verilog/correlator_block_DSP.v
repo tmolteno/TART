@@ -329,5 +329,37 @@ module correlator_block_DSP
        .DO(dat)
        );
 
-   
+
+`ifdef __icarus
+   //-------------------------------------------------------------------------
+   //  Notify when data-prefetching is beginning, and ending.
+   //-------------------------------------------------------------------------
+`include "../include/tart_pairs.v"
+
+   reg [2:0]           cor = 3'h0;
+
+   initial begin
+      #10 case (PAIRS0)
+            PAIRS00_00: cor <= 3'h0;
+            PAIRS01_00: cor <= 3'h1;
+            PAIRS02_00: cor <= 3'h2;
+            PAIRS03_00: cor <= 3'h3;
+            PAIRS04_00: cor <= 3'h4;
+            PAIRS05_00: cor <= 3'h5;
+            default:
+              $error("ERROR: Unrecognised correlator block.");
+          endcase // case (PAIRS0)
+   end
+
+   always @(posedge stb_i)
+     if (!we_i)
+       $display("%12t: Correlator (%1d) READ beginning", $time, cor);
+
+   always @(negedge ack_o)
+     if (!we_i)
+       $display("%12t: Correlator (%1d) READ ending", $time, cor);
+
+`endif //  `ifdef __icarus
+
+
 endmodule // correlator_block_DSP

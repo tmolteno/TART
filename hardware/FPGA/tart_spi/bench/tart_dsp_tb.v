@@ -13,8 +13,14 @@ module tart_dsp_tb;
    parameter BSB   = BBITS-1;
    parameter MRATE = 12;
    parameter DELAY = 3;
-   parameter COUNT = 3; // (1 << 3) - 1;
-   parameter NREAD = 8;
+//    parameter COUNT = 3; // count down from:  (1 << COUNT) - 1;
+   parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
+//    parameter NREAD = 8;
+//    parameter NREAD = 24;
+   parameter NREAD = 120;
+//    parameter NREAD = `READ_COUNT >> 2;
+//    parameter NREAD = `READ_COUNT;
    parameter BREAD = NREAD << 2;
    parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
@@ -36,6 +42,7 @@ module tart_dsp_tb;
    wire         ack;
    wire         c_cyc, c_stb, c_we, c_bst, c_ack;
    reg [23:0]   data [0:255];
+   reg [31:0]   viz = 32'h0;
 
    assign dsp_en = aq_enabled;
 
@@ -52,69 +59,89 @@ module tart_dsp_tb;
    integer      num = 0;
    integer      ptr = 0;
    initial begin : SIM_BLOCK
-      $dumpfile ("dsp_tb.vcd");
-      $dumpvars;
+      if (COUNT < 6) begin
+         $dumpfile ("dsp_tb.vcd");
+         $dumpvars;
+      end
 
       //----------------------------------------------------------------------
-      $display("\n%8t: Generating fake antenna data:\n", $time);
-      for (ptr = 0; ptr < 255; ptr = ptr+1)
+      $display("\n%12t: Generating fake antenna data:", $time);
+      for (ptr = 0; ptr < 256; ptr = ptr+1)
         data[ptr] <= $random;
 
       //----------------------------------------------------------------------
-      $display("\n%8t: Issuing reset:\n", $time);
-      #33 rst <= 1; #40 rst <= 0;
+      #20 $display("\n%12t: Issuing RESET:\n", $time);
+      #13 rst <= 1; #40 rst <= 0;
 
       //----------------------------------------------------------------------
-      $display("\n%8t: Setting up the block-size:", $time);
+      $display("\n%12t: Setting up the block-size:", $time);
       #40 set <= 1; num <= 1; dtx <= COUNT; ptr <= 3'h5;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      $display("%8t: Beginning data-correlation (bank 0):", $time);
+      $display("%12t: Beginning data-correlation (bank 0):", $time);
       #40 set <= 1; num <= 1; dtx <= 8'h01; ptr <= 3'h7;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      $display("%8t: Switching banks (bank 1):", $time);
+      $display("%12t: Switching banks (bank 1):", $time);
       while (!switching) #10;
       while (switching) #10;
 
-      $display("\n%8t: Reading back a single visibility byte (bank 0):", $time);
-      while (!newblock) #10;
-      #10 get <= 1; num <= 1; ptr <= 3'h4;
-      while (!fin) #10;
-
-      $display("\n%8t: Reading back more visibilities (bank 0):", $time);
-      while (fin) #10;
-      #10 get <= 1; num <= BREAD-1; ptr <= 3'h4;
-      while (!fin) #10;
-
       //----------------------------------------------------------------------
-      while (!switching) #10; while (switching) #10;
-      $display("\n%8t: Stopping data-correlation (bank 1):", $time);
-      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 3'h7;
-      while (!fin) #10;
-
-      //----------------------------------------------------------------------
-      $display("\n%8t: Reading back visibilities (bank 1):", $time);
       while (!newblock) #10;
+      #10 $display("\n%12t: Reading back visibilities (bank 0):", $time);
       #10 get <= 1; num <= BREAD; ptr <= 3'h4;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-//       $display("\n%8t: Reading back counts (bank 1):", $time);
+      while (!switching) #10; while (switching) #10;
+      $display("\n%12t: Stopping data-correlation (bank 1):", $time);
+      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 3'h7;
+      while (!fin) #10;
+
+      //----------------------------------------------------------------------
+      while (!newblock) #10;
+      #10 $display("\n%12t: Reading back visibilities (bank 1):", $time);
+      #10 get <= 1; num <= BREAD; ptr <= 3'h4;
+      while (!fin) #10;
+
+      //----------------------------------------------------------------------
+//       $display("\n%12t: Reading back counts (bank 1):", $time);
 //       #80 get <= 1;
 //       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      #80 $display("\n%8t: Simulation finished:", $time);
+      #80 $display("\n%12t: Simulation finished:", $time);
       $finish;
    end
 
+
+   //-------------------------------------------------------------------------
+   //  Exit if the simulation appears to have stalled.
+   //-------------------------------------------------------------------------
+   parameter LIMIT = 1000 + (1 << COUNT) * 300;
+
    initial begin : SIM_FAILED
-      #12000 $display ("TIMEOUT!");
+      $display("%12t: Simulation TIMEOUT limit:\t%12d", $time, LIMIT);
+      #LIMIT $display ("\nTIMEOUT!\n");
       $finish;
+
+//       if (COUNT < 6) begin
+//          #12000 $display ("TIMEOUT!");
+//          $finish;
+//       end
    end // SIM_FAILED
+
+   always @(posedge b_clk)
+     if (newblock)
+       $display("%12t: New block available.", $time);
+
+   initial begin
+      $dumpfile ("dsp_tb.vcd");
+      #60000 $dumpvars;
+      #4000  $finish;
+   end
 
 
    //-------------------------------------------------------------------------
@@ -136,17 +163,17 @@ module tart_dsp_tb;
         {cyc, stb, we } <= #DELAY 0;
      end
      else if (set) begin
-        $display("%8t: write beginning (num = %1d)", $time, num);
+        $display("%12t: write beginning (num = %1d)", $time, num);
         {fin, get, set} <= #DELAY 0;
         {cyc, stb, we } <= #DELAY 7;
      end
      else if (get) begin
-        $display("%8t: read beginning (num = %1d)", $time, num);
+        $display("%12t: read beginning (num = %1d)", $time, num);
         {fin, get, set} <= #DELAY 0;
         {cyc, stb, we } <= #DELAY 6;
      end
      else if (cyc) begin
-        if (!stb && ack) $display("%8t: transfer ending", $time);
+        if (!stb && ack) $display("%12t: transfer ending", $time);
 `ifdef __WB_CLASSIC
         {fin, get, set} <= #DELAY { cyc_n, get, set};
         {cyc, stb, we } <= #DELAY {!cyc_n, !cyc_n, we && !cyc_n};
@@ -195,18 +222,23 @@ module tart_dsp_tb;
       vals <= #DELAY {vals[2:0], set};
    end
 
+   reg [1:0] rxc = 0;
    always @(posedge b_clk) begin
       adr_r    <= #DELAY rd_adr;
       {ci, ri} <= #DELAY adr_r;
-      if (cyc && stb && !we && ack)
-        $display("%8t: Vis = %08x (c: %02x, r:%02x)", $time, dat, ci, ri);
+      if (cyc && stb && !we && ack) begin
+         rxc <= #DELAY rxc + 1;
+         viz = {dat, viz[31:8]};
+         if (rxc == 2'b11)
+           $display("%12t: Vis = %08x (c: %02x, r:%02x)", $time, viz, ci, ri);
+      end
    end
 
 
    //-------------------------------------------------------------------------
    //  Generate fake DRAM contents.
    //-------------------------------------------------------------------------
-   wire [23:0] data_w = data[data_index];
+   wire [23:0] data_w = data[data_index[7:0]];
    integer     data_index = 0;
    reg         ready = 0;
    reg         aq_start = 0, aq_done = 1;
@@ -247,7 +279,7 @@ module tart_dsp_tb;
    wire       wrap_cnt = cnt == MRATE-1;
    integer    rd_adr = 0;
 
-   assign antenna = data[rd_adr];
+   assign antenna = data[rd_adr[7:0]];
 
    always @(posedge clk_x)
      if (rst) cnt <= #DELAY 0;
