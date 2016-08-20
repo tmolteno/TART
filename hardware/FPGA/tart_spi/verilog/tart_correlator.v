@@ -86,7 +86,8 @@ module tart_correlator
    //-------------------------------------------------------------------------
    //  The configuration file includes the parameters that determine which
    //  antannae connect to each of the correlators.
-`include "../include/tart_config.v"
+`include "../include/tart_pairs.v"
+// `include "../include/tart_config.v"
 
    // Activate the Hilbert transform and correlators once this module has been
    // enabled, and when the first valid data arrives.

@@ -174,14 +174,22 @@ adjust s xs | null xs   = []
   where
     n = length xs
 
+
+-- * Program main.
 ------------------------------------------------------------------------------
 -- | Parse command-line options.
 parser :: Parser (Z, Z, Z, FilePath)
 parser  = (,,,) <$> optInt  "antennas"  'a' "The number of antennae"
                 <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
                 <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
-                <*> optPath "outfile  " 'o' "Output filename"
+                <*> optPath "outfile"   'o' "Output filename"
 
+------------------------------------------------------------------------------
+-- | Generate antenna-pair indices, for the correlators.
+--   Default (Makefile) options:
+--     runhaskell script/pairs.hs --antennas=24 --blocksize=6 --multiplex=12 \
+--       --outfile include/tart_pairs.v
+--   
 main :: IO ()
 main  = do
   stdout " == Antenna pair generation =="
