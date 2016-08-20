@@ -27,6 +27,7 @@
 module Main where
 
 import Prelude hiding (FilePath)
+import Control.Arrow
 import Data.Bits
 import Data.List
 import Data.Maybe
@@ -112,8 +113,13 @@ params :: Z -> Z -> Z -> Shell Text
 params a b m =
   let bs = buildset a b
       bi = blockset a b
---       bz = map (chunk m) bs
-      bz = map (fmap (adjust m) . chunk m) bs
+      ms = [ (i,i+1) | i <- [0,2..] ]
+--       bz = padEnds m ms $ chunk m <$> bs
+      bz = let go ps     []  yz = (ps, yz)
+               go ps (xs:xz) yz = let (ps', ys) = padEnds m ps xs
+                                  in  second (ys:) $ go ps' xz yz
+           in  snd $ go ms (chunk m <$> bs) []
+--       bz = map (fmap (adjust m) . chunk m) bs
       ps = pairs a
       -- ^ number of index-bits:
 --       ib = ceiling $ log (fromIntegral (b+b)) / log 2
@@ -121,7 +127,6 @@ params a b m =
       -- ^ number of parameter-bits/correlator:
       pb = ib*2*m
       cs = concat (concat bz)
---       cs = concat bs
       ix = catMaybes $ map (flip elemIndex cs) ps
       c  = 2^ib
       l  = length (head bz)     -- #correlators/block
@@ -154,6 +159,7 @@ indices b bz ps = show ix
 --     ix = map (flip shiftR b) $ catMaybes $ map (flip elemIndex cs) ps
     ix = catMaybes $ map (flip elemIndex cs) ps
     cs = concat $ concatMap (map (adjust c)) bz
+--     ms = 
 
 
 -- * Helper functions.
@@ -173,6 +179,22 @@ adjust s xs | null xs   = []
             | otherwise = xs
   where
     n = length xs
+
+-- | Pad the end of the (second) list with items from the first list, if it
+--   has fewer than the given number of elements.
+appendFrom :: Z -> [a] -> [a] -> ([a], [a])
+appendFrom s zs xs
+  | n  <  s   = (drop m zs, xs ++ take m zs)
+  | otherwise = (zs, xs)
+  where
+    (n, m) = (length xs, s - n)
+
+padEnds :: Z -> [a] -> [[a]] -> ([a], [[a]])
+padEnds s = go []
+  where
+    go zz ps     []  = (ps, zz)
+    go zz ps (ys:yz) = let (ps', zs) = appendFrom s ps ys
+                       in  second (zs:) $ go zz ps' yz
 
 
 -- * Program main.

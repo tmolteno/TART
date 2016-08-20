@@ -36,14 +36,16 @@
 module wb_prefetch
   #(parameter WIDTH = 32,
     parameter MSB   = WIDTH-1,
-    parameter COUNT = 575,      // <fetch count> - 1
+    parameter COUNT = 576,      // <fetch count>
     parameter SBITS = 10,
     parameter SIZE  = 1 << SBITS,
     parameter ASB   = SBITS-1,
-    parameter BSIZE = 23,
+    parameter BSIZE = 24,
     parameter BBITS = 5,
     parameter BSTEP = (1 << BBITS) - BSIZE,
     parameter BSB   = BBITS-1,
+    parameter UBITS = SBITS-BBITS,
+    parameter USB   = UBITS-1,
     parameter DELAY = 3)
    (
     input              rst_i,
@@ -54,15 +56,15 @@ module wb_prefetch
     output reg         ready_o = 0,
 
     // Prefetching master Wishbone-like bus interface:
-    output reg         a_cyc_o = 0,
-    output reg         a_stb_o = 0,
+    output             a_cyc_o,
+    output             a_stb_o,
     output             a_we_o,
-    output reg         a_bst_o = 0, // Bulk Sequential Transfer?
+    output             a_bst_o, // Bulk Sequential Transfer?
     input              a_ack_i,
     input              a_wat_i,
-    output reg [ASB:0] a_adr_o = 0,
+    output [ASB:0]     a_adr_o,
     input [MSB:0]      a_dat_i,
-    output reg [MSB:0] a_dat_o,
+    output [MSB:0]     a_dat_o,
 
     // Transmitting master Wishbone-like bus interface:
     output reg         b_cyc_o = 0,
@@ -77,96 +79,117 @@ module wb_prefetch
     );
 
    reg [ASB:0]         count = 0;
+   reg [SBITS:0]       count_nxt;
+   reg                 count_end = 0;
+   reg                 read = 0;
+   wire                done;
 
-   wire [ASB:0]        a_adr_nxt = a_adr_o + (a_adr_blk ? BSTEP : 1);
-   wire                a_adr_bst = count < COUNT - 1;
-   wire                a_adr_blk = a_adr_o[BSB:0] == BSIZE;
-
-   wire                b_adr_max = b_adr_o == COUNT;
-   wire                b_adr_bst = b_adr_o < COUNT - 1;
 
    //-------------------------------------------------------------------------
-   //  Port A master Wishbone-like bus interface.
+   //  Prefetcher control-signals.
    //-------------------------------------------------------------------------
-   reg [3:0]           wat = 0;
-//    wire                a_cyc = a_stb_o || !a_ack_i;
-   wire                a_cyc = a_stb_o || wat > 1 || !a_ack_i;
-   wire                a_stb = a_bst_o;
-   wire                a_bst = a_adr_bst && a_cyc_o;
-
-   assign a_we_o = 0;
-
-   //  Port A state and bus-control signals.
    always @(posedge clk_i)
-     if (rst_i)
-       {a_cyc_o, a_stb_o, a_bst_o} <= #DELAY 3'b000;
-     else if (begin_i)
-       {a_cyc_o, a_stb_o, a_bst_o} <= #DELAY 3'b111;
-     else if (a_cyc_o)
-       {a_cyc_o, a_stb_o, a_bst_o} <= #DELAY {a_cyc, a_stb, a_bst};
-     else
-       {a_cyc_o, a_stb_o, a_bst_o} <= #DELAY 3'b000;
-
-   //  address generation.
-   always @(posedge clk_i)
-     if (rst_i || begin_i)        a_adr_o <= #DELAY 0;
-//      else if (a_cyc_o && a_bst_o) a_adr_o <= #DELAY a_adr_nxt;
-     else if (a_cyc_o && a_bst_o && !a_wat_i) a_adr_o <= #DELAY a_adr_nxt;
-
-   //-------------------------------------------------------------------------
-   //  Count the requested number of transfers.
-   wire [SBITS:0]      count_next = count + 1;
-   always @(posedge clk_i)
-     if (rst_i || begin_i)        count <= #DELAY 0;
-//      else if (a_cyc_o && a_stb_o) count <= #DELAY count_next[ASB:0];
-     else if (a_cyc_o && a_bst_o) count <= #DELAY count_next[ASB:0];
-
-   //  Count to make sure that all requested data is retransmitted.
-   always @(posedge clk_i)
-     if (rst_i)   wat <= #DELAY 0;
-     else if (a_cyc_o)
-       case ({a_stb_o, a_ack_i})
-         2'b10:   wat <= #DELAY wat + 1;
-         2'b01:   wat <= #DELAY wat - 1;
-         default: wat <= #DELAY wat;
-       endcase // case ({a_stb_o, a_ack_i})
+     if (rst_i || begin_i) count <= #DELAY {SBITS{1'b0}};
+     else if (done)        count <= #DELAY count_nxt;
 
    //  Strobe the `ready_o` signal when a prefetch has been completed.
    always @(posedge clk_i)
      if (rst_i || begin_i) ready_o <= #DELAY 0;
-     else                  ready_o <= #DELAY a_cyc_o && !a_cyc;
-       
+     else                  ready_o <= #DELAY count_end && done;
+
+   //  Pipeline these signals, since the block-prefetches take several clock-
+   //  cycles to complete.
+   always @(posedge clk_i) begin
+      count_nxt <= #DELAY count + BSIZE;
+      count_end <= #DELAY !begin_i && count_nxt >= COUNT;
+   end
+
+
+   //-------------------------------------------------------------------------
+   //  Port A master Wishbone-like bus interface.
+   //-------------------------------------------------------------------------
+   reg [USB:0]         a_adr = 0;
+   wire [UBITS:0]      a_adr_nxt = a_adr + 1;
+   wire [BSB:0]        a_blk;
+
+   assign a_adr_o = {a_adr, a_blk};
+   assign a_dat_o = {WIDTH{1'bx}};
+
+   //-------------------------------------------------------------------------
+   //  Keep prefetching blocks, until at least `COUNT` words have been
+   //  transferred.
+   always @(posedge clk_i)
+     if (rst_i)
+       {a_adr, read} <= #DELAY {(UBITS+1){1'b0}};
+     else if (begin_i)
+       {a_adr, read} <= #DELAY {{UBITS{1'b0}}, 1'b1};
+     else if (done && count_nxt < COUNT)
+       {a_adr, read} <= #DELAY {a_adr_nxt[USB:0], 1'b1};
+     else
+       {a_adr, read} <= #DELAY {a_adr, 1'b0};
+
 
    //-------------------------------------------------------------------------
    //  Port B master Wishbone-like bus interface.
    //-------------------------------------------------------------------------
    //  Port B state and bus-control signals.
+   reg [BSB:0]         b_blk = 0;
+   wire [BBITS:0]      b_nxt = b_blk + 1;
+   wire                b_run = a_cyc_o && a_ack_i && !b_cyc_o;
    wire                b_cyc = b_stb_o || !b_ack_i;
    wire                b_stb = b_bst_o;
-   wire                b_bst = b_adr_bst && b_cyc_o;
-   wire                b_begin = a_cyc_o && a_ack_i && !b_cyc_o;
+   wire                b_bst = b_blk < BSIZE-2;
 
    assign b_we_o = b_cyc_o;
 
    always @(posedge clk_i)
      if (rst_i)
        {b_cyc_o, b_stb_o, b_bst_o} <= #DELAY 3'b000;
-     else if (b_begin)
+     else if (b_run)
        {b_cyc_o, b_stb_o, b_bst_o} <= #DELAY 3'b111;
      else if (b_cyc_o)
        {b_cyc_o, b_stb_o, b_bst_o} <= #DELAY {b_cyc, b_stb, b_bst};
      else
        {b_cyc_o, b_stb_o, b_bst_o} <= #DELAY 3'b000;
 
+   //-------------------------------------------------------------------------
    //  Address generation.
    always @(posedge clk_i)
-     if (rst_i || b_begin)        b_adr_o <= #DELAY 0;
-//      else if (b_cyc_o && b_bst_o) b_adr_o <= #DELAY b_adr_o + 1;
-     else if (b_cyc_o && b_bst_o && !b_wat_i) b_adr_o <= #DELAY b_adr_o + 1;
+     if (rst_i || begin_i)
+       b_adr_o <= #DELAY 0;
+     else if (b_cyc_o && (b_bst_o && !b_wat_i || !b_cyc))
+       b_adr_o <= #DELAY b_adr_o + 1;
 
    //  Transfer incoming data to the output bus.
    always @(posedge clk_i)
-     if (a_cyc_o && a_ack_i)      b_dat_o <= #DELAY a_dat_i;
+     if (a_ack_i) b_dat_o <= #DELAY a_dat_i;
+
+   //-------------------------------------------------------------------------
+   //  Block-counter, for computing burst transfers.
+   always @(posedge clk_i)
+     if (rst_i || b_run) b_blk <= #DELAY {BBITS{1'b0}};
+     else                b_blk <= #DELAY b_bst_o ? b_nxt[BSB:0] : b_blk;
+
+
+   //-------------------------------------------------------------------------
+   //  Address-generation unit, for each block.
+   //-------------------------------------------------------------------------
+   wb_get_block
+     #(.BSIZE(BSIZE), .BBITS(BBITS), .DELAY(DELAY)
+       ) FETCH0
+       ( .clk_i(clk_i),
+         .rst_i(rst_i),
+         .cyc_o(a_cyc_o),
+         .stb_o(a_stb_o),
+         .we_o (a_we_o),
+         .bst_o(a_bst_o),
+         .ack_i(a_ack_i),
+         .wat_i(a_wat_i),
+         .blk_o(a_blk),
+
+         .read_i(read),
+         .done_o(done)
+         );
 
 
 `ifdef __icarus
@@ -185,103 +208,3 @@ module wb_prefetch
 
 
 endmodule // wb_prefetch
-
-
-`timescale 1ns/100ps
-/*
- * Module      : verilog/bus/wb_prefetch.v
- * Copyright   : (C) Tim Molteno     2016
- *             : (C) Max Scheel      2016
- *             : (C) Patrick Suggate 2016
- * License     : LGPL3
- * 
- * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
- * Stability   : Experimental
- * Portability : only tested with Icarus Verilog
- * 
- * Generates the control and address signals needed, to prefetch a block of
- * data, using Wishbone-like burst transfers.
- * 
- * NOTE:
- * 
- * Changelog:
- *  + 20/08/2016  --  initial file;
- * 
- * TODO:
- *  + more robust flow-control (by monitoring and generating bus wait-state
- *   cycles);
- * 
- */
-
-module wb_get_block
-  #(parameter BSIZE = 23,
-    parameter BBITS = 5,
-    parameter BSB   = BBITS-1,
-    parameter DELAY = 3)
-   (
-    input          clk_i,
-    input          rst_i,
-    output reg     cyc_o = 0,
-    output reg     stb_o = 0,
-    output         we_o,
-    output reg     bst_o = 0,
-    input          ack_i,
-    input          wat_i,
-    output [BSB:0] blk_o,
-
-    input          read_i,
-    output reg     done_o = 0
-    );
-
-   wire            cyc = stb_o || wat > 1 || !ack_i;
-   wire            stb = bst_o;
-   wire            bst = blk < BSIZE;
-   reg [BSB:0]     blk = 0;
-   reg [2:0]       wat = 0; // # of outstanding requests
-
-   wire [BBITS:0]  blk_nxt = blk + 1;
-
-   assign we_o  = 0;
-   assign blk_o = blk;
-
-
-   //-------------------------------------------------------------------------
-   //  Fetch-port state and bus-control signals.
-   //-------------------------------------------------------------------------
-   always @(posedge clk_i)
-     if (rst_i)
-       {cyc_o, stb_o, bst_o} <= #DELAY 3'b000;
-     else if (read_i)
-       {cyc_o, stb_o, bst_o} <= #DELAY 3'b111;
-     else if (cyc_o)
-       {cyc_o, stb_o, bst_o} <= #DELAY {cyc, stb, bst};
-     else
-       {cyc_o, stb_o, bst_o} <= #DELAY 3'b000;
-
-   //-------------------------------------------------------------------------
-   //  Address generation, with a block.
-   always @(posedge clk_i)
-     if (rst_i || read_i)               blk <= #DELAY 0;
-     else if (cyc_o && bst_o && !wat_i) blk <= #DELAY blk_nxt;
-
-   //-------------------------------------------------------------------------
-   //  Count to make sure that all requested data is retransmitted.
-   always @(posedge clk_i)
-     if (rst_i)   wat <= #DELAY 0;
-     else if (cyc_o)
-       case ({stb_o, ack_i})
-         2'b10:   wat <= #DELAY wat + 1;
-         2'b01:   wat <= #DELAY wat - 1;
-         default: wat <= #DELAY wat;
-       endcase // case ({stb_o, ack_i})
-
-
-   //-------------------------------------------------------------------------
-   //  Strobe the `done_o` signal when a prefetch has been completed.
-   //-------------------------------------------------------------------------
-   always @(posedge clk_i)
-     if (rst_i || read_i) done_o <= #DELAY 0;
-     else                 done_o <= #DELAY cyc_o && !cyc;
-
-
-endmodule // wb_get_block

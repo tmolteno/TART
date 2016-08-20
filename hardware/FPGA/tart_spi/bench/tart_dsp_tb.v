@@ -13,14 +13,17 @@ module tart_dsp_tb;
    parameter BSB   = BBITS-1;
    parameter MRATE = 12;
    parameter DELAY = 3;
-//    parameter COUNT = 3; // count down from:  (1 << COUNT) - 1;
+
+//    parameter COUNT = 4; // count down from:  (1 << COUNT) - 1;
    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
 //    parameter NREAD = 8;
 //    parameter NREAD = 24;
-   parameter NREAD = 120;
+   parameter NREAD = 96;
+//    parameter NREAD = 120;
 //    parameter NREAD = `READ_COUNT >> 2;
 //    parameter NREAD = `READ_COUNT;
+
    parameter BREAD = NREAD << 2;
    parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
@@ -137,11 +140,13 @@ module tart_dsp_tb;
      if (newblock)
        $display("%12t: New block available.", $time);
 
+   /*
    initial begin
       $dumpfile ("dsp_tb.vcd");
       #60000 $dumpvars;
       #4000  $finish;
    end
+    */
 
 
    //-------------------------------------------------------------------------

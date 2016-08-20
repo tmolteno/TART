@@ -121,7 +121,8 @@ module correlator_SDP
 `endif
    wire [4:0]   a_index, b_index;
    reg          go = 0, ar, br, bi, hi;
-   wire         sum = SUMHI && rd[3:1] == 3'b101;
+//    wire         sum = SUMHI && rd[3:1] == 3'b101;
+   wire         sum = SUMHI && {rd[3], rd[1]} == 2'b11;
 
    assign {b_index, a_index} = pairs[rd];
 

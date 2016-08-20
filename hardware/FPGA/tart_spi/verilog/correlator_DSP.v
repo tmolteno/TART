@@ -129,7 +129,8 @@ module correlator_DSP
                                PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
 `endif
    wire [4:0]   a_index, b_index;
-   wire         hi = SUMHI && rd[3:2] == 2'b11;
+//    wire         hi = SUMHI && rd[3:1] == 3'b101;
+   wire         hi = SUMHI && {rd[3], rd[1]} == 2'b11;
    wire         ar = re[a_index];
    wire         br = re[b_index];
    wire         bi = im[b_index];

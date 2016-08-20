@@ -67,7 +67,7 @@ module tart_visibilities
    //  The time-multiplexing ratio determines how many values are stored
    //  within each correlator. E.g., for `TRATE = 12`, there are 12 real and
    //  12 complex values within each of the correlator's SRAM's.
-   parameter BSIZE = TRATE*2-1;
+   parameter BSIZE = TRATE*2;
    parameter BBITS = TBITS+1;
    parameter BSB   = BBITS-1;
 
@@ -111,7 +111,7 @@ module tart_visibilities
 
    //  Prefetches data from the various correlators after each bank-switch,
    //  and then sends it on to a block SRAM.
-   wb_prefetch #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT-1),
+   wb_prefetch #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT),
                   .BSIZE(BSIZE), .BBITS(BBITS) ) PREFETCH0
      ( .rst_i(rst_i),
        .clk_i(clk_i),
