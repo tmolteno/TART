@@ -220,6 +220,17 @@ module correlator_block_SDP
 
 
    //-------------------------------------------------------------------------
+   //  Handle overflows.
+   //-------------------------------------------------------------------------
+   wire [4:0]          oc_w = {overflow_cos, oc[3:0]};
+   wire [4:0]          os_w = {overflow_sin, os[3:0]};
+
+   always @(posedge clk_x)
+     if (rst) {overflow_sin, overflow_cos} <= #DELAY 2'b0;
+     else     {overflow_sin, overflow_cos} <= #DELAY {|os_w, |oc_w};
+
+
+   //-------------------------------------------------------------------------
    //  Correlator instances.
    //-------------------------------------------------------------------------
    correlator_SDP

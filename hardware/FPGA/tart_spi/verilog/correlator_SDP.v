@@ -77,6 +77,9 @@ module correlator_SDP
 
    assign vis = {qsin, qcos};
 
+   always @(posedge clk_x)
+     {overflow_sin, overflow_cos} <= #DELAY {os, oc};
+
 
    //-------------------------------------------------------------------------
    //  Select pairs of antenna to correlate.
@@ -137,8 +140,8 @@ module correlator_SDP
 
    always @(posedge clk_x)
      if (en) begin : RAM_READ
-        dcos <= #DELAY sw ? 0 : dcos_w;
-        dsin <= #DELAY sw ? 0 : dsin_w;
+        dcos <= #DELAY sw ? {ACCUM{1'b0}} : dcos_w;
+        dsin <= #DELAY sw ? {ACCUM{1'b0}} : dsin_w;
      end
 
 

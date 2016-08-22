@@ -1,4 +1,7 @@
-from tartspi import TartSPI
+#!/usr/bin/env python
+
+# from tartspi import TartSPI
+from tartdsp import TartSPI
 
 import numpy as np
 import time
@@ -14,29 +17,25 @@ if __name__ == '__main__':
   args = parser.parse_args()
   
   num_bytes = np.power(2,args.bramexp)
-  t = TartSPI(speed=args.speed*1000000)
-  t.reset()
-  t.reset()
-  t.debug(on=1)
-  t.debug(on=1)
-  t.debug(on=0)
-  t.debug(on=0)
-  t.debug(on=1)
-  t.debug(on=1)
-  t.debug(on=0)
-  t.debug(on=0)
-  t.reset()
-  t.reset()
-  t.reset()
+  tart = TartSPI(speed=args.speed*1000000)
+  tart.reset(True)
+  tart.reset()
+  tart.debug(on=1, noisy=True)
+  tart.debug(on=1)
+  tart.debug(on=0)
+  tart.debug(on=0)
+  tart.debug(on=1)
+  tart.debug(on=1)
+  tart.debug(on=0)
+  tart.debug(on=0)
+  tart.reset()
+  tart.reset()
+  tart.reset()
 
+  tart.debug(on=int(args.internal), noisy=True)
+  tart.start_acquisition(sleeptime=1.1, noisy=True)
 
-
-
-
-  t.debug(args.internal)
-  t.start_acquisition(sleeptime=3)
-
-  data = t.read_data(num_bytes=num_bytes, blocksize=1024)
+  data = tart.read_data(num_bytes=num_bytes, blocksize=1024)
   print 'generate 24bit integer'
   resp_dec = (np.array(data[:,0],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,2],dtype='uint32'))
   print np.info(resp_dec)

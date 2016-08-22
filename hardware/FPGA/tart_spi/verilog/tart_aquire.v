@@ -104,7 +104,8 @@ module tart_aquire
     (* ASYNC_REG = "TRUE" *)
     output reg         aq_enabled = 0,
     output reg         aq_debug_mode = 0,
-	  output reg [2:0]   aq_sample_delay = 0
+	  output reg [2:0]   aq_sample_delay = 0,
+    input [24:0]       aq_adr_i
     );
 
 
@@ -117,7 +118,8 @@ module tart_aquire
    wire [MSB:0]        vx_status = {available, accessed, 1'b0, log_block};
 
    wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
-   wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
+//    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
+   wire [MSB:0]        aq_status = {aq_adr_i[7:1], aq_enabled};
    wire                x_ack;
 
 
@@ -264,16 +266,14 @@ module tart_aquire
    //-------------------------------------------------------------------------
    //  DRAM prefetcher-control logic.
    //-------------------------------------------------------------------------
-   wire [MSB:0]        data [0:2];
    reg                 data_sent = 0;
    reg [1:0]           index = 0;
    wire                send, wrap_index;
    wire [1:0]          next_index = wrap_index ? 0 : index + 1;
 
-   assign data[0]    = ax_data[23:16];
-   assign data[1]    = ax_data[15: 8];
-   assign data[2]    = ax_data[ 7: 0];
-   assign ax_stream  = data[index];
+   assign ax_stream  = index == 0 ? ax_data[23:16] :
+                       index == 1 ? ax_data[15: 8] :
+                       ax_data[7:0];
 
    assign send       = cyc_i && stb_i && !we_i && !ack_o && adr_i == `AX_STREAM;
    assign wrap_index = index == 2;

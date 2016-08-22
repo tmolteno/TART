@@ -45,7 +45,7 @@ module tart_control
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
 
-    input          status_i,
+    input [MSB:0]  status_i,
     input          overflow_i,
     input          underrun_i,
     input          reset_ni,

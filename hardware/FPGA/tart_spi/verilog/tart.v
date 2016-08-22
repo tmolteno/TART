@@ -10,128 +10,135 @@
 `include "tartcfg.v"
 
 module tart
-  (
-	 // SHOW DELAYED CLOCK:
-	 output wire        rx_clk_test_pin,
-     
-   // PAPILIO
-   output wire        led,
-  
-   // SDRAM
-   output wire        SDRAM_CLK,
-   output wire        SDRAM_CKE,
-   output wire        SDRAM_CS,
-   output wire        SDRAM_RAS,
-   output wire        SDRAM_CAS,
-   output wire        SDRAM_WE,
-   output wire [1:0]  SDRAM_DQM,
-   output wire [12:0] SDRAM_ADDR,
-   output wire [1:0]  SDRAM_BA,
-   inout wire [15:0]  SDRAM_DQ,
-  
-   // SPI
-   input              SPI_SCK,
-   input              SPI_SSEL,
-   input              SPI_MOSI,
-   output wire        SPI_MISO,
-  
-   // TELESCOPE
-   input              rx_clk_16, // 16.368 MHz receiver master clock
-   input [23:0]       antenna // Radio Data Interface
-   );
-
+  #(// Memory controller parameters:
+    parameter SDRAM_STARTUP_CYCLES = 10100, // -- 100us, plus a little more, @100MHz
 `ifdef __512Mb_SDRAM
-   parameter SDRAM_COLUMN_BITS    = 10;     // 8 for standard papilio pro
-   parameter SDRAM_ADDRESS_WIDTH  = 25;    // 22 for standard papilio pro
-   parameter CYCLES_PER_REFRESH   = 780;  // (64000*100)/8192-1 Cycled as  (64ms @ 100MHz)/ 8192 rows
+    parameter SDRAM_COLUMN_BITS    = 10, // 8 for standard papilio pro
+    parameter SDRAM_ADDRESS_WIDTH  = 25, // 22 for standard papilio pro
+    parameter CYCLES_PER_REFRESH   = 780, // (64000*100)/8192-1 Cycled as (64ms @100MHz)/8192 rows
 `else
-   parameter SDRAM_COLUMN_BITS    = 8;     // 8 for standard papilio pro
-   parameter SDRAM_ADDRESS_WIDTH  = 22;    // 22 for standard papilio pro
-   parameter CYCLES_PER_REFRESH   = 1524;  // = (64000*100)/4096-1 Cycled as  (64ms @ 100MHz)/ 4096 rows
+    parameter SDRAM_COLUMN_BITS    = 8,     // 8 for standard papilio pro
+    parameter SDRAM_ADDRESS_WIDTH  = 22,    // 22 for standard papilio pro
+    parameter CYCLES_PER_REFRESH   = 1524,  // (64000*100)/4096-1 Cycled as (64ms @100MHz)/4096 rows
 `endif // !`ifdef __512Mb_SDRAM
-   parameter SDRAM_STARTUP_CYCLES = 10100; // -- 100us, plus a little more, @ 100MHz
+    parameter SSB                  = SDRAM_ADDRESS_WIDTH-2,
 
-   //  Simulation settings:
-   parameter DELAY = 3;
+    //  Antenna/signal parameters:
+    parameter ANTENNAE = `NUM_ANTENNA,
+    parameter NSB      = ANTENNAE-1,
+    parameter RNG      = `RANDOM_DATA,
 
-   wire               reset_n, reset;
+    //  Simulation parameters:
+    parameter DELAY    = `DELAY)     // Simulation gate-delay setting
+   (
+    // SDRAM
+    output wire        SDRAM_CLK,
+    output wire        SDRAM_CKE,
+    output wire        SDRAM_CS,
+    output wire        SDRAM_RAS,
+    output wire        SDRAM_CAS,
+    output wire        SDRAM_WE,
+    output wire [1:0]  SDRAM_DQM,
+    output wire [12:0] SDRAM_ADDR,
+    output wire [1:0]  SDRAM_BA,
+    inout wire [15:0]  SDRAM_DQ,
+   
+    // SPI
+    input              SPI_SCK,
+    input              SPI_SSEL,
+    input              SPI_MOSI,
+    output wire        SPI_MISO,
+   
+    // TELESCOPE
+    input              rx_clk_16, // 16.368 MHz receiver master clock
+    input [NSB:0]      antenna, // Radio Data Interface
+
+    // MISCELLANEOUS
+	  output wire        rx_clk_test_pin, // show delayed clock
+    output wire        led              // Papilio LED
+    );
+
+   (* PERIOD = "10.18 ns" *) wire fpga_clk;
+   (* PERIOD = "10.18 ns" *) wire rx_clk;
+   (* PERIOD = "5.091 ns" *) wire clk_x;
+
+   wire                reset_n, reset;
+   wire [NSB:0]        ax_dat;
+
+   //  SDRAM memory-controller signals:
+   wire                cmd_enable, cmd_ready, cmd_wr;
+   wire [SSB:0]        cmd_address;
+   wire [31:0]         cmd_data_in;
+   wire [31:0]         data_out;
+
+   wire                request_from_spi;
+   (* KEEP = "TRUE" *) wire aq_enabled;
+   wire                spi_debug;
+   wire [2:0]          data_sample_delay;
+   wire [2:0]          tart_state;
+
 
    assign led = tart_state >= 2; // asserted when data can be read back
+	 assign rx_clk_test_pin = rx_clk;
 
 
    //-------------------------------------------------------------------------
-   //     GENERATE DIFFERENT CLOCK DOMAINS
+   //     GENERATE TART SYSTEM CLOCKS
    //-------------------------------------------------------------------------
-   (* PERIOD = "10.18 ns" *)
-   wire               fpga_clk;
-
 `ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
-      .CLKIN(rx_clk_16),               // 16.368 MHZ
-      .CLKOUT0(rx_clk_16_buffered),    // 16.368 MHZ buffered
-      .CLKOUT1(fpga_clk),               // 16.368x6 = 98.208 MHz
+      .CLKIN(rx_clk_16),        // 16.368 MHz
+      .CLKOUT0(rx_clk_16_buf),  // 16.368 MHz buffered
+      .CLKOUT1(fpga_clk),       // 16.368x6 = 98.208 MHz
       .reset_n(reset_n)
       );
+
 `else
-   (* PERIOD = "5.091 ns" *)
-   wire               clk_x;
-
    tart_dcm TART_DCM0
-     ( .clk_pin(rx_clk_16),               // 16.368 MHZ
-       .clk_rst(0),
-
-       .clk(rx_clk_16_buffered), // 16.368 MHZ buffered
+     ( .clk_pin(rx_clk_16),     // 16.368 MHZ
+       .clk_rst(1'b0),
+       .clk(rx_clk_16_buf),     // 16.368 MHz buffered
        .reset_n(reset_n),
        .status_n(status_n),
-       .clk6x(fpga_clk),         // 16.368x6 = 98.208 MHz
-       .clk12x(clk_x)         // 16.368x6 = 98.208 MHz
+       .clk6x(fpga_clk),        // 16.368x6  =  98.208 MHz
+       .clk12x(clk_x)           // 16.368x12 = 196.416 MHz
        );
-`endif // __USE_OLD_CLOCKS
+`endif // !__USE_OLD_CLOCKS
+  
 
-   
+`ifdef __USE_OLD_CAPTURE   
    //-------------------------------------------------------------------------
    //     DATA CAPTURE
    //-------------------------------------------------------------------------
+   //  TODO: Use a more robust data-capture circuit.
+   reg [NSB:0]         real_antenna;
+   wire [NSB:0]        fake_antenna;
+
+   always @(posedge fpga_clk)
+     real_antenna <= #DELAY antenna;
    
-   //     HOOK UP IO REGISTER TO INTERNAL LOGIC
-   reg [23:0] real_antenna;
-   always @(posedge fpga_clk) real_antenna <= antenna;
-   
-   //     GENERATE FAKE DATA (24 BIT COUNTER) FOR DEBUGGING
-   wire [23:0] fake_antenna;
+   //  Generate fake data (24 bit counter) for debugging
    //fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
-   fake_telescope #( .WIDTH(24) ) FAKE_TART0
-     ( .write_clk(rx_clk_16_buffered), .write_data(fake_antenna) );
+   fake_telescope #( .WIDTH(ANTENNAE), .RNG(RNG) ) FAKE_TART0
+     ( .write_clk(rx_clk_16_buf), .write_data(fake_antenna) );
 
    // Antenna source MUX, for choosing real data or fake data
-   wire        spi_debug;
-   wire [23:0] antenna_data = spi_debug ? fake_antenna : real_antenna;
+   wire [NSB:0] antenna_data = spi_debug ? fake_antenna : real_antenna;
 
-   wire rx_clk;
-   //sync_antennas_to_clock sync_ant_int(
-   // .fast_clk(fpga_clk),
-   // .data_in(sel_antenna_data),
-   // .slow_clk(rx_clk),
-   // .data_out(antenna_data)  // data valid on the rising edge of the clock.
-   // );
-   wire [2:0] data_sample_delay;
-
-	 delay_data_sampling_clk delay_rx_clk
+	 delay_data_sampling_clk DELAY_RX_CLK
      (
 	    .fast_clk(fpga_clk),
 		  .data_sample_delay(data_sample_delay),
 		  .slow_clk(rx_clk)
 	    );
 
-	 assign rx_clk_test_pin = rx_clk;
-
 
    //-------------------------------------------------------------------------
    //     AQUISITION BLOCK
    //-------------------------------------------------------------------------
-   wire [23:0] aq_write_data;
-   wire [23:0] aq_read_data;
+   wire [NSB:0] aq_write_data;
+   wire [NSB:0] aq_read_data;
    wire [8:0] aq_bb_rd_address;
    wire [8:0] aq_bb_wr_address;
 
@@ -147,15 +154,6 @@ module tart
    //-------------------------------------------------------------------------
    //      STORAGE BLOCK
    //-------------------------------------------------------------------------
-   wire [SDRAM_ADDRESS_WIDTH-2:0] cmd_address;
-   wire [2:0] tart_state;
-
-   wire [31:0] cmd_data_in;
-   wire [31:0] data_out;
-
-   wire        request_from_spi;
-   (* KEEP = "TRUE" *) wire        aq_enabled;
-  
    fifo_sdram_fifo_scheduler
      #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
    SCHEDULER0
@@ -178,6 +176,46 @@ module tart
        .tart_state(tart_state)
        );
 
+`else // !`ifdef __USE_OLD_CAPTURE
+   //-------------------------------------------------------------------------
+   //  
+   //  TART ANTENNA DATA CAPTURE BLOCK
+   //  
+   //-------------------------------------------------------------------------
+   tart_capture
+     #(.AXNUM(ANTENNAE),
+       .ABITS(SDRAM_ADDRESS_WIDTH),
+       .RNG  (RNG)
+       ) CAP0
+     ( .clk_i     (fpga_clk),
+       .clk_x     (clk_x),
+       .clk_e     (rx_clk_16_buf),
+       .clk_d     (rx_clk),
+       .rst_i     (reset),
+
+       .mcb_ce_o  (cmd_enable),
+       .mcb_wr_o  (cmd_wr),
+       .mcb_rdy_i (cmd_ready),
+       .mcb_adr_o (cmd_address),
+       .mcb_dat_o (cmd_data_in),
+
+       .aq_ce_i   (aq_enabled),
+       .aq_delay_i(data_sample_delay),
+       .aq_debug_i(spi_debug),
+       .ax_data_i (antenna),
+       .ax_data_o (ax_dat),
+       .rd_req_i  (request_from_spi),
+
+       .tart_state(tart_state)
+       );
+`endif //  !`ifdef __USE_OLD_CAPTURE
+
+
+   //-------------------------------------------------------------------------
+   //  
+   //  SDRAM CONTROLLER FOR THE RAW ANTENNA DATA
+   //  
+   //-------------------------------------------------------------------------
    SDRAM_Controller_v
    #(
       .sdram_address_width(SDRAM_ADDRESS_WIDTH),
@@ -210,7 +248,6 @@ module tart
    );
 
 
-`ifdef __USE_WISHBONE_CORES
    //-------------------------------------------------------------------------
    //
    //  TART's system-wide, Wishbone-like interconnect and peripherals.
@@ -280,11 +317,11 @@ module tart
    assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
 
    assign b_ack = r_ack || a_ack;
- `ifdef __icarus
+`ifdef __icarus
    assign b_dtx = r_stb || r_sel ? r_drx : (a_stb || a_sel ? a_drx : 'bz);
- `else
+`else
    assign b_dtx = r_stb || r_sel ? r_drx : a_drx;
- `endif
+`endif
 
    //-------------------------------------------------------------------------
    //  Keep the selected device active until the transaction has been
@@ -363,7 +400,7 @@ module tart
        //  DRAM (streaming) read-back signals:
        .data_ready  (data_out_ready),
        .data_request(request_from_spi),
-       .data_in     (data_out[23:0]),
+       .data_in     (data_out[MSB:0]),
 
        .spi_busy(spi_busy),
 
@@ -385,11 +422,12 @@ module tart
        //  Antenna capture & aquisition controls:
        .aq_debug_mode(spi_debug),
        .aq_enabled(aq_enabled),
-       .aq_sample_delay(data_sample_delay)
+       .aq_sample_delay(data_sample_delay),
+       .aq_adr_i(cmd_address)
        );
 
 
- `ifdef __USE_CORRELATORS
+`ifdef __USE_CORRELATORS
    //-------------------------------------------------------------------------
    //     
    //     CORRELATOR / VISIBILITIES BLOCK.
@@ -420,218 +458,7 @@ module tart
        .checksum (checksum),
        .streamed (streamed)
        );
-
-
-  `ifdef __USE_OLD_SCHOOL_CORRELATORS
-
-   //  WB signals to access the prefetched visibilities (that have been
-   //  stored within a block SRAM).
-   wire [BSB:0] v_drx, v_dtx;
-   wire [ASB:0] v_adr;
-   wire         v_cyc, v_stb, v_bst, v_we, v_ack, v_wat;
-
-   //  WB signals between the visibilities-prefetch logic-core and the block
-   //  of correlators.
-   wire [RSB+XBITS:0] c_adr;
-   wire [MSB:0]       c_drx, c_dtx;
-   wire               c_cyc, c_stb, c_bst, c_we, c_ack, c_wat;
-
-
-   //-------------------------------------------------------------------------
-   //  Streaming, visibilities-read-back logic-core.
-   //-------------------------------------------------------------------------
-   wb_stream
-     #(  .WIDTH (BBITS),
-         .WORDS (NREAD << 2),
-         .WBITS (ABITS),
-         .DELAY (DELAY)
-         ) WB_STREAM0
-       ( .clk_i(b_clk),
-         .rst_i(reset),
-
-         .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
-         .m_stb_o(v_stb),       // sequentially
-         .m_we_o (v_we),
-         .m_bst_o(v_bst),
-         .m_ack_i(v_ack),
-         .m_wat_i(v_wat),
-         .m_adr_o(v_adr),
-         .m_dat_i(v_drx),
-         .m_dat_o(v_dtx),
-
-         .s_cyc_i(s_cyc),       // visibilities are streamed from here to the
-         .s_stb_i(s_stb),       // SPI module
-         .s_we_i (s_we),
-         .s_bst_i(1'b0),
-         .s_ack_o(s_ack),
-         .s_dat_i('bx),
-         .s_dat_o(s_dat),
-
-         .wrapped(streamed)     // strobes when block has been streamed
-         );
-
-   //-------------------------------------------------------------------------
-   //  Visibilities read-back unit.
-   //-------------------------------------------------------------------------
-   tart_visibilities
-     #(  .BLOCK (BLOCK),
-         .COUNT (NREAD),
-         .TRATE (TRATE),
-         .DELAY (DELAY)
-         ) TART_VISIBILITIES0
-       ( .clk_i(b_clk),
-         .rst_i(reset),
-
-         .cyc_i(v_cyc),         // this bus accesses the prefetched bank of
-         .stb_i(v_stb),         // visibilities -- which are prefetched after
-         .we_i (v_we),          // every bank-switch
-         .bst_i(v_bst),
-         .ack_o(v_ack),
-         .wat_o(v_wat),
-  `ifdef __USE_SDP_DSRAM
-         .adr_i({v_blk, v_adr}),
-  `else
-         .adr_i(v_adr),
-  `endif
-         .byt_i(v_dtx),
-         .byt_o(v_drx),
-
-         .cyc_o(c_cyc),         // master interface that connects to the
-         .stb_o(c_stb),         // correlators, to read back their computed
-         .we_o (c_we),          // visibilities
-         .bst_o(c_bst),
-         .ack_i(c_ack),
-//          .wat_i(c_wat),
-         .adr_o(c_adr),
-         .dat_i(c_drx),
-         .dat_o(c_dtx),
-
-         .switching(switching), // strobes at every bank-switch (bus domain)
-         .available(newblock),  // strobes when new block is available
-         .checksum (checksum)   // computed checksum of block
-         );
-
-   //-------------------------------------------------------------------------
-   //     TOP-LEVEL CORRELATORS-BLOCK FUNCTIONAL UNIT.
-   //-------------------------------------------------------------------------
-   reg [3:0]    q_cnt = 0;
-   reg          strobe = 0;
-
-   always @(posedge clk_x)
-     if (reset) q_cnt <= #DELAY 0;
-     else       q_cnt <= #DELAY q_cnt == TRATE-1 ? 0 : q_cnt + 1;
-
-   always @(posedge clk_x)
-     strobe <= #DELAY q_cnt == TRATE >> 1;
-
-   //-------------------------------------------------------------------------
-   //  Synchronise signals from the WB clock domain.
-   (* KEEP = "TRUE" *) reg [MSB:0]  block_x  = 0;
-   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
-
-   (* KEEP = "TRUE" *) reg          enable_x = 0;
-   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg          enable_s = 0;
-
-   always @(posedge clk_x) begin
-      block_s  <= #DELAY blocksize;
-      enable_s <= #DELAY aq_enabled;
-   end
-
-   always @(posedge clk_x) begin
-      block_x  <= #DELAY block_s;
-      enable_x <= #DELAY enable_s;
-   end
-
-   tart_correlator
-     #(  .BLOCK (BLOCK),
-         .DELAY (DELAY)
-         ) TART_CORRELATOR0
-       ( .clk_x(clk_x),         // 12x data-rate sampling clock
-         .rst  (reset),
-         .clk_i(b_clk),
-
-         .cyc_i(c_cyc),         // the correlator connects to the read-back
-         .stb_i(c_stb),         // unit for the visibilities, via this bus
-         .we_i (c_we),
-         .bst_i(c_bst),
-         .ack_o(c_ack),
-         .adr_i(c_adr),
-         .dat_i(c_dtx),
-         .dat_o(c_drx),
-
-         .enable(enable_x),     // begins correlating once asserted
-         .blocksize(block_x),   // number of samples per visibility sum
-         .strobe(strobe),       // indicates arrival of a new sample
-         .antenna(antenna),     // antenna data
-         .switch(switching)     // asserts on bank-switch (sample domain)
-         );
- `endif //  `ifdef __USE_OLD_SCHOOL_CORRELATORS
-`endif // __USE_CORRELATORS
-
-`else //  __USE_WISHBONE_CORES
-
-   //-------------------------------------------------------------------------
-   //     RESET AND STATUS LOGIC
-   //-------------------------------------------------------------------------
-   wire               spi_reset;
-   reg                reset_0 = 0, reset_1 = 0, reset_r = 0;
-   wire               debug_o;
-
-   // TODO: Remove the unwanted combinational delays.
-   // TODO: Make sure the reset is asserted for several clock-cycles.
-   assign reset = reset_r | ~reset_n;
-
-   always @(posedge fpga_clk)
-     begin
-        reset_0 <= spi_reset;
-        reset_1 <= reset_0;
-        reset_r <= reset_1;
-     end
-
-   // assign led = debug_o;
-   assign led = tart_state >= 2;
-   // assign led = ~SPI_SSEL;
-
-
-   //-------------------------------------------------------------------------
-   //     TRANSMISSION BLOCK
-   //     SPI SLAVE & WB MASTER
-   //     
-   //     OBSOLETE: Replacing with individual cores.
-   //-------------------------------------------------------------------------
-   wire spi_status = {1'b1, debug_o, request_from_spi, aq_enabled, spi_debug, tart_state[2:0]};
-
-   tart_spi
-     #( .ADDR_READ_DATA1  (4'h0),
-        .ADDR_READ_DATA2  (4'h1),
-        .ADDR_READ_DATA3  (4'h2),
-        .ADDR_SAMPLE_DELAY(4'h5),
-        .ADDR_DEBUG       (4'h6),
-        .ADDR_STARTAQ     (4'h7),
-        .ADDR_STATUS      (4'he),
-        .ADDR_RESET       (4'hf)
-        ) TART_SPI0
-       (.clk(fpga_clk),
-        .rst(reset),
-        
-        .data_ready  (data_out_ready),
-        .data_request(request_from_spi),
-        .data_in     (data_out[23:0]),
-
-        .debug_o(debug_o),
-
-        .spi_status(spi_status),
-			  .data_sample_delay(data_sample_delay),
-        .spi_reset(spi_reset),
-        .aq_enabled(aq_enabled),
-        .spi_debug(spi_debug),
-        
-        .SCK (SPI_SCK),
-        .MOSI(SPI_MOSI),
-        .MISO(SPI_MISO),
-        .SSEL(SPI_SSEL)
-        );
-`endif // !__USE_WISHBONE_CORES
+ `endif //  `ifdef __USE_CORRELATORS
 
 
 endmodule // tart

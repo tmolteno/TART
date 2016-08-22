@@ -137,6 +137,9 @@ module correlator_DSP
 
    assign {b_index, a_index} = pairs[rd];
 
+   always @(posedge clk_x)
+     {overflow_sin, overflow_cos} <= #DELAY {os, oc};
+
 
    //-------------------------------------------------------------------------
    //  Time-multiplexed correlator.

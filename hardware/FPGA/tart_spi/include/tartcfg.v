@@ -24,11 +24,13 @@
 //  Visibilities and correlator settings.
 `define NUM_ANTENNA 24
 `define ACCUM_BITS  24          // Bit-width of the accumulators
-// `define ACCUM_BITS  32          // Bit-width of the accumulators
 `define TMUX_RATE   12          // Time-multiplexing rate
 `define VISB_LOG2   20          // = 2^20 samples/block;
 `define READ_COUNT 576          // Number of visibilities to read back
 `define READ_BITS   10          // = ceiling{log2(`READ_COUNT)};
+// `define RANDOM_DATA  1          // Use a RNG for fake data?
+`define RANDOM_DATA  0          // Use a RNG for fake data?
+
 
 //----------------------------------------------------------------------------
 //
@@ -41,19 +43,26 @@
 
 //----------------------------------------------------------------------------
 //
+//  The old data-capture circuit also generates the fake-data, for debugging.
+//
+//----------------------------------------------------------------------------
+// `define __USE_OLD_CAPTURE
+
+
+//----------------------------------------------------------------------------
+//
 //  The new clocks are unfinished.
 //
 //----------------------------------------------------------------------------
 // `define __USE_OLD_CLOCKS
 `define __USE_DCM_CLKGEN
 
+
 //----------------------------------------------------------------------------
 //
 //  The version using Wishbone cores is the more current version.
 //
 //----------------------------------------------------------------------------
-`define __USE_WISHBONE_CORES
-
 //  Choose whether to use classic Wishbone bus cycles, or the newer, faster
 //  pipelined transfers.
 `define __WB_CLASSIC
@@ -71,14 +80,24 @@
 `define __USE_CORRELATORS
 
 //----------------------------------------------------------------------------
+//  Wishbone bus settings for reading back the visibilities.
+`define WBADR_BITS 12           // Address bit-width
+`define WBBUS_BITS  8           // Bit-width of the SoC data bus
+`define BLOCK_BITS  4           // Bit-width of the block-counter
+
+
+//----------------------------------------------------------------------------
+//  Simulation settings
+//----------------------------------------------------------------------------
+`define DELAY 3
+
+
+//
+//  LEGACY
+//
+//----------------------------------------------------------------------------
 //  The correlators can be set to use only distributed SRAM's, or a mix of
 //  distributed SRAM's and block SRAM's. The latter uses few resources (if
 //  there are enough block SRAM's), but imposes additional placement
 //  constraints, potentially leading to lower circuit performance.
 `define __USE_SDP_DSRAM
-
-//----------------------------------------------------------------------------
-//  Wishbone bus settings for reading back the visibilities.
-`define WBADR_BITS 12           // Address bit-width
-`define WBBUS_BITS  8           // Bit-width of the SoC data bus
-`define BLOCK_BITS  4           // Bit-width of the block-counter
