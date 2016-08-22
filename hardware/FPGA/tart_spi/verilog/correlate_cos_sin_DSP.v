@@ -33,9 +33,6 @@ module correlate_cos_sin_DSP
 
     input [MSB:0]  dcos,
     input [MSB:0]  dsin,
-
-    output reg     oc = 0, // cosine overflow
-    output         os, // sine overflow
     output [MSB:0] qcos,
     output [MSB:0] qsin
     );
@@ -80,7 +77,7 @@ module correlate_cos_sin_DSP
          .OPMODE(opmode),
 
          // inputs & input registers:
-         .RSTA(clr),              // first 48-bit input
+         .RSTA(clr),            // first 48-bit input
          .CEA(en),
          .A(a),
          .RSTB(clr),
@@ -90,12 +87,12 @@ module correlate_cos_sin_DSP
          .CED(en),
          .D(d),
 
-         .RSTC(1'b0),              // second 48-bit input
+         .RSTC(1'b0),           // second 48-bit input
          .CEC(en),
          .C(c),
 
-         .CARRYOUTF(os),          // sine overflow
-         .RSTP(rst),              // output register
+         .CARRYOUTF(),          // sine overflow
+         .RSTP(rst),            // output register
          .CEP(vld),
          .P({qsin, qcos})
          );

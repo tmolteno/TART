@@ -74,10 +74,7 @@ module correlator_block_DSP
     input              sw, // switch banks
     input              en, // data is valid
     input [ISB:0]      re, // real component of imput
-    input [ISB:0]      im, // imaginary component of input
-
-    output reg         overflow_cos = 0,
-    output reg         overflow_sin = 0
+    input [ISB:0]      im  // imaginary component of input
     );
 
 
@@ -91,7 +88,6 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    //  Wishbone-like bus interface.
    //-------------------------------------------------------------------------
-   wire [3:0]          oc, os;
    reg                 ack = 0;
    reg [2:0]           adr = 0;
    wire                vld;
@@ -108,66 +104,10 @@ module correlator_block_DSP
       dat_o <= #DELAY dat_w;
    end
 
-   MUX8 #( .WIDTH(ACCUM) ) MUXDAT0
-     ( .a(dat[ACCUM*1-1:ACCUM*0]),
-       .b(dat[ACCUM*2-1:ACCUM*1]),
-       .c(dat[ACCUM*3-1:ACCUM*2]),
-       .d(dat[ACCUM*4-1:ACCUM*3]),
-       .e(dat[ACCUM*5-1:ACCUM*4]),
-       .f(dat[ACCUM*6-1:ACCUM*5]),
-       .g(dat[ACCUM*7-1:ACCUM*6]),
-       .h(dat[ACCUM*8-1:ACCUM*7]),
-       .s(adr),
-       .x(dat_w)
-       );
-
-   /*
-   //  Put data onto the WB bus, in two steps.
-   always @(posedge clk_i) begin
-      if (cyc_i && stb_i) adr <= #DELAY adr_i[2:0];
-      case (adr) // 8:1 MUX to select the desired word:
-        0: dat_o <= #DELAY dat[ACCUM*1-1:ACCUM*0];
-        1: dat_o <= #DELAY dat[ACCUM*2-1:ACCUM*1];
-        2: dat_o <= #DELAY dat[ACCUM*3-1:ACCUM*2];
-        3: dat_o <= #DELAY dat[ACCUM*4-1:ACCUM*3];
-        4: dat_o <= #DELAY dat[ACCUM*5-1:ACCUM*4];
-        5: dat_o <= #DELAY dat[ACCUM*6-1:ACCUM*5];
-        6: dat_o <= #DELAY dat[ACCUM*7-1:ACCUM*6];
-        7: dat_o <= #DELAY dat[ACCUM*8-1:ACCUM*7];
-      endcase // case (adr_i[2:0])
-   end
-   */
-
 
    //-------------------------------------------------------------------------
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
-// `define __USE_OLD_SCHOOL
-`ifdef  __USE_OLD_SCHOOL
-   reg [TSB:0]         x_rd_adr = 0, x_wt_adr = 0, x_wr_adr = 0;
-   reg                 go = 0;
-   wire [TSB:0]        next_x_rd_adr = wrap_x_rd_adr ? 0 : x_rd_adr + 1 ;
-   wire                wrap_x_rd_adr = x_rd_adr == TRATE - 1;
-   wire                wrap_x_wr_adr = x_wr_adr == TRATE - 1;
-
-   always @(posedge clk_x)
-     go <= #DELAY en;
-
-   //  Pipelined correlator requires cycles for:
-   //    { read, MAC, write } .
-   always @(posedge clk_x)
-     if (rst) begin
-        x_rd_adr <= #DELAY 0;
-        x_wt_adr <= #DELAY 0;
-        x_wr_adr <= #DELAY 0;
-     end
-     else begin
-        x_rd_adr <= #DELAY en  ? next_x_rd_adr : x_rd_adr;
-        x_wt_adr <= #DELAY go  ? x_rd_adr      : x_wt_adr;
-        x_wr_adr <= #DELAY vld ? x_wt_adr      : x_wr_adr;
-     end
-
-`else // !`ifdef __USE_OLD_SCHOOL
    wire [TSB:0] x_rd_adr, x_wr_adr;
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
@@ -183,7 +123,6 @@ module correlator_block_DSP
          .wr_adr_o(x_wr_adr),
          .wr_wrap_o(wrap_x_wr_adr)
          );
-`endif // !`ifdef __USE_OLD_SCHOOL
 
 
    //-------------------------------------------------------------------------
@@ -219,14 +158,21 @@ module correlator_block_DSP
 
 
    //-------------------------------------------------------------------------
-   //  Handle overflows.
+   //  Explicitly instantiate an 8:1 MUX for the output-data, so that it can
+   //  be floor-planned.
    //-------------------------------------------------------------------------
-   wire [4:0]          oc_w = {overflow_cos, oc[3:0]};
-   wire [4:0]          os_w = {overflow_sin, os[3:0]};
-
-   always @(posedge clk_x)
-     if (rst) {overflow_sin, overflow_cos} <= #DELAY 2'b0;
-     else     {overflow_sin, overflow_cos} <= #DELAY {|os_w, |oc_w};
+   MUX8 #( .WIDTH(ACCUM) ) MUXDAT0
+     ( .a(dat[ACCUM*1-1:ACCUM*0]),
+       .b(dat[ACCUM*2-1:ACCUM*1]),
+       .c(dat[ACCUM*3-1:ACCUM*2]),
+       .d(dat[ACCUM*4-1:ACCUM*3]),
+       .e(dat[ACCUM*5-1:ACCUM*4]),
+       .f(dat[ACCUM*6-1:ACCUM*5]),
+       .g(dat[ACCUM*7-1:ACCUM*6]),
+       .h(dat[ACCUM*8-1:ACCUM*7]),
+       .s(adr),
+       .x(dat_w)
+       );
 
 
    //-------------------------------------------------------------------------
@@ -249,10 +195,7 @@ module correlator_block_DSP
          .wr(x_wr_adr),
 
          .vld(vld),
-         .vis(vis[WSB:0]),
-
-         .overflow_cos(oc[0]),
-         .overflow_sin(os[0])
+         .vis(vis[WSB:0])
          );
 
    correlator_DSP
@@ -272,10 +215,7 @@ module correlator_block_DSP
          .wr(x_wr_adr),
 
          .vld(),
-         .vis(vis[WIDTH+WSB:WIDTH]),
-
-         .overflow_cos(oc[1]),
-         .overflow_sin(os[1])
+         .vis(vis[WIDTH+WSB:WIDTH])
          );
 
    correlator_DSP
@@ -295,10 +235,7 @@ module correlator_block_DSP
          .wr(x_wr_adr),
 
          .vld(),
-         .vis(vis[WIDTH+WIDTH+WSB:WIDTH+WIDTH]),
-
-         .overflow_cos(oc[2]),
-         .overflow_sin(os[2])
+         .vis(vis[WIDTH+WIDTH+WSB:WIDTH+WIDTH])
          );
 
    correlator_DSP
@@ -319,10 +256,7 @@ module correlator_block_DSP
          .wr(x_wr_adr),
 
          .vld(),
-         .vis(vis[WIDTH+WIDTH+WIDTH+WSB:WIDTH+WIDTH+WIDTH]),
-
-         .overflow_cos(oc[3]),
-         .overflow_sin(os[3])
+         .vis(vis[WIDTH+WIDTH+WIDTH+WSB:WIDTH+WIDTH+WIDTH])
          );
 
 

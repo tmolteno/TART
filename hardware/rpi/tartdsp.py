@@ -48,8 +48,10 @@ class TartSPI:
     self.spi.close()
     return 1
 
-  def pause(self):
-    time.sleep(0.005)
+  def pause(self, duration=0.005, noisy=False):
+    if noisy:
+      print ' pausing for %1.3fs' % duration
+    time.sleep(duration)
 
 
   ##--------------------------------------------------------------------------
@@ -63,6 +65,9 @@ class TartSPI:
       print '\tReset issued.'
     self.pause()
     return 1
+
+  def status(self, noisy=False):
+    return self.read_status(noisy)
 
   def read_status(self, noisy=False):
     '''Read back the status registers of the hardware.'''
@@ -127,6 +132,7 @@ class TartSPI:
       return 0
 
   def start_acquisition(self, sleeptime=0.2, noisy=False):
+    '''Enable the data-aquisition flag, and then read back the aquisition-status register, to verify that aquisition has begun.'''
     old = self.spi.xfer([self.WRITE_CMD | self.AQ_STATUS, 0x01])
     self.pause()
     ret = self.spi.xfer([self.AQ_STATUS, 0x0, 0x0])
@@ -137,7 +143,7 @@ class TartSPI:
       print tobin(old)
       print tobin(ret)
     if val:
-      time.sleep(sleeptime)       # optionally wait for aquisition to end
+      self.pause(sleeptime)       # optionally wait for aquisition to end
       res = self.spi.xfer([self.AQ_STATUS, 0x0, 0x0])
       self.pause()
       if noisy:
@@ -145,17 +151,19 @@ class TartSPI:
       fin = res[2] & 0x03
     return val == 0x01 and fin == 0x03
 
-  def read_data(self, num_bytes=2**21, blocksize=1000):
+  def read_data(self, num_words=2**21, blocksize=1000):
+    '''Read back the requested number of 24-bit words.'''
     blk = [self.AX_STREAM, 0xff,] + [0,0,0,]*blocksize
     dat = []
-    for i in range(0, int(num_bytes/blocksize)):
+    for i in range(0, int(num_words/blocksize)):
       dat += self.spi.xfer(blk)[2:]
-    lst = num_bytes % blocksize
+    lst = num_words % blocksize
     dat += self.spi.xfer([self.AX_STREAM, 0xff,] + [0,0,0,]*lst)[2:]
     dat = np.array(dat).reshape(-1,3)
     return dat
 
   def read_test(self, noisy=True):
+    '''Read back just the current 24-bit word.'''
     dat1 = self.spi.xfer([self.AX_DATA1, 0x0, 0x0])
     dat2 = self.spi.xfer([self.AX_DATA2, 0x0, 0x0])
     dat3 = self.spi.xfer([self.AX_DATA3, 0x0, 0x0])
@@ -165,6 +173,10 @@ class TartSPI:
   ##--------------------------------------------------------------------------
   ##  Visibility-calculation settings, and streaming read-back.
   ##--------------------------------------------------------------------------
+  def start(self, blocksize=24, noisy=False):
+    self.set_blocksize(blocksize, noisy)
+    self.start_aquisition(noisy)
+
   def set_blocksize(self, blocksize=24, noisy=False):
     '''Set the correlator blocksize to 2^blocksize.'''
     if blocksize > 0 and blocksize < 25:
@@ -192,6 +204,19 @@ class TartSPI:
     if noisy:
       print val
     return val
+
+  def vis_ready(self, noisy=False):
+    res = self.spi.xfer([self.VX_STATUS, 0x0, 0x0])
+    rdy = res[2] & 0x80 != 0
+    if noisy:
+      print '%s\t(ready = %s)' % (res, rdy)
+    return rdy
+
+  def vis_read(self, noisy=False):
+    while not self.vis_ready(noisy):
+      self.pause()
+    vis = self.read_visibilities(noisy)
+    return vis
 
 
 ##----------------------------------------------------------------------------
@@ -229,7 +254,7 @@ if __name__ == '__main__':
   tart.debug(on=True, noisy=True)
   tart.start_acquisition(1.1, True)
   print tart.read_test(True)
-  print tart.read_data(num_bytes=2**args.bramexp)
+  print tart.read_data(num_words=2**args.bramexp)
   print tart.read_test(True)
 
   print "\nReading visibilities:"

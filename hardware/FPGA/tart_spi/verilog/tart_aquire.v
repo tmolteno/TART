@@ -115,7 +115,8 @@ module tart_aquire
    wire [23:0]         ax_data;
 
    reg [4:0]           log_block = 0; // = log2(#viz/block);
-   wire [MSB:0]        vx_status = {available, accessed, 1'b0, log_block};
+   wire                vx_enable = aq_enabled; // TODO:
+   wire [MSB:0]        vx_status = {available, accessed, vx_enable, log_block};
 
    wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
 //    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};

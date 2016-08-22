@@ -14,6 +14,7 @@ TIMESPEC "TSspi_clk"=PERIOD "spi_clk" 8.000  ns HIGH 50%;
 
 NET "DSP/blocksize<*>" TIG;
 NET "aq_enabled" TIG;
+NET "ax_dat<*>" TIG;
 NET "DSP/CORRELATOR/sw_d" TIG;
 NET "DSP/CORRELATOR/sw_b" TIG;
 NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;

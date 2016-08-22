@@ -43,10 +43,7 @@ module correlator
     input              sw, // switch banks
     input              en, // data is valid
     input [23:0]       re,
-    input [23:0]       im,
-
-    output reg         overflow_cos = 0,
-    output reg         overflow_sin = 0
+    input [23:0]       im
     );
 
 
@@ -63,7 +60,7 @@ module correlator
    //    wire [MSB:0]    dsin = sinram[{bank, x_rd_adr}];
 
    reg                 bank = 0, swap = 0, clear = 0;
-   wire                oc, os, valid;
+   wire                valid;
    reg [3:0]           x_rd_adr = 0;
    reg [4:0]           x_wt_adr = 0, x_wr_adr = 0;
    wire                wrap_x_rd_adr = x_rd_adr == 11;
@@ -221,11 +218,7 @@ module correlator
          .dsin(dsin),
          .valid(valid),
          .qcos(qcos),
-         .qsin(qsin),
-
-         // Overflow flags:
-         .oc(oc),
-         .os(os)
+         .qsin(qsin)
          );
 
 

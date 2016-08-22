@@ -31,7 +31,8 @@ module block_buffer
       block_data <= #DELAY block_buffer[read_address];
    end
 
-`else
+`else // !`ifndef __USE_EXPLICT_BRAM
+   // FIXME:
    wire [13:0]      ADDRA = {read_address , {14-ADDR_WIDTH{1'b0}}};
    wire [13:0]      ADDRB = {write_address, {14-ADDR_WIDTH{1'b0}}};
    wire [31:0]      a_data = {{(32-DATA_WIDTH){1'b0}}, write_data};

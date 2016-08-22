@@ -33,27 +33,17 @@
 
 `include "tartcfg.v"
 
-// Bus transaction states.
-`define BUS_IDLE  0
-`define BUS_WAIT  1
-`define BUS_READ  2
-`define BUS_WRITE 4
-
 module tart_correlator
   #( parameter BLOCK = `ACCUM_BITS,
      parameter MSB   = BLOCK-1,
-`ifdef __USE_SDP_DSRAM
      parameter ABITS = 14,
-`else
-     parameter ABITS = 10,
-`endif
      parameter ASB   = ABITS - 1,
      parameter DELAY = 3)
    (
     input              clk_x,
     input              rst,
 
-    // Wishbone-like bus interface for reading visibilities.
+    //  Wishbone-like bus interface for reading visibilities.
     input              clk_i, // bus clock
     input              cyc_i,
     input              stb_i,
@@ -64,7 +54,7 @@ module tart_correlator
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
 
-    // The real component of the signal from the antennas.
+    //  The real component of the signal from the antennas.
     input              enable, // data aquisition is active
     input [MSB:0]      blocksize, // block size - 1
     output             strobe, // `antenna` data is valid
@@ -73,8 +63,22 @@ module tart_correlator
     output reg         switch = 0 // NOTE: bus domain
     );
 
+
+   (* KEEP = "TRUE", IOB = "TRUE" *)
+   reg                 a_reg = 24'b0;
+
+
    //-------------------------------------------------------------------------
+   //  Data-capture.
+   //  TODO:
+   always @(posedge clk_x)
+     a_reg <= #DELAY antenna;
+
+
+   //-------------------------------------------------------------------------
+   //  
    //  Hardware-correlator control logic.
+   //  
    //-------------------------------------------------------------------------
    //  Fill a block with visibilities, and then switch banks.
    wire [MSB:0]        next_blk = wrap_blk ? 0 : blk + 1 ;
@@ -83,12 +87,13 @@ module tart_correlator
    reg [MSB:0]         blk = 0;
    reg [3:0]           delays = 0;
 
-   //-------------------------------------------------------------------------
-   //  The configuration file includes the parameters that determine which
-   //  antannae connect to each of the correlators.
-`include "../include/tart_pairs.v"
-// `include "../include/tart_config.v"
+   //  Compose address:     UNIT       BLOCK       VALUE
+   wire [ASB-3:0] c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
 
+   wire                go;
+   wire [23:0]         re, im;
+
+   //-------------------------------------------------------------------------
    // Activate the Hilbert transform and correlators once this module has been
    // enabled, and when the first valid data arrives.
    always @(posedge clk_x)
@@ -171,7 +176,16 @@ module tart_correlator
      if (rst) ack_o <= #DELAY 0;
      else     ack_o <= #DELAY cyc_i && acks[dev];
 
-   // 8:1 MUX and output-data latch.
+   always @(posedge clk_i) begin
+      dev   <= #DELAY adr[9:7];
+      dat_o <= #DELAY cyc_i && !we_i && ack_w ? dat_w : dat_o;
+   end
+
+
+   //-------------------------------------------------------------------------
+   //  Explicitly instantiate an 8:1 MUX for the output-data, so that it can
+   //  be floor-planned.
+   //-------------------------------------------------------------------------
    wire [MSB:0] dat_w;
    MUX8 #( .WIDTH(BLOCK) ) MUXDAT0
      ( .a(dats[0]),
@@ -186,25 +200,9 @@ module tart_correlator
        .x(dat_w)
        );
 
-   always @(posedge clk_i) begin
-      dev   <= #DELAY adr[9:7];
-//       dat_o <= #DELAY cyc_i && !we_i && ack_w ? dats[dev] : dat_o;
-      dat_o <= #DELAY cyc_i && !we_i && ack_w ? dat_w : dat_o;
-   end
-
-
    //-------------------------------------------------------------------------
    //  Hilbert transform to reconstruct imaginaries.
    //-------------------------------------------------------------------------
-   wire                go;
-   wire [23:0]         re, im;
-
-   (* KEEP = "TRUE", IOB = "TRUE" *)
-   reg                 a_reg = 24'b0;
-
-   always @(posedge clk_x)
-     a_reg <= #DELAY antenna;
-
    fake_hilbert #( .WIDTH(24) ) HILB0
      (  .clk(clk_x),
         .rst(rst),
@@ -218,18 +216,14 @@ module tart_correlator
 
 
    //-------------------------------------------------------------------------
+   //  
    //  There are six correlator-blocks, each connected to 12 of the 24
    //  antennas.
+   //  
    //-------------------------------------------------------------------------
-   wire [5:0]          oc, os;  // overflows
-`ifdef __USE_SDP_DSRAM
-   //  Compose address:     UNIT       BLOCK       VALUE
-   wire [ASB-3:0] c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
-   //  Compose address:     UNIT       BLOCK       VALUE
-//    wire [ASB-3:0] c_adr = {adr[6:5], adr[ASB:10], adr[4:0]};
-`else
-   wire [ASB-3:0] c_adr = adr[6:0];
-`endif
+   //  The configuration file includes the parameters that determine which
+   //  antannae connect to each of the correlators.
+`include "../include/tart_pairs.v"
 
    (* AREA_GROUP = "cblk0" *)
    correlator_block_DSP
@@ -251,16 +245,13 @@ module tart_correlator
          .bst_i(bst),
          .ack_o(acks[0]),
          .adr_i(c_adr),
-         .dat_i(32'bx),
+         .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[0]),
 
          .sw(sw),
          .en(go),
          .re(re),
-         .im(im),
-
-         .overflow_cos(oc[0]),
-         .overflow_sin(os[0])
+         .im(im)
          );
 
    (* AREA_GROUP = "cblk1" *)
@@ -282,16 +273,13 @@ module tart_correlator
          .bst_i(bst),
          .ack_o(acks[1]),
          .adr_i(c_adr),
-         .dat_i(32'bx),
+         .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[1]),
 
          .sw(sw),
          .en(go),
          .re(re),
-         .im(im),
-
-         .overflow_cos(oc[1]),
-         .overflow_sin(os[1])
+         .im(im)
          );
 
    (* AREA_GROUP = "cblk2" *)
@@ -313,16 +301,13 @@ module tart_correlator
          .bst_i(bst),
          .ack_o(acks[2]),
          .adr_i(c_adr),
-         .dat_i(32'bx),
+         .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[2]),
 
          .sw(sw),
          .en(go),
          .re(re),
-         .im(im),
-
-         .overflow_cos(oc[2]),
-         .overflow_sin(os[2])
+         .im(im)
          );
 
    (* AREA_GROUP = "cblk3" *)
@@ -345,16 +330,13 @@ module tart_correlator
          .bst_i(bst),
          .ack_o(acks[3]),
          .adr_i(c_adr),
-         .dat_i(32'bx),
+         .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[3]),
 
          .sw(sw),
          .en(go),
          .re(re),
-         .im(im),
-
-         .overflow_cos(oc[3]),
-         .overflow_sin(os[3])
+         .im(im)
          );
 
    (* AREA_GROUP = "cblk4" *)
@@ -376,16 +358,13 @@ module tart_correlator
          .bst_i(bst),
          .ack_o(acks[4]),
          .adr_i(c_adr),
-         .dat_i(32'bx),
+         .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[4]),
 
          .sw(sw),
          .en(go),
          .re(re),
-         .im(im),
-
-         .overflow_cos(oc[4]),
-         .overflow_sin(os[4])
+         .im(im)
          );
 
    (* AREA_GROUP = "cblk5" *)
@@ -407,45 +386,14 @@ module tart_correlator
          .bst_i(bst),
          .ack_o(acks[5]),
          .adr_i(c_adr),
-         .dat_i(32'bx),
+         .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[5]),
 
          .sw(sw),
          .en(go),
          .re(re),
-         .im(im),
-
-         .overflow_cos(oc[5]),
-         .overflow_sin(os[5])
+         .im(im)
          );
 
-   /*
-   //-------------------------------------------------------------------------
-   //  Count the number of ones, from each antenna.
-   //  NOTE: Used to compute their means, as their gains are unknown.
-   //-------------------------------------------------------------------------
-   (* AREA_GROUP = "cblk6" *)
-   ones_count
-     #(  .ACCUM (BLOCK),
-         .DELAY (DELAY)
-         ) CXBLOCK6
-       ( .clk_x(clk_x),
-         .rst(rst),
-
-         .clk_i(clk_i),
-         .cyc_i(cyc),
-         .stb_i(stbs[6]),
-         .we_i (we_w),
-         .bst_i(bst),
-         .ack_o(acks[6]),
-         .adr_i(adr[4:0]),
-         .dat_i(32'bx),
-         .dat_o(dats[6]),
-
-         .switch(sw),
-         .enable(go),
-         .antenna(re)
-         );
-    */
 
 endmodule // tart_correlator    

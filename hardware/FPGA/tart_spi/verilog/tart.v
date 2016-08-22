@@ -63,7 +63,6 @@ module tart
    (* PERIOD = "5.091 ns" *) wire clk_x;
 
    wire                reset_n, reset;
-   wire [NSB:0]        ax_dat;
 
    //  SDRAM memory-controller signals:
    wire                cmd_enable, cmd_ready, cmd_wr;
@@ -72,11 +71,14 @@ module tart
    wire [31:0]         data_out;
 
    wire                request_from_spi;
-   (* KEEP = "TRUE" *) wire aq_enabled;
    wire                spi_debug;
    wire [2:0]          data_sample_delay;
    wire [2:0]          tart_state;
 
+   //  Force these signals to be kept, so that they can be referenced in the
+   //  constraints file (as they have the `TIG` constraint applied).
+   (* KEEP = "TRUE" *) wire aq_enabled;
+   (* KEEP = "TRUE" *) wire [NSB:0] ax_dat;
 
    assign led = tart_state >= 2; // asserted when data can be read back
 	 assign rx_clk_test_pin = rx_clk;
@@ -105,78 +107,8 @@ module tart
        .clk12x(clk_x)           // 16.368x12 = 196.416 MHz
        );
 `endif // !__USE_OLD_CLOCKS
-  
-
-`ifdef __USE_OLD_CAPTURE   
-   //-------------------------------------------------------------------------
-   //     DATA CAPTURE
-   //-------------------------------------------------------------------------
-   //  TODO: Use a more robust data-capture circuit.
-   reg [NSB:0]         real_antenna;
-   wire [NSB:0]        fake_antenna;
-
-   always @(posedge fpga_clk)
-     real_antenna <= #DELAY antenna;
-   
-   //  Generate fake data (24 bit counter) for debugging
-   //fake_telescope fake_tart (.write_clk(fake_rx_clk), .write_data(fake_antenna));
-   fake_telescope #( .WIDTH(ANTENNAE), .RNG(RNG) ) FAKE_TART0
-     ( .write_clk(rx_clk_16_buf), .write_data(fake_antenna) );
-
-   // Antenna source MUX, for choosing real data or fake data
-   wire [NSB:0] antenna_data = spi_debug ? fake_antenna : real_antenna;
-
-	 delay_data_sampling_clk DELAY_RX_CLK
-     (
-	    .fast_clk(fpga_clk),
-		  .data_sample_delay(data_sample_delay),
-		  .slow_clk(rx_clk)
-	    );
 
 
-   //-------------------------------------------------------------------------
-   //     AQUISITION BLOCK
-   //-------------------------------------------------------------------------
-   wire [NSB:0] aq_write_data;
-   wire [NSB:0] aq_read_data;
-   wire [8:0] aq_bb_rd_address;
-   wire [8:0] aq_bb_wr_address;
-
-   block_buffer aq_bb
-     (
-      .read_data(aq_read_data),
-      .write_data(antenna_data),
-      .clk(fpga_clk),
-      .write_address(aq_bb_wr_address),
-      .read_address(aq_bb_rd_address)
-      );
-
-   //-------------------------------------------------------------------------
-   //      STORAGE BLOCK
-   //-------------------------------------------------------------------------
-   fifo_sdram_fifo_scheduler
-     #(.SDRAM_ADDRESS_WIDTH(SDRAM_ADDRESS_WIDTH))
-   SCHEDULER0
-     ( .clk(rx_clk),
-       .clk6x(fpga_clk),
-       .rst(reset),
-
-       .aq_bb_wr_address(aq_bb_wr_address),
-       .aq_bb_rd_address(aq_bb_rd_address),
-       .aq_read_data(aq_read_data),
-
-       .spi_start_aq(aq_enabled),
-       .spi_buffer_read_complete(request_from_spi),
-
-       .cmd_data_in(cmd_data_in),
-       .cmd_ready(cmd_ready),
-       .cmd_enable(cmd_enable),
-       .cmd_wr(cmd_wr),
-       .cmd_address(cmd_address),
-       .tart_state(tart_state)
-       );
-
-`else // !`ifdef __USE_OLD_CAPTURE
    //-------------------------------------------------------------------------
    //  
    //  TART ANTENNA DATA CAPTURE BLOCK
@@ -208,9 +140,10 @@ module tart
 
        .tart_state(tart_state)
        );
-`endif //  !`ifdef __USE_OLD_CAPTURE
 
 
+   //  No aquisition means that the memory-controller isn't needed.
+`ifdef __NO_AQUISITION
    //-------------------------------------------------------------------------
    //  
    //  SDRAM CONTROLLER FOR THE RAW ANTENNA DATA
@@ -246,6 +179,14 @@ module tart
       .SDRAM_BA(SDRAM_BA),
       .SDRAM_DATA(SDRAM_DQ)
    );
+`else // !`ifdef __NO_AQUISITION
+
+   //  Drive zeros onto the unused pins:
+   assign cmd_ready = 1'b0;
+   assign data_out_ready = 1'b0;
+   assign data_out = 32'b0;
+
+`endif //  `ifdef !__NO_AQUISITION
 
 
    //-------------------------------------------------------------------------
@@ -423,7 +364,8 @@ module tart
        .aq_debug_mode(spi_debug),
        .aq_enabled(aq_enabled),
        .aq_sample_delay(data_sample_delay),
-       .aq_adr_i(cmd_address)
+//        .aq_adr_i(cmd_address)
+       .aq_adr_i(24'h0000b5)
        );
 
 
@@ -451,7 +393,8 @@ module tart
        .aq_dat_o(s_dat),
 
        .aq_enable(aq_enabled),
-       .antenna  (antenna),
+//        .antenna  (antenna),
+       .antenna  (ax_dat),
        .blocksize(blocksize),
        .switching(switching),
        .newblock (newblock),

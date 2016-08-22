@@ -59,10 +59,7 @@ module correlator_DSP
     input [TSB:0]  wr,
 
     output reg     vld = 0,
-    output [WSB:0] vis,
-
-    output reg     overflow_cos = 0,
-    output reg     overflow_sin = 0
+    output [WSB:0] vis
     );
 
 
@@ -72,7 +69,6 @@ module correlator_DSP
    // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
    // mode.
    wire [MSB:0]        dcos, dsin, qcos, qsin;
-   wire                oc, os;
    reg                 go = 0;
 
    assign vis = {qsin, qcos};
@@ -137,9 +133,6 @@ module correlator_DSP
 
    assign {b_index, a_index} = pairs[rd];
 
-   always @(posedge clk_x)
-     {overflow_sin, overflow_cos} <= #DELAY {os, oc};
-
 
    //-------------------------------------------------------------------------
    //  Time-multiplexed correlator.
@@ -162,11 +155,7 @@ module correlator_DSP
          .dcos(dcos),
          .dsin(dsin),
          .qcos(qcos),
-         .qsin(qsin),
-
-         // Overflow flags:
-         .oc(oc),
-         .os(os)
+         .qsin(qsin)
          );
 
    

@@ -115,13 +115,13 @@ module tart_capture
 	     );
 
 
+`ifdef __NO_AQUISITION
    //-------------------------------------------------------------------------
    //  FIFO for temporary buffering.
    block_buffer AQ_BB
      ( .clk          (clk_i),
        .read_data    (aq_read_data),
        .write_data   (ax_data),
-//        .write_data   (ax_data_w),
        .write_address(aq_bb_wr_address),
        .read_address (aq_bb_rd_address)
        );
@@ -152,7 +152,15 @@ module tart_capture
 
        .tart_state (tart_state)
        );
-// `endif //  `ifdef __USE_OLD_CAPTURE
+`else // !`ifdef __NO_AQUISITION
+
+   //  Drive zeroes onto the unused pins:
+   assign mcb_ce_o  = 1'b0;
+   assign mcb_wr_o  = 1'b0;
+   assign mcb_adr_o = {(ABITS-1){1'b0}};
+   assign mcb_dat_o = {32{1'b0}};
+
+`endif //  `ifdef !__NO_AQUISITION
 
 
 endmodule // tart_capture

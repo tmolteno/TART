@@ -30,8 +30,6 @@ module correlate_cos_sin
     input [MSB:0]  dsin,
 
     output reg     valid = 0,
-    output reg     oc = 0, // cosine overflow
-    output reg     os = 0, // sine overflow
     output [MSB:0] qcos,
     output [MSB:0] qsin
     );
@@ -49,17 +47,22 @@ module correlate_cos_sin
    reg [MSB:0]     r_cos = 0;
    reg [MSB:0]     r_sin = 0;
 
+   wire [ACCUM:0]  w_cos = dcos + c0;
+   wire [ACCUM:0]  w_sin = dsin + c1;
+
    assign qcos = r_cos;
    assign qsin = r_sin;
 
    always @(posedge clk)
      if (rst) begin
-        {oc, r_cos} <= #DELAY 0;
-        {os, r_sin} <= #DELAY 0;
+        r_cos <= #DELAY 0;
+        r_sin <= #DELAY 0;
      end
      else if (en) begin
-        {oc, r_cos} <= #DELAY c0 ? dcos + 1 : dcos ;
-        {os, r_sin} <= #DELAY c1 ? dsin + 1 : dsin ;
+//         r_cos <= #DELAY c0 ? dcos + 1 : dcos ;
+//         r_sin <= #DELAY c1 ? dsin + 1 : dsin ;
+        r_cos <= #DELAY w_cos[MSB:0];
+        r_sin <= #DELAY w_sin[MSB:0];
      end
 
 `else // !`ifdef __icarus

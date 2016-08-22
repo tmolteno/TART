@@ -59,10 +59,7 @@ module correlator_SDP
     input [TSB:0]  wr,
 
     output         vld,
-    output [WSB:0] vis,
-
-    output reg     overflow_cos = 0,
-    output reg     overflow_sin = 0
+    output [WSB:0] vis
     );
 
 
@@ -73,12 +70,8 @@ module correlator_SDP
    // mode.
    wire [MSB:0]        dcos_w, dsin_w, qcos, qsin;
    reg [MSB:0]         dcos, dsin;
-   wire                oc, os;
 
    assign vis = {qsin, qcos};
-
-   always @(posedge clk_x)
-     {overflow_sin, overflow_cos} <= #DELAY {os, oc};
 
 
    //-------------------------------------------------------------------------
@@ -165,11 +158,7 @@ module correlator_SDP
          .dsin(dsin),
          .valid(vld),
          .qcos(qcos),
-         .qsin(qsin),
-
-         // Overflow flags:
-         .oc(oc),
-         .os(os)
+         .qsin(qsin)
          );
 
    
