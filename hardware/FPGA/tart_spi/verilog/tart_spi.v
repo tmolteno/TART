@@ -69,7 +69,7 @@ module tart_spi
      //             Register                        Function
      parameter ADDR_STATUS       = 4'b0000, // STATUS ADDR
 
-     // Data aquisition control and read-back registers:
+     // Data acquisition control and read-back registers:
      parameter ADDR_STARTAQ      = 4'b0001, // START SAMPLING
      parameter ADDR_READ_DATA1   = 4'b0010, // DATA MSB [23:16]
      parameter ADDR_READ_DATA2   = 4'b0011, // DATA     [15:8]

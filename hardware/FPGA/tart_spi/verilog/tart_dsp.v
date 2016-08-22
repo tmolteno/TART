@@ -53,7 +53,7 @@ module tart_dsp
     output [7:0]   aq_dat_o,
 
     // The real component of the signal from the antennas.
-    input          aq_enable, // data aquisition is active
+    input          aq_enable, // data acquisition is active
     output         switching, // NOTE: bus domain
     input [MSB:0]  blocksize, // block size - 1
     input [23:0]   antenna, // the raw antenna signal

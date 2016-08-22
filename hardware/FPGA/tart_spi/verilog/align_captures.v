@@ -81,7 +81,7 @@ module align_captures
      end
 
    //-------------------------------------------------------------------------
-   //  An aquisition window begins with any strobe, and ends once all have
+   //  An acquisition window begins with any strobe, and ends once all have
    //  been received.
    //-------------------------------------------------------------------------
    always @(posedge clk)
@@ -117,7 +117,7 @@ module align_captures
      else         clear <= clear;
 
    //-------------------------------------------------------------------------
-   //  Aquisition is locked if aligned.
+   //  Acquisition is locked if aligned.
    //-------------------------------------------------------------------------
    wire clear_valid = strobe && clear >= CLEAR_GAP;
 

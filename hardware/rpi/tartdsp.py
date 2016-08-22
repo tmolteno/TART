@@ -44,8 +44,10 @@ class TartSPI:
     self.spi.bits_per_word = 8
     self.spi.max_speed_hz = int(speed)
 
-  def close(self):
+  def close(self, noisy=False):
     self.spi.close()
+    if noisy:
+      print 'SPI <-> TART interface closed.'
     return 1
 
   def pause(self, duration=0.005, noisy=False):
@@ -62,7 +64,7 @@ class TartSPI:
     ret = self.spi.xfer([self.WRITE_CMD | self.SPI_RESET, 0x01])
     if noisy:
       print tobin(ret)
-      print '\tReset issued.'
+      print ' reset issued.'
     self.pause()
     return 1
 
@@ -90,7 +92,7 @@ class TartSPI:
       ret = self.spi.xfer([self.WRITE_CMD | self.AQ_DEBUG, val])
       if noisy:
         print tobin(ret)
-        print 'debug now ON'
+        print ' debug now ON'
     else:
       val = self.spi.xfer([self.AQ_DEBUG, 0x0, 0x0])
       val = val[2] & 0x7F
@@ -98,13 +100,13 @@ class TartSPI:
       ret = self.spi.xfer([self.WRITE_CMD | self.AQ_DEBUG, val])
       if noisy:
         print tobin(ret)
-        print 'debug now OFF'
+        print ' debug now OFF'
     self.pause()
     return 1
 
 
   ##--------------------------------------------------------------------------
-  ##  Data aquisition settings, and streaming read-back.
+  ##  Data acquisition settings, and streaming read-back.
   ##--------------------------------------------------------------------------
   def read_sample_delay(self, noisy=False):
     '''Read back the data sampling delays.'''
@@ -132,18 +134,18 @@ class TartSPI:
       return 0
 
   def start_acquisition(self, sleeptime=0.2, noisy=False):
-    '''Enable the data-aquisition flag, and then read back the aquisition-status register, to verify that aquisition has begun.'''
+    '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
     old = self.spi.xfer([self.WRITE_CMD | self.AQ_STATUS, 0x01])
     self.pause()
     ret = self.spi.xfer([self.AQ_STATUS, 0x0, 0x0])
     self.pause()
     val = ret[2] & 0x01
     if noisy:
-      print 'Attempting to set aquisition-mode to ON'
+      print ' attempting to set acquisition-mode to ON'
       print tobin(old)
       print tobin(ret)
     if val:
-      self.pause(sleeptime)       # optionally wait for aquisition to end
+      self.pause(sleeptime)       # optionally wait for acquisition to end
       res = self.spi.xfer([self.AQ_STATUS, 0x0, 0x0])
       self.pause()
       if noisy:
@@ -175,7 +177,7 @@ class TartSPI:
   ##--------------------------------------------------------------------------
   def start(self, blocksize=24, noisy=False):
     self.set_blocksize(blocksize, noisy)
-    self.start_aquisition(noisy)
+    self.start_acquisition(noisy)
 
   def set_blocksize(self, blocksize=24, noisy=False):
     '''Set the correlator blocksize to 2^blocksize.'''
@@ -209,7 +211,7 @@ class TartSPI:
     res = self.spi.xfer([self.VX_STATUS, 0x0, 0x0])
     rdy = res[2] & 0x80 != 0
     if noisy:
-      print '%s\t(ready = %s)' % (res, rdy)
+      print '%s   \t(ready = %s)' % (tobin(res), rdy)
     return rdy
 
   def vis_read(self, noisy=False):
@@ -250,7 +252,7 @@ if __name__ == '__main__':
   tart.set_blocksize(args.blocksize, True)
   tart.get_blocksize(True)
 
-  print "\nTesting aquisition:"
+  print "\nTesting acquisition:"
   tart.debug(on=True, noisy=True)
   tart.start_acquisition(1.1, True)
   print tart.read_test(True)

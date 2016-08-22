@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/tart_aquire.v
+ * Module      : verilog/tart_acquire.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -10,7 +10,7 @@
  * Stability   : Experimental
  * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
- * TART's data-aquisition control subcircuit, connected via a Wishbone-like
+ * TART's data-acquisition control subcircuit, connected via a Wishbone-like
  * interconnect.
  * 
  * Has system registers for:
@@ -18,9 +18,9 @@
  *   001  --  antenna data[23:16];
  *   010  --  antenna data[15: 8];
  *   011  --  antenna data[ 7: 0];
- *   101  --  aquisition sample delay;
- *   110  --  aquisition debug mode; and
- *   111  --  aquisition status and control.
+ *   101  --  acquisition sample delay;
+ *   110  --  acquisition debug mode; and
+ *   111  --  acquisition status and control.
  * 
  * NOTE:
  *  + supports both classic and pipelined transfers;
@@ -35,7 +35,7 @@
 `include "tartcfg.v"
 
 //----------------------------------------------------------------------------
-//  TART DATA-AQUISITION UNIT REGISTERS
+//  TART DATA-ACQUISITION UNIT REGISTERS
 //  TODO: Move into the above configuration file?
 //----------------------------------------------------------------------------
 // Raw antenna-data, read-back registers:
@@ -50,12 +50,12 @@
 `define VX_STATUS 3'h5
 // `define VX_CHKSUM 2
 
-// Data-aquisition status, and control:
+// Data-acquisition status, and control:
 `define AQ_DEBUG  3'h6
 `define AQ_STATUS 3'h7
 
 
-module tart_aquire
+module tart_acquire
   #(parameter WIDTH = 8,        // WB-like bus data-width
     parameter MSB   = WIDTH-1,
     parameter ACCUM = 32,       // #bits of the viz accumulators
@@ -174,7 +174,7 @@ module tart_aquire
          `VX_STREAM: dat_o <= #DELAY vx_dat_i;
          `VX_STATUS: dat_o <= #DELAY vx_status;
 
-         //  Aquisition status, and control, registers:
+         //  Acquisition status, and control, registers:
          `AQ_DEBUG:  dat_o <= #DELAY aq_debug;
          `AQ_STATUS: dat_o <= #DELAY aq_status;
 
@@ -305,4 +305,4 @@ module tart_aquire
        );
 
 
-endmodule // tart_aquire
+endmodule // tart_acquire

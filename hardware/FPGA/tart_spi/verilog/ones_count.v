@@ -43,7 +43,7 @@ module ones_count
     output reg [MSB:0] dat_o,
 
     // The real component of the signal from the antennas.
-    input              enable,  // data aquisition is active
+    input              enable,  // data acquisition is active
     input              switch,  // switch banks
     input [23:0]       antenna  // the real component from each antenna
     );

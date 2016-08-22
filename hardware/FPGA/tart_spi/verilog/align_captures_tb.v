@@ -28,14 +28,14 @@ module align_captures_tb;
 
 
    //-------------------------------------------------------------------------
-   // Generate random data to be aquired.
+   // Generate random data to be acquired.
    always @(posedge clk)
      raw <= $random;
 
    always @(posedge clk12x)
      if (ready) $display("%8t: DATA = %08b (%02x)", $time, daq, daq);
 
-   // Start aquisition after a reset.
+   // Start acquisition after a reset.
    always @(posedge clk)
      ce <= !rst ? 1 : 0 ;
 

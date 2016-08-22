@@ -62,24 +62,24 @@ module tart_spi_tb;
       #40 set <= 1; num <= 1; ptr <= 7'h0f; dtx <= 8'h01;
       while (!fin) #10;
 
-      $display("\n%8t: Enabling data aquisition:", $time);
+      $display("\n%8t: Enabling data acquisition:", $time);
       #120 set <= 1; num <= 1; ptr <= 7'h07; dtx <= 8'h01;
       while (!fin) #10;
 
-      $display("\n%8t: Read back aquisition status:", $time);
+      $display("\n%8t: Read back acquisition status:", $time);
       #60 get <= 1; num <= 2; ptr <= 7'h07;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      $display("\n%8t: Reading back aquisition data:", $time);
+      $display("\n%8t: Reading back acquisition data:", $time);
       #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
-      $display("\n%8t: Reading back some more aquisition data:", $time);
+      $display("\n%8t: Reading back some more acquisition data:", $time);
       #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
-      $display("\n%8t: Reading back even more aquisition data:", $time);
+      $display("\n%8t: Reading back even more acquisition data:", $time);
       #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
@@ -112,7 +112,7 @@ module tart_spi_tb;
       cyc <= 0; #60 ;
 
       //----------------------------------------------------------------------
-      $display("\n%10t: Set the aquisition mode:", $time);
+      $display("\n%10t: Set the acquisition mode:", $time);
       #30  cyc  <= 1; stb <= 1;
       data_tx <= {1'b1, 3'b000, 4'b0001};
       while (!ack) #10 ;
@@ -125,7 +125,7 @@ module tart_spi_tb;
       cyc <= 0; #60 ;
 
       //----------------------------------------------------------------------
-      $display("\n%10t: Read back the aquisition mode:", $time);
+      $display("\n%10t: Read back the acquisition mode:", $time);
       #30  cyc  <= 1; stb <= 1;
       data_tx <= {1'b0, 3'b000, 4'b0001};
       while (!ack) #10 ;
@@ -143,7 +143,7 @@ module tart_spi_tb;
       #20 ready <= 1;
 
       //----------------------------------------------------------------------
-      //  Aquire some data, wait and then get some more.
+      //  Acquire some data, wait and then get some more.
       $display("\n%10t: Now get some data:", $time);
       #20 aq_count <= 6; aq_start <= 1;
       #10 while (!aq_done) #10 ;

@@ -296,7 +296,7 @@ module tart_dsp_tb;
 
 
    //-------------------------------------------------------------------------
-   //     DATA-AQUISITION CONTROL AND READ-BACK.
+   //     DATA-ACQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
    wire [BSB:0] s_dat;
    wire [XSB:0] v_blk;
@@ -315,9 +315,9 @@ module tart_dsp_tb;
      wat <= #DELAY stb && bst && !ack;
 
 
-   tart_aquire
+   tart_acquire
      #( .WIDTH(BBITS), .ACCUM(ACCUM), .BBITS(XBITS)
-        ) TART_AQUIRE0
+        ) TART_ACQUIRE0
      ( .clk_i(b_clk),
        .rst_i(rst),
        .cyc_i(cyc),

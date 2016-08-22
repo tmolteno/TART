@@ -55,7 +55,7 @@ module tart_correlator
     output reg [MSB:0] dat_o,
 
     //  The real component of the signal from the antennas.
-    input              enable, // data aquisition is active
+    input              enable, // data acquisition is active
     input [MSB:0]      blocksize, // block size - 1
     output             strobe, // `antenna` data is valid
     input [23:0]       antenna,// the real component from each antenna
@@ -118,7 +118,7 @@ module tart_correlator
    //  Synchronise the bank-switching signal to the bus domain.
    //  NOTE: Keeps `sw_b` asserted until acknowledged.
    //-------------------------------------------------------------------------
-   reg sw_x = 0, sw_d = 0;      // aquisition domain
+   reg sw_x = 0, sw_d = 0;      // acquisition domain
    (* ASYNC_REG = "TRUE" *) reg sw_b = 0; // bus domain
 
    always @(posedge clk_x)

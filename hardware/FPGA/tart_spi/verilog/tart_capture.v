@@ -93,7 +93,7 @@ module tart_capture
 
 
    //-------------------------------------------------------------------------
-   //     AQUISITION BLOCK
+   //     ACQUISITION BLOCK
    //-------------------------------------------------------------------------
    wire [MSB:0] aq_write_data;
    wire [MSB:0] aq_read_data;
@@ -115,7 +115,7 @@ module tart_capture
 	     );
 
 
-`ifdef __NO_AQUISITION
+`ifdef __USE_ACQUISITION
    //-------------------------------------------------------------------------
    //  FIFO for temporary buffering.
    block_buffer AQ_BB
@@ -152,7 +152,7 @@ module tart_capture
 
        .tart_state (tart_state)
        );
-`else // !`ifdef __NO_AQUISITION
+`else // !`ifdef __USE_ACQUISITION
 
    //  Drive zeroes onto the unused pins:
    assign mcb_ce_o  = 1'b0;
@@ -160,7 +160,7 @@ module tart_capture
    assign mcb_adr_o = {(ABITS-1){1'b0}};
    assign mcb_dat_o = {32{1'b0}};
 
-`endif //  `ifdef !__NO_AQUISITION
+`endif // !`ifdef __USE_ACQUISITION
 
 
 endmodule // tart_capture

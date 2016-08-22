@@ -142,8 +142,8 @@ module tart
        );
 
 
-   //  No aquisition means that the memory-controller isn't needed.
-`ifdef __NO_AQUISITION
+   //  No acquisition means that the memory-controller isn't needed.
+`ifdef __USE_ACQUISITION
    //-------------------------------------------------------------------------
    //  
    //  SDRAM CONTROLLER FOR THE RAW ANTENNA DATA
@@ -179,14 +179,14 @@ module tart
       .SDRAM_BA(SDRAM_BA),
       .SDRAM_DATA(SDRAM_DQ)
    );
-`else // !`ifdef __NO_AQUISITION
+`else // !`ifdef __USE_ACQUISITION
 
    //  Drive zeros onto the unused pins:
    assign cmd_ready = 1'b0;
    assign data_out_ready = 1'b0;
    assign data_out = 32'b0;
 
-`endif //  `ifdef !__NO_AQUISITION
+`endif // !`ifdef __USE_ACQUISITION
 
 
    //-------------------------------------------------------------------------
@@ -221,7 +221,7 @@ module tart
    wire [BSB:0] r_drx, r_dtx;   // reset handler's signals
    wire         r_stb, r_ack;
 
-   wire [BSB:0] a_drx, a_dtx;   // data-aquisition controller's signals
+   wire [BSB:0] a_drx, a_dtx;   // data-acquisition controller's signals
    wire [2:0]   a_adr = b_adr[2:0];
    wire         a_stb, a_ack;
 
@@ -232,7 +232,7 @@ module tart
    wire [XSB:0] v_blk;
    wire         s_cyc, s_stb, s_we, s_ack;
 
-   //  Aquisition-unit signals.
+   //  Acquisition-unit signals.
    wire         newblock, streamed, accessed, available;
    wire [MSB:0] checksum, blocksize;
 
@@ -254,7 +254,7 @@ module tart
    assign a_dtx = b_drx;
 
    //  Address decoders for the Wishbone(-like) bus:
-   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
+   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for acquire
    assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
 
    assign b_ack = r_ack || a_ack;
@@ -324,9 +324,9 @@ module tart
 
 
    //-------------------------------------------------------------------------
-   //     DATA-AQUISITION CONTROL AND READ-BACK.
+   //     DATA-ACQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-   tart_aquire #( .WIDTH(BBITS), .ACCUM(ACCUM) ) TART_AQUIRE0
+   tart_acquire #( .WIDTH(BBITS), .ACCUM(ACCUM) ) TART_ACQUIRE0
      ( // WB-like bus between SPI and TART's data:
        .clk_i(b_clk),
        .rst_i(reset),
@@ -360,7 +360,7 @@ module tart
        .checksum (checksum),
        .blocksize(blocksize),
 
-       //  Antenna capture & aquisition controls:
+       //  Antenna capture & acquisition controls:
        .aq_debug_mode(spi_debug),
        .aq_enabled(aq_enabled),
        .aq_sample_delay(data_sample_delay),
@@ -382,7 +382,7 @@ module tart
        ) DSP
      ( .clk_x(clk_x),
        .rst_i(reset),
-       .aq_clk_i(b_clk),        // Bus between DSP and aquisition unit
+       .aq_clk_i(b_clk),        // Bus between DSP and acquisition unit
        .aq_cyc_i(s_cyc),
        .aq_stb_i(s_stb),
        .aq_we_i (s_we),

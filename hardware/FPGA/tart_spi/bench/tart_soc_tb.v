@@ -75,24 +75,24 @@ module tart_soc_tb;
       #40 set <= 1; num <= 1; ptr <= 7'h0f; dtx <= 8'h01;
       while (!fin) #10;
 
-      $display("\n%8t: Enabling data aquisition:", $time);
+      $display("\n%8t: Enabling data acquisition:", $time);
       #120 set <= 1; num <= 1; ptr <= 7'h07; dtx <= 8'h01;
       while (!fin) #10;
 
-      $display("\n%8t: Read back aquisition status:", $time);
+      $display("\n%8t: Read back acquisition status:", $time);
       #60 get <= 1; num <= 2; ptr <= 7'h07;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      $display("\n%8t: Reading back aquisition data:", $time);
+      $display("\n%8t: Reading back acquisition data:", $time);
       #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
-      $display("\n%8t: Reading back some more aquisition data:", $time);
+      $display("\n%8t: Reading back some more acquisition data:", $time);
       #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
-      $display("\n%8t: Reading back even more aquisition data:", $time);
+      $display("\n%8t: Reading back even more acquisition data:", $time);
       #60 get <= 1; num <= 7; ptr <= 7'h00;
       while (!fin) #10;
 
@@ -241,7 +241,7 @@ module tart_soc_tb;
    wire [MSB:0] r_drx, r_dtx;   // reset handler's signals
    wire         r_stb, r_ack;
 
-   wire [MSB:0] a_drx, a_dtx;   // data-aquisition controller's signals
+   wire [MSB:0] a_drx, a_dtx;   // data-acquisition controller's signals
    wire [2:0]   a_adr = b_adr[2:0];
    wire         a_stb, a_ack;
 
@@ -252,7 +252,7 @@ module tart_soc_tb;
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
 
-   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for aquire
+   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for acquire
 //    assign r_stb = b_adr == 7'h0f && b_stb; // address decoder for reset unit
    assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
 
@@ -325,9 +325,9 @@ module tart_soc_tb;
        );
 
    //-------------------------------------------------------------------------
-   //     DATA-AQUISITION CONTROL AND READ-BACK.
+   //     DATA-ACQUISITION CONTROL AND READ-BACK.
    //-------------------------------------------------------------------------
-   tart_aquire #( .WIDTH(WIDTH) ) TART_AQUIRE0
+   tart_acquire #( .WIDTH(WIDTH) ) TART_ACQUIRE0
      ( .clk_i(b_clk),
        .rst_i(reset),
        .cyc_i(b_cyc),
