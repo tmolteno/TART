@@ -11,7 +11,7 @@
  */
 
 module correlate_cos_sin
-  #( parameter ACCUM = 32,
+  #( parameter ACCUM = 24,
      parameter MSB   = ACCUM-1,
      parameter SUMHI = 0,       // is "ones-counting" needed?
      parameter DELAY = 3)
@@ -22,7 +22,6 @@ module correlate_cos_sin
 
     input          hi,
     input          ar,
-    // input                  ai,
     input          br,
     input          bi,
 
@@ -59,8 +58,6 @@ module correlate_cos_sin
         r_sin <= #DELAY 0;
      end
      else if (en) begin
-//         r_cos <= #DELAY c0 ? dcos + 1 : dcos ;
-//         r_sin <= #DELAY c1 ? dsin + 1 : dsin ;
         r_cos <= #DELAY w_cos[MSB:0];
         r_sin <= #DELAY w_sin[MSB:0];
      end

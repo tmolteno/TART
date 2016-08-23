@@ -120,7 +120,7 @@ module tart_acquire
 
    wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
 //    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
-   wire [MSB:0]        aq_status = {aq_adr_i[7:1], aq_enabled};
+   wire [MSB:0]        aq_status = {aq_adr_i[6:0], aq_enabled};
    wire                x_ack;
 
 

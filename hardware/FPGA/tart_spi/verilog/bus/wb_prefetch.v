@@ -62,6 +62,7 @@ module wb_prefetch
     output             a_bst_o, // Bulk Sequential Transfer?
     input              a_ack_i,
     input              a_wat_i,
+    input              a_err_i,
     output [ASB:0]     a_adr_o,
     input [MSB:0]      a_dat_i,
     output [MSB:0]     a_dat_o,
@@ -185,6 +186,7 @@ module wb_prefetch
          .bst_o(a_bst_o),
          .ack_i(a_ack_i),
          .wat_i(a_wat_i),
+         .err_i(a_err_i),
          .blk_o(a_blk),
 
          .read_i(read),

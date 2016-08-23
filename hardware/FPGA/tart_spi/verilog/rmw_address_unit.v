@@ -27,17 +27,13 @@ module rmw_address_unit
      parameter ASB   = ABITS-1,
      parameter LOWER = 0,
      parameter UPPER = 11,
-     parameter STEPS = 3,
      parameter DELAY = 3)
    (
     input          clk_i,
     input          rst_i,
     input          ce_i,
-    output reg     vld_o = 0,
 
-//     (* MAX_FANOUT = "60" *)
     output [ASB:0] rd_adr_o,
-
     output         rd_wrap_o,
     output [ASB:0] wr_adr_o,
     output         wr_wrap_o
@@ -92,20 +88,41 @@ module rmw_address_unit
        );
 
 
-   //-------------------------------------------------------------------------
-   //  Generate output-valid signals.
-   //-------------------------------------------------------------------------
-   wire                ce;
-
-   always @(posedge clk_i)
-     vld_o    <= #DELAY ce;
-
-   shift_reg
-     #( .STEPS(STEPS-2)) CE0
-       (.clk(clk_i), .ce(1'b1), .d(ce_i), .q(ce));
-
-
 endmodule // rmw_address_unit
+
+module dbl_fd
+  #(parameter WIDTH = 4,
+    parameter MSB = WIDTH-1,
+    parameter INIT0 = {WIDTH{1'b0}},
+    parameter INIT1 = {WIDTH{1'b0}},
+    parameter DELAY = 3)
+   (
+    input          clk,
+    input [MSB:0]  d,
+    output [MSB:0] q
+    );
+
+`ifdef __icarus
+   reg [MSB:0]     q0 = INIT0, q1 = INIT1;
+
+   assign q = q1;
+
+   always @(posedge clk)
+     {q1, q0} <= #DELAY {q0, d};
+
+`else
+   wire [MSB:0]    r;
+
+   (* KEEP = "TRUE" *)
+   FD #(.INIT(INIT0)) FD0[MSB:0] (.D(d), .Q(r), .C(clk));
+
+   (* KEEP = "TRUE" *)
+   FD #(.INIT(INIT1)) FD1[MSB:0] (.D(r), .Q(q), .C(clk));
+
+`endif // !`ifdef __icarus
+
+
+endmodule // dbl_fd
 
 /*
 module rmw_address_unit
@@ -161,7 +178,6 @@ module rmw_address_unit
 
 
 endmodule // rmw_address_unit
-*/
 
 module shift_reg
   #(parameter STEPS = 2,
@@ -184,37 +200,4 @@ module shift_reg
      if (ce) {x, sr} <= #DELAY {sr, d};
 
 endmodule // shift_reg
-
-module dbl_fd
-  #(parameter WIDTH = 4,
-    parameter MSB = WIDTH-1,
-    parameter INIT0 = {WIDTH{1'b0}},
-    parameter INIT1 = {WIDTH{1'b0}},
-    parameter DELAY = 3)
-   (
-    input          clk,
-    input [MSB:0]  d,
-    output [MSB:0] q
-    );
-
-`ifdef __icarus
-   reg [MSB:0]     q0 = INIT0, q1 = INIT1;
-
-   assign q = q1;
-
-   always @(posedge clk)
-     {q1, q0} <= #DELAY {q0, d};
-
-`else
-   wire [MSB:0]    r;
-
-   (* KEEP = "TRUE" *)
-   FD #(.INIT(INIT0)) FD0[MSB:0] (.D(d), .Q(r), .C(clk));
-
-   (* KEEP = "TRUE" *)
-   FD #(.INIT(INIT1)) FD1[MSB:0] (.D(r), .Q(q), .C(clk));
-
-`endif // !`ifdef __icarus
-
-
-endmodule // dbl_fd
+*/

@@ -14,12 +14,12 @@ module tart_dsp_tb;
    parameter MRATE = 12;
    parameter DELAY = 3;
 
-//    parameter COUNT = 4; // count down from:  (1 << COUNT) - 1;
-   parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
+   parameter COUNT = 4; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
-//    parameter NREAD = 8;
+   parameter NREAD = 8;
 //    parameter NREAD = 24;
-   parameter NREAD = 96;
+//    parameter NREAD = 96;
 //    parameter NREAD = 120;
 //    parameter NREAD = `READ_COUNT >> 2;
 //    parameter NREAD = `READ_COUNT;
@@ -69,8 +69,10 @@ module tart_dsp_tb;
 
       //----------------------------------------------------------------------
       $display("\n%12t: Generating fake antenna data:", $time);
+      $display("%12t: (Data is just increasing counter values)", $time);
       for (ptr = 0; ptr < 256; ptr = ptr+1)
-        data[ptr] <= $random;
+        data[ptr] <= ptr;
+//         data[ptr] <= $random;
 
       //----------------------------------------------------------------------
       #20 $display("\n%12t: Issuing RESET:\n", $time);

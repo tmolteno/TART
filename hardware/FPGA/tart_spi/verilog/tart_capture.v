@@ -75,7 +75,8 @@ module tart_capture
    (* IOB = "TRUE" *)
    reg [MSB:0]     ax_real;
    reg [MSB:0]     ax_data;
-   wire [MSB:0]    ax_fake, ax_data_w;
+   wire [MSB:0]    ax_fake;
+   wire [MSB:0]    ax_data_w;
 
 
    //-------------------------------------------------------------------------

@@ -32,13 +32,17 @@
 `include "tartcfg.v"
 
 module correlator_block_DSP
-  #( parameter ACCUM = `ACCUM_BITS,
-     parameter IBITS = `NUM_ANTENNA,
+  #( parameter ACCUM = 24,
+     parameter IBITS = 24,
      // Pairs of antennas to correlate, for each block:
-     parameter PAIRS0 = 120'hb1a191817161b0a090807060,
-     parameter PAIRS1 = 120'hb3a393837363b2a292827262,
-     parameter PAIRS2 = 120'hb5a595857565b4a494847464,
-     parameter PAIRS3 = 120'hb1a191817161b0a090807060, // TODO:
+     parameter PAIRS0 = 120'h0,
+     parameter PAIRS1 = 120'h0,
+     parameter PAIRS2 = 120'h0,
+     parameter PAIRS3 = 120'h0, // TODO:
+//      parameter PAIRS0 = 120'hb1a191817161b0a090807060,
+//      parameter PAIRS1 = 120'hb3a393837363b2a292827262,
+//      parameter PAIRS2 = 120'hb5a595857565b4a494847464,
+//      parameter PAIRS3 = 120'hb1a191817161b0a090807060, // TODO:
      // Various additional bit-widths:
      parameter MSB   = ACCUM-1,
      parameter ISB   = IBITS-1,
@@ -82,7 +86,9 @@ module correlator_block_DSP
    //  Visibilities buffer.
    //-------------------------------------------------------------------------
    reg [3:0]           block = 0;
-   wire [XSB:0]        vis, dat;
+   wire [XSB:0]        vis;
+   wire [XSB:0]        dat;
+   wire                vld;
 
 
    //-------------------------------------------------------------------------
@@ -90,7 +96,6 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    reg                 ack = 0;
    reg [2:0]           adr = 0;
-   wire                vld;
 
    //  Acknowledge any request, even if ignored.
    always @(posedge clk_i)
@@ -108,16 +113,16 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
-   wire [TSB:0] x_rd_adr, x_wr_adr;
+   wire [TSB:0] x_rd_adr;
+   wire [TSB:0] x_wr_adr;
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .STEPS(3)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1)
          ) RMW0
        ( .clk_i(clk_x),
          .rst_i(rst),
          .ce_i(en),
-//          .vld_o(vld),
          .rd_adr_o(x_rd_adr),
          .rd_wrap_o(wrap_x_rd_adr),
          .wr_adr_o(x_wr_adr),
@@ -180,6 +185,7 @@ module correlator_block_DSP
    //-------------------------------------------------------------------------
    correlator_DSP
      #(  .ACCUM(ACCUM),
+         .SUMHI(0),
          .TBITS(TBITS),
          .PAIRS(PAIRS0),
          .DELAY(DELAY)
@@ -200,6 +206,7 @@ module correlator_block_DSP
 
    correlator_DSP
      #(  .ACCUM(ACCUM),
+         .SUMHI(0),
          .TBITS(TBITS),
          .PAIRS(PAIRS1),
          .DELAY(DELAY)
@@ -220,6 +227,7 @@ module correlator_block_DSP
 
    correlator_DSP
      #(  .ACCUM(ACCUM),
+         .SUMHI(0),
          .TBITS(TBITS),
          .PAIRS(PAIRS2),
          .DELAY(DELAY)
@@ -240,7 +248,7 @@ module correlator_block_DSP
 
    correlator_DSP
      #(  .ACCUM(ACCUM),
-         .SUMHI(1'b1),          // also count #ones
+         .SUMHI(1),             // also count #ones
          .TBITS(TBITS),
          .PAIRS(PAIRS3),
          .DELAY(DELAY)

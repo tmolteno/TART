@@ -36,13 +36,14 @@ module wb_get_block
     output reg     bst_o = 0,
     input          ack_i,
     input          wat_i,
+    input          err_i,
     output [BSB:0] blk_o,
 
     input          read_i,
     output reg     done_o = 0
     );
 
-   wire            cyc = stb_o || wat > 1 || !ack_i;
+   wire            cyc = !err_i && (stb_o || wat > 1 || !ack_i);
    wire            stb = bst_o;
    wire            bst = blk < BSIZE-2;
    reg [BSB:0]     blk = 0;

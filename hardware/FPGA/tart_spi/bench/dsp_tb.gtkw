@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Sat Aug 20 06:20:30 2016
+[*] Tue Aug 23 03:09:01 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.vcd"
-[dumpfile_mtime] "Sat Aug 20 06:19:34 2016"
-[dumpfile_size] 8474234
+[dumpfile_mtime] "Tue Aug 23 03:08:22 2016"
+[dumpfile_size] 9284010
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
-[timestart] 60000000
-[size] 2560 1416
+[timestart] 1879800
+[size] 2560 1388
 [pos] -1 -1
-*-18.505976 62013000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.042028 2243000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
 [treeopen] tart_dsp_tb.TART_DSP.CORRELATOR.
@@ -116,20 +116,20 @@ tart_dsp_tb.TART_DSP.v_adr[11:0]
 tart_dsp_tb.TART_DSP.v_ack
 @1401200
 -Stream
-@c00022
-tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-@28
-(0)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(1)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(2)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(3)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(4)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(5)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(6)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(7)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-@1401200
--group_end
-@23
+@22
 tart_dsp_tb.TART_DSP.CORRELATOR.c_adr[10:0]
+@29
+tart_dsp_tb.TART_DSP.CORRELATOR.dev[2:0]
+@800022
+tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+@28
+(0)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+(1)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+(2)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+(3)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+(4)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+(5)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[5:0]
+@1001200
+-group_end
 [pattern_trace] 1
 [pattern_trace] 0

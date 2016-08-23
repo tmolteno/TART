@@ -69,6 +69,7 @@ module tart_dsp
    //
    //-------------------------------------------------------------------------
    //  Visibilities/correlator settings.
+   parameter AXNUM = `NUM_ANTENNA;// Number of antennae
    parameter ACCUM = `ACCUM_BITS; // Bit-width of the accumulators
    parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
    parameter MSB   = BLOCK-1;     // Data transfer MSB
@@ -91,11 +92,11 @@ module tart_dsp
    //-------------------------------------------------------------------------
    //     SYNCHRONISE SIGNALS FROM THE WISHBONE CLOCK DOMAIN.
    //-------------------------------------------------------------------------
-   (* KEEP = "TRUE" *) reg [MSB:0]  block_x  = 0;
-   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
+   reg [MSB:0]  block_x  = 0;
+   reg          enable_x = 0;
 
-   (* KEEP = "TRUE" *) reg          enable_x = 0;
-   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg          enable_s = 0;
+   (* ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
+   (* ASYNC_REG = "TRUE" *) reg          enable_s = 0;
 
    always @(posedge clk_x) begin
       block_s  <= #DELAY blocksize;
@@ -126,6 +127,8 @@ module tart_dsp
    wire               c_cyc, c_stb, c_bst, c_we, c_ack;
    wire               c_wat = 1'b0;
 
+   //  Keep (it's name the same), so that it can be exempted from timing.
+   (* KEEP = "TRUE" *) wire c_err;
 
    //-------------------------------------------------------------------------
    //  Streaming, visibilities-read-back logic-core.
@@ -189,6 +192,7 @@ module tart_dsp
          .we_o (c_we),          // visibilities
          .bst_o(c_bst),
          .ack_i(c_ack),
+         .err_i(c_err),
          .wat_i(c_wat),
          .adr_o(c_adr),
          .dat_i(c_drx),
@@ -205,6 +209,8 @@ module tart_dsp
    //-------------------------------------------------------------------------
    tart_correlator
      #(  .BLOCK (BLOCK),
+         .AXNUM (AXNUM),
+         .ABITS (RBITS + XBITS),
          .DELAY (DELAY)
          ) CORRELATOR
        ( .clk_x(clk_x),         // 12x data-rate sampling clock
@@ -216,13 +222,14 @@ module tart_dsp
          .we_i (c_we),
          .bst_i(c_bst),
          .ack_o(c_ack),
+         .err_o(c_err),
          .adr_i(c_adr),
          .dat_i(c_dtx),
          .dat_o(c_drx),
 
          .enable(enable_x),     // begins correlating once asserted
          .blocksize(block_x),   // number of samples per visibility sum
-         .strobe(strobe),       // indicates arrival of a new sample
+//          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
          .switch(switching)     // asserts on bank-switch (sample domain)
          );

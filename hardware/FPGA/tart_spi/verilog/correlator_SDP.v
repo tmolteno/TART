@@ -91,9 +91,9 @@ module correlator_SDP
    parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
    parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
 
-// `define __licarus
-// `ifdef  __licarus
-`ifdef __icarus
+`define __licarus
+`ifdef  __licarus
+// `ifdef __icarus
    // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
    //   the wire values;
    wire [9:0]   pairs[0:11];
@@ -142,7 +142,7 @@ module correlator_SDP
    //  Time-multiplexed correlator.
    //-------------------------------------------------------------------------
    correlate_cos_sin
-     #(  .ACCUM(ACCUM), .DELAY(DELAY) ) CORR_COS_SIN0
+     #(  .ACCUM(ACCUM), .SUMHI(SUMHI), .DELAY(DELAY) ) CORR_COS_SIN0
        ( .clk(clk_x),
          .rst(rst),
 
@@ -166,11 +166,13 @@ module correlator_SDP
    //  RAM32M's implemented the nerdy way.
    //-------------------------------------------------------------------------
    //  TODO: Parameterise the accumulator width.
+   parameter INIT = 64'hf0e1d2c3b4a59687;
+
    RAM32X6_SDP
-     #( .INITA(64'h0),
-        .INITB(64'h0),
-        .INITC(64'h0),
-        .INITD(64'h0),
+     #( .INITA(INIT),
+        .INITB(INIT),
+        .INITC(INIT),
+        .INITD(INIT),
         .DELAY(3)
         ) RAM32X6_SDP_COS [3:0]
        (.WCLK(clk_x),
@@ -178,16 +180,14 @@ module correlator_SDP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qcos),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dcos_w),
-        .DID(2'b0),
-        .DOD()
+        .DO(dcos_w)
         );
 
    RAM32X6_SDP
-     #( .INITA(64'h0),
-        .INITB(64'h0),
-        .INITC(64'h0),
-        .INITD(64'h0),
+     #( .INITA(INIT),
+        .INITB(INIT),
+        .INITC(INIT),
+        .INITD(INIT),
         .DELAY(3)
         ) RAM32X6_SDP_SIN [3:0]
        (.WCLK(clk_x),
@@ -195,9 +195,7 @@ module correlator_SDP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qsin),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dsin_w),
-        .DID(2'b0),
-        .DOD()
+        .DO(dsin_w)
         );
 
 

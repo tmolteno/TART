@@ -34,13 +34,17 @@
 `include "tartcfg.v"
 
 module correlator_block_SDP
-  #( parameter ACCUM = `ACCUM_BITS,
-     parameter IBITS = `NUM_ANTENNA,
+  #( parameter ACCUM = 24,
+     parameter IBITS = 24,
      // Pairs of antennas to correlate, for each block:
-     parameter PAIRS0 = 120'hb1a191817161b0a090807060,
-     parameter PAIRS1 = 120'hb3a393837363b2a292827262,
-     parameter PAIRS2 = 120'hb5a595857565b4a494847464,
-     parameter PAIRS3 = 120'hb1a191817161b0a090807060, // TODO:
+     parameter PAIRS0 = 120'h0,
+     parameter PAIRS1 = 120'h0,
+     parameter PAIRS2 = 120'h0,
+     parameter PAIRS3 = 120'h0,
+//      parameter PAIRS0 = 120'hb9ec7a9e8799e47b9ac6a9a8699a46,
+//      parameter PAIRS1 = 120'hba6c9aa6899a649ba2c8aa2889a248,
+//      parameter PAIRS2 = 120'hbaecbaae8b9ae4bbaacaaaa8a9aa4a,
+//      parameter PAIRS3 = 120'h9ca30ad2f3b4eb3a4d6a5a5495a148,
      // Various additional bit-widths:
      parameter MSB   = ACCUM-1,
      parameter ISB   = IBITS-1,
@@ -51,7 +55,7 @@ module correlator_block_SDP
      parameter TRATE = 12,            // Time-multiplexing rate
      parameter TBITS = 4,
      parameter TSB   = TBITS-1,
-     parameter BBITS = `BLOCK_BITS,   // Block-buffer address bits
+     parameter BBITS = 4,       // Block-buffer address bits
      parameter BSB   = BBITS-1,
      parameter NSRAM = ACCUM>>2,      // #<block SRAM> for read-back
      parameter ABITS = 3+TBITS+BBITS, // External I/O address bits
@@ -83,8 +87,10 @@ module correlator_block_SDP
    //-------------------------------------------------------------------------
    //  Visibilities buffer.
    //-------------------------------------------------------------------------
-   reg [3:0]       block = 0;
-   wire [XSB:0]    vis, dat;
+   reg [3:0]           block = 0;
+   wire [XSB:0]        vis;
+   wire [XSB:0]        dat;
+   wire                vld;
 
 
    //-------------------------------------------------------------------------
@@ -92,7 +98,6 @@ module correlator_block_SDP
    //-------------------------------------------------------------------------
    reg             ack = 0;
    reg [2:0]       adr = 0;
-   wire            vld;
 
    //  Acknowledge any request, even if ignored.
    always @(posedge clk_i)
@@ -110,16 +115,16 @@ module correlator_block_SDP
    //-------------------------------------------------------------------------
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
-   wire [TSB:0] x_rd_adr, x_wr_adr;
+   wire [TSB:0] x_rd_adr;
+   wire [TSB:0] x_wr_adr;
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .STEPS(3)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1)
          ) RMW0
        ( .clk_i(clk_x),
          .rst_i(rst),
          .ce_i(en),
-//          .vld_o(vld),
          .rd_adr_o(x_rd_adr),
          .rd_wrap_o(wrap_x_rd_adr),
          .wr_adr_o(x_wr_adr),
@@ -182,6 +187,7 @@ module correlator_block_SDP
    //-------------------------------------------------------------------------
    correlator_SDP
      #(  .ACCUM(ACCUM),
+         .SUMHI(0),
          .TBITS(TBITS),
          .PAIRS(PAIRS0),
          .DELAY(DELAY)
@@ -202,6 +208,7 @@ module correlator_block_SDP
 
    correlator_SDP
      #(  .ACCUM(ACCUM),
+         .SUMHI(0),
          .TBITS(TBITS),
          .PAIRS(PAIRS1),
          .DELAY(DELAY)
@@ -222,6 +229,7 @@ module correlator_block_SDP
 
    correlator_SDP
      #(  .ACCUM(ACCUM),
+         .SUMHI(0),
          .TBITS(TBITS),
          .PAIRS(PAIRS2),
          .DELAY(DELAY)
@@ -242,7 +250,7 @@ module correlator_block_SDP
 
    correlator_SDP
      #(  .ACCUM(ACCUM),
-         .SUMHI(1'b1),          // also count #ones
+         .SUMHI(1),             // also count #ones
          .TBITS(TBITS),
          .PAIRS(PAIRS3),
          .DELAY(DELAY)

@@ -31,6 +31,10 @@ class TartSPI:
   SPI_MISC  = 0x0E
   SPI_RESET = 0x0F
 
+  CHECKSUM1 = 0x0D
+  CHECKSUM2 = 0x0E
+  CHECKSUM3 = 0x0F
+
   WRITE_CMD = 0x80
 
 
@@ -75,13 +79,33 @@ class TartSPI:
     '''Read back the status registers of the hardware.'''
     vals = []
     regs = [self.VX_STATUS, self.AQ_DEBUG, self.AQ_STATUS,
-            self.SPI_STATS, self.SPI_EXTRA, self.SPI_MISC]
+            self.SPI_STATS, # self.SPI_EXTRA, self.SPI_MISC]
+            self.CHECKSUM1, self.CHECKSUM2, self.CHECKSUM3]
     for reg in regs:
       ret = self.spi.xfer([reg, 0x0, 0x0])
       vals.append(ret[2])
       if noisy:
-        print '0x%02x: %s' % (reg, tobin(ret))
+        print self.show_status(reg, ret[2])
+#         print '0x%02x: %s' % (reg, tobin(ret))
     return vals
+
+  def show_status(self, reg, val):
+    bits = []
+    for b in range(8):
+      bits.append((val >> b) & 0x01 == 0x01)
+
+    msgs = {
+      self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, enabled = %s, blocksize = %d' % (bits[7], bits[6], bits[5], val & 0x1F),
+      self.AQ_DEBUG: 'AQ_DEBUG:\tdebug = %s, delay = %d' % (bits[7], val & 0x07),
+      self.AQ_STATUS: 'AQ_STATUS:\tblock = %d, enabled = %s' % (val >> 1, bits[0]),
+      self.SPI_STATS: 'SPI_STATS:\tFIFO {underrun = %s, overflow = %s}, spireq = %s, enabled = %s, debug = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
+      self.CHECKSUM1: 'CHECKSUM1:\tchecksum[7:0]   = 0x%02x' % val,
+      self.CHECKSUM2: 'CHECKSUM2:\tchecksum[15:8]  = 0x%02x' % val,
+      self.CHECKSUM3: 'CHECKSUM3:\tchecksum[23:16] = 0x%02x' % val
+#       self.SPI_EXTRA: 'SPI_EXTRA:\t',
+#       self.SPI_MISC:  'SPI_MISC:\t'
+    }
+    return msgs.get(reg, 'WARNING: Not a status register.')
 
   def debug(self, on=1, noisy=False):
     '''Read the debug register, and update the debug-mode flag, and then write back the new debug register value.'''
@@ -152,6 +176,19 @@ class TartSPI:
         print tobin(res)
       fin = res[2] & 0x03
     return val == 0x01 and fin == 0x03
+
+  def read_slow(self, num_words=2**21, blocksize=1024):
+    '''Read back the requested number of 24-bit words.'''
+    num = int(blocksize*3)
+    blk = [self.AX_STREAM, 0xff,] + [0,0,0,]*blocksize
+    dat = np.zeros(num_words*3)
+    ptr = int(0)
+    for i in range(0, int(num_words/blocksize)):
+      dat[range(ptr, ptr+num)] = self.spi.xfer(blk)[2:]
+      ptr += num
+    lst = int(num_words % blocksize)
+    dat[range(ptr, ptr+lst*3)] = self.spi.xfer([self.AX_STREAM, 0xff,] + [0,0,0,]*lst)[2:]
+    return dat.reshape(-1,3)
 
   def read_data(self, num_words=2**21, blocksize=1000):
     '''Read back the requested number of 24-bit words.'''

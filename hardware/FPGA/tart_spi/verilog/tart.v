@@ -74,6 +74,7 @@ module tart
    wire                spi_debug;
    wire [2:0]          data_sample_delay;
    wire [2:0]          tart_state;
+   wire                switching;
 
    //  Force these signals to be kept, so that they can be referenced in the
    //  constraints file (as they have the `TIG` constraint applied).
@@ -186,6 +187,17 @@ module tart
    assign data_out_ready = 1'b0;
    assign data_out = 32'b0;
 
+   assign SDRAM_CS   = 1'b1;
+   assign SDRAM_CKE  = 1'b0;
+   (* PULLUP = "TRUE" *) assign SDRAM_CLK  = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_WE   = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_RAS  = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_CAS  = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_BA   = 2'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_ADDR = 13'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_DQM  = 2'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_DQ   = 16'bz;
+
 `endif // !`ifdef __USE_ACQUISITION
 
 
@@ -214,18 +226,22 @@ module tart
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 
    //  SPI -> WB bus signals.
-   wire [BSB:0] b_dtx, b_drx;   // bus master's signals
+   wire [BSB:0] b_dtx;   // bus master's signals
+   wire [BSB:0] b_drx;
    wire [WSB:0] b_adr;
    wire         b_cyc, b_stb, b_we, b_ack;
 
-   wire [BSB:0] r_drx, r_dtx;   // reset handler's signals
+   wire [BSB:0] r_drx;   // reset handler's signals
+   wire [BSB:0] r_dtx;
    wire         r_stb, r_ack;
 
-   wire [BSB:0] a_drx, a_dtx;   // data-acquisition controller's signals
+   wire [BSB:0] a_drx;   // data-acquisition controller's signals
+   wire [BSB:0] a_dtx;
    wire [2:0]   a_adr = b_adr[2:0];
    wire         a_stb, a_ack;
 
-   reg          r_sel = 0, a_sel = 0;
+   reg          r_sel = 0;
+   reg          a_sel = 0;
 
    //  WB signals for the streaming interface to the visibilities data.
    wire [BSB:0] s_dat;
@@ -234,7 +250,9 @@ module tart
 
    //  Acquisition-unit signals.
    wire         newblock, streamed, accessed, available;
-   wire [MSB:0] checksum, blocksize;
+   wire [MSB:0] blocksize;
+   (* KEEP = "TRUE" *) wire [MSB:0] checksum;
+   (* KEEP = "TRUE" *) wire uflow, oflow;
 
    //  Remap system signals to WB signals.
    assign b_clk = fpga_clk;
@@ -245,9 +263,8 @@ module tart
    //     TRANSMISSION BLOCK
    //     SPI SLAVE & WB MASTER
    //-------------------------------------------------------------------------
-   wire debug_spi = oflow || uflow;
    wire spi_busy;
-   wire [7:0] spi_status = {1'b1, debug_spi, request_from_spi, aq_enabled,
+   wire [7:0] spi_status = {uflow, oflow, request_from_spi, aq_enabled,
                             spi_debug, tart_state[2:0]};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
@@ -315,11 +332,10 @@ module tart
        .dat_i(r_dtx),
        .dat_o(r_drx),
 
-       .status_i(spi_status),
-       .overflow_i(oflow),
-       .underrun_i(uflow),
-       .reset_ni(reset_n),
-       .reset_o (reset)
+       .status_i  (spi_status),
+       .reset_ni  (reset_n),
+       .reset_o   (reset),
+       .checksum_i(checksum)
        );
 
 
@@ -365,7 +381,7 @@ module tart
        .aq_enabled(aq_enabled),
        .aq_sample_delay(data_sample_delay),
 //        .aq_adr_i(cmd_address)
-       .aq_adr_i(24'h0000b5)
+       .aq_adr_i({21'h0, v_blk})
        );
 
 
@@ -375,8 +391,6 @@ module tart
    //     CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
-   wire switching;
-
    tart_dsp
      #(.NREAD(NREAD)
        ) DSP
@@ -389,7 +403,7 @@ module tart
        .aq_bst_i(1'b0),
        .aq_ack_o(s_ack),
        .aq_blk_i(v_blk),
-       .aq_dat_i('bx),
+       .aq_dat_i(8'bx),
        .aq_dat_o(s_dat),
 
        .aq_enable(aq_enabled),
