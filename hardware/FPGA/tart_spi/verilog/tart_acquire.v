@@ -100,6 +100,8 @@ module tart_acquire
 
     (* ASYNC_REG = "TRUE" *)
     output reg [XSB:0] blocksize = 0, // = #viz/block - 1;
+    input              vx_stuck_i,
+    input              vx_limp_i,
 
     (* ASYNC_REG = "TRUE" *)
     output reg         aq_enabled = 0,
@@ -118,7 +120,7 @@ module tart_acquire
    wire                vx_enable = aq_enabled; // TODO:
    wire [MSB:0]        vx_status = {available, accessed, vx_enable, log_block};
 
-   wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
+   wire [MSB:0]        aq_debug  = {aq_debug_mode, vx_stuck_i, vx_limp_i, 2'b0, aq_sample_delay};
 //    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
    wire [MSB:0]        aq_status = {aq_adr_i[6:0], aq_enabled};
    wire                x_ack;

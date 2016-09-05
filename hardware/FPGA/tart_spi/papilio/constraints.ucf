@@ -22,6 +22,10 @@ NET "aq_delay<*>" TIG;
 NET "aq_debug" TIG;
 NET "ax_dat<*>" TIG;
 
+NET "cnt28<*>" TIG;
+NET "stuck" TIG;
+NET "limp" TIG;
+
 NET "checksum<*>" TIG;
 NET "uflow" TIG;
 NET "oflow" TIG;

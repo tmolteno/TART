@@ -42,7 +42,7 @@ module tart_dsp_tb;
    reg [2:0]    adr;
    reg [BSB:0]  dtx;
    reg          set = 0, get = 0, fin = 0;
-   wire         ack;
+   wire         dsp_en, stuck, limp, ack;
    wire         c_cyc, c_stb, c_we, c_bst, c_ack;
    reg [23:0]   data [0:255];
    reg [31:0]   viz = 32'h0;
@@ -349,9 +349,13 @@ module tart_dsp_tb;
        .checksum(checksum),
        .blocksize(blocksize),
 
+       .vx_stuck_i(stuck),
+       .vx_limp_i (limp),
+
        .aq_debug_mode(aq_debug_mode),
        .aq_enabled(aq_enabled),
-       .aq_sample_delay(aq_sample_delay)
+       .aq_sample_delay(aq_sample_delay),
+       .aq_adr_i(25'b0)
        );
 
    tart_dsp
@@ -373,6 +377,8 @@ module tart_dsp_tb;
        .antenna  (antenna),
        .switching(switching),
        .blocksize(blocksize),
+       .stuck_o  (stuck),
+       .limp_o   (limp),
 
        .newblock (newblock),
        .checksum (checksum),

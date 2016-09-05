@@ -69,7 +69,11 @@ module correlator_DSP
    // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
    // mode.
    wire [MSB:0]        dcos, dsin, qcos, qsin;
-   reg                 go = 0;
+   reg                 go = 1'b0, wt = 1'b0;
+
+   reg [MSB:0]         rcos = {ACCUM{1'b0}};
+   reg [MSB:0]         rsin = {ACCUM{1'b0}};
+   reg                 rar = 1'b0, rbr = 1'b0, rbi, rhi = 1'b0;
 
    assign vis = {qsin, qcos};
 
@@ -78,9 +82,15 @@ module correlator_DSP
    //  Control signals.
    //-------------------------------------------------------------------------
    //  Add a cycle of latency to wait for the RAM read.
-   //  Add another cycle of latency, to wait for the DSP addition.
+   //  Add another cycle of latency, to compute the DSP inputs.
+   //  Add yet another cycle of latency, to wait for the DSP addition.
    always @(posedge clk_x)
-     {vld, go} <= #DELAY {go, en};
+     {vld, go, wt} <= #DELAY {go, wt, en};
+
+   always @(posedge clk_x) begin
+      {rsin, rcos} <= #DELAY {dsin, dcos};
+      {rbi, rbr, rar, rhi} <= #DELAY {bi, br, ar, hi};
+   end
 
 
    //-------------------------------------------------------------------------
@@ -143,6 +153,7 @@ module correlator_DSP
          .rst(rst),
          .clr(sw),
 
+`ifdef __USE_DSP_SLOW
          // Antenna enables and inputs:
          .en(en),
          .vld(go),
@@ -154,6 +165,19 @@ module correlator_DSP
          // Accumulator inputs and outputs:
          .dcos(dcos),
          .dsin(dsin),
+`else
+         // Antenna enables and inputs:
+         .en(wt),
+         .vld(go),
+         .hi(rhi),
+         .ar(rar),
+         .br(rbr),
+         .bi(rbi),
+
+         // Accumulator inputs and outputs:
+         .dcos(rcos),
+         .dsin(rsin),
+`endif
          .qcos(qcos),
          .qsin(qsin)
          );

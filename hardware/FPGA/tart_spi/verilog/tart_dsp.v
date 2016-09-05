@@ -52,6 +52,10 @@ module tart_dsp
     input [7:0]    aq_dat_i,
     output [7:0]   aq_dat_o,
 
+    // Debugging signals.
+    output         stuck_o,
+    output         limp_o,
+
     // The real component of the signal from the antennas.
     input          aq_enable, // data acquisition is active
     output         switching, // NOTE: bus domain
@@ -87,6 +91,10 @@ module tart_dsp
    parameter ASB   = ABITS-1;     // Address MSB
    parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
+
+
+   assign stuck_o = stuck;
+   assign limp_o  = limp;
 
 
    //-------------------------------------------------------------------------
@@ -233,6 +241,41 @@ module tart_dsp
          .antenna(antenna),     // antenna data
          .switch(switching)     // asserts on bank-switch (sample domain)
          );
+
+
+   //-------------------------------------------------------------------------
+   //     Debugging stuff.
+   //-------------------------------------------------------------------------
+   reg                stuck = 1'b0;
+   reg                limp  = 1'b1;
+   reg [5:0]          count = 6'b0;
+   wire [5:0]         cnext = count[4:0] + 1'b1;
+
+   //  Assert 'stuck` if transfers are taking too long.
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       {count, stuck} <= #DELAY 7'b0;
+     else if (c_cyc && c_ack) begin
+        if (!count[5])
+          {count, stuck} <= #DELAY {cnext, stuck};
+        else
+          {count, stuck} <= #DELAY {count, 1'b1};
+     end
+     else if (!c_cyc)
+       {count, stuck} <= #DELAY {6'b0, stuck};
+
+   //  Clear `limp` if the device is prefetching visibilities.
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       limp <= #DELAY 1'b1;
+     else if (c_cyc && c_ack && aq_enable)
+       limp <= #DELAY 1'b0;
+
+   always @(posedge aq_clk_i)
+     if (stuck) begin
+        #10 $display("%12t: WB stuck.", $time);
+        #80 $finish;
+     end
 
 
 endmodule // tart_dsp

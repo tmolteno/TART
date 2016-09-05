@@ -83,7 +83,7 @@ module correlator_block_SDP
     input [ISB:0]      im_i  // imaginary component of input
     );
 
-`ifdef __USE_SLOW
+`ifdef __USE_SDP_SLOW
    wire                sw = sw_i;
    wire                en = en_i;
    wire [ISB:0]        re = re_i;
@@ -288,7 +288,7 @@ module correlator_block_SDP
          .en(en),
          .re(re),
          .im(im),
-`ifdef __NO_DUPS
+`ifdef __NO_SDP_DUPS
          .rd(x_rd_adr),
          .wr(x_wr_adr),
 `else
@@ -314,7 +314,7 @@ module correlator_block_SDP
          .en(en),
          .re(re),
          .im(im),
-`ifdef __NO_DUPS
+`ifdef __NO_SDP_DUPS
          .rd(x_rd_adr),
          .wr(x_wr_adr),
 `else

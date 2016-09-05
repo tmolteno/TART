@@ -135,7 +135,7 @@ placeRAMB8 dbl w (RAMB8 x y) p = toUCF $ zipWith (++) ix ls
   where
     w' = (w `shiftL` 3 + 35) `div` 36
     ix = map pf [0..w'-1]
-    hx = [ bool j (j+j) dbl | [0..w'-1] ]
+    hx = [ bool j (j+j) dbl | j <- [0..w'-1] ]
     ls = map ((' ':) . showLOC . RAMB8 x . (y+)) hx
     pf = \i -> "INST " ++ show (p ++ showIndex i ++ "/SRAM0")
 
@@ -175,7 +175,7 @@ floorSDP p d =
 --       ps = [printf "%s%d/CORRELATOR%d/CORR_COS_SIN0" p i j | i <- [d..5], j <- [0..3]]
 --       ls = [ SLICE 18 (i*6+2) | i <- [0..4*n-1] ]
 --       ax = zipWith floorADD  ps ls
-      dbl = heightSDP >= 24
+      dbl = False -- heightSDP >= 24
       ax = [""]
       ds = [ SLICE 16 (i*hl+2) | i <- [0..pred n] ]
       qs = [ p ++ show i | i <- [d..5] ]

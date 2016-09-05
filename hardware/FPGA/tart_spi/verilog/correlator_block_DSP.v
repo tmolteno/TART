@@ -81,7 +81,7 @@ module correlator_block_DSP
     input [ISB:0]      im_i  // imaginary component of input
     );
 
-`ifdef __USE_SLOW
+`ifdef __USE_DSP_SLOW
    wire                sw = sw_i;
    wire                en = en_i;
    wire [ISB:0]        re = re_i;
@@ -135,7 +135,7 @@ module correlator_block_DSP
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(4)
          ) RMW0
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -153,7 +153,7 @@ module correlator_block_DSP
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(4)
          ) RMW0
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -165,7 +165,7 @@ module correlator_block_DSP
          );
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(4)
          ) RMW1
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -287,7 +287,7 @@ module correlator_block_DSP
          .en(en),
          .re(re),
          .im(im),
-`ifdef __NO_DUPS
+`ifdef __NO_DSP_DUPS
          .rd(x_rd_adr),
          .wr(x_wr_adr),
 `else
@@ -313,7 +313,7 @@ module correlator_block_DSP
          .en(en),
          .re(re),
          .im(im),
-`ifdef __NO_DUPS
+`ifdef __NO_DSP_DUPS
          .rd(x_rd_adr),
          .wr(x_wr_adr),
 `else

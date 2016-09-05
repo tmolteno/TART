@@ -80,10 +80,18 @@ module tart
    (* KEEP = "TRUE" *) wire aq_enabled;
    (* KEEP = "TRUE" *) wire [2:0] aq_delay;
    (* KEEP = "TRUE" *) wire aq_debug;
+   (* KEEP = "TRUE" *) wire stuck;
+   (* KEEP = "TRUE" *) wire limp;
    (* KEEP = "TRUE" *) wire [NSB:0] ax_dat;
 
-   assign led = tart_state >= 2; // asserted when data can be read back
+//    assign led = tart_state >= 2; // asserted when data can be read back
+   (* KEEP = "TRUE" *) reg [27:0] cnt28 = 28'b0;
+
+   assign led = tart_state >= 2 && cnt28[27];
 	 assign rx_clk_test_pin = rx_clk;
+
+   always @(posedge clk_x)
+     cnt28 <= #DELAY cnt28 + 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -377,6 +385,9 @@ module tart
        .checksum (checksum),
        .blocksize(blocksize),
 
+       .vx_stuck_i(stuck),
+       .vx_limp_i (limp),
+
        //  Antenna capture & acquisition controls:
        .aq_debug_mode(aq_debug),
        .aq_enabled(aq_enabled),
@@ -406,6 +417,9 @@ module tart
        .aq_blk_i(v_blk),
        .aq_dat_i(8'bx),
        .aq_dat_o(s_dat),
+
+       .stuck_o  (stuck),
+       .limp_o   (limp),
 
        .aq_enable(aq_enabled),
 //        .antenna  (antenna),

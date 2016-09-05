@@ -96,7 +96,7 @@ class TartSPI:
 
     msgs = {
       self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, enabled = %s, blocksize = %d' % (bits[7], bits[6], bits[5], val & 0x1F),
-      self.AQ_DEBUG: 'AQ_DEBUG:\tdebug = %s, delay = %d' % (bits[7], val & 0x07),
+      self.AQ_DEBUG: 'AQ_DEBUG:\tdebug = %s, stuck = %s, limp = %s, delay = %d' % (bits[7], bits[6], bits[5], val & 0x07),
       self.AQ_STATUS: 'AQ_STATUS:\tblock = %d, enabled = %s' % (val >> 1, bits[0]),
       self.SPI_STATS: 'SPI_STATS:\tFIFO {underrun = %s, overflow = %s}, spireq = %s, enabled = %s, debug = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
       self.CHECKSUM1: 'CHECKSUM1:\tchecksum[7:0]   = 0x%02x' % val,
@@ -267,6 +267,8 @@ if __name__ == '__main__':
   parser.add_argument('--bramexp', default=11, type=int, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
   parser.add_argument('--blocksize', default=24, type=int, help='exponent of correlator block-size')
+  parser.add_argument('--status', action='store_true', help='just query the device')
+  parser.add_argument('--reset', action='store_true', help='just reset the device')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)
@@ -274,11 +276,15 @@ if __name__ == '__main__':
   print "\nTART hardware checker. Copyright Max Scheel, 2016 ."
   print "\nStatus flags:"
   tart.read_status(True)
+  if args.status:
+    exit(0)
 
   print "\nIssuing reset:"
   tart.reset()
   print "Status flags:"
   tart.read_status(True)
+  if args.reset:
+    exit(0)
 
   print "\nCycling through sampling-delays:"
   for i in range(6):

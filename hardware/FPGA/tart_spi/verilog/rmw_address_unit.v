@@ -27,6 +27,7 @@ module rmw_address_unit
      parameter ASB   = ABITS-1,
      parameter LOWER = 0,
      parameter UPPER = 11,
+     parameter TICKS = 3,
      parameter DELAY = 3)
    (
     input          clk_i,
@@ -40,6 +41,8 @@ module rmw_address_unit
     );
 
    wire [ASB:0]    next_rd_adr, next_adr;
+   wire [ASB:0]    wr_adr_w;
+   reg [ASB:0]     wr_adr_r = LOWER;
 
    assign rd_wrap_o = rd_adr_o == UPPER;
    assign wr_wrap_o = wr_adr_o == UPPER;
@@ -49,6 +52,18 @@ module rmw_address_unit
    assign next_adr[2] = rd_adr_o[1:0] == 2'b11  ? ~rd_adr_o[2] : rd_adr_o[2];
    assign next_adr[3] = rd_adr_o[2:0] == 3'b111 ? ~rd_adr_o[3] : rd_adr_o[3];
    assign next_rd_adr = rd_wrap_o ? LOWER : next_adr;
+
+
+   //-------------------------------------------------------------------------
+   //  Does the write-address lag the read-address by 3 or 4 cycles?
+   //-------------------------------------------------------------------------
+   assign wr_adr_o = TICKS == 4 ? wr_adr_r : TICKS == 3 ? wr_adr_w : {ABITS{1'bx}};
+
+   always @(posedge clk_i)
+     if (rst_i)
+       wr_adr_r <= #DELAY LOWER;
+     else
+       wr_adr_r <= #DELAY wr_adr_w;
 
 
    //-------------------------------------------------------------------------
@@ -84,7 +99,7 @@ module rmw_address_unit
    DBL_FD0
      ( .clk(clk_i),
        .d(rd_adr_o),
-       .q(wr_adr_o)
+       .q(wr_adr_w)
        );
 
 

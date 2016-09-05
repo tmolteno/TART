@@ -35,9 +35,6 @@
 //
 //  OPTIONAL FEATURES
 //
-`define __NO_DSP_DUPS
-// `define __NO_SDP_DUPS
-
 
 //----------------------------------------------------------------------------
 //
@@ -93,6 +90,20 @@
 `define WBADR_BITS 12           // Address bit-width
 `define WBBUS_BITS  8           // Bit-width of the SoC data bus
 `define BLOCK_BITS  4           // Bit-width of the block-counter
+
+
+//----------------------------------------------------------------------------
+//  
+//  Optimisation settings.
+//  
+//----------------------------------------------------------------------------
+//  Duplicate any of the address registers?
+`define __NO_DSP_DUPS
+// `define __NO_SDP_DUPS
+
+//  Reduce latency, but increase combinational delays?
+// `define __USE_DSP_SLOW
+// `define __USE_SDP_SLOW
 
 
 //----------------------------------------------------------------------------
