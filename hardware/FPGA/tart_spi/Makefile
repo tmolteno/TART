@@ -2,7 +2,7 @@ all: pairs floor
 
 .PHONY: pairs
 pairs:
-	runhaskell script/pairs.hs --antennas=24 --blocksize=6 --multiplex=12 --outfile include/tart_pairs.v
+	runhaskell script/pairs.hs --antennae=24 --blocksize=6 --multiplex=12 --outfile include/tart_pairs.v
 
 .PHONY: floor
 floor:

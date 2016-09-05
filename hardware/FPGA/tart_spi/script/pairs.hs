@@ -31,9 +31,12 @@ import Control.Arrow
 import Data.Bits
 import Data.List
 import Data.Maybe
+import Data.Tuple
 import Data.Text (pack, unpack)
 import Text.Printf
 import Turtle hiding (printf)
+
+import qualified Data.Set as Set
 
 
 type Z = Int
@@ -104,40 +107,7 @@ buildset a b =
       (xz,s) = foldl (\(xs, s) b ->
                        let (x, s') = allocate c b s
                        in  (x:xs, s')) ([], sz) bz
---   in  map sort $ zipWith (++) (reverse xz) wz
   in  zipWith (++) wz (reverse xz)
-
-------------------------------------------------------------------------------
--- | Generate the Verilog parameters, for the correlator-blocks.
-params :: Z -> Z -> Z -> Shell Text
-params a b m =
-  let bs = buildset a b
-      bi = blockset a b
-      ms = [ (i,i+1) | i <- [0,2..] ]
---       bz = padEnds m ms $ chunk m <$> bs
-      bz = let go ps     []  yz = (ps, yz)
-               go ps (xs:xz) yz = let (ps', ys) = padEnds m ps xs
-                                  in  second (ys:) $ go ps' xz yz
-           in  snd $ go ms (chunk m <$> bs) []
---       bz = map (fmap (adjust m) . chunk m) bs
-      ps = pairs a
-      -- ^ number of index-bits:
---       ib = ceiling $ log (fromIntegral (b+b)) / log 2
-      ib = ceiling $ log (fromIntegral a) / log 2
-      -- ^ number of parameter-bits/correlator:
-      pb = ib*2*m
-      cs = concat (concat bz)
-      ix = catMaybes $ map (flip elemIndex cs) ps
-      c  = 2^ib
-      l  = length (head bz)     -- #correlators/block
-      -- ^ generate antenna-index parameter labels:
-      lx = [ printf "PAIRS%02x_%02x = " i j | i <- [0..length bs-1], j <- [0..l-1] ]
-      -- ^ generate antenna-index parameters:
-      hx x = printf "{%d'h%x};" pb x :: String
-      px = concatMap (map (hx . toBitfield ib)) bz
-      pp = zipWith (++) (repeat "   parameter ") (zipWith (++) lx px)
-      hd = printf "   //\n   // Generated using:\n   //   ./pairs.hs -a %d -b %d -m %d -o <file>\n   //" a b m
-  in  select $ pack <$> (hd:pp)
 
 toBitfield :: Z -> [(Z, Z)] -> Integer
 toBitfield b = go 0
@@ -159,7 +129,6 @@ indices b bz ps = show ix
 --     ix = map (flip shiftR b) $ catMaybes $ map (flip elemIndex cs) ps
     ix = catMaybes $ map (flip elemIndex cs) ps
     cs = concat $ concatMap (map (adjust c)) bz
---     ms = 
 
 
 -- * Helper functions.
@@ -189,6 +158,8 @@ appendFrom s zs xs
   where
     (n, m) = (length xs, s - n)
 
+-- | For lists with length less than the specified minimum length, append
+--   items from the given list of extra elements.
 padEnds :: Z -> [a] -> [[a]] -> ([a], [[a]])
 padEnds s = go []
   where
@@ -197,14 +168,92 @@ padEnds s = go []
                        in  second (zs:) $ go zz ps' yz
 
 
+-- * Antenna index-pair generator.
+------------------------------------------------------------------------------
+-- | Generate the Verilog parameters, for the correlator-blocks.
+makeParams :: Z -> Z -> Z -> Shell Text
+makeParams a b m = showParams a b m $ params a b m
+
+-- | Generate the Verilog parameters, for the correlator-blocks.
+params :: Z -> Z -> Z -> [[[(Z, Z)]]]
+params a b m =
+  let bs = buildset a b
+--       ms = [ (i,i+1) | i <- [0,2..] ]
+      mx = [ ( 0, 1), ( 6, 7)
+           , ( 2, 3), (12,13)
+           , ( 4, 5), (18,19)
+           , ( 8, 9), (16,17)
+           , (10,11), (20,21)
+           , (14,15), (22,23)]
+--       ms = if a == 24 then map swap mx else [ (i,i+1) | i <- [0,2..] ]
+      ms = if a == 24 then mx else [ (i,i+1) | i <- [0,2..] ]
+--       ms = reverse mx
+--       ms = drop 6 mx ++ take 6 mx
+--       ms = repeat (24,24)
+      -- ^ The last two index-pairs, of each block, are used for counting the
+      --   number of ones, for four of the antennae.
+      bz = let go ps     []  yz = (ps, yz)
+               go ps (xs:xz) yz = let (ps', ys) = padEnds m ps xs
+                                  in  second (ys:) $ go ps' xz yz
+           in  snd $ go ms (chunk m <$> bs) []
+--       bz = map (fmap (adjust m) . chunk m) bs
+  in  bz
+
+showParams :: Z -> Z -> Z -> [[[(Z, Z)]]] -> Shell Text
+showParams a b m bz =
+  let -- ^ number of index-bits:
+      ib = ceiling $ log (fromIntegral a) / log 2
+      -- ^ number of parameter-bits/correlator:
+      (n, l) = (length bz, length (head bz)) -- (#blocks, #correlators/block)
+      -- ^ generate antenna-index parameter labels:
+      lx = [ printf "PAIRS%02x_%02x = " i j | i <- [0..n-1], j <- [0..l-1] ]
+      -- ^ generate antenna-index parameters:
+      hx x = printf "{%d'h%x};" (ib*2*m) x :: String
+      px = concatMap (map (hx . toBitfield ib)) bz
+      pp = zipWith (++) (repeat "   parameter ") (zipWith (++) lx px)
+  in  select $ pack <$> (showHeader a b m:pp)
+
+showHeader :: Z -> Z -> Z -> String
+showHeader a b m =
+  let hs = unlines [ "   //"
+                   , "   // Generated using:"
+                   , "   //   ./pairs.hs -a %d -b %d -m %d -o <file>"
+                   , "   //"]
+  in  printf (init hs) a b m
+
+
 -- * Program main.
 ------------------------------------------------------------------------------
 -- | Parse command-line options.
-parser :: Parser (Z, Z, Z, FilePath)
-parser  = (,,,) <$> optInt  "antennas"  'a' "The number of antennae"
-                <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
-                <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
-                <*> optPath "outfile"   'o' "Output filename"
+parser :: Parser (Z, Z, Z, FilePath, Bool)
+parser  = (,,,,) <$> optInt  "antennae"  'a' "The number of antennae"
+                 <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
+                 <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
+                 <*> optPath "outfile"   'o' "Output filename"
+                 <*> switch  "verbose"   'v' "Show extra information"
+
+-- | Display extra information when the `--verbose` option is used.
+verbose :: Z -> Z -> Z -> FilePath -> IO ()
+verbose a b m o = do
+  stdout " == Antenna pair generation =="
+  stdout "\nCorrelator block parameters:"
+  stdout $ makeParams a b m
+  stdout ""
+  let f  = Set.fromList . uncurry (++) . unzip
+      bs = f <$> buildset a b
+      pz = params a b m
+      ps = map f <$> pz
+      ss = Set.fromList $ pairs a
+--   mapM_ print bs
+--   mapM_ print ps
+--   mapM_ (print . Set.size) bs
+--   mapM_ (print . map Set.size) ps
+  mapM_ (print . Set.size . f . concat) pz
+--   print ss
+--   print $ Set.size ss
+--   print $ foldr Set.insert Set.empty (concat (concat pz))
+--   print $ foldr Set.delete ss (concat (concat pz))
+  mapM_ (mapM_ print >=> const (putStrLn "")) pz
 
 ------------------------------------------------------------------------------
 -- | Generate antenna-pair indices, for the correlators.
@@ -214,12 +263,10 @@ parser  = (,,,) <$> optInt  "antennas"  'a' "The number of antennae"
 --   
 main :: IO ()
 main  = do
-  stdout " == Antenna pair generation =="
-  (a, b, m, o) <- options "" parser
-  let bz = blockset a b
-      sz = shareds  a b
-      pz = params a b m
-      sho ((s, t), ps) = printf "{%s, \t%s}:\t(%d)%s\n\n" (show s) (show t) (length ps) (show ps)
+  (a, b, m, o, v) <- options "" parser
+--   let bz = blockset a b
+--   let sz = shareds  a b
+--       sho ((s, t), ps) = printf "{%s, \t%s}:\t(%d)%s\n\n" (show s) (show t) (length ps) (show ps)
 
 --   print $ pairs a
 --   print $ length $ pairs a
@@ -237,7 +284,5 @@ main  = do
 --   mapM_ sho $ bz `zip` buildset a b
 --   mapM_ print $ concat $ fmap (adjust 12) . chunk 12 <$> buildset a b
 
-  stdout "\nCorrelator block parameters:"
-  stdout pz
-  output o pz
-  stdout ""
+  when v $ verbose a b m o
+  output o $ makeParams a b m

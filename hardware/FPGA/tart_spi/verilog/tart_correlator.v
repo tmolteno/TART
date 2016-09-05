@@ -263,10 +263,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[0]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk1" *)
@@ -291,10 +291,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[1]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk2" *)
@@ -319,10 +319,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[2]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk3" *)
@@ -348,10 +348,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[3]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk4" *)
@@ -376,10 +376,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[4]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk5" *)
@@ -404,10 +404,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[5]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
 

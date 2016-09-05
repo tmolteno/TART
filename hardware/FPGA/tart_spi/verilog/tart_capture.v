@@ -87,7 +87,8 @@ module tart_capture
    assign ax_data_o = ax_data;
 
    //  TODO: Use a more robust data-capture circuit.
-   always @(posedge clk_i) begin
+   always @(posedge clk_e) begin
+//    always @(posedge clk_i) begin
       ax_real <= #DELAY ax_data_i;
       ax_data <= #DELAY ax_data_w;
    end

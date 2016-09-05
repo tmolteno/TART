@@ -71,8 +71,8 @@ module tart_dsp_tb;
       $display("\n%12t: Generating fake antenna data:", $time);
       $display("%12t: (Data is just increasing counter values)", $time);
       for (ptr = 0; ptr < 256; ptr = ptr+1)
-        data[ptr] <= ptr;
-//         data[ptr] <= $random;
+//         data[ptr] <= ptr;
+        data[ptr] <= $random;
 
       //----------------------------------------------------------------------
       #20 $display("\n%12t: Issuing RESET:\n", $time);

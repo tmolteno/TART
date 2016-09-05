@@ -15,8 +15,13 @@ TIMESPEC "TSspi_clk"=PERIOD "spi_clk" 8.000  ns HIGH 50%;
 # Exempt some signals from timing consideration.
 # NOTE: These are typically exempted because they're not performance-critical.
 #
+NET "reset" TIG;
+
 NET "aq_enabled" TIG;
+NET "aq_delay<*>" TIG;
+NET "aq_debug" TIG;
 NET "ax_dat<*>" TIG;
+
 NET "checksum<*>" TIG;
 NET "uflow" TIG;
 NET "oflow" TIG;
@@ -24,34 +29,7 @@ NET "DSP/blocksize<*>" TIG;
 NET "DSP/c_err" TIG;
 NET "DSP/CORRELATOR/sw_d" TIG;
 NET "DSP/CORRELATOR/sw_b" TIG;
-NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
-
-# DSP48-based correlator area-groups:
-INST "DSP/CORRELATOR/CXBLOCK0" AREA_GROUP="cblk0";
-INST "DSP/CORRELATOR/CXBLOCK1" AREA_GROUP="cblk1";
-INST "DSP/CORRELATOR/CXBLOCK2" AREA_GROUP="cblk2";
-INST "DSP/CORRELATOR/CXBLOCK3" AREA_GROUP="cblk3";
-
-AREA_GROUP "cblk0" RANGE=SLICE_X0Y2:SLICE_X11Y15;
-AREA_GROUP "cblk1" RANGE=SLICE_X0Y16:SLICE_X11Y31;
-AREA_GROUP "cblk2" RANGE=SLICE_X0Y32:SLICE_X11Y47;
-AREA_GROUP "cblk3" RANGE=SLICE_X0Y48:SLICE_X11Y61;
-
-# Carry-adder-based correlator area-groups:
-INST "DSP/CORRELATOR/CXBLOCK4" AREA_GROUP="cblk4";
-INST "DSP/CORRELATOR/CXBLOCK5" AREA_GROUP="cblk5";
-
-AREA_GROUP "cblk4" RANGE=SLICE_X14Y2:SLICE_X23Y17;
-AREA_GROUP "cblk5" RANGE=SLICE_X14Y18:SLICE_X23Y33;
-
-# AREA_GROUP "cblk4" RANGE=SLICE_X14Y2:SLICE_X23Y13;
-# AREA_GROUP "cblk5" RANGE=SLICE_X14Y14:SLICE_X23Y25;
-
-# AREA_GROUP "cblk4" RANGE=RAMB8_X1Y0:RAMB8_X1Y7;
-# AREA_GROUP "cblk5" RANGE=RAMB8_X1Y8:RAMB8_X1Y13;
-
-# INST "DSP/CORRELATOR/CXBLOCK6" AREA_GROUP="cblk6";
-# AREA_GROUP "cblk6" RANGE=SLICE_X12Y50:SLICE_X23Y61;
+# NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
 
 
 ##############################################################################

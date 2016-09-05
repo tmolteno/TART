@@ -61,8 +61,9 @@ module tart
    (* PERIOD = "10.18 ns" *) wire fpga_clk;
    (* PERIOD = "10.18 ns" *) wire rx_clk;
    (* PERIOD = "5.091 ns" *) wire clk_x;
+   (* KEEP   = "TRUE"     *) wire reset;
 
-   wire                reset_n, reset;
+   wire                reset_n;
 
    //  SDRAM memory-controller signals:
    wire                cmd_enable, cmd_ready, cmd_wr;
@@ -71,14 +72,14 @@ module tart
    wire [31:0]         data_out;
 
    wire                request_from_spi;
-   wire                spi_debug;
-   wire [2:0]          data_sample_delay;
    wire [2:0]          tart_state;
    wire                switching;
 
    //  Force these signals to be kept, so that they can be referenced in the
    //  constraints file (as they have the `TIG` constraint applied).
    (* KEEP = "TRUE" *) wire aq_enabled;
+   (* KEEP = "TRUE" *) wire [2:0] aq_delay;
+   (* KEEP = "TRUE" *) wire aq_debug;
    (* KEEP = "TRUE" *) wire [NSB:0] ax_dat;
 
    assign led = tart_state >= 2; // asserted when data can be read back
@@ -133,8 +134,8 @@ module tart
        .mcb_dat_o (cmd_data_in),
 
        .aq_ce_i   (aq_enabled),
-       .aq_delay_i(data_sample_delay),
-       .aq_debug_i(spi_debug),
+       .aq_delay_i(aq_delay),
+       .aq_debug_i(aq_debug),
        .ax_data_i (antenna),
        .ax_data_o (ax_dat),
        .rd_req_i  (request_from_spi),
@@ -265,7 +266,7 @@ module tart
    //-------------------------------------------------------------------------
    wire spi_busy;
    wire [7:0] spi_status = {uflow, oflow, request_from_spi, aq_enabled,
-                            spi_debug, tart_state[2:0]};
+                            aq_debug, tart_state[2:0]};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
@@ -377,9 +378,9 @@ module tart
        .blocksize(blocksize),
 
        //  Antenna capture & acquisition controls:
-       .aq_debug_mode(spi_debug),
+       .aq_debug_mode(aq_debug),
        .aq_enabled(aq_enabled),
-       .aq_sample_delay(data_sample_delay),
+       .aq_sample_delay(aq_delay),
 //        .aq_adr_i(cmd_address)
        .aq_adr_i({21'h0, v_blk})
        );

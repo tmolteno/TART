@@ -77,12 +77,28 @@ module correlator_block_SDP
     output reg [MSB:0] dat_o,
 
     // Real and imaginary components from the antennas.
-    input              sw, // switch banks
-    input              en, // data is valid
-    input [ISB:0]      re, // real component of imput
-    input [ISB:0]      im  // imaginary component of input
+    input              sw_i, // switch banks
+    input              en_i, // data is valid
+    input [ISB:0]      re_i, // real component of imput
+    input [ISB:0]      im_i  // imaginary component of input
     );
 
+`ifdef __USE_SLOW
+   wire                sw = sw_i;
+   wire                en = en_i;
+   wire [ISB:0]        re = re_i;
+   wire [ISB:0]        im = im_i;
+`else
+   (* KEEP = "TRUE" *) reg         sw = 0;
+   (* KEEP = "TRUE" *) reg         en = 0;
+   (* KEEP = "TRUE" *) reg [ISB:0] re = {IBITS{1'b0}};
+   (* KEEP = "TRUE" *) reg [ISB:0] im = {IBITS{1'b0}};
+
+   always @(posedge clk_x) begin
+      {sw, en} <= #DELAY {sw_i, en_i};
+      {im, re} <= #DELAY {im_i, re_i};
+   end
+`endif // !`ifdef __USE_SLOW
 
    //-------------------------------------------------------------------------
    //  Visibilities buffer.
@@ -115,6 +131,7 @@ module correlator_block_SDP
    //-------------------------------------------------------------------------
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
+`ifdef __NO_SDP_DUPS
    wire [TSB:0] x_rd_adr;
    wire [TSB:0] x_wr_adr;
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
@@ -130,7 +147,37 @@ module correlator_block_SDP
          .wr_adr_o(x_wr_adr),
          .wr_wrap_o(wrap_x_wr_adr)
          );
+`else
+   (* KEEP = "TRUE" *) wire [TSB:0] x_rd_adr;
+   (* KEEP = "TRUE" *) wire [TSB:0] x_wr_adr;
+   (* KEEP = "TRUE" *) wire [TSB:0] y_rd_adr;
+   (* KEEP = "TRUE" *) wire [TSB:0] y_wr_adr;
+   wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
+   rmw_address_unit
+     #(  .ABITS(TBITS), .UPPER(TRATE-1)
+         ) RMW0
+       ( .clk_i(clk_x),
+         .rst_i(rst),
+         .ce_i(en),
+         .rd_adr_o(x_rd_adr),
+         .rd_wrap_o(wrap_x_rd_adr),
+         .wr_adr_o(x_wr_adr),
+         .wr_wrap_o(wrap_x_wr_adr)
+         );
+
+   rmw_address_unit
+     #(  .ABITS(TBITS), .UPPER(TRATE-1)
+         ) RMW1
+       ( .clk_i(clk_x),
+         .rst_i(rst),
+         .ce_i(en),
+         .rd_adr_o(y_rd_adr),
+         .rd_wrap_o(),
+         .wr_adr_o(y_wr_adr),
+         .wr_wrap_o()
+         );
+`endif
 
    //-------------------------------------------------------------------------
    //  Banks are switched at the next address-wrap event.
@@ -241,8 +288,13 @@ module correlator_block_SDP
          .en(en),
          .re(re),
          .im(im),
+`ifdef __NO_DUPS
          .rd(x_rd_adr),
          .wr(x_wr_adr),
+`else
+         .rd(y_rd_adr),
+         .wr(y_wr_adr),
+`endif
 
          .vld(),
          .vis(vis[WIDTH+WIDTH+WSB:WIDTH+WIDTH])
@@ -262,8 +314,13 @@ module correlator_block_SDP
          .en(en),
          .re(re),
          .im(im),
+`ifdef __NO_DUPS
          .rd(x_rd_adr),
          .wr(x_wr_adr),
+`else
+         .rd(y_rd_adr),
+         .wr(y_wr_adr),
+`endif
 
          .vld(),
          .vis(vis[WIDTH+WIDTH+WIDTH+WSB:WIDTH+WIDTH+WIDTH])
