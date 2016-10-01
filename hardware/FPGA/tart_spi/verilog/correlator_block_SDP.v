@@ -328,7 +328,8 @@ module correlator_block_SDP
 
 
    //-------------------------------------------------------------------------
-   //  Explicit instantiation, because XST sometimes gets it wrong.
+   //  Explicit instantiation, because explicitly placing them is needed to
+   //  consistently meet timing (and XST sometimes gets the primitive wrong).
    //-------------------------------------------------------------------------
    //  TODO: Parameterise the number of block SRAM's.
    RAMB8X32_SDP #(.DELAY(DELAY)) VISRAM [NSRAM-1:0]

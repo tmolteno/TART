@@ -27,6 +27,9 @@
  * Changelog:
  *  + 14/07/2016  --  initial file (rebuilt from `correlator_block.v`);
  * 
+ * TODO:
+ *  + is the delay `RAM32M -> MUX8 -> FDE` too long?
+ * 
  */
 
 `include "tartcfg.v"
@@ -105,18 +108,24 @@ module correlator_block_DSP
    wire [XSB:0]        vis;
    wire [XSB:0]        dat;
    wire                vld;
-
-
-   //-------------------------------------------------------------------------
-   //  Wishbone-like bus interface.
-   //-------------------------------------------------------------------------
    reg                 ack = 0;
    reg [2:0]           adr = 0;
 
+`ifdef __WB_CLASSIC
+   //  Acknowledge any request, even if ignored.
+   always @(posedge clk_i)
+     if (rst) {ack_o, ack} <= #DELAY 2'b00;
+     else     {ack_o, ack} <= #DELAY {cyc_i && stb_i && ack && !ack_o, cyc_i && stb_i && !ack && !ack_o};
+
+`else // !`ifdef __WB_CLASSIC
+   //-------------------------------------------------------------------------
+   //  Wishbone-like bus interface.
+   //-------------------------------------------------------------------------
    //  Acknowledge any request, even if ignored.
    always @(posedge clk_i)
      if (rst) {ack_o, ack} <= #DELAY 2'b00;
      else     {ack_o, ack} <= #DELAY {cyc_i && ack, cyc_i && stb_i};
+`endif // !`ifdef __WB_CLASSIC
 
    //  Put data onto the WB bus, in two steps.
    wire [MSB:0]        dat_w;        

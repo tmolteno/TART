@@ -242,6 +242,7 @@ class TartSPI:
     val = np.array(res)
     if noisy:
       print val
+      print " sum of visibilities:\t%d\n" % sum(val)
     return val
 
   def vis_ready(self, noisy=False):

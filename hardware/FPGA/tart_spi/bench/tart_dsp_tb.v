@@ -14,10 +14,10 @@ module tart_dsp_tb;
    parameter MRATE = 12;
    parameter DELAY = 3;
 
-   parameter COUNT = 4; // count down from:  (1 << COUNT) - 1;
+   parameter COUNT = 5; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
-   parameter NREAD = 8;
+   parameter NREAD = 24;
 //    parameter NREAD = 24;
 //    parameter NREAD = 96;
 //    parameter NREAD = 120;
@@ -125,7 +125,7 @@ module tart_dsp_tb;
    //-------------------------------------------------------------------------
    //  Exit if the simulation appears to have stalled.
    //-------------------------------------------------------------------------
-   parameter LIMIT = 1000 + (1 << COUNT) * 300;
+   parameter LIMIT = 1000 + (1 << COUNT) * 320;
 
    initial begin : SIM_FAILED
       $display("%12t: Simulation TIMEOUT limit:\t%12d", $time, LIMIT);
@@ -359,7 +359,7 @@ module tart_dsp_tb;
        );
 
    tart_dsp
-     #(.NREAD(NREAD)
+     #(.NREAD(NREAD << 1)
        ) TART_DSP
      ( .clk_x(clk_x),
        .rst_i(rst),

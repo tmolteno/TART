@@ -422,7 +422,6 @@ module tart
        .limp_o   (limp),
 
        .aq_enable(aq_enabled),
-//        .antenna  (antenna),
        .antenna  (ax_dat),
        .blocksize(blocksize),
        .switching(switching),

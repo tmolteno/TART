@@ -28,6 +28,7 @@
 `define VISB_LOG2   20          // = 2^20 samples/block;
 `define READ_COUNT 576          // Number of visibilities to read back
 `define READ_BITS   10          // = ceiling{log2(`READ_COUNT)};
+
 // `define RANDOM_DATA  1          // Use a RNG for fake data?
 `define RANDOM_DATA  0          // Use a RNG for fake data?
 

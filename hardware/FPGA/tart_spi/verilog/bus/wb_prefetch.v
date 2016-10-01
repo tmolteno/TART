@@ -13,13 +13,13 @@
  * Has two master Wishbone-like buses, for prefetching data from one slave
  * device/bus, and then transferring this data to another slave device.
  * 
- * The data prefetches are broken up into multiple block-transfers, of the
+ * The data-prefetches are broken up into multiple block-transfers, of the
  * parameterised sizes, so that data can be fetched from multiple, similar
  * devices.
  * 
  * NOTE:
  *  + currently synchronous, and both bus interfaces share the same clock;
- *  + it would be unwise to change the input `count_i` value when this module
+ *  + it would be unwise to change the input `count_i` value while this module
  *    is active;
  * 
  * Changelog:

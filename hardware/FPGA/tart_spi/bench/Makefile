@@ -11,7 +11,7 @@ BUS =$(RTL)/bus
 SPI =$(RTL)/spi
 
 # Some Wishbone-like cores:
-WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_prefetch.v $(BUS)/wb_get_block.v $(BUS)/wb_stream.v
+WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_prefetch.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v
 
 # Common library cores:
 LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_acquire.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v
