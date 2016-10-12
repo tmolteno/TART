@@ -48,7 +48,7 @@ module tart_dsp
     input          aq_we_i, // writes only work for system registers
     input          aq_bst_i, // Bulk Sequential Transfer?
     output         aq_ack_o,
-    input [XSB:0]  aq_blk_i, // upper address-space for registers
+    input [XSB:0]  aq_blk_i,
     input [7:0]    aq_dat_i,
     output [7:0]   aq_dat_o,
 
@@ -150,8 +150,8 @@ module tart_dsp
        ( .clk_i(aq_clk_i),
          .rst_i(rst_i),
 
-         .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
-         .m_stb_o(v_stb),       // sequentially
+         .m_cyc_o(v_cyc),     // this bus prefetches visibilities, and
+         .m_stb_o(v_stb),     // sequentially
          .m_we_o (v_we),
          .m_bst_o(v_bst),
          .m_ack_i(v_ack),
@@ -160,8 +160,8 @@ module tart_dsp
          .m_dat_i(v_drx),
          .m_dat_o(v_dtx),
 
-         .s_cyc_i(aq_cyc_i),       // visibilities are streamed from here to the
-         .s_stb_i(aq_stb_i),       // SPI module
+         .s_cyc_i(aq_cyc_i),  // visibilities are streamed from here to the
+         .s_stb_i(aq_stb_i),  // SPI module
          .s_we_i (aq_we_i),
          .s_bst_i(1'b0),
          .s_ack_o(aq_ack_o),
@@ -169,7 +169,7 @@ module tart_dsp
          .s_dat_i(8'bx),
          .s_dat_o(aq_dat_o),
 
-         .wrapped(streamed)     // strobes when block has been streamed
+         .wrapped(streamed)   // strobes when block has been streamed
          );
 
 

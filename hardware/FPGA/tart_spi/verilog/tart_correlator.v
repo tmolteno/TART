@@ -252,7 +252,7 @@ module tart_correlator
        );
 
    //-------------------------------------------------------------------------
-   //  Hilbert transform to reconstruct imaginaries.
+   //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
    fake_hilbert #( .WIDTH(AXNUM) ) HILB0
      (  .clk(clk_x),
