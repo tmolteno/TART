@@ -10,8 +10,7 @@
  * Stability   : Experimental
  * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
- * Top-level of the TART DSP units, which contain the time-multiplexed block
- * of correlator-blocks.
+ * Fake top-level of the TART DSP units, to find the "all-zero" bug.
  * 
  * NOTE:
  *  + hardwired for a 24 antenna setup;
@@ -25,6 +24,7 @@
  *    of the accumulator, because the visibilities are monotone increasing;
  * 
  * TODO:
+ *  + 
  *  + when `bst_i` deasserts, deassert `stb[i]` the next cycle? Currently, the
  *    "tails" of a transaction are one cycle too long;
  *  + compute the exponent of the count-size;
@@ -118,6 +118,30 @@ module tart_fake_dsp
 
 
    //-------------------------------------------------------------------------
+   //  Add a single hardware correlator, for testing.
+   //-------------------------------------------------------------------------
+   correlator_SDP
+     #(  .ACCUM(ACCUM),
+         .SUMHI(0),
+         .TBITS(TBITS),
+         .PAIRS(PAIRS0),
+         .DELAY(DELAY)
+         ) CORRELATOR0
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .sw(clear),
+         .en(en),
+         .re(re),
+         .im(im),
+         .rd(x_rd_adr),
+         .wr(x_wr_adr),
+
+         .vld(vld),
+         .vis(vis[WSB:0])
+         );
+
+   //-------------------------------------------------------------------------
    //  Explicit instantiation, because XST sometimes gets it wrong.
    //-------------------------------------------------------------------------
    //  TODO: Parameterise the number of block SRAM's.
@@ -131,6 +155,42 @@ module tart_fake_dsp
        .RADDR(adr_i[ASB:3]),
        .DO(dat)
        );
+   
+   //-------------------------------------------------------------------------
+   //  RAM32M's implemented the nerdy way.
+   //-------------------------------------------------------------------------
+   //  TODO: Parameterise the accumulator width.
+   parameter INIT = 64'hf0e1d2c3b4a59687;
+
+   RAM32X6_SDP
+     #( .INITA(INIT),
+        .INITB(INIT),
+        .INITC(INIT),
+        .INITD(INIT),
+        .DELAY(3)
+        ) RAM32X6_SDP_COS [3:0]
+       (.WCLK(clk_x),
+        .WE(vld),
+        .WADDR({{5-TBITS{1'b0}}, wr}),
+        .DI(qcos),
+        .RADDR({{5-TBITS{1'b0}}, rd}),
+        .DO(dcos_w)
+        );
+
+   RAM32X6_SDP
+     #( .INITA(INIT),
+        .INITB(INIT),
+        .INITC(INIT),
+        .INITD(INIT),
+        .DELAY(3)
+        ) RAM32X6_SDP_SIN [3:0]
+       (.WCLK(clk_x),
+        .WE(vld),
+        .WADDR({{5-TBITS{1'b0}}, wr}),
+        .DI(qsin),
+        .RADDR({{5-TBITS{1'b0}}, rd}),
+        .DO(dsin_w)
+        );
 
 
 endmodule // tart_fake_dsp

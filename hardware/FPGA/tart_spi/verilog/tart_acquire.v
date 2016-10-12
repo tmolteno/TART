@@ -13,6 +13,11 @@
  * TART's data-acquisition control subcircuit, connected via a Wishbone-like
  * interconnect.
  * 
+ * This module handles DRAM prefetch of raw acquisition data, for the SPI
+ * interface, and controls the settings for both the:
+ *  a) visibilities calculation unit; and
+ *  b) raw acquisition-data buffering unit.
+ * 
  * Has system registers for:
  *   000  --  antenna data stream;
  *   001  --  antenna data[23:16];
