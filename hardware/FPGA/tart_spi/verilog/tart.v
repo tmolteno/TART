@@ -403,7 +403,11 @@ module tart
    //     CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
+ `ifdef __USE_FAKE_DSP
+   tart_fake_dsp
+ `else
    tart_dsp
+ `endif
      #(.NREAD(NREAD)
        ) DSP
      ( .clk_x(clk_x),

@@ -27,7 +27,7 @@ module wb_chunk
     parameter MSB   = CHUNK-1,
     parameter COUNT = (WIDTH+CHUNK-1) / CHUNK - 1,
     parameter CBITS = 3,
-    parameter CSB   = ABITS-1,
+    parameter CSB   = CBITS-1,
     parameter DELAY = 3)
    (
     // Wishbone-like bus interface:
@@ -40,11 +40,12 @@ module wb_chunk
     input [MSB:0]  dat_i, // ignored
     output [MSB:0] dat_o,
 
-    output         fetch_o,
+    output reg     fetch_o = 0,
     input          ready_i,
     input [WSB:0]  value_i
     );
 
+   reg             empty = 1'b1;
    reg [WSB:0]     word = {WIDTH{1'bx}};
    reg [CSB:0]     count = {CBITS{1'b0}};
    wire            wrap_count = count == COUNT-1;
@@ -70,9 +71,17 @@ module wb_chunk
    //  Retrieve data from external source.
    always @(posedge clk_i)
      if (rst_i || fetch_o && ready_i)
-       fetch_o <= #DELAY 1'b0;
+        fetch_o <= #DELAY 1'b0;
+     else if (cyc_i && stb_i) begin
+       fetch_o <= #DELAY wrap_count;
+     end
+
+   always @(posedge clk_i)
+     if (rst_i)
+       empty <= #DELAY 1'b1;
      else if (cyc_i && stb_i && !ack_o)
        fetch_o <= #DELAY wrap_count;
+     end
 
    //-------------------------------------------------------------------------
    //  Store incoming data, and break into chunks, to be sent.

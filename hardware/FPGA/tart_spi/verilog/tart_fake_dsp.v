@@ -36,16 +36,16 @@ module tart_fake_dsp
     input          clk_x,
     input          rst_i,
 
-    // Wishbone-like bus interface for reading visibilities.
+    // 100 MHz, 8-bit, Wishbone-like interconnect for reading visibilities.
     input          aq_clk_i, // bus clock
     input          aq_cyc_i,
     input          aq_stb_i,
-    input          aq_we_i, // writes only work for system registers
-    input          aq_bst_i, // Bulk Sequential Transfer?
+    input          aq_we_i,
+    input          aq_bst_i,
     output         aq_ack_o,
     input [XSB:0]  aq_blk_i,
-    input [7:0]    aq_dat_i,
-    output [7:0]   aq_dat_o,
+    input [BSB:0]  aq_dat_i,
+    output [BSB:0] aq_dat_o,
 
     // Debugging signals.
     output         stuck_o,
@@ -55,7 +55,7 @@ module tart_fake_dsp
     input          aq_enable, // data acquisition is active
     output         switching, // NOTE: bus domain
     input [MSB:0]  blocksize, // block size - 1
-    input [23:0]   antenna, // the raw antenna signal
+    input [NSB:0]  antenna, // the raw antenna signal
 
     output         newblock,
     output [MSB:0] checksum, // TODO:
@@ -93,6 +93,7 @@ module tart_fake_dsp
    assign switching = switch;
    assign streamed  = switch;
    assign newblock  = switch;
+   assign checksum  = {ACCUM{1'bx}};
 
 
    //-------------------------------------------------------------------------
@@ -131,11 +132,11 @@ module tart_fake_dsp
      if (rst_i) sw_d <= #DELAY 0;
      else       sw_d <= #DELAY sw_x && strobe;
 
-   always @(posedge clk_i or posedge sw_d)
+   always @(posedge aq_clk_i or posedge sw_d)
      if (sw_d)                 sw_b <= #DELAY 1'b1;
      else if (rst_i || switch) sw_b <= #DELAY 1'b0;
 
-   always @(posedge clk_i)
+   always @(posedge aq_clk_i)
      if (rst_i) switch <= #DELAY 1'b0;
      else       switch <= #DELAY sw_b && !switch;
 
@@ -160,8 +161,9 @@ module tart_fake_dsp
         sw    <= #DELAY 1'b0;
         count <= #DELAY {COUNT{1'b0}};
      end
-     else if (go) begin
-        sw    <= #DELAY delays[3] && wrap_blk; // signal an upcoming bank-swap
+     else if (valid) begin
+        // signal an upcoming bank-swap?
+        sw    <= #DELAY delays[3] && wrap_count;
         count <= #DELAY strobe ? next_count[MSB:0] : count;
      end
      else begin
@@ -209,8 +211,7 @@ module tart_fake_dsp
    //-------------------------------------------------------------------------
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
-   wire [TSB:0] x_rd_adr;
-   wire [TSB:0] x_wr_adr;
+   wire [TSB:0] x_rd_adr, x_wr_adr;
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
@@ -249,11 +250,13 @@ module tart_fake_dsp
    wire         write;
    wire [WSB:0] vis_data;
 
+`include "../include/tart_pairs.v"
+
    correlator_SDP
      #(  .ACCUM(ACCUM),
          .SUMHI(0),
          .TBITS(TBITS),
-         .PAIRS(PAIRS0),
+         .PAIRS(PAIRS00_00),
          .DELAY(DELAY)
          ) CORRELATOR0
        ( .clk_x(clk_x),
@@ -277,13 +280,19 @@ module tart_fake_dsp
    //  
    //-------------------------------------------------------------------------
    wire sram_ce, sram_we;
-   wire [ASB:0] sram_adr;
-   wire [MSB:0] sram_to_wb, wb_to_sram;
+   wire [7:0] sram_adr;
+   wire [WSB:0] sram_to_wb, wb_to_sram;
    wire         s_cyc, s_ack;
-   reg [CSB:0]  s_adr = {CBITS{1'b0}};
+   reg [7:0]    s_adr = 8'b0;
    wire [WSB:0] s_dat;
 
    assign sram_to_wb = {ACCUM{1'b0}};
+
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       s_adr <= #DELAY 8'h00;
+     else if (s_cyc && s_ack)
+       s_adr <= #DELAY s_adr + 1;
 
    //-------------------------------------------------------------------------
    //  Break the 48-bit words into 8-bit chunks.
@@ -305,10 +314,9 @@ module tart_fake_dsp
 
    //-------------------------------------------------------------------------
    //  Fetch the 48-bit `{sin, cos}` visibilities from the buffer.
-   wb_sram_interface #( .WIDTH(WIDTH), .ABITS(CBITS) ) WBSRAM0
-     ( .rst_i(rst_i),
-
-       .clk_i(aq_clk_i),
+   wb_sram_interface #( .WIDTH(WIDTH), .ABITS(8) ) WBSRAM0
+     ( .clk_i(aq_clk_i),
+       .rst_i(rst_i),
        .cyc_i(s_cyc),
        .stb_i(s_cyc),
        .we_i (1'b0),
@@ -348,6 +356,14 @@ module tart_fake_dsp
        .RADDR(sram_adr),
        .DO   (ramb8_rd_data)
        );
+
+
+   //-------------------------------------------------------------------------
+   //     Debugging stuff.
+   //-------------------------------------------------------------------------
+   always @aq_bst_i
+     if (aq_bst_i)
+       $display("%12t: WB burst-mode transfer attempted.", $time);
 
 
 endmodule // tart_fake_dsp

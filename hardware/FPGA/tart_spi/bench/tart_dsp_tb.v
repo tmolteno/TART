@@ -63,7 +63,11 @@ module tart_dsp_tb;
    integer      ptr = 0;
    initial begin : SIM_BLOCK
       if (COUNT < 6) begin
+`ifdef __USE_FAKE_DSP
+         $dumpfile ("fake_tb.vcd");
+`else
          $dumpfile ("dsp_tb.vcd");
+`endif
          $dumpvars;
       end
 
@@ -141,14 +145,6 @@ module tart_dsp_tb;
    always @(posedge b_clk)
      if (newblock)
        $display("%12t: New block available.", $time);
-
-   /*
-   initial begin
-      $dumpfile ("dsp_tb.vcd");
-      #60000 $dumpvars;
-      #4000  $finish;
-   end
-    */
 
 
    //-------------------------------------------------------------------------
@@ -358,10 +354,14 @@ module tart_dsp_tb;
        .aq_adr_i(25'b0)
        );
 
+`ifdef __USE_FAKE_DSP
+   tart_fake_dsp FAKE_DSP
+`else
    tart_dsp
      #(.NREAD(NREAD << 1)
        ) TART_DSP
-     ( .clk_x(clk_x),
+ `endif
+    ( .clk_x(clk_x),
        .rst_i(rst),
        .aq_clk_i(b_clk),
        .aq_cyc_i(dsp_cyc),
