@@ -27,13 +27,22 @@ NET "stuck" TIG;
 NET "limp" TIG;
 
 NET "checksum<*>" TIG;
+NET "DSP/blocksize<*>" TIG;
+
 NET "uflow" TIG;
 NET "oflow" TIG;
-NET "DSP/blocksize<*>" TIG;
 NET "DSP/c_err" TIG;
 NET "DSP/CORRELATOR/sw_d" TIG;
 NET "DSP/CORRELATOR/sw_b" TIG;
 # NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
+
+# # Fake constraints:
+# NET "DSP/sw_d" TIG;
+# NET "DSP/sw_b" TIG;
+# # INST "DSP/block_s" TIG;
+# # INST "DSP/block_x" TIG;
+# # NET "DSP/enable_s" TIG;
+# # NET "DSP/enable_x" TIG;
 
 
 ##############################################################################

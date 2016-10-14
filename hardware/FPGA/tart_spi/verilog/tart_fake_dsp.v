@@ -48,7 +48,9 @@ module tart_fake_dsp
     output [BSB:0] aq_dat_o,
 
     // Debugging signals.
+    (* KEEP = "TRUE" *)
     output         stuck_o,
+    (* KEEP = "TRUE" *)
     output         limp_o,
 
     // The real component of the signal from the antennas.
@@ -88,12 +90,17 @@ module tart_fake_dsp
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 
 
-   assign stuck_o   = 1'b0;
-   assign limp_o    = 1'b0;
+   assign stuck_o   = s_cyc;
+   assign limp_o    = switch;
+
    assign switching = switch;
    assign streamed  = switch;
-   assign newblock  = switch;
+   assign newblock  = newblocks[7];
    assign checksum  = {ACCUM{1'bx}};
+
+   reg [7:0]       newblocks = 0;
+   always @(posedge aq_clk_i)
+     newblocks <= #DELAY {newblocks[6:0], switch};
 
 
    //-------------------------------------------------------------------------
@@ -152,6 +159,7 @@ module tart_fake_dsp
    wire                wrap_count = count == count_max;
    reg [MSB:0]         count = {COUNT{1'b0}};
    reg [3:0]           delays = 4'h0;
+   wire                valid;
 
    //-------------------------------------------------------------------------
    //  Count the number of correlations, computed so far within this block,
@@ -230,7 +238,7 @@ module tart_fake_dsp
    //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
    wire         hilb_en = enable_x;
-   wire         valid, strobe;
+   wire         strobe;
    wire [NSB:0] re, im;
 
    fake_hilbert #( .WIDTH(AXNUM) ) HILB0
@@ -286,8 +294,6 @@ module tart_fake_dsp
    reg [7:0]    s_adr = 8'b0;
    wire [WSB:0] s_dat;
 
-   assign sram_to_wb = {ACCUM{1'b0}};
-
    always @(posedge aq_clk_i)
      if (rst_i)
        s_adr <= #DELAY 8'h00;
@@ -340,7 +346,22 @@ module tart_fake_dsp
    //  This SRAM buffers blocks of visibilities, waiting to be read back via
    //  the SPI interface.
    //-------------------------------------------------------------------------
+`ifdef __USE_GENERIC_SRAM
+   reg [WSB:0]  visram [0:255];
+   reg [WSB:0]  visdat = {WIDTH{1'b0}};
+   wire [7:0]   visadr = {block, x_wr_adr};
+
+   assign sram_to_wb = visdat;
+
+   always @(posedge clk_x)
+     if (write) visram[visadr] <= #DELAY vis_data;
+
+   always @(posedge aq_clk_i)
+     if (sram_ce) visdat <= #DELAY visram[sram_adr];
+
+`else
    wire [71:0]  ramb8_wr_data, ramb8_rd_data;
+   wire [7:0]   ramb8_wr_addr = {block, x_wr_adr};
 
    assign ramb8_wr_data = {{(72-WIDTH){1'b0}}, vis_data};
    assign sram_to_wb    = ramb8_rd_data[WSB:0];
@@ -348,14 +369,15 @@ module tart_fake_dsp
    RAMB8X36_SDP #(.DELAY(DELAY)) VISRAM [1:0]
      ( .WCLK (clk_x),           // store the visibilities
        .WE   (write),
-       .WADDR({block, x_wr_adr}),
+       .WADDR(ramb8_wr_addr),
        .DI   (ramb8_wr_data),
        .RCLK (aq_clk_i),        // read back the visibilities
-       .CE   (sram_ce),
-//        .CE   (1'b1),
+//        .CE   (sram_ce),
+       .CE   (1'b1),
        .RADDR(sram_adr),
        .DO   (ramb8_rd_data)
        );
+`endif // !`ifdef __USE_GENERIC_SRAM
 
 
    //-------------------------------------------------------------------------

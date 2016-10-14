@@ -60,14 +60,15 @@ module RAMB8X36_SDP #(parameter DELAY = 3)
    //  Behavioural description of the `RAMB8X36_SDP` core.
    //-------------------------------------------------------------------------
    reg [35:0]     sram[0:255];
-   reg [35:0]     reg_DO = 0;
+   reg [35:0]     reg_DO = 36'h0;
 
    assign DO = reg_DO;
 
-   always @(posedge WCLK) begin
-      if (WE) sram[WADDR] <= #DELAY DI;
-      if (CE) reg_DO      <= #DELAY sram[RADDR];
-   end
+   always @(posedge WCLK)
+     if (WE) sram[WADDR] <= #DELAY DI;
+
+   always @(posedge RCLK)
+     if (CE) reg_DO <= #DELAY sram[RADDR];
 
 
 `else

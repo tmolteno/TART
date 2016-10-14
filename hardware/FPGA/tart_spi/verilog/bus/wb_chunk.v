@@ -48,7 +48,7 @@ module wb_chunk
    reg             empty = 1'b1;
    reg [WSB:0]     word = {WIDTH{1'bx}};
    reg [CSB:0]     count = {CBITS{1'b0}};
-   wire            wrap_count = count == COUNT-1;
+   wire            wrap_count = count == COUNT;
    wire [CBITS:0]  next_count = wrap_count ? {CBITS{1'b0}} : count + 1;
 
    assign dat_o = word[MSB:0];
@@ -58,30 +58,30 @@ module wb_chunk
    always @(posedge clk_i)
      if (rst_i || ack_o)
        ack_o <= #DELAY 1'b0;
-     else if (cyc_i && stb_i)
+     else if (cyc_i && stb_i && !empty)
        ack_o <= #DELAY 1'b1;
 
    always @(posedge clk_i)
      if (rst_i || fetch_o && ready_i)
        count <= #DELAY {CBITS{1'b0}};
-     else if (cyc_i && stb_i && !ack_o)
+     else if (cyc_i && stb_i && !ack_o && !empty)
        count <= #DELAY next_count[CSB:0];
 
    //-------------------------------------------------------------------------
    //  Retrieve data from external source.
    always @(posedge clk_i)
      if (rst_i || fetch_o && ready_i)
-        fetch_o <= #DELAY 1'b0;
-     else if (cyc_i && stb_i) begin
-       fetch_o <= #DELAY wrap_count;
-     end
+       fetch_o <= #DELAY 1'b0;
+     else if (cyc_i && stb_i && empty)
+       fetch_o <= #DELAY 1'b1;
 
    always @(posedge clk_i)
      if (rst_i)
        empty <= #DELAY 1'b1;
-     else if (cyc_i && stb_i && !ack_o)
-       fetch_o <= #DELAY wrap_count;
-     end
+     else if (fetch_o && ready_i)
+       empty <= #DELAY 1'b0;
+     else if (wrap_count && cyc_i && stb_i && !ack_o)
+       empty <= #DELAY 1'b1;
 
    //-------------------------------------------------------------------------
    //  Store incoming data, and break into chunks, to be sent.

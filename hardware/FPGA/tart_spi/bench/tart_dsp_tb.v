@@ -17,12 +17,15 @@ module tart_dsp_tb;
    parameter COUNT = 5; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
+`ifdef __USE_FAKE_DSP
+   parameter NREAD = 9;
+`else
    parameter NREAD = 24;
-//    parameter NREAD = 24;
 //    parameter NREAD = 96;
 //    parameter NREAD = 120;
 //    parameter NREAD = `READ_COUNT >> 2;
 //    parameter NREAD = `READ_COUNT;
+`endif
 
    parameter BREAD = NREAD << 2;
    parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
