@@ -111,13 +111,13 @@ module correlator_block_DSP
    reg                 ack = 0;
    reg [2:0]           adr = 0;
 
-`ifdef __WB_CLASSIC
+`ifdef __WB_CORRELATOR_CLASSIC
    //  Acknowledge any request, even if ignored.
    always @(posedge clk_i)
      if (rst) {ack_o, ack} <= #DELAY 2'b00;
      else     {ack_o, ack} <= #DELAY {cyc_i && stb_i && ack && !ack_o, cyc_i && stb_i && !ack && !ack_o};
 
-`else // !`ifdef __WB_CLASSIC
+`else // !`ifdef __WB_CORRELATOR_CLASSIC
    //-------------------------------------------------------------------------
    //  Wishbone-like bus interface.
    //-------------------------------------------------------------------------
@@ -125,7 +125,7 @@ module correlator_block_DSP
    always @(posedge clk_i)
      if (rst) {ack_o, ack} <= #DELAY 2'b00;
      else     {ack_o, ack} <= #DELAY {cyc_i && ack, cyc_i && stb_i};
-`endif // !`ifdef __WB_CLASSIC
+`endif // !`ifdef __WB_CORRELATOR_CLASSIC
 
    //  Put data onto the WB bus, in two steps.
    wire [MSB:0]        dat_w;        
@@ -351,10 +351,11 @@ module correlator_block_DSP
 
 
 `ifdef __icarus
+ `include "../include/tart_pairs.v"
+ `ifdef __noisy_simulation
    //-------------------------------------------------------------------------
    //  Notify when data-prefetching is beginning, and ending.
    //-------------------------------------------------------------------------
-`include "../include/tart_pairs.v"
 
    reg [2:0]           cor = 3'h0;
 
@@ -379,6 +380,7 @@ module correlator_block_DSP
      if (!we_i)
        $display("%12t: Correlator (%1d) READ ending", $time, cor);
 
+ `endif //  `ifdef __noisy_simulation
 `endif //  `ifdef __icarus
 
 

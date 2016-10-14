@@ -21,6 +21,7 @@
 // Uncomment this, or set `-D__WB_SRAM_CLASSIC`, if classic (two-cycle) bus
 // transactions are desired:
 // `define __WB_SRAM_CLASSIC
+`undef __WB_SRAM_CLASSIC
 
 module wb_sram_dual_port
   #(parameter SBITS = 10,

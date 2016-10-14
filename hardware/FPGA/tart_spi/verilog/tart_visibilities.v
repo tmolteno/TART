@@ -106,7 +106,7 @@ module tart_visibilities
 
    //  Prefetches data from the various correlators after each bank-switch,
    //  and then sends it on to a block SRAM.
-`ifdef __WB_CLASSIC
+`ifdef __WB_PREFETCH_CLASSIC
    wb_prefetch_classic #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT),
 `else
    wb_prefetch #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT),

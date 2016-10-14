@@ -52,6 +52,7 @@ module tart_correlator
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
     output reg         ack_o = 1'b0,
+    output reg         wat_o = 1'b0,
     output reg         err_o = 1'b0,
     input [ASB:0]      adr_i,
     input [MSB:0]      dat_i,
@@ -145,7 +146,7 @@ module tart_correlator
    wire [5:0]   acks;
    wire         we_w = 1'b0, ack_w = |acks;
 
-`ifdef __WB_CLASSIC
+`ifdef __WB_CORRELATOR_CLASSIC
    //-------------------------------------------------------------------------
    //  Pass through (and pipeline) the bus transactions.
    always @(posedge clk_i)
@@ -181,7 +182,7 @@ module tart_correlator
      if (rst) ack_o <= #DELAY 1'b0;
      else     ack_o <= #DELAY !ack_o && cyc_i && stb_i && ack_w;
 
-`else // !`ifdef __WB_CLASSIC
+`else // !`ifdef __WB_CORRELATOR_CLASSIC
    //-------------------------------------------------------------------------
    //  Pass through (and pipeline) the bus transactions.
    always @(posedge clk_i)
@@ -198,7 +199,6 @@ module tart_correlator
    //  Address decoders -- that sets the strobes for each of the sub-units.
    always @(posedge clk_i)
      if (stb_i)
-//      if (cyc_i)
        case (adr_i[9:7])
          0: stbs <= #DELAY 6'b000001;
          1: stbs <= #DELAY 6'b000010;
@@ -217,7 +217,7 @@ module tart_correlator
    always @(posedge clk_i)
      if (rst) ack_o <= #DELAY 1'b0;
      else     ack_o <= #DELAY ack_w;
-`endif // !`ifdef __WB_CLASSIC
+`endif // !`ifdef __WB_CORRELATOR_CLASSIC
 
    //-------------------------------------------------------------------------
    //  Assert a bus address error, for attempted accesses to unmapped address-
@@ -278,7 +278,6 @@ module tart_correlator
 
    (* AREA_GROUP = "cblk0" *)
    correlator_block_DSP
-//    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
@@ -363,7 +362,6 @@ module tart_correlator
 
    (* AREA_GROUP = "cblk3" *)
    correlator_block_DSP
-//    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),

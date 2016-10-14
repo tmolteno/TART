@@ -45,6 +45,7 @@
 //----------------------------------------------------------------------------
 // Raw antenna-data, read-back registers:
 `define AX_STREAM 3'h0
+// `define AX_SYSTEM 3'h1
 `define AX_DATA1  3'h1
 `define AX_DATA2  3'h2
 `define AX_DATA3  3'h3
@@ -173,6 +174,7 @@ module tart_acquire
        case (adr_i)
          //  Antenna-data access registers:
          `AX_STREAM: dat_o <= #DELAY ax_stream;
+//          `AX_SYSTEM: dat_o <= #DELAY ax_system;
          `AX_DATA1:  dat_o <= #DELAY ax_data[23:16];
          `AX_DATA2:  dat_o <= #DELAY ax_data[15: 8];
          `AX_DATA3:  dat_o <= #DELAY ax_data[ 7: 0];

@@ -117,12 +117,14 @@ module RAMB8X32_SDP #(parameter DELAY = 3)
        .DOBDO(DO[31:16]),       // 16-bit output: MSB data
        .DOPBDOP(),              // 2-bit output: MSB parity
        // Not used in SDP-mode or with the output registers disabled:
-       .REGCEA(1'b1),           // 1-bit input: A port register enable
+       .REGCEA(1'b0),           // 1-bit input: A port register enable
        .RSTA(1'b0),             // 1-bit input: A port set/reset
-       .WEAWEL(2'b11),          // 2-bit input: A port write enable
+       .WEAWEL({WE, WE}),          // 2-bit input: A port write enable
+//        .WEAWEL(2'b11),          // 2-bit input: A port write enable
        .REGCEBREGCE(1'b1),      // 1-bit input: Register enable
        .RSTBRST(1'b0),          // 1-bit input: B port set/reset
-       .WEBWEU(2'b11)           // 2-bit input: B port write enable
+       .WEBWEU({WE, WE})           // 2-bit input: B port write enable
+//        .WEBWEU(2'b11)           // 2-bit input: B port write enable
    );
 `endif // !`ifdef __icarus
 

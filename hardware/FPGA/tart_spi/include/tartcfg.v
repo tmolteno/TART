@@ -29,8 +29,8 @@
 `define READ_COUNT 576          // Number of visibilities to read back
 `define READ_BITS   10          // = ceiling{log2(`READ_COUNT)};
 
-// `define RANDOM_DATA  1          // Use a RNG for fake data?
-`define RANDOM_DATA  0          // Use a RNG for fake data?
+`define RANDOM_DATA  1          // Use a RNG for fake data?
+// `define RANDOM_DATA  0          // Use a RNG for fake data?
 
 
 //
@@ -87,6 +87,19 @@
  `undef  __WB_CLASSIC
  `define __WB_PIPELINED
 `endif // __WB_CLASSIC
+
+//  Choose whether to use classic, or burst-mode, transfers when prefetching
+//  visibilities.
+// `define __WB_PREFETCH_CLASSIC
+
+//  Choose whether to use classic, or burst-mode, transfers when accessing
+//  SRAM's.
+// `define __WB_SRAM_CLASSIC
+
+//  Choose whether to use classic, or burst-mode, transfers when accessing
+//  SRAM's.
+// `define __WB_CORRELATOR_CLASSIC
+
 
 //----------------------------------------------------------------------------
 //  Wishbone bus settings for reading back the visibilities.

@@ -270,6 +270,7 @@ if __name__ == '__main__':
   parser.add_argument('--blocksize', default=24, type=int, help='exponent of correlator block-size')
   parser.add_argument('--status', action='store_true', help='just query the device')
   parser.add_argument('--reset', action='store_true', help='just reset the device')
+  parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)
@@ -299,14 +300,22 @@ if __name__ == '__main__':
   print "\nTesting acquisition:"
   tart.debug(on=True, noisy=True)
   tart.start_acquisition(1.1, True)
-  print tart.read_test(True)
-  print tart.read_data(num_words=2**args.bramexp)
-  print tart.read_test(True)
 
-  print "\nReading visibilities:"
-  tart.read_visibilities(True)
+  if args.monitor:
+    print "\nMonitoring visibilities:"
+    while True:
+      viz = tart.vis_read(False)
+      print "Visibilities: %s (sum = %d)" % (viz, sum(viz))
 
-  print "\nStatus flags:"
-  tart.read_status(True)
+  else:
+    print tart.read_test(True)
+    print tart.read_data(num_words=2**args.bramexp)
+    print tart.read_test(True)
 
-  print "\nDone."
+    print "\nReading visibilities:"
+    tart.read_visibilities(True)
+
+    print "\nStatus flags:"
+    tart.read_status(True)
+
+    print "\nDone."
