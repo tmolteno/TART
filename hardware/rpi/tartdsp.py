@@ -33,9 +33,9 @@ class TartSPI:
   SPI_MISC  = 0x7A
   SPI_RESET = 0x7B
 
-  CHECKSUM1 = 0x78
-  CHECKSUM2 = 0x79
-  CHECKSUM3 = 0x7A
+  CHECKSUM1 = 0x79
+  CHECKSUM2 = 0x7A
+  CHECKSUM3 = 0x7B
 
   WRITE_CMD = 0x80
 
@@ -80,7 +80,8 @@ class TartSPI:
   def read_status(self, noisy=False):
     '''Read back the status registers of the hardware.'''
     vals = []
-    regs = [self.VX_STATUS, self.AQ_DEBUG, self.AQ_STATUS,
+    regs = [self.AQ_STATUS, self.AQ_DEBUG, self.AQ_SYSTEM,
+            self.VX_STATUS, self.VX_SYSTEM,
             self.SPI_STATS, # self.SPI_EXTRA, self.SPI_MISC]
             self.CHECKSUM1, self.CHECKSUM2, self.CHECKSUM3]
     for reg in regs:
@@ -93,10 +94,10 @@ class TartSPI:
 
   def show_status(self, reg, val):
     bits = []
-#     vals = []
+    vals = []
     for b in range(8):
       vals.append(val >> b)
-#       bits.append(vals[b] & 0x01 == 0x01)
+      bits.append(vals[b] & 0x01 == 0x01)
 
     msgs = {
       # Acquisition registers:
@@ -104,8 +105,8 @@ class TartSPI:
       self.AQ_DEBUG:  'AQ_DEBUG: \tdebug = %s, stuck = %s, limp = %s' % (bits[7], bits[6], bits[5]),
       self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, delay = %d' % (bits[7], val & 0x7),
       # Visibilities registers:
-      self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, block = %d' % (bits[7], bits[6], val & 0xf),
-      self.VX_SYSTEM: 'VX_SYSTEM:\tenabled = %s, blocksize = %d' % (bits[7], val & 0x1f),
+      self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, overflow = %s, block = %d' % (bits[7], bits[6], bits[5], val & 0xf),
+      self.VX_SYSTEM: 'VX_SYSTEM:\tenabled = %s, overwrite = %s, blocksize = %d' % (bits[7], bits[6], val & 0x1f),
       # SPI & system registers:
       self.SPI_STATS: 'SPI_STATS:\tFIFO {underrun = %s, overflow = %s}, spireq = %s, enabled = %s, debug = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
       self.CHECKSUM1: 'CHECKSUM1:\tchecksum[7:0]   = 0x%02x' % val,
@@ -223,13 +224,17 @@ class TartSPI:
   ##  Visibility-calculation settings, and streaming read-back.
   ##--------------------------------------------------------------------------
   def start(self, blocksize=24, noisy=False):
-    self.set_blocksize_and_start(blocksize, noisy)
+    self.set_blocksize_and_start(blocksize, True, noisy)
 #     self.start_acquisition(noisy)
 
-  def set_blocksize_and_start(self, blocksize=24, noisy=False):
+  def set_blocksize_and_start(self, blocksize=24, overwrite=True, noisy=False):
     '''Set the correlator blocksize to 2^blocksize.'''
     if blocksize > 0 and blocksize < 25:
-      bs  = 0x80 | int(blocksize)
+      if overwrite:
+        ow = 0x40
+      else:
+        ow = 0x00
+      bs  = 0x80 | ow | int(blocksize)
       ret = self.spi.xfer([self.WRITE_CMD | self.VX_SYSTEM, bs])
       self.pause()
       if noisy:
@@ -303,13 +308,13 @@ if __name__ == '__main__':
     tart.set_sample_delay(i)
     tart.read_sample_delay(True)
 
-  print "\nSetting up correlators (block-size = 2^%d):" % args.blocksize
-  tart.set_blocksize(args.blocksize, True)
-  tart.get_blocksize(True)
-
   print "\nTesting acquisition:"
   tart.debug(on=True, noisy=True)
   tart.start_acquisition(1.1, True)
+
+  print "\nSetting up correlators (block-size = 2^%d):" % args.blocksize
+  tart.set_blocksize_and_start(args.blocksize, True)
+  tart.get_blocksize(True)
 
   if args.monitor:
     print "\nMonitoring visibilities:"
@@ -323,7 +328,9 @@ if __name__ == '__main__':
     print tart.read_test(True)
 
     print "\nReading visibilities:"
-    tart.read_visibilities(True)
+    viz = tart.vis_read(False)
+    print " Visibilities: %s (sum = %d)" % (viz, sum(viz))
+#     tart.read_visibilities(True)
 
     print "\nStatus flags:"
     tart.read_status(True)

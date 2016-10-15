@@ -77,6 +77,8 @@ module tart
 
    //  Force these signals to be kept, so that they can be referenced in the
    //  constraints file (as they have the `TIG` constraint applied).
+   (* KEEP = "TRUE" *) wire overflow;
+   (* KEEP = "TRUE" *) wire overwrite;
    (* KEEP = "TRUE" *) wire aq_enabled;
    (* KEEP = "TRUE" *) wire vx_enabled;
    (* KEEP = "TRUE" *) wire [2:0] aq_delay;
@@ -142,6 +144,7 @@ module tart
        .mcb_adr_o (cmd_address),
        .mcb_dat_o (cmd_data_in),
 
+       .vx_ce_i   (vx_enabled),
        .aq_ce_i   (aq_enabled),
        .aq_delay_i(aq_delay),
        .aq_debug_i(aq_debug),
@@ -379,6 +382,7 @@ module tart
        .vx_blk_o(v_blk),
        .vx_dat_i(s_dat),
 
+       .overflow (overflow),
        .newblock (newblock), // strobes when new block ready
        .streamed (streamed), // has an entire block finished streaming?
        .accessed (accessed), // asserts once visibilities are read back
@@ -387,6 +391,7 @@ module tart
        .blocksize(blocksize),
 
        .vx_enabled(vx_enabled),
+       .vx_overwrite(overwrite), // overwrite when buffers full?
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
@@ -429,9 +434,11 @@ module tart
 
        .aq_enable(aq_enabled),
        .vx_enable(vx_enabled),
+       .overwrite(overwrite),
        .antenna  (ax_dat),
        .blocksize(blocksize),
        .switching(switching),
+       .overflow (overflow),
        .newblock (newblock),
        .checksum (checksum),
        .streamed (streamed)

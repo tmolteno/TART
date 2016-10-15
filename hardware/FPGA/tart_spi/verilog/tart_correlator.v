@@ -40,6 +40,8 @@ module tart_correlator
      parameter ASB   = ABITS-1,
      parameter AXNUM = 24,
      parameter NSB   = AXNUM-1,
+     parameter BBITS = 4,       // visibilities banks
+     parameter BSB   = BBITS-1,
      parameter DELAY = 3)
    (
     input              clk_x,
@@ -61,6 +63,7 @@ module tart_correlator
     //  The real component of the signal from the antennas.
     input              enable, // data acquisition is active
     input [MSB:0]      blocksize, // block size - 1
+    output [BSB:0]     bankindex,
     output             strobe, // `antenna` data is valid
     input [NSB:0]      antenna,// the real component from each antenna
 
@@ -87,7 +90,6 @@ module tart_correlator
    //  Compose address:     UNIT       BLOCK       VALUE
    wire [ASB-3:0]      c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
    wire [MSB:0]        dat_w;
-
 
    //-------------------------------------------------------------------------
    // Activate the Hilbert transform and correlators once this module has been
@@ -301,7 +303,9 @@ module tart_correlator
          .sw_i(sw),
          .en_i(go),
          .re_i(re),
-         .im_i(im)
+         .im_i(im),
+
+         .bank_o(bankindex)
          );
 
    (* AREA_GROUP = "cblk1" *)

@@ -103,6 +103,7 @@ module tart_acquire
     input              vx_ack_i,
     output reg [BSB:0] vx_blk_o = {BBITS{1'b0}}, // Visibilities block to access
     input [MSB:0]      vx_dat_i,
+    input              overflow,
     input              newblock,
     input              streamed,
     input [XSB:0]      checksum, // TODO:
@@ -112,6 +113,7 @@ module tart_acquire
     (* ASYNC_REG = "TRUE" *)
     output reg [XSB:0] blocksize = 1'b0, // = #viz/block - 1;
     output reg         vx_enabled = 1'b0,
+    output reg         vx_overwrite = 1'b0,
     input              vx_stuck_i,
     input              vx_limp_i,
 
@@ -146,8 +148,8 @@ module tart_acquire
    wire [MSB:0]        vx_stream, vx_status, vx_system;
    reg [4:0]           log_block = 0; // = log2(#viz/block);
 
-   assign vx_status = {available, accessed, {(6-BBITS){1'b0}}, vx_blk_o};
-   assign vx_system = {vx_enabled, {(WIDTH-6){1'b0}}, log_block};
+   assign vx_status = {available, accessed, overflow, {(5-BBITS){1'b0}}, vx_blk_o};
+   assign vx_system = {vx_enabled, vx_overwrite, {(WIDTH-7){1'b0}}, log_block};
 
 
    //-------------------------------------------------------------------------
@@ -247,8 +249,9 @@ module tart_acquire
          end
          //  Visibilities control register:
          `VX_SYSTEM: begin
-            vx_enabled <= #DELAY dat_i[MSB];
-            log_block  <= #DELAY dat_i[4:0];
+            vx_enabled   <= #DELAY dat_i[MSB];
+            vx_overwrite <= #DELAY dat_i[MSB-1];
+            log_block    <= #DELAY dat_i[4:0];
          end
        endcase // case (adr_i)
      else
@@ -258,23 +261,16 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Visibilities access and control circuit.
    //-------------------------------------------------------------------------
-   wire                bs_new;
-   reg                 bs_upd = 0, bs_dec = 0;
-   reg [XSB:0]         bs_shift = 0;
+   wire                bs_new_w;
+   reg                 bs_upd = 1'b0;
 
-   assign bs_new   = cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_SYSTEM;
+   assign bs_new_w = cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_SYSTEM;
 
-   /*
-   //  TODO: How slow is computing the new block-size?
-   always @(posedge clk_i)
-     if (bs_new)
-       blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
-    */
-
+`define __LOOKUP_BLOCKSIZE
    always @(posedge clk_i) begin
-      bs_upd <= #DELAY bs_new && !bs_upd;
-//       bs_dec <= #DELAY bs_upd;
+      bs_upd <= #DELAY bs_new_w && !bs_upd;
       if (bs_upd)
+`ifdef  __LOOKUP_BLOCKSIZE
         case (log_block)
           0:  blocksize <= #DELAY        0;
           1:  blocksize <= #DELAY        1;
@@ -302,10 +298,11 @@ module tart_acquire
           23: blocksize <= #DELAY  8388607;
           default:
             blocksize   <= #DELAY 16777215;
-        endcase
-//         bs_shift  <= #DELAY (1 << log_block);
-//       if (bs_upd)
-//         blocksize <= #DELAY bs_shift - 1;
+        endcase // case (log_block)
+`else
+      //  TODO: How slow is computing the new block-size?
+      blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
+`endif
    end
 
    //-------------------------------------------------------------------------
@@ -322,8 +319,6 @@ module tart_acquire
 `ifdef __USE_SETTABLE_BLOCK_COUNTER
      else if (upd_blk)
        vx_blk_o <= #DELAY new_blk;
-//      else if (cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_STATUS)
-//        vx_blk_o <= #DELAY dat_i[BSB:0];
 `endif
      else
        vx_blk_o <= #DELAY streamed ? vx_next[BSB:0] : vx_blk_o;

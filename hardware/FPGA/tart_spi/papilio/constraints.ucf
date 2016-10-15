@@ -28,7 +28,10 @@ NET "stuck" TIG;
 NET "limp" TIG;
 
 NET "checksum<*>" TIG;
+NET "overflow" TIG;
+NET "overwrite" TIG;
 NET "DSP/blocksize<*>" TIG;
+NET "DSP/bank<*>" TIG;
 
 NET "uflow" TIG;
 NET "oflow" TIG;

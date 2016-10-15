@@ -1,14 +1,29 @@
 `timescale 1ns/100ps
 /*
+ * Module      : verilog/bus/wb_stream.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
  * Manages fetching visibilities data from the correlators -- transferring
  * visibilities from the correlators to a SRAM after each bank-swap.
  * 
  * NOTE:
  *  + 8-bit bus to the SPI interface, and 32-bit bus to the correlators;
+ *  + the correlator bank-address (typically the upper 4-bits of `adr_i`) is
+ *    passed straight through;
+ *  + this is because the bank-address is controlled by `tart_acquire`;
+ * 
+ * Changelog:
+ *  + 16/06/2016  --  initial file;
  * 
  * TODO:
- *  + redirection ROM?
+ *  + redirection ROM? Or, better to do the reordering in software?
  * 
  */
 
@@ -28,33 +43,35 @@ module tart_visibilities
     parameter RSB   = TBITS-1,
     parameter DELAY = 3)
    (
-    input              clk_i, // bus clock
+    input              clk_i, // bus clock & reset
     input              rst_i,
 
     // Wishbone-like (slave) bus interface that connects to `tart_spi`:
     input              cyc_i,
     input              stb_i,
-    input              we_i, // writes only work for system registers
+    input              we_i,
     input              bst_i, // Bulk Sequential Transfer?
     output             ack_o,
     output             wat_o,
-    input [ASB+2:0]    adr_i, // upper address-space for registers
+    input [ASB+2:0]    adr_i, // Upper 4-bits are typically the bank#
     input [7:0]        byt_i,
     output [7:0]       byt_o,
 
     // Wishbone-like (master) bus interface that connects to the correlators:
     output             cyc_o,
     output             stb_o,
-    output             we_o, // writes only work for system registers
+    output             we_o,
     output             bst_o, // Bulk Sequential Transfer?
     input              ack_i,
     input              err_i,
     input              wat_i,
-    output [ASB:0]     adr_o, // upper address-space for registers
+    output [ASB:0]     adr_o,
     input [MSB:0]      dat_i,
     output [MSB:0]     dat_o,
 
     // Status flags for the correlators and visibilities.
+    input              streamed, // signals that a bank has been sent
+    input              overwrite, // overwrite when buffer is full?
     input              switching, // inicates that banks have switched
     output             available, // asserted when a window is accessed
     output reg [MSB:0] checksum = 0
@@ -67,6 +84,11 @@ module tart_visibilities
    parameter BSIZE = TRATE*2;
    parameter BBITS = TBITS+1;
    parameter BSB   = BBITS-1;
+
+
+   initial begin : VIS_PARAMS
+      $display("\nModule : tart_visibilities\n\tBLOCK\t= %4d\n\tCOUNT\t= %4d\n\tABITS\t= %4d\n\tCBITS\t= %4d\n\tTRATE\t= %4d\n\tTBITS\t= %4d\n\tMSKIP\t= %4d\n", BLOCK, COUNT, ABITS, CBITS, TRATE, TBITS, MSKIP);
+   end // VIS_PARAMS
 
 
    //-------------------------------------------------------------------------
@@ -89,6 +111,35 @@ module tart_visibilities
      else if (cyc_o && ack_i)
 //        checksum <= #DELAY checksum + dat_i;
        checksum <= #DELAY checksum ^ dat_i;
+
+
+   //-------------------------------------------------------------------------
+   //  State-machine that tracks the contents of the prefetch buffer.
+   //-------------------------------------------------------------------------
+   reg                 empty = 1'b1, ready = 1'b0, start = 1'b0;
+
+   //  Prefetch buffer is empty on reset, or once all of its data has been
+   //  streamed out.
+   always @(posedge clk_i)
+     if (rst_i || streamed)
+       empty <= #DELAY 1'b1;
+     else if (available)
+       empty <= #DELAY 1'b0;
+
+   //  Data is ready to prefetch after the correlators perform a bank-switch.
+   always @(posedge clk_i)
+     if (rst_i || start)
+       ready <= #DELAY 1'b0;
+     else if (switching)
+       ready <= #DELAY 1'b1;
+
+   //  If the prefetch buffer is empty, and visibilities data is ready to be
+   //  prefetched, then start a prefetch.
+   always @(posedge clk_i)
+     if (rst_i || start)
+       start <= #DELAY 1'b0;
+     else if (empty && ready)
+       start <= #DELAY 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -115,7 +166,7 @@ module tart_visibilities
      ( .rst_i(rst_i),
        .clk_i(clk_i),
 
-       .begin_i(switching),
+       .begin_i(start),
        .ready_o(available),
 
        .a_cyc_o(cyc_o),         // prefetch interface (from the correlators)

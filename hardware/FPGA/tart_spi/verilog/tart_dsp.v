@@ -29,6 +29,8 @@
  *    "tails" of a transaction are one cycle too long;
  *  + compute the exponent of the count-size;
  *  + status registers, and correctly handle overflows;
+ *  + disable the correlators to prevent overwriting data, if that mode has
+ *    been selected;
  * 
  */
 
@@ -59,10 +61,12 @@ module tart_dsp
     // The real component of the signal from the antennas.
     input          aq_enable, // data acquisition is active
     input          vx_enable, // correlation is active
+    input          overwrite, // overwrite when buffers full?
     output         switching, // NOTE: bus domain
     input [MSB:0]  blocksize, // block size - 1
     input [23:0]   antenna, // the raw antenna signal
 
+    output reg     overflow = 1'b0,
     output         newblock,
     output [MSB:0] checksum, // TODO:
     output         streamed
@@ -116,6 +120,30 @@ module tart_dsp
       block_x  <= #DELAY block_s;
       enable_x <= #DELAY enable_s;
    end
+
+
+   //-------------------------------------------------------------------------
+   //  BANK OVERWRITE LOGIC.
+   //-------------------------------------------------------------------------
+   //  TODO: Disable the correlators to prevent banks being overwritten.
+   (* KEEP      = "TRUE" *) wire [XSB:0]       bank;
+   (* ASYNC_REG = "TRUE" *) reg [XSB:0]        bank_sync = {XBITS{1'b0}};
+   reg [XBITS:0]      bank_slow = {XBITS{1'b0}};
+   wire [XBITS:0]     bank_next = bank_slow + 1;
+
+   //  Bring the correlator `bank` signal into the Wishbone clock domain.
+   always @(posedge aq_clk_i) begin
+      bank_sync <= #DELAY bank;
+      bank_slow <= #DELAY bank_sync;
+   end
+
+   //  Assert overflow whenever a bank-switch causes new data to be written
+   //  to the bank currently being read back.
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       overflow <= #DELAY 1'b0;
+     else if (bank_next == aq_blk_i && switching && !overwrite)
+       overflow <= #DELAY 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -207,6 +235,8 @@ module tart_dsp
          .dat_i(c_drx),
          .dat_o(c_dtx),
 
+         .streamed (streamed),  // signals that a bank has been sent
+         .overwrite(overwrite), // overwrite when buffers full?
          .switching(switching), // strobes at every bank-switch (bus domain)
          .available(newblock),  // strobes when new block is available
          .checksum (checksum)   // computed checksum of block
@@ -238,6 +268,7 @@ module tart_dsp
 
          .enable(enable_x),     // begins correlating once asserted
          .blocksize(block_x),   // number of samples per visibility sum
+         .bankindex(bank),   // the current bank-address being written to
 //          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
          .switch(switching)     // asserts on bank-switch (sample domain)
@@ -245,7 +276,9 @@ module tart_dsp
 
 
    //-------------------------------------------------------------------------
-   //     Debugging stuff.
+   //     
+   //     DEBUGGING STUFF.
+   //     
    //-------------------------------------------------------------------------
    reg                stuck = 1'b0;
    reg                limp  = 1'b1;
@@ -269,7 +302,7 @@ module tart_dsp
    always @(posedge aq_clk_i)
      if (rst_i)
        limp <= #DELAY 1'b1;
-     else if (c_cyc && c_ack && aq_enable)
+     else if (c_cyc && c_ack && vx_enable)
        limp <= #DELAY 1'b0;
 
    always @(posedge aq_clk_i)

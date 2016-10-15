@@ -56,6 +56,7 @@ module tart_capture
     output [31:0]  mcb_dat_o,
 
     //  Antenna inputs, control-signals, and captured-data outputs:
+    input          vx_ce_i,
     input          aq_ce_i,
     input [2:0]    aq_delay_i,
     input          aq_debug_i,
@@ -74,6 +75,7 @@ module tart_capture
 
    (* IOB = "TRUE" *)
    reg [MSB:0]     ax_real;
+   reg             en_fake = 1'b0;
    reg [MSB:0]     ax_data;
    wire [MSB:0]    ax_fake;
    wire [MSB:0]    ax_data_w;
@@ -88,10 +90,14 @@ module tart_capture
 
    //  TODO: Use a more robust data-capture circuit.
    always @(posedge clk_e) begin
-//    always @(posedge clk_i) begin
       ax_real <= #DELAY ax_data_i;
       ax_data <= #DELAY ax_data_w;
    end
+
+   //  Enable the fake-data generator when in debug-mode.
+   always @(posedge clk_i)
+     if (rst_i) en_fake <= #DELAY 1'b0;
+     else       en_fake <= #DELAY (vx_ce_i || aq_ce_i) && aq_debug_i;
 
 
    //-------------------------------------------------------------------------
@@ -105,7 +111,7 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for debugging.
    fake_telescope #( .WIDTH(AXNUM), .RNG(RNG) ) FAKE_TART0
-     ( .write_clk(clk_e), .write_data(ax_fake) );
+     ( .clk(clk_e), .fake_enable(en_fake), .fake_data(ax_fake) );
 
 
    //-------------------------------------------------------------------------

@@ -76,6 +76,20 @@ module tart_dsp_tb;
       end
 
       //----------------------------------------------------------------------
+      $display("\n%12t: TART DSP settings:", $time);
+      $display(  "%12t:  TART I/O bus settings:", $time);
+      $display(  "%12t:   SPI data-bus bit-width:  \t\t%3d", $time, BBITS);
+      $display(  "%12t:   Number of visibilities banks:    \t%3d", $time, XBITS);
+      $display(  "%12t:  TART visibilities read-back settings:", $time);
+      $display(  "%12t:   Visibility-data address-width:   \t%3d", $time, ABITS);
+      $display(  "%12t:   Data prefetch block-size (words):\t%3d", $time, NREAD);
+      $display(  "%12t:   Data prefetch block-size (bytes):\t%3d", $time, BREAD);
+      $display(  "%12t:  TART correlator settings:", $time);
+      $display(  "%12t:   Accumulator bit-width:   \t\t%3d", $time, ACCUM);
+      $display(  "%12t:   Correlator bus data-width:       \t%3d", $time, BLOCK);
+      $display(  "%12t:   Correlator bus address-width:    \t%3d", $time, CBITS);
+
+      //----------------------------------------------------------------------
       $display("\n%12t: Generating fake antenna data:", $time);
       $display("%12t: (Data is just increasing counter values)", $time);
       for (ptr = 0; ptr < 256; ptr = ptr+1)
@@ -304,8 +318,8 @@ module tart_dsp_tb;
    wire [XSB:0] v_blk;
    wire         s_cyc, s_stb, s_we, s_ack;
    reg          wat = 0;
-   wire         newblock, streamed, accessed, available, switching;
-   wire         aq_debug_mode, aq_enabled, vx_enabled;
+   wire         overflow, newblock, streamed, accessed, available, switching;
+   wire         aq_debug_mode, aq_enabled, vx_enabled, overwrite;
 
    wire         dsp_cyc, dsp_stb, dsp_we, dsp_bst, dsp_ack;
    wire [XSB:0] dsp_blk;
@@ -342,6 +356,8 @@ module tart_dsp_tb;
        .vx_ack_i(dsp_ack),
        .vx_blk_o(dsp_blk),
        .vx_dat_i(dsp_dat),
+
+       .overflow (overflow),
        .newblock(newblock),
        .streamed(streamed), // has an entire block finished streaming?
        .accessed(accessed),
@@ -350,6 +366,7 @@ module tart_dsp_tb;
        .blocksize(blocksize),
 
        .vx_enabled(vx_enabled),
+       .vx_overwrite(overwrite),
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
@@ -367,29 +384,30 @@ module tart_dsp_tb;
        ) TART_DSP
  `endif
     ( .clk_x(clk_x),
-       .rst_i(rst),
-       .aq_clk_i(b_clk),
-       .aq_cyc_i(dsp_cyc),
-       .aq_stb_i(dsp_stb),
-       .aq_we_i (dsp_we ),
-       .aq_bst_i(dsp_bst),
-       .aq_ack_o(dsp_ack),
-       .aq_blk_i(dsp_blk),
-       .aq_dat_i(dsp_val),
-       .aq_dat_o(dsp_dat),
+      .rst_i(rst),
+      .aq_clk_i(b_clk),
+      .aq_cyc_i(dsp_cyc),
+      .aq_stb_i(dsp_stb),
+      .aq_we_i (dsp_we ),
+      .aq_bst_i(dsp_bst),
+      .aq_ack_o(dsp_ack),
+      .aq_blk_i(dsp_blk),
+      .aq_dat_i(dsp_val),
+      .aq_dat_o(dsp_dat),
 
-       .aq_enable(aq_enabled),
-       .vx_enable(vx_enabled),
-       .antenna  (antenna),
-       .switching(switching),
-       .blocksize(blocksize),
-       .stuck_o  (stuck),
-       .limp_o   (limp),
+      .aq_enable(aq_enabled),
+      .vx_enable(vx_enabled),
+      .overwrite(overwrite),
+      .antenna  (antenna),
+      .switching(switching),
+      .blocksize(blocksize),
+      .stuck_o  (stuck),
+      .limp_o   (limp),
 
-       .newblock (newblock),
-       .checksum (checksum),
-       .streamed (streamed)
-       );
+      .newblock (newblock),
+      .checksum (checksum),
+      .streamed (streamed)
+      );
 
 
 endmodule // tart_dsp_tb

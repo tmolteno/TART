@@ -30,8 +30,9 @@ module fake_telescope
     parameter RNG   = 1,
     parameter DELAY = 3)
    (
-    input          write_clk,
-    output [MSB:0] write_data
+    input          clk,
+    input          fake_enable,
+    output [MSB:0] fake_data
     );
 
    wire [31:0]     mfsr_new;
@@ -40,10 +41,11 @@ module fake_telescope
 
    assign write_data = RNG == 0 ? data_reg : mfsr_reg[MSB:0];
 
-   always @(posedge write_clk) begin
-      data_reg <= #DELAY data_reg + 1;
-      mfsr_reg <= #DELAY mfsr_new;
-   end
+   always @(posedge clk)
+     if (fake_enable) begin
+        data_reg <= #DELAY data_reg + 1;
+        mfsr_reg <= #DELAY mfsr_new;
+     end
 
 
    //-------------------------------------------------------------------------

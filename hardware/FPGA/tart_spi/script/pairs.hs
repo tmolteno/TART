@@ -15,12 +15,19 @@
 -- 
 -- Generates the configuration values for TART's hardware correlators.
 -- 
+-- NOTE:
+--  + requires `text` and `turtle` to be installed:
+--      > cabal install text turtle
+--      > make pairs
+-- 
 -- Changelog:
 --  + 16/06/2016  --  initial file;
+--  + 15/10/2016  --  permutation vector support added;
 -- 
 -- FIXME:
 -- 
 -- TODO:
+--  + only inputs `a == 24, b == 6, m == 12` are correctly supported.
 -- 
 ------------------------------------------------------------------------------
 
@@ -170,16 +177,15 @@ padEnds s = go []
 
 -- * Antenna index-pair generator.
 ------------------------------------------------------------------------------
--- | Generate the Verilog parameters, for the correlator-blocks.
-makeParams :: Z -> Z -> Z -> Shell Text
-makeParams a b m = showParams a b m $ params a b m
-
--- | Generate the Verilog parameters, for the correlator-blocks.
+-- | Generates the correlator-pairs, for the given:
+--    `a` -- antennae;
+--    `b` -- blocksize; and,
+--    `m` -- (time) multiplexing rate.
 params :: Z -> Z -> Z -> [[[(Z, Z)]]]
 params a b m =
   let bs = buildset a b
 --       ms = [ (i,i+1) | i <- [0,2..] ]
-      mx = [ ( 0, 1), ( 6, 7)
+      mx = [ ( 0, 1), ( 6, 7)   -- TODO: generate from parameters
            , ( 2, 3), (12,13)
            , ( 4, 5), (18,19)
            , ( 8, 9), (16,17)
@@ -198,6 +204,11 @@ params a b m =
            in  snd $ go ms (chunk m <$> bs) []
 --       bz = map (fmap (adjust m) . chunk m) bs
   in  bz
+
+------------------------------------------------------------------------------
+-- | Generate the Verilog parameters, for the correlator-blocks.
+makeParams :: Z -> Z -> Z -> Shell Text
+makeParams a b m = showParams a b m $ params a b m
 
 showParams :: Z -> Z -> Z -> [[[(Z, Z)]]] -> Shell Text
 showParams a b m bz =
@@ -225,13 +236,15 @@ showHeader a b m =
 -- * Program main.
 ------------------------------------------------------------------------------
 -- | Parse command-line options.
-parser :: Parser (Z, Z, Z, FilePath, Bool)
-parser  = (,,,,) <$> optInt  "antennae"  'a' "The number of antennae"
-                 <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
-                 <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
-                 <*> optPath "outfile"   'o' "Output filename"
-                 <*> switch  "verbose"   'v' "Show extra information"
+parser :: Parser (Z, Z, Z, FilePath, Bool, Bool)
+parser  = (,,,,,) <$> optInt  "antennae"  'a' "The number of antennae"
+                  <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
+                  <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
+                  <*> optPath "outfile"   'o' "Output filename"
+                  <*> switch  "verbose"   'v' "Show extra information"
+                  <*> switch  "permute"   'p' "Generate permutation vector"
 
+------------------------------------------------------------------------------
 -- | Display extra information when the `--verbose` option is used.
 verbose :: Z -> Z -> Z -> FilePath -> IO ()
 verbose a b m o = do
@@ -256,6 +269,22 @@ verbose a b m o = do
   mapM_ (mapM_ print >=> const (putStrLn "")) pz
 
 ------------------------------------------------------------------------------
+-- | Generate the permutation vector, to reorder the visibilities into the
+--   standard "triangular" ordering.
+--   
+--   TODO:
+permute :: Z -> Z -> Z -> IO ()
+permute a b m = do
+  let pz = params a b m
+      ps = concat <$> pz
+      n  = pred a*div a 2
+      s  = n + div a 2
+      t  = length (head ps) - 2
+      qs = take t <$> ps
+  print n
+  mapM_ print qs
+
+------------------------------------------------------------------------------
 -- | Generate antenna-pair indices, for the correlators.
 --   Default (Makefile) options:
 --     runhaskell script/pairs.hs --antennas=24 --blocksize=6 --multiplex=12 \
@@ -263,26 +292,11 @@ verbose a b m o = do
 --   
 main :: IO ()
 main  = do
-  (a, b, m, o, v) <- options "" parser
---   let bz = blockset a b
---   let sz = shareds  a b
---       sho ((s, t), ps) = printf "{%s, \t%s}:\t(%d)%s\n\n" (show s) (show t) (length ps) (show ps)
+  (a, b, m, o, v, p) <- options "" parser
 
---   print $ pairs a
---   print $ length $ pairs a
---   stdout "\nBlocks:"
---   mapM_ print $ blocks a b
---   stdout "\nBlocksets:"
---   mapM_ print bz
-
---   stdout "\nShared index pairs:"
---   mapM_ sho $ bz `zip` chunk 10 sz
-
---   stdout "\nCorrelator block indices:"
---   mapM_ (print . length) $ choices bz sz
---   mapM_ print $ choices bz sz
---   mapM_ sho $ bz `zip` buildset a b
---   mapM_ print $ concat $ fmap (adjust 12) . chunk 12 <$> buildset a b
+  unless (a == 24 && b == 6 && m == 12) $ do
+    putStrLn "Unsupported input parameters."
 
   when v $ verbose a b m o
+  when p $ permute a b m
   output o $ makeParams a b m
