@@ -78,6 +78,7 @@ module tart
    //  Force these signals to be kept, so that they can be referenced in the
    //  constraints file (as they have the `TIG` constraint applied).
    (* KEEP = "TRUE" *) wire aq_enabled;
+   (* KEEP = "TRUE" *) wire vx_enabled;
    (* KEEP = "TRUE" *) wire [2:0] aq_delay;
    (* KEEP = "TRUE" *) wire aq_debug;
    (* KEEP = "TRUE" *) wire stuck;
@@ -246,7 +247,7 @@ module tart
 
    wire [BSB:0] a_drx;   // data-acquisition controller's signals
    wire [BSB:0] a_dtx;
-   wire [2:0]   a_adr = b_adr[2:0];
+   wire [3:0]   a_adr = b_adr[3:0];
    wire         a_stb, a_ack;
 
    reg          r_sel = 0;
@@ -280,8 +281,8 @@ module tart
    assign a_dtx = b_drx;
 
    //  Address decoders for the Wishbone(-like) bus:
-   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for acquire
-   assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
+   assign a_stb = b_adr[6:4] == 3'h0 && b_stb; // decoder for acquire
+   assign r_stb = b_adr[6:3] == 4'hf && b_stb; // address decoder for reset unit
 
    assign b_ack = r_ack || a_ack;
 `ifdef __icarus
@@ -385,6 +386,7 @@ module tart
        .checksum (checksum),
        .blocksize(blocksize),
 
+       .vx_enabled(vx_enabled),
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
@@ -426,6 +428,7 @@ module tart
        .limp_o   (limp),
 
        .aq_enable(aq_enabled),
+       .vx_enable(vx_enabled),
        .antenna  (ax_dat),
        .blocksize(blocksize),
        .switching(switching),

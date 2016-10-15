@@ -58,6 +58,7 @@ module tart_dsp
 
     // The real component of the signal from the antennas.
     input          aq_enable, // data acquisition is active
+    input          vx_enable, // correlation is active
     output         switching, // NOTE: bus domain
     input [MSB:0]  blocksize, // block size - 1
     input [23:0]   antenna, // the raw antenna signal
@@ -101,14 +102,14 @@ module tart_dsp
    //     SYNCHRONISE SIGNALS FROM THE WISHBONE CLOCK DOMAIN.
    //-------------------------------------------------------------------------
    reg [MSB:0]  block_x  = 0;
-   reg          enable_x = 0;
+   reg          enable_x = 1'b0;
 
    (* ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
    (* ASYNC_REG = "TRUE" *) reg          enable_s = 0;
 
    always @(posedge clk_x) begin
       block_s  <= #DELAY blocksize;
-      enable_s <= #DELAY aq_enable;
+      enable_s <= #DELAY vx_enable;
    end
 
    always @(posedge clk_x) begin

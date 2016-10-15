@@ -20,20 +20,22 @@ class TartSPI:
   AX_DATA2  = 0x02
   AX_DATA3  = 0x03
 
-  VX_STREAM = 0x04
-  VX_STATUS = 0x05
-
+  AQ_STATUS = 0x04
   AQ_DEBUG  = 0x06
-  AQ_STATUS = 0x07
+  AQ_SYSTEM = 0x07
 
-  SPI_STATS = 0x0C
-  SPI_EXTRA = 0x0D
-  SPI_MISC  = 0x0E
-  SPI_RESET = 0x0F
+  VX_STREAM = 0x08
+  VX_STATUS = 0x09
+  VX_SYSTEM = 0x0A
 
-  CHECKSUM1 = 0x0D
-  CHECKSUM2 = 0x0E
-  CHECKSUM3 = 0x0F
+  SPI_STATS = 0x78
+  SPI_EXTRA = 0x79
+  SPI_MISC  = 0x7A
+  SPI_RESET = 0x7B
+
+  CHECKSUM1 = 0x78
+  CHECKSUM2 = 0x79
+  CHECKSUM3 = 0x7A
 
   WRITE_CMD = 0x80
 
@@ -91,13 +93,20 @@ class TartSPI:
 
   def show_status(self, reg, val):
     bits = []
+#     vals = []
     for b in range(8):
-      bits.append((val >> b) & 0x01 == 0x01)
+      vals.append(val >> b)
+#       bits.append(vals[b] & 0x01 == 0x01)
 
     msgs = {
-      self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, enabled = %s, blocksize = %d' % (bits[7], bits[6], bits[5], val & 0x1F),
-      self.AQ_DEBUG: 'AQ_DEBUG:\tdebug = %s, stuck = %s, limp = %s, delay = %d' % (bits[7], bits[6], bits[5], val & 0x07),
-      self.AQ_STATUS: 'AQ_STATUS:\tblock = %d, enabled = %s' % (val >> 1, bits[0]),
+      # Acquisition registers:
+      self.AQ_STATUS: 'AQ_STATUS:\taddress = %d' % val,
+      self.AQ_DEBUG:  'AQ_DEBUG: \tdebug = %s, stuck = %s, limp = %s' % (bits[7], bits[6], bits[5]),
+      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, delay = %d' % (bits[7], val & 0x7),
+      # Visibilities registers:
+      self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, block = %d' % (bits[7], bits[6], val & 0xf),
+      self.VX_SYSTEM: 'VX_SYSTEM:\tenabled = %s, blocksize = %d' % (bits[7], val & 0x1f),
+      # SPI & system registers:
       self.SPI_STATS: 'SPI_STATS:\tFIFO {underrun = %s, overflow = %s}, spireq = %s, enabled = %s, debug = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
       self.CHECKSUM1: 'CHECKSUM1:\tchecksum[7:0]   = 0x%02x' % val,
       self.CHECKSUM2: 'CHECKSUM2:\tchecksum[15:8]  = 0x%02x' % val,
@@ -134,8 +143,8 @@ class TartSPI:
   ##--------------------------------------------------------------------------
   def read_sample_delay(self, noisy=False):
     '''Read back the data sampling delays.'''
-    ret = self.spi.xfer([self.AQ_DEBUG, 0x0, 0x0])
-    val = ret[2] & 0x03
+    ret = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
+    val = ret[2] & 0x07
     if noisy:
       print tobin(ret)
     self.pause()
@@ -144,10 +153,10 @@ class TartSPI:
   def set_sample_delay(self, latency=0, noisy=False):
     '''Read the sampling-delay register, and update the delay, and then write back, the new register value.'''
     if (latency < 6 and latency >= 0):
-      val = self.spi.xfer([self.AQ_DEBUG, 0x0, 0x0])
-      val = val[2] & 0x80 | int(latency)
+      val = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
+      val = val[2] & 0xF8 | int(latency)
       self.pause()
-      ret = self.spi.xfer([self.WRITE_CMD | self.AQ_DEBUG, val])
+      ret = self.spi.xfer([self.WRITE_CMD | self.AQ_SYSTEM, val])
       self.pause()
       if noisy:
         print tobin(ret)
@@ -159,23 +168,24 @@ class TartSPI:
 
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
-    old = self.spi.xfer([self.WRITE_CMD | self.AQ_STATUS, 0x01])
+    old = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
     self.pause()
-    ret = self.spi.xfer([self.AQ_STATUS, 0x0, 0x0])
+    ret = self.spi.xfer([self.AQ_STATUS | self.WRITE_CMD, 0x0, 0x80 | old[2]])
     self.pause()
-    val = ret[2] & 0x01
+    res = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
+    val = (res[2] >> 7) == 0x01
     if noisy:
       print ' attempting to set acquisition-mode to ON'
       print tobin(old)
       print tobin(ret)
     if val:
       self.pause(sleeptime)       # optionally wait for acquisition to end
-      res = self.spi.xfer([self.AQ_STATUS, 0x0, 0x0])
+      res = self.spi.xfer([self.SPI_STATS, 0x0, 0x0])
       self.pause()
       if noisy:
         print tobin(res)
-      fin = res[2] & 0x03
-    return val == 0x01 and fin == 0x03
+      fin = res[2] & 0x03 == 0x03
+    return val and fin
 
   def read_slow(self, num_words=2**21, blocksize=1024):
     '''Read back the requested number of 24-bit words.'''
@@ -213,14 +223,14 @@ class TartSPI:
   ##  Visibility-calculation settings, and streaming read-back.
   ##--------------------------------------------------------------------------
   def start(self, blocksize=24, noisy=False):
-    self.set_blocksize(blocksize, noisy)
-    self.start_acquisition(noisy)
+    self.set_blocksize_and_start(blocksize, noisy)
+#     self.start_acquisition(noisy)
 
-  def set_blocksize(self, blocksize=24, noisy=False):
+  def set_blocksize_and_start(self, blocksize=24, noisy=False):
     '''Set the correlator blocksize to 2^blocksize.'''
     if blocksize > 0 and blocksize < 25:
-      bs  = int(blocksize)
-      ret = self.spi.xfer([self.WRITE_CMD | self.VX_STATUS, bs])
+      bs  = 0x80 | int(blocksize)
+      ret = self.spi.xfer([self.WRITE_CMD | self.VX_SYSTEM, bs])
       self.pause()
       if noisy:
         print tobin(ret)
@@ -230,11 +240,11 @@ class TartSPI:
 
   def get_blocksize(self, noisy=False):
     '''Get the (exponent of the) correlator block-size.'''
-    ret = self.spi.xfer([self.VX_STATUS, 0x0, 0x0])
+    ret = self.spi.xfer([self.VX_SYSTEM, 0x0, 0x0])
     self.pause()
     if noisy:
       print tobin(ret)
-    return ret[2]
+    return ret[2] & 0x1F
 
   def read_visibilities(self, noisy=True):
     '''Read back visibilities data.'''

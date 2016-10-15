@@ -23,6 +23,7 @@ NET "aq_debug" TIG;
 NET "ax_dat<*>" TIG;
 
 NET "cnt28<*>" TIG;
+NET "vx_enabled" TIG;
 NET "stuck" TIG;
 NET "limp" TIG;
 

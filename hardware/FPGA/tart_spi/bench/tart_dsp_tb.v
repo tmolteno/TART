@@ -42,15 +42,16 @@ module tart_dsp_tb;
    wire [BSB:0] dat, val, drx;
    reg          clk_x = 1, b_clk = 1, rst = 0;
    reg          cyc = 0, stb = 0, we = 0, bst = 0;
-   reg [2:0]    adr;
+   reg [3:0]    adr;
    reg [BSB:0]  dtx;
    reg          set = 0, get = 0, fin = 0;
    wire         dsp_en, stuck, limp, ack;
    wire         c_cyc, c_stb, c_we, c_bst, c_ack;
    reg [23:0]   data [0:255];
    reg [31:0]   viz = 32'h0;
+   reg [4:0]    log_bsize = COUNT[4:0];
 
-   assign dsp_en = aq_enabled;
+   assign dsp_en = vx_enabled;
 
 
    //-------------------------------------------------------------------------
@@ -86,14 +87,14 @@ module tart_dsp_tb;
       #13 rst <= 1; #40 rst <= 0;
 
       //----------------------------------------------------------------------
-      $display("\n%12t: Setting up the block-size:", $time);
-      #40 set <= 1; num <= 1; dtx <= COUNT; ptr <= 3'h5;
+      $display("\n%12t: Setting block-size & beginning correlation (bank 0):", $time);
+      #40 set <= 1; num <= 1; dtx <= {1'b1, 2'b00, log_bsize}; ptr <= 4'ha;
       while (!fin) #10;
 
-      //----------------------------------------------------------------------
-      $display("%12t: Beginning data-correlation (bank 0):", $time);
-      #40 set <= 1; num <= 1; dtx <= 8'h01; ptr <= 3'h7;
-      while (!fin) #10;
+//       //----------------------------------------------------------------------
+//       $display("%12t: Beginning data-acquisition (bank 0):", $time);
+//       #40 set <= 1; num <= 1; dtx <= 8'h80; ptr <= 4'h7;
+//       while (!fin) #10;
 
       //----------------------------------------------------------------------
       $display("%12t: Switching banks (bank 1):", $time);
@@ -103,19 +104,19 @@ module tart_dsp_tb;
       //----------------------------------------------------------------------
       while (!newblock) #10;
       #10 $display("\n%12t: Reading back visibilities (bank 0):", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 3'h4;
+      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
       while (!switching) #10; while (switching) #10;
       $display("\n%12t: Stopping data-correlation (bank 1):", $time);
-      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 3'h7;
+      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 4'ha;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
       while (!newblock) #10;
       #10 $display("\n%12t: Reading back visibilities (bank 1):", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 3'h4;
+      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -304,7 +305,7 @@ module tart_dsp_tb;
    wire         s_cyc, s_stb, s_we, s_ack;
    reg          wat = 0;
    wire         newblock, streamed, accessed, available, switching;
-   wire         aq_debug_mode, aq_enabled;
+   wire         aq_debug_mode, aq_enabled, vx_enabled;
 
    wire         dsp_cyc, dsp_stb, dsp_we, dsp_bst, dsp_ack;
    wire [XSB:0] dsp_blk;
@@ -348,6 +349,7 @@ module tart_dsp_tb;
        .checksum(checksum),
        .blocksize(blocksize),
 
+       .vx_enabled(vx_enabled),
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
@@ -377,6 +379,7 @@ module tart_dsp_tb;
        .aq_dat_o(dsp_dat),
 
        .aq_enable(aq_enabled),
+       .vx_enable(vx_enabled),
        .antenna  (antenna),
        .switching(switching),
        .blocksize(blocksize),
