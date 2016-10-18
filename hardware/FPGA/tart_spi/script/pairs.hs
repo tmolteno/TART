@@ -44,6 +44,7 @@ import Text.Printf
 import Turtle hiding (printf)
 
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 
 
 type Z = Int
@@ -276,13 +277,38 @@ verbose a b m o = do
 permute :: Z -> Z -> Z -> IO ()
 permute a b m = do
   let pz = params a b m
-      ps = concat <$> pz
+      ri = [0,(2*a)..]
+      ps = indexCalc a . concat <$> pz
       n  = pred a*div a 2
       s  = n + div a 2
       t  = length (head ps) - 2
-      qs = take t <$> ps
-  print n
-  mapM_ print qs
+      ms = zipWith (indexMeans a) ri $ concat <$> pz
+      qs = zipWith indexPairs ri ps
+      rs = [(i*pred a + j, n + i*2 + j) | i <- [0..b-1], j <- [0,1]]
+      pm = Map.fromList $ map swap $ concat qs ++ rs
+--   print n
+--   mapM_ print qs
+  print pm
+
+-- | Index each of the pairs.
+--   NOTE: Assumes that the last two pairs are indices that were used for
+--     computing antenna signal means.
+indexPairs :: Z -> [a] -> [(Z, a)]
+indexPairs from ps =
+  let ps' = zip [from..] ps
+  in  init $ init ps'
+
+indexMeans :: Z -> Z -> [a] -> [(Z, a)]
+indexMeans stride from ps =
+  let ps' = zip [from..] ps
+  in  drop (stride - 2) ps'
+
+-- | The "triangular" indices have `stride-1` entries in row zero, and then
+--   one less for each subsequent row.
+indexCalc :: Z -> [(Z, Z)] -> [Z]
+indexCalc stride =
+  let f (i, j) = ((2*stride - i - 3) * i) `div` 2 + j - 1
+  in  map f
 
 ------------------------------------------------------------------------------
 -- | Generate antenna-pair indices, for the correlators.

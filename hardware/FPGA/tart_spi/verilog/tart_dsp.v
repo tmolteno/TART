@@ -61,11 +61,13 @@ module tart_dsp
     // The real component of the signal from the antennas.
     input          aq_enable, // data acquisition is active
     input          vx_enable, // correlation is active
+    output [XSB:0] vx_block,
     input          overwrite, // overwrite when buffers full?
     output         switching, // NOTE: bus domain
     input [MSB:0]  blocksize, // block size - 1
     input [23:0]   antenna, // the raw antenna signal
 
+    (* ASYNC_REG = "TRUE" *)
     output reg     overflow = 1'b0,
     output         newblock,
     output [MSB:0] checksum, // TODO:
@@ -125,25 +127,40 @@ module tart_dsp
    //-------------------------------------------------------------------------
    //  BANK OVERWRITE LOGIC.
    //-------------------------------------------------------------------------
-   //  TODO: Disable the correlators to prevent banks being overwritten.
+`define __USE_OVERFLOW_DETECTION
+`ifdef  __USE_OVERFLOW_DETECTION
+   wire               switch_x;
+   (* KEEP      = "TRUE" *) wire               overflow_x;
    (* KEEP      = "TRUE" *) wire [XSB:0]       bank;
+
+   //  Assert overflow whenever a bank-switch causes new data to be written
+   //  to the bank currently being read back.
+   always @(posedge aq_clk_i)
+     overflow <= #DELAY overflow_x;
+`endif
+
+   /*
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       overflow <= #DELAY 1'b0;
+     else if (bank_next == aq_blk_i && switching && !overwrite)
+       overflow <= #DELAY 1'b1;
+
+   //  TODO: Disable the correlators to prevent banks being overwritten.
    (* ASYNC_REG = "TRUE" *) reg [XSB:0]        bank_sync = {XBITS{1'b0}};
    reg [XBITS:0]      bank_slow = {XBITS{1'b0}};
+
+   (* KEEP      = "TRUE" *)
    wire [XBITS:0]     bank_next = bank_slow + 1;
+
+   assign vx_block  = bank_next;
 
    //  Bring the correlator `bank` signal into the Wishbone clock domain.
    always @(posedge aq_clk_i) begin
       bank_sync <= #DELAY bank;
       bank_slow <= #DELAY bank_sync;
    end
-
-   //  Assert overflow whenever a bank-switch causes new data to be written
-   //  to the bank currently being read back.
-   always @(posedge aq_clk_i)
-     if (rst_i)
-       overflow <= #DELAY 1'b0;
-     else if (bank_next == aq_blk_i && switching && !overwrite)
-       overflow <= #DELAY 1'b1;
+    */
 
 
    //-------------------------------------------------------------------------
@@ -239,7 +256,12 @@ module tart_dsp
          .overwrite(overwrite), // overwrite when buffers full?
          .switching(switching), // strobes at every bank-switch (bus domain)
          .available(newblock),  // strobes when new block is available
-         .checksum (checksum)   // computed checksum of block
+         .checksum (checksum),  // computed checksum of block
+
+         //  Correlator-domain signals:
+         .clk_x    (clk_x),
+         .switch_x (switch_x),
+         .overflow_x(overflow_x)
          );
 
 
@@ -271,6 +293,7 @@ module tart_dsp
          .bankindex(bank),   // the current bank-address being written to
 //          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
+         .swap_x(switch_x),
          .switch(switching)     // asserts on bank-switch (sample domain)
          );
 

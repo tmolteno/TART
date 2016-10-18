@@ -41,6 +41,8 @@ module tart_visibilities
     parameter TBITS = 4,
     parameter MSKIP = (1 << TBITS) - TRATE + 1,
     parameter RSB   = TBITS-1,
+    parameter XBITS = ABITS-CBITS, // number of banks of visibilities
+    parameter XSB   = XBITS-1,
     parameter DELAY = 3)
    (
     input              clk_i, // bus clock & reset
@@ -74,7 +76,12 @@ module tart_visibilities
     input              overwrite, // overwrite when buffer is full?
     input              switching, // inicates that banks have switched
     output             available, // asserted when a window is accessed
-    output reg [MSB:0] checksum = 0
+    output reg [MSB:0] checksum = 0,
+
+    // Correlator clock-domain signals.
+    input              clk_x,
+    input              switch_x,
+    output reg         overflow_x = 1'b0
     );
 
    //-------------------------------------------------------------------------
@@ -116,6 +123,7 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    //  State-machine that tracks the contents of the prefetch buffer.
    //-------------------------------------------------------------------------
+`ifdef __USE_OLD_PREFETCH_CONTROL
    reg                 empty = 1'b1, ready = 1'b0, start = 1'b0;
 
    //  Prefetch buffer is empty on reset, or once all of its data has been
@@ -140,6 +148,50 @@ module tart_visibilities
        start <= #DELAY 1'b0;
      else if (empty && ready)
        start <= #DELAY 1'b1;
+
+`else // !`ifdef __USE_OLD_PREFETCH_CONTROL
+   reg                 empty = 1'b1, start = 1'b0;
+   wire                prefetch_empty, prefetch_full;
+
+   //  Prefetch buffer is empty on reset, or once all of its data has been
+   //  streamed out.
+   always @(posedge clk_i)
+     if (rst_i || streamed)
+       empty <= #DELAY 1'b1;
+     else if (start)
+       empty <= #DELAY 1'b0;
+
+   always @(posedge clk_i)
+     if (rst_i || start)
+       start <= #DELAY 1'b0;
+     else if (empty && !prefetch_empty)
+       start <= #DELAY 1'b1;
+
+   always @(posedge clk_x)
+     if (rst_i)
+       overflow_x <= #DELAY 1'b0;
+     else if (prefetch_full && switch_x)
+       overflow_x <= #DELAY 1'b1;
+     else
+       overflow_x <= #DELAY overflow_x;
+
+   //-------------------------------------------------------------------------
+   //  Use an asynchronous FIFO's control-logic to synchronise data-ready
+   //  information across clock-domains.
+   afifo_gray #( .WIDTH(0), .ABITS(XBITS) ) PREFETCH_CONTROL0
+     ( .rd_clk_i (clk_i),
+       .rd_en_i  (start),
+       .rd_data_o(),
+       
+       .wr_clk_i (clk_x),
+       .wr_en_i  (switch_x),
+       .wr_data_i(),
+
+       .rst_i    (rst_i),
+       .rempty_o (prefetch_empty),
+       .wfull_o  (prefetch_full)
+       );
+`endif // !`ifdef __USE_OLD_PREFETCH_CONTROL
 
 
    //-------------------------------------------------------------------------

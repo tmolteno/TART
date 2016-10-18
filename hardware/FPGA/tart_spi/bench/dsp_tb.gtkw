@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Sat Oct 15 04:59:27 2016
+[*] Tue Oct 18 02:44:04 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.vcd"
-[dumpfile_mtime] "Sat Oct 15 04:57:56 2016"
-[dumpfile_size] 14629708
+[dumpfile_mtime] "Tue Oct 18 02:42:34 2016"
+[dumpfile_size] 14631552
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
 [pos] -1 -1
-*-19.902819 4023000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.902819 4033000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
 [treeopen] tart_dsp_tb.TART_DSP.CORRELATOR.
@@ -19,17 +19,14 @@
 [sst_expanded] 1
 [sst_vpaned_height] 447
 @800200
+-== TOP ==
 -Signal
 @28
 tart_dsp_tb.clk_x
-@29
 tart_dsp_tb.rst
 @22
 tart_dsp_tb.antenna[23:0]
-@800200
--Hilb
 @1000200
--Hilb
 -Signal
 @800200
 -System
@@ -57,6 +54,7 @@ tart_dsp_tb.val[7:0]
 tart_dsp_tb.dat[7:0]
 @1000200
 -Bus
+-== TOP ==
 @800200
 -DSP Bus
 @28
@@ -70,11 +68,26 @@ tart_dsp_tb.dsp_blk[3:0]
 tart_dsp_tb.dsp_dat[7:0]
 @1000200
 -DSP Bus
+@800200
+--- Viz --
 @28
 tart_dsp_tb.available
 tart_dsp_tb.newblock
 tart_dsp_tb.TART_DSP.streamed
 tart_dsp_tb.switching
+tart_dsp_tb.TART_DSP.VISIBILITIES.switch_x
+tart_dsp_tb.TART_DSP.VISIBILITIES.overflow_x
+@800200
+-Control
+@28
+tart_dsp_tb.TART_DSP.VISIBILITIES.empty
+@29
+tart_dsp_tb.TART_DSP.VISIBILITIES.start
+@28
+tart_dsp_tb.TART_DSP.VISIBILITIES.prefetch_empty
+tart_dsp_tb.TART_DSP.VISIBILITIES.prefetch_full
+@1000200
+-Control
 @800200
 -Prefetch
 @28
@@ -116,6 +129,7 @@ tart_dsp_tb.TART_DSP.VISIBILITIES.p_dat[23:0]
 tart_dsp_tb.TART_DSP.VISIBILITIES.PREFETCH0.count[9:0]
 @1000200
 -Prefetch
+--- Viz --
 @c00200
 -Stream
 @28

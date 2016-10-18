@@ -161,7 +161,11 @@ module afifo_gray
 
    reg [ABITS:0]    wp_bin = 0, wp_gray = 0;
    reg [ABITS:0]    rp_bin = 0, rp_gray = 0;
-   reg [ABITS:0]    wp_s = 0, rp_s = 0;
+
+   (* ASYNC_REG = "TRUE" *)
+   reg [ABITS:0]    wp_s = 0;
+   (* ASYNC_REG = "TRUE" *)
+   reg [ABITS:0]    rp_s = 0;
 
    wire [ABITS:0]   wp_bin_x, rp_bin_x;
 

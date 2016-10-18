@@ -65,6 +65,7 @@ module tart_correlator
     input [MSB:0]      blocksize, // block size - 1
     output [BSB:0]     bankindex,
     output             strobe, // `antenna` data is valid
+    output             swap_x, // NOTE: correlator domain
     input [NSB:0]      antenna,// the real component from each antenna
 
     output reg         switch = 1'b0 // NOTE: bus domain
@@ -74,6 +75,8 @@ module tart_correlator
    wire                go;
    wire [NSB:0]        re;
    wire [NSB:0]        im;
+
+   assign swap_x = sw;
 
 
    //-------------------------------------------------------------------------

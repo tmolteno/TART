@@ -279,6 +279,9 @@ module tart
    wire spi_busy;
    wire [7:0] spi_status = {uflow, oflow, request_from_spi, aq_enabled,
                             aq_debug, tart_state[2:0]};
+//    wire [7:0] viz_status = {aq_debug, vx_enabled, available, overflow, v_blk};
+   wire [3:0] c_blk;
+   wire [7:0] viz_status = {c_blk, v_blk};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
@@ -321,7 +324,8 @@ module tart
        .dat_o(b_drx),
 
        .active_o(spi_busy),
-       .status_i(spi_status),
+//        .status_i(spi_status),
+       .status_i(viz_status),
        .overflow_o(oflow),
        .underrun_o(uflow),
        
@@ -434,6 +438,7 @@ module tart
 
        .aq_enable(aq_enabled),
        .vx_enable(vx_enabled),
+       .vx_block (c_blk),
        .overwrite(overwrite),
        .antenna  (ax_dat),
        .blocksize(blocksize),

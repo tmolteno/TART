@@ -218,10 +218,11 @@ module tart_acquire
    //  Aqusition & visibilities register writes.
    reg [BSB:0] new_blk = {BBITS{1'b0}};
    reg         upd_blk = 1'b0;
+   reg         vx_enable = 1'b0, vx_disable = 1'b0;
 
    always @(posedge clk_i)
      if (rst_i) begin
-        vx_enabled      <= #DELAY 1'b0;
+        vx_enable       <= #DELAY 1'b0;
         aq_enabled      <= #DELAY 1'b0;
         aq_debug_mode   <= #DELAY 1'b0;
         aq_sample_delay <= #DELAY 3'h0;
@@ -249,13 +250,17 @@ module tart_acquire
          end
          //  Visibilities control register:
          `VX_SYSTEM: begin
-            vx_enabled   <= #DELAY dat_i[MSB];
+            vx_enable    <= #DELAY dat_i[MSB];
+            vx_disable   <= #DELAY ~dat_i[MSB];
             vx_overwrite <= #DELAY dat_i[MSB-1];
             log_block    <= #DELAY dat_i[4:0];
          end
        endcase // case (adr_i)
-     else
-       upd_blk <= #DELAY 1'b0;
+     else begin
+        upd_blk    <= #DELAY 1'b0;
+        vx_enable  <= #DELAY 1'b0;
+        vx_disable <= #DELAY 1'b0;
+     end
 
 
    //-------------------------------------------------------------------------
@@ -266,6 +271,19 @@ module tart_acquire
 
    assign bs_new_w = cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_SYSTEM;
 
+   //-------------------------------------------------------------------------
+   //  Enable the visibilities unit when a write is performed to the control-
+   //  register, and disable it upon overflow, if overwrite mode is disabled.
+   always @(posedge clk_i)
+     if (rst_i)
+       vx_enabled <= #DELAY 1'b0;
+     else if (vx_enable)
+       vx_enabled <= #DELAY 1'b1;
+     else if (vx_disable || overflow && !vx_overwrite)
+       vx_enabled <= #DELAY 1'b0;
+
+   //-------------------------------------------------------------------------
+   //  Set the blocksize when a write is performed to the control-register.
 `define __LOOKUP_BLOCKSIZE
    always @(posedge clk_i) begin
       bs_upd <= #DELAY bs_new_w && !bs_upd;

@@ -37,6 +37,8 @@ class TartSPI:
   CHECKSUM2 = 0x7A
   CHECKSUM3 = 0x7B
 
+  VIZ_STATS = 0x6f
+
   WRITE_CMD = 0x80
 
 
@@ -111,9 +113,11 @@ class TartSPI:
       self.SPI_STATS: 'SPI_STATS:\tFIFO {underrun = %s, overflow = %s}, spireq = %s, enabled = %s, debug = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
       self.CHECKSUM1: 'CHECKSUM1:\tchecksum[7:0]   = 0x%02x' % val,
       self.CHECKSUM2: 'CHECKSUM2:\tchecksum[15:8]  = 0x%02x' % val,
-      self.CHECKSUM3: 'CHECKSUM3:\tchecksum[23:16] = 0x%02x' % val
+      self.CHECKSUM3: 'CHECKSUM3:\tchecksum[23:16] = 0x%02x' % val,
 #       self.SPI_EXTRA: 'SPI_EXTRA:\t',
 #       self.SPI_MISC:  'SPI_MISC:\t'
+      self.VIZ_STATS: 'VIZ_STATS:\twrite-block = %d, read-block = %d' % (vals[4], val & 0x0f)
+#       self.VIZ_STATS: 'VIZ_STATS:\tdebug = %s, enabled = %s, available = %s, overflow = %s, block = %d' % (bits[7], bits[6], bits[5], bits[4], val & 0x0f)
     }
     return msgs.get(reg, 'WARNING: Not a status register.')
 
@@ -224,11 +228,12 @@ class TartSPI:
   ##  Visibility-calculation settings, and streaming read-back.
   ##--------------------------------------------------------------------------
   def start(self, blocksize=24, noisy=False):
-    self.set_blocksize_and_start(blocksize, True, noisy)
+#     self.set_blocksize_and_start(blocksize, overwrite=True, noisy)
+    self.set_blocksize_and_start(blocksize, overwrite=False, noisy=noisy)
 #     self.start_acquisition(noisy)
 
-  def set_blocksize_and_start(self, blocksize=24, overwrite=True, noisy=False):
-    '''Set the correlator blocksize to 2^blocksize.'''
+  def set_blocksize_and_start(self, blocksize=24, overwrite=False, noisy=False):
+    '''Set the correlator blocksize to 2^blocksize.\nNOTE: With `overwrite` enabled, the TART device can get itself into invalid states.'''
     if blocksize > 0 and blocksize < 25:
       if overwrite:
         ow = 0x40
@@ -253,11 +258,12 @@ class TartSPI:
 
   def read_visibilities(self, noisy=True):
     '''Read back visibilities data.'''
-    res = self.spi.xfer([self.VX_STREAM, 0x0,] + [0x0, 0x0, 0x0, 0x0]*576)[2:]
-    val = np.array(res)
+    res = self.spi.xfer([self.VX_STREAM, 0x0,] + [0x0, 0x0, 0x0, 0x0]*576)
+    val = np.array(res[2:])
     if noisy:
-      print val
-      print " sum of visibilities:\t%d\n" % sum(val)
+      tim = time.clock()
+      print self.show_status(self.VIZ_STATS, res[1])
+      print " Visibilities (@t = %g): \t%s (sum = %d)\n" % (tim, val, sum(val))
     return val
 
   def vis_ready(self, noisy=False):
@@ -268,7 +274,8 @@ class TartSPI:
     return rdy
 
   def vis_read(self, noisy=False):
-    while not self.vis_ready(noisy):
+#     while not self.vis_ready(noisy):
+    while not self.vis_ready(False):
       self.pause()
     vis = self.read_visibilities(noisy)
     return vis
@@ -294,6 +301,7 @@ if __name__ == '__main__':
   print "\nStatus flags:"
   tart.read_status(True)
   if args.status:
+    tart.close()
     exit(0)
 
   print "\nIssuing reset:"
@@ -301,6 +309,7 @@ if __name__ == '__main__':
   print "Status flags:"
   tart.read_status(True)
   if args.reset:
+    tart.close()
     exit(0)
 
   print "\nCycling through sampling-delays:"
@@ -313,14 +322,17 @@ if __name__ == '__main__':
   tart.start_acquisition(1.1, True)
 
   print "\nSetting up correlators (block-size = 2^%d):" % args.blocksize
-  tart.set_blocksize_and_start(args.blocksize, True)
+#   tart.set_blocksize_and_start(args.blocksize, True)
+  tart.start(args.blocksize, True)
   tart.get_blocksize(True)
 
   if args.monitor:
     print "\nMonitoring visibilities:"
     while True:
-      viz = tart.vis_read(False)
-      print "Visibilities: %s (sum = %d)" % (viz, sum(viz))
+#       viz = tart.vis_read(False)
+#       tim = time.clock()
+#       print " Visibilities (@t = %g): \t%s (sum = %d)" % (tim, viz, sum(viz))
+      viz = tart.vis_read(True)
 
   else:
     print tart.read_test(True)
@@ -335,4 +347,5 @@ if __name__ == '__main__':
     print "\nStatus flags:"
     tart.read_status(True)
 
+    tart.close()
     print "\nDone."

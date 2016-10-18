@@ -106,7 +106,7 @@
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1476514384" xil_pn:in_ck="-636239885220538995" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="5050132534591747037" xil_pn:start_ts="1476514341">
+    <transform xil_pn:end_ts="1476762615" xil_pn:in_ck="-636239885220538995" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="5050132534591747037" xil_pn:start_ts="1476762565">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -124,11 +124,11 @@
       <outfile xil_pn:name="webtalk_pn.xml"/>
       <outfile xil_pn:name="xst"/>
     </transform>
-    <transform xil_pn:end_ts="1476513248" xil_pn:in_ck="3365922956548144140" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="123229027436179517" xil_pn:start_ts="1476513248">
+    <transform xil_pn:end_ts="1476762156" xil_pn:in_ck="3365922956548144140" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="123229027436179517" xil_pn:start_ts="1476762156">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1476514398" xil_pn:in_ck="-3736750513579650995" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-5880821926154873280" xil_pn:start_ts="1476514384">
+    <transform xil_pn:end_ts="1476762627" xil_pn:in_ck="-3736750513579650995" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-5880821926154873280" xil_pn:start_ts="1476762615">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <outfile xil_pn:name="_ngo"/>
@@ -137,7 +137,7 @@
       <outfile xil_pn:name="tart.ngd"/>
       <outfile xil_pn:name="tart_ngdbuild.xrpt"/>
     </transform>
-    <transform xil_pn:end_ts="1476514526" xil_pn:in_ck="-3736750513579650994" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="-3188509700205785181" xil_pn:start_ts="1476514398">
+    <transform xil_pn:end_ts="1476762752" xil_pn:in_ck="-3736750513579650994" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="-3188509700205785181" xil_pn:start_ts="1476762627">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -152,7 +152,7 @@
       <outfile xil_pn:name="tart_summary.xml"/>
       <outfile xil_pn:name="tart_usage.xml"/>
     </transform>
-    <transform xil_pn:end_ts="1476514583" xil_pn:in_ck="7316502586510792295" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="93661965788626211" xil_pn:start_ts="1476514526">
+    <transform xil_pn:end_ts="1476762963" xil_pn:in_ck="7316502586510792295" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="93661965788626211" xil_pn:start_ts="1476762752">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -167,7 +167,7 @@
       <outfile xil_pn:name="tart_pad.txt"/>
       <outfile xil_pn:name="tart_par.xrpt"/>
     </transform>
-    <transform xil_pn:end_ts="1476514638" xil_pn:in_ck="5073612556222" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1476514611">
+    <transform xil_pn:end_ts="1476762989" xil_pn:in_ck="5073612556222" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1476762963">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -196,7 +196,7 @@
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="InputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1476514598" xil_pn:in_ck="-3736750513579651126" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1476514583">
+    <transform xil_pn:end_ts="1476762963" xil_pn:in_ck="-3736750513579651126" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1476762949">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
