@@ -236,10 +236,10 @@ module afifo_gray
    //  Synchronization Logic
    //-------------------------------------------------------------------------
    always @(posedge rd_clk_i)
-     wp_s <= #DELAY wp_gray;              // write pointer
+     wp_s <= #DELAY wp_gray;  // write pointer
 
    always @(posedge wr_clk_i)
-     rp_s <= #DELAY rp_gray;              // read pointer
+     rp_s <= #DELAY rp_gray;  // read pointer
 
 
    //-------------------------------------------------------------------------

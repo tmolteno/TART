@@ -323,7 +323,7 @@ main  = do
 --   stdout " == TART floorplanner for the hardware correlators =="
   Settings md mp mo <- options "" parser
 --   stdout "\nCorrelator block parameters:"
-  let p = maybe "DSP/CORRELATOR/CXBLOCK" toString mp
+  let p = maybe "DSP/COR/CXBLOCK" toString mp
       d = fromMaybe 4 md
       u = fromString $ floorplan p d
   maybe (stdout u) (`output` u) mo

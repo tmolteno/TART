@@ -268,20 +268,20 @@ module tart
    (* KEEP = "TRUE" *) wire uflow, oflow;
 
    //  Remap system signals to WB signals.
-   assign b_clk = fpga_clk;
-   assign b_rst = reset;
+   (* KEEP = "TRUE" *) wire b_clk = fpga_clk;
+   (* KEEP = "TRUE" *) wire b_rst = reset;
 
 
    //-------------------------------------------------------------------------
    //     TRANSMISSION BLOCK
    //     SPI SLAVE & WB MASTER
    //-------------------------------------------------------------------------
-   wire spi_busy;
-   wire [7:0] spi_status = {uflow, oflow, request_from_spi, aq_enabled,
-                            aq_debug, tart_state[2:0]};
-//    wire [7:0] viz_status = {aq_debug, vx_enabled, available, overflow, v_blk};
-   wire [3:0] c_blk;
-   wire [7:0] viz_status = {c_blk, v_blk};
+   wire         spi_busy;
+   wire [3:0]   c_blk;
+   wire [7:0]   spi_status = {uflow, oflow, request_from_spi, aq_enabled,
+                              aq_debug, tart_state[2:0]};
+   wire [7:0]   viz_status = {aq_debug, vx_enabled, available, overflow, v_blk};
+//    wire [7:0] viz_status = {c_blk, v_blk};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;

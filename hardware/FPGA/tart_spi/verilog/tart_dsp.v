@@ -227,7 +227,7 @@ module tart_dsp
          .COUNT (NREAD),
          .TRATE (TRATE),
          .DELAY (DELAY)
-         ) VISIBILITIES
+         ) VIZ
        ( .clk_i(aq_clk_i),
          .rst_i(rst_i),
 
@@ -273,7 +273,7 @@ module tart_dsp
          .AXNUM (AXNUM),
          .ABITS (RBITS + XBITS),
          .DELAY (DELAY)
-         ) CORRELATOR
+         ) COR
        ( .clk_x(clk_x),         // 12x data-rate sampling clock
          .rst  (rst_i),
          .clk_i(aq_clk_i),

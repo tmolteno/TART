@@ -116,8 +116,8 @@ class TartSPI:
       self.CHECKSUM3: 'CHECKSUM3:\tchecksum[23:16] = 0x%02x' % val,
 #       self.SPI_EXTRA: 'SPI_EXTRA:\t',
 #       self.SPI_MISC:  'SPI_MISC:\t'
-      self.VIZ_STATS: 'VIZ_STATS:\twrite-block = %d, read-block = %d' % (vals[4], val & 0x0f)
-#       self.VIZ_STATS: 'VIZ_STATS:\tdebug = %s, enabled = %s, available = %s, overflow = %s, block = %d' % (bits[7], bits[6], bits[5], bits[4], val & 0x0f)
+#       self.VIZ_STATS: 'VIZ_STATS:\twrite-block = %d, read-block = %d' % (vals[4], val & 0x0f)
+      self.VIZ_STATS: 'VIZ_STATS:\tdebug = %s, enabled = %s, available = %s, overflow = %s, block = %d' % (bits[7], bits[6], bits[5], bits[4], val & 0x0f)
     }
     return msgs.get(reg, 'WARNING: Not a status register.')
 

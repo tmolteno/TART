@@ -178,7 +178,7 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    //  Use an asynchronous FIFO's control-logic to synchronise data-ready
    //  information across clock-domains.
-   afifo_gray #( .WIDTH(0), .ABITS(XBITS) ) PREFETCH_CONTROL0
+   afifo_gray #( .WIDTH(0), .ABITS(XBITS) ) PC0
      ( .rd_clk_i (clk_i),
        .rd_en_i  (start),
        .rd_data_o(),

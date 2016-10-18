@@ -11,12 +11,16 @@ TIMESPEC "TSsys_clk"=PERIOD "sys_clk" 10.18  ns HIGH 50%;
 TIMESPEC "TSvis_clk"=PERIOD "vis_clk" 5.091  ns HIGH 50%;
 TIMESPEC "TSspi_clk"=PERIOD "spi_clk" 8.000  ns HIGH 50%;
 
-# TIMESPEC "TSvizctrl"=FROM "DSP/VISIBILITIES/PREFETCH_CONTROL0/rp_s<*>" TO
-
+NET "TART_DCM0/clk12x_dcm" TNM_NET=FFS "GRP_X";
+NET "TART_DCM0/clk6x_dcm"  TNM_NET=FFS "GRP_B";
+TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 4.5ns DATAPATHONLY;
+TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 4.5ns DATAPATHONLY;
 
 #
 # Exempt some signals from timing consideration.
 # NOTE: These are typically exempted because they're not performance-critical.
+#
+# TODO: Rewrite some of these using `FROM/TO` constraints.
 #
 NET "reset" TIG;
 
@@ -41,8 +45,8 @@ NET "DSP/blocksize<*>" TIG;
 NET "uflow" TIG;
 NET "oflow" TIG;
 NET "DSP/c_err" TIG;
-NET "DSP/CORRELATOR/sw_d" TIG;
-NET "DSP/CORRELATOR/sw_b" TIG;
+NET "DSP/COR/sw_d" TIG;
+NET "DSP/COR/sw_b" TIG;
 # NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
 
 # # Fake constraints:

@@ -290,6 +290,25 @@ permute a b m = do
 --   mapM_ print qs
   print pm
 
+{-- }
+permute a b m = do
+  ar <- Vec.new (a*a)
+  let ix = [
+  let pz = params a b m
+      ri = [0,(2*a)..]
+      ps = indexCalc a . concat <$> pz
+      n  = pred a*div a 2
+      s  = n + div a 2
+      t  = length (head ps) - 2
+      ms = zipWith (indexMeans a) ri $ concat <$> pz
+      qs = zipWith indexPairs ri ps
+      rs = [(i*pred a + j, n + i*2 + j) | i <- [0..b-1], j <- [0,1]]
+      pm = Map.fromList $ map swap $ concat qs ++ rs
+--   print n
+--   mapM_ print qs
+  print pm
+--}
+
 -- | Index each of the pairs.
 --   NOTE: Assumes that the last two pairs are indices that were used for
 --     computing antenna signal means.

@@ -6,7 +6,7 @@ pairs:
 
 .PHONY: floor
 floor:
-	runhaskell script/floor.hs --numDSP=4 --prefix="DSP/CORRELATOR/CXBLOCK" --outfile papilio/floor.ucf
+	runhaskell script/floor.hs --numDSP=4 --prefix="DSP/COR/CXBLOCK" --outfile papilio/floor.ucf
 
 .PHONY: clean
 clean:
