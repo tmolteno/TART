@@ -60,14 +60,15 @@ module RAMB8X36_SDP #(parameter DELAY = 3)
    //  Behavioural description of the `RAMB8X36_SDP` core.
    //-------------------------------------------------------------------------
    reg [35:0]     sram[0:255];
-   reg [35:0]     reg_DO = 0;
+   reg [35:0]     reg_DO = 36'h0;
 
    assign DO = reg_DO;
 
-   always @(posedge WCLK) begin
-      if (WE) sram[WADDR] <= #DELAY DI;
-      if (CE) reg_DO      <= #DELAY sram[RADDR];
-   end
+   always @(posedge WCLK)
+     if (WE) sram[WADDR] <= #DELAY DI;
+
+   always @(posedge RCLK)
+     if (CE) reg_DO <= #DELAY sram[RADDR];
 
 
 `else
@@ -116,12 +117,12 @@ module RAMB8X36_SDP #(parameter DELAY = 3)
        .DOBDO(DO[33:18]),       // 16-bit output: MSB data
        .DOPBDOP(DO[35:34]),     // 2-bit output: MSB parity
        // Not used in SDP-mode or with the output registers disabled:
-       .REGCEA(1'b0),           // 1-bit input: A port register enable
+       .REGCEA(1'b1),           // 1-bit input: A port register enable
        .RSTA(1'b0),             // 1-bit input: A port set/reset
-       .WEAWEL(2'b0),           // 2-bit input: A port write enable
-       .REGCEBREGCE(1'b0),      // 1-bit input: Register enable
+       .WEAWEL(2'b11),          // 2-bit input: A port write enable
+       .REGCEBREGCE(1'b1),      // 1-bit input: Register enable
        .RSTBRST(1'b0),          // 1-bit input: B port set/reset
-       .WEBWEU(2'b0)            // 2-bit input: B port write enable
+       .WEBWEU(2'b11)           // 2-bit input: B port write enable
    );
 `endif // !`ifdef __icarus
 

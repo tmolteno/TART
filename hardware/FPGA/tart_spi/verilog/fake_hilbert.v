@@ -13,7 +13,7 @@
  */
 
 module fake_hilbert
-  #( parameter WIDTH = 1,
+  #( parameter WIDTH = 24,
      parameter MSB   = WIDTH-1,
      parameter TICKS = 12,
      parameter TBITS = 4,
@@ -24,31 +24,29 @@ module fake_hilbert
     input              rst,
     input              en,
     input [MSB:0]      d,
-    output reg         valid = 0,
-    output reg         strobe = 0,
+    output reg         valid = 1'b0,
+    output reg         strobe = 1'b0,
 
-    (* KEEP = "TRUE", IOB = "FALSE" *)
-    output reg [MSB:0] re = 0,
-    (* KEEP = "TRUE", IOB = "FALSE" *)
-    output reg [MSB:0] im = 0
+    output reg [MSB:0] re = {WIDTH{1'b0}},
+    output reg [MSB:0] im = {WIDTH{1'b0}}
     );
 
    reg                 go = 0;
    reg [TSB:0]         ticks = 0;
    wire                ticks_wrap = ticks == TICKS-1;
-   wire [TSB:0]        ticks_next = ticks_wrap ? 0 : ticks+1;
+   wire [TSB:0]        ticks_next = ticks_wrap ? {TBITS{1'b0}} : ticks+1;
 
    always @(posedge clk)
-     if (rst)                  ticks <= #DELAY 0;
+     if (rst)                  ticks <= #DELAY {TBITS{1'b0}};
      else if (en || ticks > 0) ticks <= #DELAY ticks_next;
 
    always @(posedge clk)
      if (rst) go <= #DELAY 1'b0;
-     else     go <= #DELAY ticks_wrap ? en : 0;
+     else     go <= #DELAY ticks_wrap ? en : 1'b0;
 
    always @(posedge clk)
      if (rst) valid <= #DELAY 1'b0;
-     else     valid <= #DELAY ticks == 0 ? go : valid;
+     else     valid <= #DELAY ticks == {TBITS{1'b0}} ? go : valid;
 
    always @(posedge clk)
      if (rst) strobe <= #DELAY 1'b0;

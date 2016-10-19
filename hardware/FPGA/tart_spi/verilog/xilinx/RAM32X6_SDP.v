@@ -55,9 +55,7 @@ module RAM32X6_SDP
     input [4:0]  WADDR,
     input [5:0]  DI,
     input [4:0]  RADDR,
-    output [5:0] DO,
-    input [1:0]  DID,
-    output [1:0] DOD
+    output [5:0] DO
     );
 
 
@@ -83,7 +81,7 @@ module RAM32X6_SDP
        ( .DOA(DO[1:0]),
          .DOB(DO[3:2]),
          .DOC(DO[5:4]),
-         .DOD(DOD),
+         .DOD(),
 
          .ADDRA(RADDR),
          .ADDRB(RADDR),
@@ -95,7 +93,7 @@ module RAM32X6_SDP
          .DIA(DI[1:0]),
          .DIB(DI[3:2]),
          .DIC(DI[5:4]),
-         .DID(DID)
+         .DID(2'b00)
          );
 `endif // !`ifdef __icarus
 

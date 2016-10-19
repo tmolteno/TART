@@ -13,13 +13,13 @@
  * Has two master Wishbone-like buses, for prefetching data from one slave
  * device/bus, and then transferring this data to another slave device.
  * 
- * The data prefetches are broken up into multiple block-transfers, of the
+ * The data-prefetches are broken up into multiple block-transfers, of the
  * parameterised sizes, so that data can be fetched from multiple, similar
  * devices.
  * 
  * NOTE:
  *  + currently synchronous, and both bus interfaces share the same clock;
- *  + it would be unwise to change the input `count_i` value when this module
+ *  + it would be unwise to change the input `count_i` value while this module
  *    is active;
  * 
  * Changelog:
@@ -62,6 +62,7 @@ module wb_prefetch
     output             a_bst_o, // Bulk Sequential Transfer?
     input              a_ack_i,
     input              a_wat_i,
+    input              a_err_i,
     output [ASB:0]     a_adr_o,
     input [MSB:0]      a_dat_i,
     output [MSB:0]     a_dat_o,
@@ -83,6 +84,11 @@ module wb_prefetch
    reg                 count_end = 0;
    reg                 read = 0;
    wire                done;
+
+
+   initial begin : PREFETCH_BLOCK
+      $display("\nModule : wb_prefetch\n\tWIDTH\t= %4d\n\tCOUNT\t= %4d\n\tSIZE\t= %4d\n\tSBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n\tBSTEP\t= %4d\n\tUBITS\t= %4d\n", WIDTH, COUNT, SIZE, SBITS, BSIZE, BBITS, BSTEP, UBITS);
+   end // PREFETCH_BLOCK
 
 
    //-------------------------------------------------------------------------
@@ -154,11 +160,13 @@ module wb_prefetch
 
    //-------------------------------------------------------------------------
    //  Address generation.
+   wire [SBITS:0]      b_adr_next = b_adr_o + 1;
+
    always @(posedge clk_i)
      if (rst_i || begin_i)
-       b_adr_o <= #DELAY 0;
+       b_adr_o <= #DELAY {SBITS{1'b0}};
      else if (b_cyc_o && (b_bst_o && !b_wat_i || !b_cyc))
-       b_adr_o <= #DELAY b_adr_o + 1;
+       b_adr_o <= #DELAY b_adr_next[ASB:0];
 
    //  Transfer incoming data to the output bus.
    always @(posedge clk_i)
@@ -185,6 +193,7 @@ module wb_prefetch
          .bst_o(a_bst_o),
          .ack_i(a_ack_i),
          .wat_i(a_wat_i),
+         .err_i(a_err_i),
          .blk_o(a_blk),
 
          .read_i(read),
@@ -201,9 +210,6 @@ module wb_prefetch
    always @(posedge clk_i)
      if (rst_i || begin_i) rxd <= #DELAY 0;
      else if (a_cyc_o && a_ack_i) rxd <= #DELAY rxd+1;
-
-//    always @(posedge clk_i)
-//      if (a_cyc_o && !a_cyc &&
 `endif //  `ifdef __icarus
 
 

@@ -1,28 +1,39 @@
 `timescale 1ns/100ps
 /*
+ * Module      : verilog/bus/wb_stream.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
  * Manages fetching visibilities data from the correlators -- transferring
  * visibilities from the correlators to a SRAM after each bank-swap.
  * 
  * NOTE:
  *  + 8-bit bus to the SPI interface, and 32-bit bus to the correlators;
+ *  + the correlator bank-address (typically the upper 4-bits of `adr_i`) is
+ *    passed straight through;
+ *  + this is because the bank-address is controlled by `tart_acquire`;
+ * 
+ * Changelog:
+ *  + 16/06/2016  --  initial file;
  * 
  * TODO:
- *  + redirection ROM?
+ *  + redirection ROM? Or, better to do the reordering in software?
  * 
  */
 
 `include "tartcfg.v"
 
 module tart_visibilities
-  #(parameter BLOCK = 32,
+  #(parameter BLOCK = 24,
     parameter MSB   = BLOCK-1,
     parameter COUNT = 576,     // TODO: correlators and averages
-`ifdef __USE_SDP_DSRAM
     parameter ABITS = 14,
-`else
-    parameter ABITS = 10,
-`endif
     parameter ASB   = ABITS-1,
     parameter CBITS = 10,
     parameter CSB   = CBITS-1,
@@ -30,37 +41,47 @@ module tart_visibilities
     parameter TBITS = 4,
     parameter MSKIP = (1 << TBITS) - TRATE + 1,
     parameter RSB   = TBITS-1,
+    parameter XBITS = ABITS-CBITS, // number of banks of visibilities
+    parameter XSB   = XBITS-1,
     parameter DELAY = 3)
    (
-    input              clk_i, // bus clock
+    input              clk_i, // bus clock & reset
     input              rst_i,
 
     // Wishbone-like (slave) bus interface that connects to `tart_spi`:
     input              cyc_i,
     input              stb_i,
-    input              we_i, // writes only work for system registers
+    input              we_i,
     input              bst_i, // Bulk Sequential Transfer?
     output             ack_o,
     output             wat_o,
-    input [ASB+2:0]    adr_i, // upper address-space for registers
+    input [ASB+2:0]    adr_i, // Upper 4-bits are typically the bank#
     input [7:0]        byt_i,
     output [7:0]       byt_o,
 
     // Wishbone-like (master) bus interface that connects to the correlators:
     output             cyc_o,
     output             stb_o,
-    output             we_o, // writes only work for system registers
+    output             we_o,
     output             bst_o, // Bulk Sequential Transfer?
     input              ack_i,
+    input              err_i,
     input              wat_i,
-    output [ASB:0]     adr_o, // upper address-space for registers
+    output [ASB:0]     adr_o,
     input [MSB:0]      dat_i,
     output [MSB:0]     dat_o,
 
     // Status flags for the correlators and visibilities.
+    input              streamed, // signals that a bank has been sent
+    input              overwrite, // overwrite when buffer is full?
     input              switching, // inicates that banks have switched
     output             available, // asserted when a window is accessed
-    output reg [MSB:0] checksum = 0
+    output reg [MSB:0] checksum = 0,
+
+    // Correlator clock-domain signals.
+    input              clk_x,
+    input              switch_x,
+    output reg         overflow_x = 1'b0
     );
 
    //-------------------------------------------------------------------------
@@ -70,6 +91,11 @@ module tart_visibilities
    parameter BSIZE = TRATE*2;
    parameter BBITS = TBITS+1;
    parameter BSB   = BBITS-1;
+
+
+   initial begin : VIS_PARAMS
+      $display("\nModule : tart_visibilities\n\tBLOCK\t= %4d\n\tCOUNT\t= %4d\n\tABITS\t= %4d\n\tCBITS\t= %4d\n\tTRATE\t= %4d\n\tTBITS\t= %4d\n\tMSKIP\t= %4d\n", BLOCK, COUNT, ABITS, CBITS, TRATE, TBITS, MSKIP);
+   end // VIS_PARAMS
 
 
    //-------------------------------------------------------------------------
@@ -86,15 +112,67 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    //  TODO: Just use XOR?
    always @(posedge clk_i)
-     if (switching)
-       checksum <= #DELAY 0;
+//      if (switching)
+     if (rst_i)
+       checksum <= #DELAY {BLOCK{1'b0}};
      else if (cyc_o && ack_i)
-       checksum <= #DELAY checksum + dat_i;
+//        checksum <= #DELAY checksum + dat_i;
+       checksum <= #DELAY checksum ^ dat_i;
 
 
    //-------------------------------------------------------------------------
-   //  Cores that prefetch and store visibility data, to be transferred off-
-   //  board via SPI.
+   //  State-machine that tracks the contents of the prefetch buffer.
+   //-------------------------------------------------------------------------
+   reg                 empty = 1'b1, start = 1'b0;
+   wire                prefetch_empty, prefetch_full;
+
+   //  Prefetch buffer is empty on reset, or once all of its data has been
+   //  streamed out.
+   always @(posedge clk_i)
+     if (rst_i || streamed)
+       empty <= #DELAY 1'b1;
+     else if (start)
+       empty <= #DELAY 1'b0;
+
+   always @(posedge clk_i)
+     if (rst_i || start)
+       start <= #DELAY 1'b0;
+     else if (empty && !prefetch_empty)
+       start <= #DELAY 1'b1;
+
+`ifdef __USE_OVERFLOW_DETECTION
+   //-------------------------------------------------------------------------
+   //  If the bank-full FIFO overflows, then assert the overflow flag.
+   always @(posedge clk_x)
+     if (rst_i)
+       overflow_x <= #DELAY 1'b0;
+     else if (prefetch_full && switch_x)
+       overflow_x <= #DELAY 1'b1;
+     else
+       overflow_x <= #DELAY overflow_x;
+`endif //  `ifdef __USE_OVERFLOW_DETECTION
+
+   //-------------------------------------------------------------------------
+   //  Use an asynchronous FIFO's control-logic to synchronise data-ready
+   //  information across clock-domains.
+   afifo_gray #( .WIDTH(0), .ABITS(XBITS) ) PC0
+     ( .rd_clk_i (clk_i),
+       .rd_en_i  (start),
+       .rd_data_o(),
+       
+       .wr_clk_i (clk_x),
+       .wr_en_i  (switch_x),
+       .wr_data_i(),
+
+       .rst_i    (rst_i),
+       .rempty_o (prefetch_empty),
+       .wfull_o  (prefetch_full)
+       );
+
+
+   //-------------------------------------------------------------------------
+   //  Visibilities data is prefetched from SRAM's that are local to the
+   //  correlators, and buffered for fast access by the SPI interface.
    //-------------------------------------------------------------------------
    wire [MSB:0] p_val, p_dat;
    wire [CSB:0] p_adr, adr_w;
@@ -102,21 +180,21 @@ module tart_visibilities
 
    //  Swap the LSB with the real/complex bank-select signal, so that real +
    //  complex pairs are read out together.
-`ifdef __USE_SDP_DSRAM
    assign adr_o = {adr_i[ASB+2:CBITS+2], adr_w};
-`else
-   assign adr_o = {adr_w[CSB:BBITS], adr_w[0], adr_w[BSB:1]};
-`endif
    assign wat_o = 1'b0;
 
    //  Prefetches data from the various correlators after each bank-switch,
    //  and then sends it on to a block SRAM.
+`ifdef __WB_PREFETCH_CLASSIC
+   wb_prefetch_classic #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT),
+`else
    wb_prefetch #( .WIDTH(BLOCK), .SBITS(CBITS), .COUNT(COUNT),
+`endif
                   .BSIZE(BSIZE), .BBITS(BBITS) ) PREFETCH0
      ( .rst_i(rst_i),
        .clk_i(clk_i),
 
-       .begin_i(switching),
+       .begin_i(start),
        .ready_o(available),
 
        .a_cyc_o(cyc_o),         // prefetch interface (from the correlators)
@@ -125,6 +203,7 @@ module tart_visibilities
        .a_bst_o(bst_o),
        .a_ack_i(ack_i),
        .a_wat_i(wat_i),
+       .a_err_i(err_i),
        .a_adr_o(adr_w),
        .a_dat_i(dat_i),
        .a_dat_o(dat_o),

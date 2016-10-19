@@ -92,6 +92,11 @@ module wb_stream
    assign s_dat_o = m_dat_i;
 
 
+   initial begin : STREAM_BLOCK
+      $display("\nModule : wb_stream\n\tWIDTH\t= %4d\n\tWORDS\t= %4d\n\tWBITS\t= %4d\n\tSTART\t= %4d\n\tSTEP\t= %4d\n\tLAST\t= %4d\n", WIDTH, WORDS, WBITS, START, STEP, LAST);
+   end // STREAM_BLOCK
+
+
    //-------------------------------------------------------------------------
    //  Address generation.
    always @(posedge clk_i)

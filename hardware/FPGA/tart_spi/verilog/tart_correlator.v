@@ -34,10 +34,14 @@
 `include "tartcfg.v"
 
 module tart_correlator
-  #( parameter BLOCK = `ACCUM_BITS,
+  #( parameter BLOCK = 24,
      parameter MSB   = BLOCK-1,
      parameter ABITS = 14,
-     parameter ASB   = ABITS - 1,
+     parameter ASB   = ABITS-1,
+     parameter AXNUM = 24,
+     parameter NSB   = AXNUM-1,
+     parameter BBITS = 4,       // visibilities banks
+     parameter BSB   = BBITS-1,
      parameter DELAY = 3)
    (
     input              clk_x,
@@ -49,30 +53,30 @@ module tart_correlator
     input              stb_i,
     input              we_i, // writes only work for system registers
     input              bst_i, // Bulk Sequential Transfer?
-    output reg         ack_o = 0,
-    input [ASB:0]      adr_i, // upper address-space for registers
+    output reg         ack_o = 1'b0,
+    output reg         wat_o = 1'b0,
+    output reg         err_o = 1'b0,
+    input [ASB:0]      adr_i,
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o,
 
     //  The real component of the signal from the antennas.
     input              enable, // data acquisition is active
     input [MSB:0]      blocksize, // block size - 1
+    output [BSB:0]     bankindex,
     output             strobe, // `antenna` data is valid
-    input [23:0]       antenna,// the real component from each antenna
+    output             swap_x, // NOTE: correlator domain
+    input [NSB:0]      antenna,// the real component from each antenna
 
-    output reg         switch = 0 // NOTE: bus domain
+    output reg         switch = 1'b0 // NOTE: bus domain
     );
 
+   reg                 sw = 1'b0;
+   wire                go;
+   wire [NSB:0]        re;
+   wire [NSB:0]        im;
 
-   (* KEEP = "TRUE", IOB = "TRUE" *)
-   reg                 a_reg = 24'b0;
-
-
-   //-------------------------------------------------------------------------
-   //  Data-capture.
-   //  TODO:
-   always @(posedge clk_x)
-     a_reg <= #DELAY antenna;
+   assign swap_x = sw;
 
 
    //-------------------------------------------------------------------------
@@ -81,32 +85,29 @@ module tart_correlator
    //  
    //-------------------------------------------------------------------------
    //  Fill a block with visibilities, and then switch banks.
-   wire [MSB:0]        next_blk = wrap_blk ? 0 : blk + 1 ;
+   wire [BLOCK:0]      next_blk = wrap_blk ? {(BLOCK+1){1'b0}} : blk+1;
    wire                wrap_blk = blk == blocksize;
-   reg                 sw = 0, strobe_r = 0;
-   reg [MSB:0]         blk = 0;
-   reg [3:0]           delays = 0;
+   reg [MSB:0]         blk = {BLOCK{1'b0}};
+   reg [3:0]           delays = 4'h0;
 
    //  Compose address:     UNIT       BLOCK       VALUE
-   wire [ASB-3:0] c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
-
-   wire                go;
-   wire [23:0]         re, im;
+   wire [ASB-3:0]      c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
+   wire [MSB:0]        dat_w;
 
    //-------------------------------------------------------------------------
    // Activate the Hilbert transform and correlators once this module has been
    // enabled, and when the first valid data arrives.
    always @(posedge clk_x)
      if (rst) begin
-        sw  <= #DELAY 0;
-        blk <= #DELAY 0;
+        sw  <= #DELAY 1'b0;
+        blk <= #DELAY {BLOCK{1'b0}};
      end
      else if (go) begin
         sw  <= #DELAY delays[3] && wrap_blk; // signal an upcoming bank-swap
-        blk <= #DELAY strobe ? next_blk : blk;
+        blk <= #DELAY strobe ? next_blk[MSB:0] : blk;
      end
      else begin
-        sw  <= #DELAY 0;
+        sw  <= #DELAY 1'b0;
         blk <= #DELAY blk;
      end
 
@@ -119,11 +120,11 @@ module tart_correlator
    //  NOTE: Keeps `sw_b` asserted until acknowledged.
    //-------------------------------------------------------------------------
    reg sw_x = 0, sw_d = 0;      // acquisition domain
-   (* ASYNC_REG = "TRUE" *) reg sw_b = 0; // bus domain
+   (* ASYNC_REG = "TRUE" *) reg sw_b = 1'b0; // bus domain
 
    always @(posedge clk_x)
-     if (rst || strobe) sw_x <= #DELAY 0;
-     else if (sw)       sw_x <= #DELAY 1;
+     if (rst || strobe) sw_x <= #DELAY 1'b0;
+     else if (sw)       sw_x <= #DELAY 1'b1;
      else               sw_x <= #DELAY sw_x;
 
    always @(posedge clk_x)
@@ -131,32 +132,59 @@ module tart_correlator
      else     sw_d <= #DELAY sw_x && strobe;
 
    always @(posedge clk_i or posedge sw_d)
-     if (sw_d)               sw_b <= #DELAY 1;
-     else if (rst || switch) sw_b <= #DELAY 0;
+     if (sw_d)               sw_b <= #DELAY 1'b1;
+     else if (rst || switch) sw_b <= #DELAY 1'b0;
 
    always @(posedge clk_i)
-     if (rst) switch <= #DELAY 0;
+     if (rst) switch <= #DELAY 1'b0;
      else     switch <= #DELAY sw_b && !switch;
 
 
    //-------------------------------------------------------------------------
    //  Bus interface.
    //-------------------------------------------------------------------------
-   wire [MSB:0] dats [0:7];
-   reg [7:0]    stbs = 0;
-   reg [2:0]    dev = 0;
-   reg [ASB:0]  adr = 0;
-   reg          cyc = 0, we = 0, bst = 0; // TODO:
-   wire [7:0]   acks;
-   wire         we_w = 0, ack_w = |acks;
+   wire [MSB:0] dats [0:5];
+   reg [5:0]    stbs = 6'h0;
+   reg [2:0]    dev = 3'h0;
+   reg [ASB:0]  adr = {ABITS{1'b0}};
+   reg          cyc = 1'b0, we = 1'b0, bst = 1'b0; // TODO:
+   wire [5:0]   acks;
+   wire         we_w = 1'b0, ack_w = |acks;
+   wire         upd_stb;
 
-   assign acks[7] = 0;
+`ifdef __WB_CORRELATOR_CLASSIC
+   wire         ack_slo;
+
+   //  Hold the strobe constant until a transfer completes.
+   assign upd_stb = stb_i && !ack_w && !ack_o;
+   assign ack_slo = cyc_i && stb_i && !ack_o;
 
    //-------------------------------------------------------------------------
    //  Pass through (and pipeline) the bus transactions.
    always @(posedge clk_i)
-     if (rst)                         cyc <= #DELAY 0;
-     else if (cyc_i && stb_i && !cyc) cyc <= #DELAY 1;
+     if (rst)                   cyc <= #DELAY 1'b0;
+     else if (ack_slo && !cyc)  cyc <= #DELAY 1'b1;
+     else if (cyc )             cyc <= #DELAY !ack_o && !ack_w;
+     else                       cyc <= #DELAY cyc;
+
+   always @(posedge clk_i)
+     if (rst)        {we, bst}      <= #DELAY 2'b0;
+     else if (cyc_i) {we, bst, adr} <= #DELAY {we_i, 1'b0, adr_i};
+
+   //-------------------------------------------------------------------------
+   //  Route throught the acknowledges from the correct device.
+   always @(posedge clk_i)
+     if (rst) ack_o <= #DELAY 1'b0;
+     else     ack_o <= #DELAY ack_slo && ack_w;
+
+`else // !`ifdef __WB_CORRELATOR_CLASSIC
+   assign upd_stb = stb_i;
+
+   //-------------------------------------------------------------------------
+   //  Pass through (and pipeline) the bus transactions.
+   always @(posedge clk_i)
+     if (rst)                         cyc <= #DELAY 1'b0;
+     else if (cyc_i && stb_i && !cyc) cyc <= #DELAY 1'b1;
      else if (cyc)                    cyc <= #DELAY |stbs;
      else                             cyc <= #DELAY cyc;
 
@@ -165,16 +193,37 @@ module tart_correlator
      else if (cyc_i) {we, bst, adr} <= #DELAY {we_i, bst_i, adr_i};
 
    //-------------------------------------------------------------------------
-   //  Address decoders -- that sets the strobes for each of the sub-units.
-   always @(posedge clk_i)
-     if (rst) stbs <= #DELAY 0;
-     else     stbs <= #DELAY {8{stb_i}} & (1 << adr_i[9:7]);
-
-   //-------------------------------------------------------------------------
    //  Route throught the acknowledges from the correct device.
    always @(posedge clk_i)
-     if (rst) ack_o <= #DELAY 0;
-     else     ack_o <= #DELAY cyc_i && acks[dev];
+     if (rst) ack_o <= #DELAY 1'b0;
+     else     ack_o <= #DELAY ack_w;
+`endif // !`ifdef __WB_CORRELATOR_CLASSIC
+
+   //-------------------------------------------------------------------------
+   //  Address decoders -- that sets the strobes for each of the sub-units.
+   always @(posedge clk_i)
+     if (upd_stb)
+       case (adr_i[9:7])
+         0: stbs <= #DELAY 6'b000001;
+         1: stbs <= #DELAY 6'b000010;
+         2: stbs <= #DELAY 6'b000100;
+         3: stbs <= #DELAY 6'b001000;
+         4: stbs <= #DELAY 6'b010000;
+         5: stbs <= #DELAY 6'b100000;
+         default:
+           stbs <= #DELAY 6'h0;
+       endcase
+     else
+       stbs <= #DELAY 6'h0;
+
+   //-------------------------------------------------------------------------
+   //  Assert a bus address error, for attempted accesses to unmapped address-
+   //  space.
+   always @(posedge clk_i)
+     if (stb_i && adr_i[9:7] > 3'h5)
+       err_o <= #DELAY 1'b1;
+     else
+       err_o <= #DELAY 1'b0;
 
    always @(posedge clk_i) begin
       dev   <= #DELAY adr[9:7];
@@ -186,7 +235,6 @@ module tart_correlator
    //  Explicitly instantiate an 8:1 MUX for the output-data, so that it can
    //  be floor-planned.
    //-------------------------------------------------------------------------
-   wire [MSB:0] dat_w;
    MUX8 #( .WIDTH(BLOCK) ) MUXDAT0
      ( .a(dats[0]),
        .b(dats[1]),
@@ -194,16 +242,16 @@ module tart_correlator
        .d(dats[3]),
        .e(dats[4]),
        .f(dats[5]),
-       .g(dats[6]),
-       .h(dats[7]),
+       .g({BLOCK{1'bx}}),
+       .h({BLOCK{1'bx}}),
        .s(dev),
        .x(dat_w)
        );
 
    //-------------------------------------------------------------------------
-   //  Hilbert transform to reconstruct imaginaries.
+   //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
-   fake_hilbert #( .WIDTH(24) ) HILB0
+   fake_hilbert #( .WIDTH(AXNUM) ) HILB0
      (  .clk(clk_x),
         .rst(rst),
         .en(enable),
@@ -227,7 +275,6 @@ module tart_correlator
 
    (* AREA_GROUP = "cblk0" *)
    correlator_block_DSP
-//    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
@@ -248,10 +295,12 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[0]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im),
+
+         .bank_o(bankindex)
          );
 
    (* AREA_GROUP = "cblk1" *)
@@ -276,10 +325,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[1]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk2" *)
@@ -304,15 +353,14 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[2]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk3" *)
    correlator_block_DSP
-//    correlator_block_SDP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS03_00),
          .PAIRS1(PAIRS03_01),
@@ -333,10 +381,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[3]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk4" *)
@@ -361,10 +409,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[4]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
    (* AREA_GROUP = "cblk5" *)
@@ -389,10 +437,10 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[5]),
 
-         .sw(sw),
-         .en(go),
-         .re(re),
-         .im(im)
+         .sw_i(sw),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im)
          );
 
 

@@ -10,19 +10,15 @@ Copyright (C) 2016 Tim Molteno, Max Scheel, and Patrick Suggate.
 
 # TART Source
 
-## Naming Conventions
+## Directories and Files
 
-### Wishbone(-like) Interfaces and Signals
-A name like *c_dtx* means that:
- * the *c* indicates that the naming is from the point-of-view of the "c" module, in this case the correlator-block; and
- * the *dtx* indicates that the signal carries data to the correlator, to be transmitted.
-
-## Directories
+**TODO rewrite some of the scripts as Python scripts**
 
 ### Configuration
 * script/       -- configuration generators;
 * include/      -- configuration files to be included;
-* ucf/          -- Xilinx implementation constraint files;
+* papilio/      -- Xilinx implementation constraint files;
+* data/         -- data-files for the current configuration;
 
 ### TART Hardware Descriptions
 * verilog/      -- most TART-specific code;
@@ -33,3 +29,10 @@ A name like *c_dtx* means that:
 * bench/
 * bench/bus/
 * bench/spi/
+
+## Naming Conventions
+
+### Wishbone(-like) Interfaces and Signals
+A name like *c_dtx* means that:
+ * the *c* indicates that the naming is from the point-of-view of the "c" module, in this case the correlator-block; and
+ * the *dtx* indicates that the signal carries data to the correlator, to be transmitted.

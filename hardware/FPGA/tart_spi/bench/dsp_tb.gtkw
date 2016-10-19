@@ -1,44 +1,42 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Sat Aug 20 06:20:30 2016
+[*] Wed Oct 19 05:10:17 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.vcd"
-[dumpfile_mtime] "Sat Aug 20 06:19:34 2016"
-[dumpfile_size] 8474234
+[dumpfile_mtime] "Wed Oct 19 05:07:19 2016"
+[dumpfile_size] 31068152
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
-[timestart] 60000000
+[timestart] 0
 [size] 2560 1416
 [pos] -1 -1
-*-18.505976 62013000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.898705 4663000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
-[treeopen] tart_dsp_tb.TART_DSP.CORRELATOR.
-[treeopen] tart_dsp_tb.TART_DSP.VISIBILITIES.
 [sst_width] 223
 [signals_width] 150
 [sst_expanded] 1
 [sst_vpaned_height] 447
 @800200
+-== TOP ==
 -Signal
 @28
 tart_dsp_tb.clk_x
+tart_dsp_tb.rst
 @22
 tart_dsp_tb.antenna[23:0]
-@800200
--Hilb
 @1000200
--Hilb
 -Signal
 @800200
 -System
 @28
 tart_dsp_tb.aq_enabled
+tart_dsp_tb.vx_enabled
 tart_dsp_tb.switching
 @22
 tart_dsp_tb.blocksize[23:0]
 @1000200
 -System
-@c00200
+@800200
 -Bus
 @28
 tart_dsp_tb.b_clk
@@ -52,9 +50,10 @@ tart_dsp_tb.dst[2:0]
 @22
 tart_dsp_tb.val[7:0]
 tart_dsp_tb.dat[7:0]
-@1401200
+@1000200
 -Bus
-@c00200
+-== TOP ==
+@800200
 -DSP Bus
 @28
 tart_dsp_tb.dsp_cyc
@@ -65,44 +64,44 @@ tart_dsp_tb.dsp_ack
 @22
 tart_dsp_tb.dsp_blk[3:0]
 tart_dsp_tb.dsp_dat[7:0]
-@1401200
+@1000200
 -DSP Bus
+@800200
+--- Viz --
 @28
 tart_dsp_tb.available
 tart_dsp_tb.newblock
 tart_dsp_tb.TART_DSP.streamed
 tart_dsp_tb.switching
 @800200
+-Control
+@1000200
+-Control
+@800200
 -Prefetch
 @28
-tart_dsp_tb.TART_DSP.VISIBILITIES.cyc_o
-tart_dsp_tb.TART_DSP.VISIBILITIES.stb_o
-tart_dsp_tb.TART_DSP.VISIBILITIES.we_o
-tart_dsp_tb.TART_DSP.VISIBILITIES.bst_o
-tart_dsp_tb.TART_DSP.VISIBILITIES.ack_i
-tart_dsp_tb.TART_DSP.VISIBILITIES.wat_i
+tart_dsp_tb.TART_DSP.VIZ.p_cyc
+tart_dsp_tb.TART_DSP.VIZ.p_stb
+tart_dsp_tb.TART_DSP.VIZ.p_we
+tart_dsp_tb.TART_DSP.VIZ.p_bst
+tart_dsp_tb.TART_DSP.VIZ.p_ack
 @22
-tart_dsp_tb.TART_DSP.VISIBILITIES.adr_o[13:0]
-tart_dsp_tb.TART_DSP.VISIBILITIES.dat_i[23:0]
+tart_dsp_tb.TART_DSP.VIZ.p_adr[9:0]
+tart_dsp_tb.TART_DSP.VIZ.p_dat[23:0]
+@800200
+-Internal
+@28
+tart_dsp_tb.TART_DSP.VIZ.start
+@29
+tart_dsp_tb.TART_DSP.VIZ.empty
+@1000200
+-Internal
 @800200
 -SRAM
-@28
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_cyc
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_stb
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_we
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_bst
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_ack
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_wat
-@22
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_adr[9:0]
-tart_dsp_tb.TART_DSP.VISIBILITIES.p_dat[23:0]
 @1000200
 -SRAM
-@22
-tart_dsp_tb.TART_DSP.VISIBILITIES.PREFETCH0.count[9:0]
-tart_dsp_tb.TART_DSP.VISIBILITIES.PREFETCH0.rxd[31:0]
-@1000200
 -Prefetch
+--- Viz --
 @c00200
 -Stream
 @28
@@ -116,20 +115,5 @@ tart_dsp_tb.TART_DSP.v_adr[11:0]
 tart_dsp_tb.TART_DSP.v_ack
 @1401200
 -Stream
-@c00022
-tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-@28
-(0)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(1)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(2)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(3)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(4)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(5)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(6)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-(7)tart_dsp_tb.TART_DSP.CORRELATOR.stbs[7:0]
-@1401200
--group_end
-@23
-tart_dsp_tb.TART_DSP.CORRELATOR.c_adr[10:0]
 [pattern_trace] 1
 [pattern_trace] 0

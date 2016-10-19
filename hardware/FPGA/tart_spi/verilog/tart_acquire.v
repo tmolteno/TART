@@ -13,14 +13,23 @@
  * TART's data-acquisition control subcircuit, connected via a Wishbone-like
  * interconnect.
  * 
+ * This module handles DRAM prefetch of raw acquisition data, for the SPI
+ * interface, and controls the settings for both the:
+ *  a) visibilities calculation unit; and
+ *  b) raw acquisition-data buffering unit.
+ * 
  * Has system registers for:
- *   000  --  antenna data stream;
- *   001  --  antenna data[23:16];
- *   010  --  antenna data[15: 8];
- *   011  --  antenna data[ 7: 0];
- *   101  --  acquisition sample delay;
- *   110  --  acquisition debug mode; and
- *   111  --  acquisition status and control.
+ *   0000  --  antenna data stream;
+ *   0001  --  antenna data[23:16];
+ *   0010  --  antenna data[15: 8];
+ *   0011  --  antenna data[ 7: 0];
+ *   0100  --  acquisition status;
+ *   0110  --  acquisition debug mode;
+ *   0111  --  acquisition control;
+ * 
+ *   1000  --  visibilities data stream;
+ *   1001  --  visibilities status; and
+ *   1010  --  visibilities control.
  * 
  * NOTE:
  *  + supports both classic and pipelined transfers;
@@ -39,29 +48,30 @@
 //  TODO: Move into the above configuration file?
 //----------------------------------------------------------------------------
 // Raw antenna-data, read-back registers:
-`define AX_STREAM 3'h0
-`define AX_DATA1  3'h1
-`define AX_DATA2  3'h2
-`define AX_DATA3  3'h3
-// `define AX_CHKSUM 1
-
-// Visibilities access, status, and control:
-`define VX_STREAM 3'h4
-`define VX_STATUS 3'h5
-// `define VX_CHKSUM 2
+`define AX_STREAM 4'h0
+`define AX_DATA1  4'h1
+`define AX_DATA2  4'h2
+`define AX_DATA3  4'h3
 
 // Data-acquisition status, and control:
-`define AQ_DEBUG  3'h6
-`define AQ_STATUS 3'h7
+`define AQ_STATUS 4'h4
+`define AQ_DEBUG  4'h6
+`define AQ_SYSTEM 4'h7
 
+// Visibilities access, status, and control:
+`define VX_STREAM 4'h8
+`define VX_STATUS 4'h9
+`define VX_SYSTEM 4'ha
 
 module tart_acquire
   #(parameter WIDTH = 8,        // WB-like bus data-width
     parameter MSB   = WIDTH-1,
-    parameter ACCUM = 32,       // #bits of the viz accumulators
+    parameter ACCUM = 24,       // #bits of the viz accumulators
     parameter XSB   = ACCUM-1,
-    parameter BBITS = `BLOCK_BITS,
+    parameter BBITS = 4,
     parameter BSB   = BBITS-1,
+    parameter AXNUM = 24,
+    parameter NSB   = AXNUM-1,
     parameter DELAY = 3)
    (
     // Wishbone-like bus interface:
@@ -71,7 +81,7 @@ module tart_acquire
     input              stb_i,
     input              we_i,
     output reg         ack_o = 0,
-    input [2:0]        adr_i,
+    input [3:0]        adr_i,
     input [MSB:0]      dat_i,
     output reg [MSB:0] dat_o = 0,
 
@@ -80,7 +90,7 @@ module tart_acquire
     //   `data_ready` is asserted.
     input              data_ready,
     output             data_request,
-    input [23:0]       data_in,
+    input [NSB:0]      data_in,
 
     // SPI status flags:
     input              spi_busy,
@@ -90,54 +100,73 @@ module tart_acquire
     output             vx_stb_o, // for reading back visibilities
     output             vx_we_o,
     input              vx_ack_i,
-    output reg [BSB:0] vx_blk_o = 0, // Visibilities block to access
+    output reg [BSB:0] vx_blk_o = {BBITS{1'b0}}, // Visibilities block to access
     input [MSB:0]      vx_dat_i,
+    input              overflow,
     input              newblock,
     input              streamed,
     input [XSB:0]      checksum, // TODO:
-    output reg         accessed = 0,
-    output reg         available = 0,
+    output reg         accessed = 1'b0,
+    output reg         available = 1'b0,
 
     (* ASYNC_REG = "TRUE" *)
-    output reg [XSB:0] blocksize = 0, // = #viz/block - 1;
+    output reg [XSB:0] blocksize = 1'b0, // = #viz/block - 1;
+    output reg         vx_enabled = 1'b0,
+    output reg         vx_overwrite = 1'b0,
+    input              vx_stuck_i,
+    input              vx_limp_i,
 
     (* ASYNC_REG = "TRUE" *)
-    output reg         aq_enabled = 0,
-    output reg         aq_debug_mode = 0,
-	  output reg [2:0]   aq_sample_delay = 0,
+    output reg         aq_enabled = 1'b0,
+    output reg         aq_debug_mode = 1'b0,
+	  output reg [2:0]   aq_sample_delay = 3'h0,
     input [24:0]       aq_adr_i
     );
 
 
    //-------------------------------------------------------------------------
-   //  Local wires.
-   wire [MSB:0]        ax_stream;
-   wire [23:0]         ax_data;
+   //  Signals for the WishBone-like bus, for streaming back visibilities.
+   //-------------------------------------------------------------------------
+   assign vx_cyc_o = cyc_i;
+   assign vx_stb_o = stb_i && adr_i == `VX_STREAM;
+   assign vx_we_o  = 1'b0;
 
+
+   //-------------------------------------------------------------------------
+   //  Group signals into registers.
+   //-------------------------------------------------------------------------
+   //  Data acquisition streaming, status, and control registers.
+   wire [MSB:0]        ax_stream, aq_status, aq_debug, aq_system;
+   wire [WIDTH*3-1:0]  ax_data;
+
+   assign aq_debug  = {aq_debug_mode, vx_stuck_i, vx_limp_i, {(WIDTH-3){1'b0}}};
+   assign aq_status = {aq_adr_i[7:0]};
+   assign aq_system = {aq_enabled, {(WIDTH-4){1'b0}}, aq_sample_delay};
+
+   //  Visibilities registers.
+   wire [MSB:0]        vx_stream, vx_status, vx_system;
    reg [4:0]           log_block = 0; // = log2(#viz/block);
-   wire                vx_enable = aq_enabled; // TODO:
-   wire [MSB:0]        vx_status = {available, accessed, vx_enable, log_block};
 
-   wire [MSB:0]        aq_debug  = {aq_debug_mode, 4'b0, aq_sample_delay};
-//    wire [MSB:0]        aq_status = {{MSB{1'b0}}, aq_enabled};
-   wire [MSB:0]        aq_status = {aq_adr_i[7:1], aq_enabled};
-   wire                x_ack;
+   assign vx_status = {available, accessed, overflow, {(5-BBITS){1'b0}}, vx_blk_o};
+   assign vx_system = {vx_enabled, vx_overwrite, {(WIDTH-7){1'b0}}, log_block};
 
 
    //-------------------------------------------------------------------------
    //  Manage system flags.
    //-------------------------------------------------------------------------
+   wire                x_ack;
+
    assign x_ack = cyc_i && stb_i && !we_i && !ack_o &&
                   adr_i == `VX_STREAM && vx_ack_i;
 
    always @(posedge clk_i)
-     if (newblock) accessed <= #DELAY 0;
+     if (newblock) accessed <= #DELAY 1'b0;
      else          accessed <= #DELAY accessed || x_ack;
 
    always @(posedge clk_i)
-     if (rst_i)         available <= #DELAY 0;
-     else if (newblock) available <= #DELAY 1;
-     else if (x_ack)    available <= #DELAY 0;
+     if (rst_i)         available <= #DELAY 1'b0;
+     else if (newblock) available <= #DELAY 1'b1;
+     else if (x_ack)    available <= #DELAY 1'b0;
 
 
    //-------------------------------------------------------------------------
@@ -147,16 +176,17 @@ module tart_acquire
    always @(posedge clk_i)
      if (rst_i)
        ack_o <= #DELAY 1'b0;
-     else if (cyc_i && stb_i && !ack_o)
-       case (adr_i)
-         `VX_STREAM: ack_o <= #DELAY vx_ack_i;
-         default:    ack_o <= #DELAY 1'b1;
-       endcase // case (adr_i)
+     else if (cyc_i && stb_i && !ack_o) begin
+        if (adr_i == `VX_STREAM)
+          ack_o <= #DELAY vx_ack_i;
+        else
+          ack_o <= #DELAY 1'b1;
+     end
      else
        ack_o <= #DELAY 1'b0;
 
    //-------------------------------------------------------------------------
-   //  Read back the appropriate register.
+   //  Aqusition & visibilities register reads.
    always @(posedge clk_i)
 `ifdef __WB_CLASSIC
      if (cyc_i && stb_i && !we_i && !ack_o)
@@ -170,54 +200,93 @@ module tart_acquire
          `AX_DATA2:  dat_o <= #DELAY ax_data[15: 8];
          `AX_DATA3:  dat_o <= #DELAY ax_data[ 7: 0];
 
+         //  Acquisition status, and control, registers:
+         `AQ_STATUS: dat_o <= #DELAY aq_status;
+         `AQ_DEBUG:  dat_o <= #DELAY aq_debug;
+         `AQ_SYSTEM: dat_o <= #DELAY aq_system;
+
          //  Visibilities registers:
          `VX_STREAM: dat_o <= #DELAY vx_dat_i;
          `VX_STATUS: dat_o <= #DELAY vx_status;
-
-         //  Acquisition status, and control, registers:
-         `AQ_DEBUG:  dat_o <= #DELAY aq_debug;
-         `AQ_STATUS: dat_o <= #DELAY aq_status;
+         `VX_SYSTEM: dat_o <= #DELAY vx_system;
 
          default:    dat_o <= #DELAY 8'bx;
        endcase // case (adr_i)
 
    //-------------------------------------------------------------------------
-   //  Write into the appropriate register.
+   //  Aqusition & visibilities register writes.
+   reg [BSB:0] new_blk = {BBITS{1'b0}};
+   reg         upd_blk = 1'b0;
+   reg         vx_enable = 1'b0, vx_disable = 1'b0;
+
    always @(posedge clk_i)
-     if (rst_i)
-       {aq_enabled, aq_debug_mode, aq_sample_delay} <= #DELAY 0;
+     if (rst_i) begin
+        vx_enable       <= #DELAY 1'b0;
+        aq_enabled      <= #DELAY 1'b0;
+        aq_debug_mode   <= #DELAY 1'b0;
+        aq_sample_delay <= #DELAY 3'h0;
+        upd_blk         <= #DELAY 1'b0;
+     end
+`ifdef __WB_CLASSIC
+     else if (cyc_i && stb_i && we_i && !ack_o)
+`else
      else if (cyc_i && stb_i && we_i)
+`endif
        case (adr_i)
-         `VX_STATUS: log_block <= #DELAY dat_i[4:0];
-         `AQ_DEBUG:  {aq_debug_mode, aq_sample_delay} <= #DELAY {dat_i[7], dat_i[2:0]};
-         `AQ_STATUS: aq_enabled <= #DELAY dat_i[0];
+         `AQ_DEBUG:  begin
+            aq_debug_mode   <= #DELAY dat_i[MSB];
+         end
+         //  Acquisition control register:
+         `AQ_SYSTEM: begin
+            aq_sample_delay <= #DELAY dat_i[2:0];
+            aq_enabled      <= #DELAY dat_i[MSB];
+         end
+         //  Visibilities status register:
+         //  NOTE: Set elsewhere.
+         `VX_STATUS: begin
+            new_blk <= #DELAY dat_i[BSB:0];
+            upd_blk <= #DELAY 1'b1;
+         end
+         //  Visibilities control register:
+         `VX_SYSTEM: begin
+            vx_enable    <= #DELAY dat_i[MSB];
+            vx_disable   <= #DELAY ~dat_i[MSB];
+            vx_overwrite <= #DELAY dat_i[MSB-1];
+            log_block    <= #DELAY dat_i[4:0];
+         end
        endcase // case (adr_i)
+     else begin
+        upd_blk    <= #DELAY 1'b0;
+        vx_enable  <= #DELAY 1'b0;
+        vx_disable <= #DELAY 1'b0;
+     end
 
 
    //-------------------------------------------------------------------------
    //  Visibilities access and control circuit.
    //-------------------------------------------------------------------------
-   wire                bs_new;
+   wire                bs_new_w;
+   reg                 bs_upd = 1'b0;
 
-   assign bs_new   = cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_STATUS;
-   assign vx_cyc_o = cyc_i;
-   assign vx_stb_o = stb_i && adr_i == `VX_STREAM;
-   assign vx_we_o  = 1'b0;
+   assign bs_new_w = cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_SYSTEM;
 
-   /*
-   //  TODO: How slow is computing the new block-size?
+   //-------------------------------------------------------------------------
+   //  Enable the visibilities unit when a write is performed to the control-
+   //  register, and disable it upon overflow, if overwrite mode is disabled.
    always @(posedge clk_i)
-     if (bs_new)
-       blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
-    */
+     if (rst_i)
+       vx_enabled <= #DELAY 1'b0;
+     else if (vx_enable)
+       vx_enabled <= #DELAY 1'b1;
+     else if (vx_disable || overflow && !vx_overwrite)
+       vx_enabled <= #DELAY 1'b0;
 
-   reg                 bs_upd = 0, bs_dec = 0;
-   reg [XSB:0]         bs_shift = 0;
-
+   //-------------------------------------------------------------------------
+   //  Set the blocksize when a write is performed to the control-register.
    always @(posedge clk_i) begin
-      bs_upd <= #DELAY bs_new && !bs_upd;
-//       bs_dec <= #DELAY bs_upd;
+      bs_upd <= #DELAY bs_new_w && !bs_upd;
       if (bs_upd)
+`ifdef  __LOOKUP_BLOCKSIZE
         case (log_block)
           0:  blocksize <= #DELAY        0;
           1:  blocksize <= #DELAY        1;
@@ -245,10 +314,11 @@ module tart_acquire
           23: blocksize <= #DELAY  8388607;
           default:
             blocksize   <= #DELAY 16777215;
-        endcase
-//         bs_shift  <= #DELAY (1 << log_block);
-//       if (bs_upd)
-//         blocksize <= #DELAY bs_shift - 1;
+        endcase // case (log_block)
+`else
+      //  TODO: How slow is computing the new block-size?
+      blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
+`endif
    end
 
    //-------------------------------------------------------------------------
@@ -260,8 +330,14 @@ module tart_acquire
    wire [BBITS:0] vx_next = vx_blk_o + 1;
 
    always @(posedge clk_i)
-     if (rst_i) vx_blk_o <= #DELAY 0;
-     else       vx_blk_o <= #DELAY streamed ? vx_next[BSB:0] : vx_blk_o;
+     if (rst_i)
+       vx_blk_o <= #DELAY {BBITS{1'b0}};
+`ifdef __USE_SETTABLE_BLOCK_COUNTER
+     else if (upd_blk)
+       vx_blk_o <= #DELAY new_blk;
+`endif
+     else
+       vx_blk_o <= #DELAY streamed ? vx_next[BSB:0] : vx_blk_o;
 
 
    //-------------------------------------------------------------------------

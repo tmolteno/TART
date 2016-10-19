@@ -27,7 +27,6 @@ module correlate_cos_sin_DSP
 
     input          hi,
     input          ar,
-    // input                  ai,
     input          br,
     input          bi,
 

@@ -7,6 +7,37 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 //
 
+/*
+ * Module      : verilog/tart.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * TART hardware description for data-acquisition, and real-time computation
+ * of visibilities.
+ * 
+ * Changelog:
+ *  + ??/??/2013  --  initial file;
+ *  + 11/05/2016  --  rebuilt the SPI module to be faster, have a Wishbone-
+ *                    like interconnect, and to separate out some TART-
+ *                    specific functionality;
+ *  + 09/06/2016  --  started adding the hardware correlators;
+ *  + 25/06/2016  --  finished refactoring the top-level modules, for the new
+ *                    SPI and correlators;
+ *  + 05/09/2016  --  floorplanning complete, and now meets timing;
+ *  + 15/10/2016  --  numerous improvements to get it to a releasable state;
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 `include "tartcfg.v"
 
 module tart
@@ -61,8 +92,9 @@ module tart
    (* PERIOD = "10.18 ns" *) wire fpga_clk;
    (* PERIOD = "10.18 ns" *) wire rx_clk;
    (* PERIOD = "5.091 ns" *) wire clk_x;
+   (* KEEP   = "TRUE"     *) wire reset;
 
-   wire                reset_n, reset;
+   wire                reset_n;
 
    //  SDRAM memory-controller signals:
    wire                cmd_enable, cmd_ready, cmd_wr;
@@ -71,17 +103,38 @@ module tart
    wire [31:0]         data_out;
 
    wire                request_from_spi;
-   wire                spi_debug;
-   wire [2:0]          data_sample_delay;
    wire [2:0]          tart_state;
+   wire                switching;
 
    //  Force these signals to be kept, so that they can be referenced in the
    //  constraints file (as they have the `TIG` constraint applied).
+   (* KEEP = "TRUE" *) wire overflow;
+   (* KEEP = "TRUE" *) wire overwrite;
    (* KEEP = "TRUE" *) wire aq_enabled;
+   (* KEEP = "TRUE" *) wire vx_enabled;
+   (* KEEP = "TRUE" *) wire [2:0] aq_delay;
+   (* KEEP = "TRUE" *) wire aq_debug;
+   (* KEEP = "TRUE" *) wire stuck;
+   (* KEEP = "TRUE" *) wire limp;
    (* KEEP = "TRUE" *) wire [NSB:0] ax_dat;
 
-   assign led = tart_state >= 2; // asserted when data can be read back
+   //-------------------------------------------------------------------------
+   //  Additional (optional) debugging outputs.
+`ifdef __RELEASE_BUILD
+   assign led = 1'b0;
+	 assign rx_clk_test_pin = 1'b0;
+
+`else
+   (* KEEP = "TRUE" *) reg [27:0] cnt28 = 28'b0;
+   wire [28:0]         cnt28_next = cnt28 + 1;
+
+//    assign led = tart_state >= 2; // asserted when data can be read back
+   assign led = tart_state >= 2 && cnt28[27];
 	 assign rx_clk_test_pin = rx_clk;
+
+   always @(posedge clk_x)
+     cnt28 <= #DELAY cnt28_next[27:0];
+`endif // !`ifdef __RELEASE_BUILD
 
 
    //-------------------------------------------------------------------------
@@ -131,9 +184,10 @@ module tart
        .mcb_adr_o (cmd_address),
        .mcb_dat_o (cmd_data_in),
 
+       .vx_ce_i   (vx_enabled),
        .aq_ce_i   (aq_enabled),
-       .aq_delay_i(data_sample_delay),
-       .aq_debug_i(spi_debug),
+       .aq_delay_i(aq_delay),
+       .aq_debug_i(aq_debug),
        .ax_data_i (antenna),
        .ax_data_o (ax_dat),
        .rd_req_i  (request_from_spi),
@@ -186,12 +240,23 @@ module tart
    assign data_out_ready = 1'b0;
    assign data_out = 32'b0;
 
+   assign SDRAM_CS   = 1'b1;
+   assign SDRAM_CKE  = 1'b0;
+   (* PULLUP = "TRUE" *) assign SDRAM_CLK  = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_WE   = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_RAS  = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_CAS  = 1'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_BA   = 2'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_ADDR = 13'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_DQM  = 2'bz;
+   (* PULLUP = "TRUE" *) assign SDRAM_DQ   = 16'bz;
+
 `endif // !`ifdef __USE_ACQUISITION
 
 
    //-------------------------------------------------------------------------
    //
-   //  TART's system-wide, Wishbone-like interconnect and peripherals.
+   //     ADDITIONAL TART SETTINGS
    //
    //-------------------------------------------------------------------------
    //  Visibilities/correlator settings.
@@ -199,6 +264,7 @@ module tart
    parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
    parameter MSB   = BLOCK-1;     // Data transfer MSB
    parameter TRATE = `TMUX_RATE;  // Time-multiplexing rate
+   parameter TBITS = `TMUX_BITS;   // TMUX bits
    parameter COUNT = `VISB_LOG2;  // (1 << 3) - 1;
    parameter NREAD = `READ_COUNT; // Number of visibilities to read back
    parameter RBITS = `READ_BITS;  // = ceiling{log2(NREAD)};
@@ -210,22 +276,38 @@ module tart
    parameter WSB   = BBITS-2;     // SPI -> WB bus address-width
    parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
    parameter ASB   = ABITS-1;     // Address MSB
-   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
+
+   //  Settings for the visibilities data banks:
+   parameter XBITS = `BANK_BITS;  // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 
+   //  Internal correlator data-bus settings:
+   parameter CBITS = `BANK_BITS + `READ_BITS;
+   parameter CSB   = CBITS-1;
+
+
+   //-------------------------------------------------------------------------
+   //
+   //     TART'S SYSTEM-WIDE, WISHBONE-LIKE INTERCONNECT AND PERIPHERALS.
+   //
+   //-------------------------------------------------------------------------
    //  SPI -> WB bus signals.
-   wire [BSB:0] b_dtx, b_drx;   // bus master's signals
+   wire [BSB:0] b_dtx;   // bus master's signals
+   wire [BSB:0] b_drx;
    wire [WSB:0] b_adr;
    wire         b_cyc, b_stb, b_we, b_ack;
 
-   wire [BSB:0] r_drx, r_dtx;   // reset handler's signals
+   wire [BSB:0] r_drx;   // reset handler's signals
+   wire [BSB:0] r_dtx;
    wire         r_stb, r_ack;
 
-   wire [BSB:0] a_drx, a_dtx;   // data-acquisition controller's signals
-   wire [2:0]   a_adr = b_adr[2:0];
+   wire [BSB:0] a_drx;   // data-acquisition controller's signals
+   wire [BSB:0] a_dtx;
+   wire [3:0]   a_adr = b_adr[3:0];
    wire         a_stb, a_ack;
 
-   reg          r_sel = 0, a_sel = 0;
+   reg          r_sel = 0;
+   reg          a_sel = 0;
 
    //  WB signals for the streaming interface to the visibilities data.
    wire [BSB:0] s_dat;
@@ -234,28 +316,32 @@ module tart
 
    //  Acquisition-unit signals.
    wire         newblock, streamed, accessed, available;
-   wire [MSB:0] checksum, blocksize;
+   wire [MSB:0] blocksize;
+   (* KEEP = "TRUE" *) wire [MSB:0] checksum;
+   (* KEEP = "TRUE" *) wire uflow, oflow;
 
    //  Remap system signals to WB signals.
-   assign b_clk = fpga_clk;
-   assign b_rst = reset;
+   (* KEEP = "TRUE" *) wire b_clk = fpga_clk;
+   (* KEEP = "TRUE" *) wire b_rst = reset;
 
 
    //-------------------------------------------------------------------------
    //     TRANSMISSION BLOCK
    //     SPI SLAVE & WB MASTER
    //-------------------------------------------------------------------------
-   wire debug_spi = oflow || uflow;
-   wire spi_busy;
-   wire [7:0] spi_status = {1'b1, debug_spi, request_from_spi, aq_enabled,
-                            spi_debug, tart_state[2:0]};
+   wire         spi_busy;
+   wire [3:0]   c_blk;
+   wire [7:0]   spi_status = {uflow, oflow, request_from_spi, aq_enabled,
+                              aq_debug, tart_state[2:0]};
+   wire [7:0]   viz_status = {aq_debug, vx_enabled, available, overflow, v_blk};
+//    wire [7:0] viz_status = {c_blk, v_blk};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
 
    //  Address decoders for the Wishbone(-like) bus:
-   assign a_stb = b_adr[6:3] == 4'h0 && b_stb; // decoder for acquire
-   assign r_stb = b_adr[6:2] == 5'h03 && b_stb; // address decoder for reset unit
+   assign a_stb = b_adr[6:4] == 3'h0 && b_stb; // decoder for acquire
+   assign r_stb = b_adr[6:3] == 4'hf && b_stb; // address decoder for reset unit
 
    assign b_ack = r_ack || a_ack;
 `ifdef __icarus
@@ -291,7 +377,8 @@ module tart
        .dat_o(b_drx),
 
        .active_o(spi_busy),
-       .status_i(spi_status),
+//        .status_i(spi_status),
+       .status_i(viz_status),
        .overflow_o(oflow),
        .underrun_o(uflow),
        
@@ -315,11 +402,10 @@ module tart
        .dat_i(r_dtx),
        .dat_o(r_drx),
 
-       .status_i(spi_status),
-       .overflow_i(oflow),
-       .underrun_i(uflow),
-       .reset_ni(reset_n),
-       .reset_o (reset)
+       .status_i  (spi_status),
+       .reset_ni  (reset_n),
+       .reset_o   (reset),
+       .checksum_i(checksum)
        );
 
 
@@ -353,6 +439,7 @@ module tart
        .vx_blk_o(v_blk),
        .vx_dat_i(s_dat),
 
+       .overflow (overflow),
        .newblock (newblock), // strobes when new block ready
        .streamed (streamed), // has an entire block finished streaming?
        .accessed (accessed), // asserts once visibilities are read back
@@ -360,12 +447,17 @@ module tart
        .checksum (checksum),
        .blocksize(blocksize),
 
+       .vx_enabled(vx_enabled),
+       .vx_overwrite(overwrite), // overwrite when buffers full?
+       .vx_stuck_i(stuck),
+       .vx_limp_i (limp),
+
        //  Antenna capture & acquisition controls:
-       .aq_debug_mode(spi_debug),
+       .aq_debug_mode(aq_debug),
        .aq_enabled(aq_enabled),
-       .aq_sample_delay(data_sample_delay),
+       .aq_sample_delay(aq_delay),
 //        .aq_adr_i(cmd_address)
-       .aq_adr_i(24'h0000b5)
+       .aq_adr_i({21'h0, v_blk})
        );
 
 
@@ -375,10 +467,17 @@ module tart
    //     CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
-   wire switching;
-
-   tart_dsp
+ `ifdef __USE_FAKE_DSP
+   tart_fake_dsp
      #(.NREAD(NREAD)
+ `else
+   tart_dsp
+     #(.AXNUM(ANTENNAE),
+       .ACCUM(ACCUM),
+       .TRATE(TRATE),
+       .TBITS(TBITS),
+       .NREAD(NREAD)
+ `endif
        ) DSP
      ( .clk_x(clk_x),
        .rst_i(reset),
@@ -389,14 +488,20 @@ module tart
        .aq_bst_i(1'b0),
        .aq_ack_o(s_ack),
        .aq_blk_i(v_blk),
-       .aq_dat_i('bx),
+       .aq_dat_i(8'bx),
        .aq_dat_o(s_dat),
 
+       .stuck_o  (stuck),
+       .limp_o   (limp),
+
        .aq_enable(aq_enabled),
-//        .antenna  (antenna),
+       .vx_enable(vx_enabled),
+       .vx_block (c_blk),
+       .overwrite(overwrite),
        .antenna  (ax_dat),
        .blocksize(blocksize),
        .switching(switching),
+       .overflow (overflow),
        .newblock (newblock),
        .checksum (checksum),
        .streamed (streamed)

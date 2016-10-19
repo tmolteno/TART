@@ -11,40 +11,68 @@ TIMESPEC "TSsys_clk"=PERIOD "sys_clk" 10.18  ns HIGH 50%;
 TIMESPEC "TSvis_clk"=PERIOD "vis_clk" 5.091  ns HIGH 50%;
 TIMESPEC "TSspi_clk"=PERIOD "spi_clk" 8.000  ns HIGH 50%;
 
+#
+# Constrain the data-path (combinational) latency, between the asynchronous
+# clock domains.
+#
+NET "TART_DCM0/clk12x_dcm" TNM_NET=FFS "GRP_X";
+NET "TART_DCM0/clk6x_dcm"  TNM_NET=FFS "GRP_B";
+# NET "SPI_SCK"              TNM_NET=FFS "GRP_S";
+NET "rx_clk_16_buf"        TNM_NET=FFS "GRP_E"; # External crystal
 
-NET "DSP/blocksize<*>" TIG;
-NET "aq_enabled" TIG;
-NET "ax_dat<*>" TIG;
-NET "DSP/CORRELATOR/sw_d" TIG;
-NET "DSP/CORRELATOR/sw_b" TIG;
-NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
+# Correlator <-> WB bus data-path constraints:
+TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 5.0ns DATAPATHONLY;
+TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 5.0ns DATAPATHONLY;
 
-# DSP48-based correlator area-groups:
-INST "DSP/CORRELATOR/CXBLOCK0" AREA_GROUP="cblk0";
-INST "DSP/CORRELATOR/CXBLOCK1" AREA_GROUP="cblk1";
-INST "DSP/CORRELATOR/CXBLOCK2" AREA_GROUP="cblk2";
-INST "DSP/CORRELATOR/CXBLOCK3" AREA_GROUP="cblk3";
+# External <-> Correlator data-path constraints:
+TIMESPEC TSe_to_x=FROM "GRP_E" TO "GRP_X" 5.0ns DATAPATHONLY;
+TIMESPEC TSx_to_e=FROM "GRP_X" TO "GRP_E" 5.0ns DATAPATHONLY;
 
-AREA_GROUP "cblk0" RANGE=SLICE_X0Y2:SLICE_X11Y15;
-AREA_GROUP "cblk1" RANGE=SLICE_X0Y16:SLICE_X11Y31;
-AREA_GROUP "cblk2" RANGE=SLICE_X0Y32:SLICE_X11Y47;
-AREA_GROUP "cblk3" RANGE=SLICE_X0Y48:SLICE_X11Y61;
+# # SPI <-> WB bus data-path constraints:
+# TIMESPEC TSs_to_b=FROM "GRP_S" TO "GRP_B" 8.0ns DATAPATHONLY;
+# TIMESPEC TSb_to_s=FROM "GRP_B" TO "GRP_S" 8.0ns DATAPATHONLY;
 
-# Carry-adder-based correlator area-groups:
-INST "DSP/CORRELATOR/CXBLOCK4" AREA_GROUP="cblk4";
-INST "DSP/CORRELATOR/CXBLOCK5" AREA_GROUP="cblk5";
 
-AREA_GROUP "cblk4" RANGE=SLICE_X14Y2:SLICE_X23Y17;
-AREA_GROUP "cblk5" RANGE=SLICE_X14Y18:SLICE_X23Y33;
+#
+# Exempt some signals from timing consideration.
+# NOTE: These are typically exempted because they're not performance-critical.
+#
+# TODO: Rewrite some of these using `FROM/TO` constraints.
+#
+NET "reset" TIG;
 
-# AREA_GROUP "cblk4" RANGE=SLICE_X14Y2:SLICE_X23Y13;
-# AREA_GROUP "cblk5" RANGE=SLICE_X14Y14:SLICE_X23Y25;
+# NET "aq_enabled" TIG;
+# NET "aq_delay<*>" TIG;
+# NET "aq_debug" TIG;
+# NET "ax_dat<*>" TIG;
 
-# AREA_GROUP "cblk4" RANGE=RAMB8_X1Y0:RAMB8_X1Y7;
-# AREA_GROUP "cblk5" RANGE=RAMB8_X1Y8:RAMB8_X1Y13;
+NET "cnt28<*>" TIG;
+# NET "vx_enabled" TIG;
+NET "stuck" TIG;
+NET "limp" TIG;
 
-# INST "DSP/CORRELATOR/CXBLOCK6" AREA_GROUP="cblk6";
-# AREA_GROUP "cblk6" RANGE=SLICE_X12Y50:SLICE_X23Y61;
+# NET "checksum<*>" TIG;
+NET "overflow" TIG;
+NET "overwrite" TIG;
+NET "DSP/overflow_x" TIG;
+# NET "DSP/blocksize<*>" TIG;
+# NET "DSP/bank<*>" TIG;
+# NET "DSP/bank_next<*>" TIG;
+
+NET "uflow" TIG;
+NET "oflow" TIG;
+NET "DSP/c_err" TIG;
+# NET "DSP/COR/sw_d" TIG;
+# NET "DSP/COR/sw_b" TIG;
+# NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
+
+# # Fake constraints:
+# NET "DSP/sw_d" TIG;
+# NET "DSP/sw_b" TIG;
+# # INST "DSP/block_s" TIG;
+# # INST "DSP/block_x" TIG;
+# # NET "DSP/enable_s" TIG;
+# # NET "DSP/enable_x" TIG;
 
 
 ##############################################################################

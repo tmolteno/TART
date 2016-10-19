@@ -4,56 +4,78 @@
 
 module tart_dsp_tb;
 
-   parameter BLOCK = `ACCUM_BITS;        // Number of bits of a block
-   parameter MSB   = BLOCK-1;
-   parameter ACCUM = BLOCK;     // Bit-width of the accumulators
-   parameter ABITS = 12;        // Address bit-width
-   parameter ASB   = ABITS-1;
-   parameter BBITS = 8;
-   parameter BSB   = BBITS-1;
-   parameter MRATE = 12;
-   parameter DELAY = 3;
+   //-------------------------------------------------------------------------
+   //
+   //  Settings.
+   //
+   //-------------------------------------------------------------------------
+   //  Antenna + accumulator settings:
+   parameter AXNUM = `NUM_ANTENNA; // Number of antenna inputs
+   parameter NSB   = AXNUM-1;
+   parameter ACCUM = `ACCUM_BITS;  // Bit-width of the accumulators
+   parameter BLOCK = ACCUM;        // Block samples-counter bits
+   parameter MSB   = BLOCK-1;      // Accumulator MSB
+   parameter TRATE = `TMUX_RATE;   // Time-multiplexing rate
+   parameter TBITS = `TMUX_BITS;   // TMUX bits
 
-//    parameter COUNT = 4; // count down from:  (1 << COUNT) - 1;
-   parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
+   //  Settings for the visibilities data banks:
+   parameter BREAD = NREAD << 2;
+   parameter XBITS = `BANK_BITS; // Bank-counter bit-width; of the b
+   parameter XSB   = XBITS-1;    // MSB of the bank-counter
+
+   //  Internal correlator data-bus settings:
+   parameter CBITS = `BANK_BITS + `READ_BITS;
+   parameter CSB   = CBITS-1;
+
+   //  External Wishbone-like bus setttings:
+   parameter ABITS = `WBADR_BITS;  // Address bit-width
+   parameter ASB   = ABITS-1;      // Address MSB
+   parameter BBITS = `WBBUS_BITS;  // Bit-width for the SoC WB bus
+   parameter BSB   = BBITS-1;      // Bus MSB
+
+   parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
-//    parameter NREAD = 8;
-//    parameter NREAD = 24;
-   parameter NREAD = 96;
+`ifdef __USE_FAKE_DSP
+   parameter NREAD = 9;
+`else
+   parameter NREAD = 24;
+//    parameter NREAD = 96;
 //    parameter NREAD = 120;
 //    parameter NREAD = `READ_COUNT >> 2;
 //    parameter NREAD = `READ_COUNT;
-
-   parameter BREAD = NREAD << 2;
-   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
-   parameter XSB   = XBITS-1;     // MSB of the block-counter
-`ifdef __USE_SDP_DSRAM
-   parameter CBITS = 14;
-`else
-   parameter CBITS = 10;
 `endif
-   parameter CSB   = CBITS-1;
 
+   //  Additional simulation settings:
+   parameter DELAY = `DELAY;       // Simulated combinational delay
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  Signals.
+   //
+   //-------------------------------------------------------------------------
    wire [MSB:0] c_dat, c_val, blocksize, checksum;
    wire [CSB:0] c_adr;
    wire [BSB:0] dat, val, drx;
    reg          clk_x = 1, b_clk = 1, rst = 0;
    reg          cyc = 0, stb = 0, we = 0, bst = 0;
-   reg [2:0]    adr;
+   reg [3:0]    adr;
    reg [BSB:0]  dtx;
    reg          set = 0, get = 0, fin = 0;
-   wire         ack;
+   wire         dsp_en, stuck, limp, ack;
    wire         c_cyc, c_stb, c_we, c_bst, c_ack;
-   reg [23:0]   data [0:255];
+   reg [NSB:0]  data [0:255];
    reg [31:0]   viz = 32'h0;
+   reg [4:0]    log_bsize = COUNT[4:0];
 
-   assign dsp_en = aq_enabled;
+   assign dsp_en = vx_enabled;
 
 
    //-------------------------------------------------------------------------
    //  Setup correlator and bus clocks, respectively.
-   always #5  clk_x <= ~clk_x;
-   always #5  b_clk <= ~b_clk;
+   always #`CLK_X  clk_x <= ~clk_x;
+   always #`CLK_B  b_clk <= ~b_clk;
 //    always #10 b_clk <= ~b_clk;
 
 
@@ -62,14 +84,34 @@ module tart_dsp_tb;
    integer      num = 0;
    integer      ptr = 0;
    initial begin : SIM_BLOCK
-      if (COUNT < 6) begin
+      if (COUNT < 7) begin
+`ifdef __USE_FAKE_DSP
+         $dumpfile ("fake_tb.vcd");
+`else
          $dumpfile ("dsp_tb.vcd");
+`endif
          $dumpvars;
       end
 
       //----------------------------------------------------------------------
+      $display("\n%12t: TART DSP settings:", $time);
+      $display(  "%12t:  TART I/O bus settings:", $time);
+      $display(  "%12t:   SPI data-bus bit-width:  \t\t%3d", $time, BBITS);
+      $display(  "%12t:   Number of visibilities banks:    \t%3d", $time, XBITS);
+      $display(  "%12t:  TART visibilities read-back settings:", $time);
+      $display(  "%12t:   Visibility-data address-width:   \t%3d", $time, ABITS);
+      $display(  "%12t:   Data prefetch block-size (words):\t%3d", $time, NREAD);
+      $display(  "%12t:   Data prefetch block-size (bytes):\t%3d", $time, BREAD);
+      $display(  "%12t:  TART correlator settings:", $time);
+      $display(  "%12t:   Accumulator bit-width:   \t\t%3d", $time, ACCUM);
+      $display(  "%12t:   Correlator bus data-width:       \t%3d", $time, BLOCK);
+      $display(  "%12t:   Correlator bus address-width:    \t%3d", $time, CBITS);
+
+      //----------------------------------------------------------------------
       $display("\n%12t: Generating fake antenna data:", $time);
+      $display("%12t: (Data is just increasing counter values)", $time);
       for (ptr = 0; ptr < 256; ptr = ptr+1)
+//         data[ptr] <= ptr;
         data[ptr] <= $random;
 
       //----------------------------------------------------------------------
@@ -77,14 +119,14 @@ module tart_dsp_tb;
       #13 rst <= 1; #40 rst <= 0;
 
       //----------------------------------------------------------------------
-      $display("\n%12t: Setting up the block-size:", $time);
-      #40 set <= 1; num <= 1; dtx <= COUNT; ptr <= 3'h5;
+      $display("\n%12t: Setting block-size & beginning correlation (bank 0):", $time);
+      #40 set <= 1; num <= 1; dtx <= {1'b1, 2'b00, log_bsize}; ptr <= 4'ha;
       while (!fin) #10;
 
-      //----------------------------------------------------------------------
-      $display("%12t: Beginning data-correlation (bank 0):", $time);
-      #40 set <= 1; num <= 1; dtx <= 8'h01; ptr <= 3'h7;
-      while (!fin) #10;
+//       //----------------------------------------------------------------------
+//       $display("%12t: Beginning data-acquisition (bank 0):", $time);
+//       #40 set <= 1; num <= 1; dtx <= 8'h80; ptr <= 4'h7;
+//       while (!fin) #10;
 
       //----------------------------------------------------------------------
       $display("%12t: Switching banks (bank 1):", $time);
@@ -94,19 +136,19 @@ module tart_dsp_tb;
       //----------------------------------------------------------------------
       while (!newblock) #10;
       #10 $display("\n%12t: Reading back visibilities (bank 0):", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 3'h4;
+      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
       while (!switching) #10; while (switching) #10;
       $display("\n%12t: Stopping data-correlation (bank 1):", $time);
-      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 3'h7;
+      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 4'ha;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
       while (!newblock) #10;
       #10 $display("\n%12t: Reading back visibilities (bank 1):", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 3'h4;
+      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
@@ -123,7 +165,7 @@ module tart_dsp_tb;
    //-------------------------------------------------------------------------
    //  Exit if the simulation appears to have stalled.
    //-------------------------------------------------------------------------
-   parameter LIMIT = 1000 + (1 << COUNT) * 300;
+   parameter LIMIT = 1000 + (1 << COUNT) * 320;
 
    initial begin : SIM_FAILED
       $display("%12t: Simulation TIMEOUT limit:\t%12d", $time, LIMIT);
@@ -139,14 +181,6 @@ module tart_dsp_tb;
    always @(posedge b_clk)
      if (newblock)
        $display("%12t: New block available.", $time);
-
-   /*
-   initial begin
-      $dumpfile ("dsp_tb.vcd");
-      #60000 $dumpvars;
-      #4000  $finish;
-   end
-    */
 
 
    //-------------------------------------------------------------------------
@@ -243,7 +277,7 @@ module tart_dsp_tb;
    //-------------------------------------------------------------------------
    //  Generate fake DRAM contents.
    //-------------------------------------------------------------------------
-   wire [23:0] data_w = data[data_index[7:0]];
+   wire [NSB:0] data_w = data[data_index[7:0]];
    integer     data_index = 0;
    reg         ready = 0;
    reg         aq_start = 0, aq_done = 1;
@@ -278,10 +312,10 @@ module tart_dsp_tb;
 
    //-------------------------------------------------------------------------
    //  Generate fake antenna data, from the fake DRAM contents.
-   wire [23:0] antenna;
+   wire [NSB:0] antenna;
    reg [3:0]  cnt = 0;
    wire [3:0] next_cnt = wrap_cnt ? 0 : cnt + 1 ;
-   wire       wrap_cnt = cnt == MRATE-1;
+   wire       wrap_cnt = cnt == TRATE-1;
    integer    rd_adr = 0;
 
    assign antenna = data[rd_adr[7:0]];
@@ -302,8 +336,8 @@ module tart_dsp_tb;
    wire [XSB:0] v_blk;
    wire         s_cyc, s_stb, s_we, s_ack;
    reg          wat = 0;
-   wire         newblock, streamed, accessed, available, switching;
-   wire         aq_debug_mode, aq_enabled;
+   wire         overflow, newblock, streamed, accessed, available, switching;
+   wire         aq_debug_mode, aq_enabled, vx_enabled, overwrite;
 
    wire         dsp_cyc, dsp_stb, dsp_we, dsp_bst, dsp_ack;
    wire [XSB:0] dsp_blk;
@@ -311,9 +345,10 @@ module tart_dsp_tb;
 
    assign dsp_bst = 1'b0;
 
+// `ifdef __WB_CLASSIC
    always @(posedge b_clk)
      wat <= #DELAY stb && bst && !ack;
-
+// `endif
 
    tart_acquire
      #( .WIDTH(BBITS), .ACCUM(ACCUM), .BBITS(XBITS)
@@ -340,42 +375,62 @@ module tart_dsp_tb;
        .vx_ack_i(dsp_ack),
        .vx_blk_o(dsp_blk),
        .vx_dat_i(dsp_dat),
-       .newblock(newblock),
-       .streamed(streamed), // has an entire block finished streaming?
-       .accessed(accessed),
+
+       .overflow (overflow),
+       .newblock (newblock),
+       .streamed (streamed), // has an entire block finished streaming?
+       .accessed (accessed),
        .available(available),
-       .checksum(checksum),
+       .checksum (checksum),
        .blocksize(blocksize),
+
+       .vx_enabled(vx_enabled),
+       .vx_overwrite(overwrite),
+       .vx_stuck_i(stuck),
+       .vx_limp_i (limp),
 
        .aq_debug_mode(aq_debug_mode),
        .aq_enabled(aq_enabled),
-       .aq_sample_delay(aq_sample_delay)
+       .aq_sample_delay(aq_sample_delay),
+       .aq_adr_i(25'b0)
        );
 
+`ifdef __USE_FAKE_DSP
+   tart_fake_dsp FAKE_DSP
+`else
    tart_dsp
-     #(.NREAD(NREAD)
+     #(.AXNUM(AXNUM),
+       .ACCUM(ACCUM),
+       .TRATE(TRATE),
+       .TBITS(TBITS),
+       .NREAD(NREAD << 1)
        ) TART_DSP
-     ( .clk_x(clk_x),
-       .rst_i(rst),
-       .aq_clk_i(b_clk),
-       .aq_cyc_i(dsp_cyc),
-       .aq_stb_i(dsp_stb),
-       .aq_we_i (dsp_we ),
-       .aq_bst_i(dsp_bst),
-       .aq_ack_o(dsp_ack),
-       .aq_blk_i(dsp_blk),
-       .aq_dat_i(dsp_val),
-       .aq_dat_o(dsp_dat),
+ `endif
+    ( .clk_x(clk_x),
+      .rst_i(rst),
+      .aq_clk_i(b_clk),
+      .aq_cyc_i(dsp_cyc),
+      .aq_stb_i(dsp_stb),
+      .aq_we_i (dsp_we ),
+      .aq_bst_i(dsp_bst),
+      .aq_ack_o(dsp_ack),
+      .aq_blk_i(dsp_blk),
+      .aq_dat_i(dsp_val),
+      .aq_dat_o(dsp_dat),
 
-       .aq_enable(aq_enabled),
-       .antenna  (antenna),
-       .switching(switching),
-       .blocksize(blocksize),
+      .aq_enable(aq_enabled),
+      .vx_enable(vx_enabled),
+      .overwrite(overwrite),
+      .antenna  (antenna),
+      .switching(switching),
+      .blocksize(blocksize),
+      .stuck_o  (stuck),
+      .limp_o   (limp),
 
-       .newblock (newblock),
-       .checksum (checksum),
-       .streamed (streamed)
-       );
+      .newblock (newblock),
+      .checksum (checksum),
+      .streamed (streamed)
+      );
 
 
 endmodule // tart_dsp_tb

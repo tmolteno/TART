@@ -161,7 +161,11 @@ module afifo_gray
 
    reg [ABITS:0]    wp_bin = 0, wp_gray = 0;
    reg [ABITS:0]    rp_bin = 0, rp_gray = 0;
-   reg [ABITS:0]    wp_s = 0, rp_s = 0;
+
+   (* ASYNC_REG = "TRUE" *)
+   reg [ABITS:0]    wp_s = 0;
+   (* ASYNC_REG = "TRUE" *)
+   reg [ABITS:0]    rp_s = 0;
 
    wire [ABITS:0]   wp_bin_x, rp_bin_x;
 
@@ -232,10 +236,10 @@ module afifo_gray
    //  Synchronization Logic
    //-------------------------------------------------------------------------
    always @(posedge rd_clk_i)
-     wp_s <= #DELAY wp_gray;              // write pointer
+     wp_s <= #DELAY wp_gray;  // write pointer
 
    always @(posedge wr_clk_i)
-     rp_s <= #DELAY rp_gray;              // read pointer
+     rp_s <= #DELAY rp_gray;  // read pointer
 
 
    //-------------------------------------------------------------------------

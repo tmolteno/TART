@@ -69,7 +69,11 @@ module correlator_DSP
    // For Xilinx FPGA's, this should be two `RAM32M's, and operating in SDP
    // mode.
    wire [MSB:0]        dcos, dsin, qcos, qsin;
-   reg                 go = 0;
+   reg                 go = 1'b0, wt = 1'b0;
+
+   reg [MSB:0]         rcos = {ACCUM{1'b0}};
+   reg [MSB:0]         rsin = {ACCUM{1'b0}};
+   reg                 rar = 1'b0, rbr = 1'b0, rbi, rhi = 1'b0;
 
    assign vis = {qsin, qcos};
 
@@ -78,9 +82,15 @@ module correlator_DSP
    //  Control signals.
    //-------------------------------------------------------------------------
    //  Add a cycle of latency to wait for the RAM read.
-   //  Add another cycle of latency, to wait for the DSP addition.
+   //  Add another cycle of latency, to compute the DSP inputs.
+   //  Add yet another cycle of latency, to wait for the DSP addition.
    always @(posedge clk_x)
-     {vld, go} <= #DELAY {go, en};
+     {vld, go, wt} <= #DELAY {go, wt, en};
+
+   always @(posedge clk_x) begin
+      {rsin, rcos} <= #DELAY {dsin, dcos};
+      {rbi, rbr, rar, rhi} <= #DELAY {bi, br, ar, hi};
+   end
 
 
    //-------------------------------------------------------------------------
@@ -100,9 +110,9 @@ module correlator_DSP
    parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
    parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
 
-// `define __licarus
-// `ifdef  __licarus
-`ifdef __icarus
+`define __licarus
+`ifdef  __licarus
+// `ifdef __icarus
    // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
    //   the wire values;
    wire [9:0]   pairs[0:11];
@@ -138,11 +148,12 @@ module correlator_DSP
    //  Time-multiplexed correlator.
    //-------------------------------------------------------------------------
    correlate_cos_sin_DSP
-     #(  .ACCUM(ACCUM), .DELAY(DELAY) ) CORR_COS_SIN0
+     #(  .ACCUM(ACCUM), .SUMHI(SUMHI), .DELAY(DELAY) ) CORR_COS_SIN0
        ( .clk(clk_x),
          .rst(rst),
          .clr(sw),
 
+`ifdef __USE_DSP_SLOW
          // Antenna enables and inputs:
          .en(en),
          .vld(go),
@@ -154,6 +165,19 @@ module correlator_DSP
          // Accumulator inputs and outputs:
          .dcos(dcos),
          .dsin(dsin),
+`else
+         // Antenna enables and inputs:
+         .en(wt),
+         .vld(go),
+         .hi(rhi),
+         .ar(rar),
+         .br(rbr),
+         .bi(rbi),
+
+         // Accumulator inputs and outputs:
+         .dcos(rcos),
+         .dsin(rsin),
+`endif
          .qcos(qcos),
          .qsin(qsin)
          );
@@ -163,11 +187,13 @@ module correlator_DSP
    //  RAM32M's implemented the nerdy way.
    //-------------------------------------------------------------------------
    //  TODO: Parameterise the accumulator width.
+   parameter INIT = 64'hf0e1d2c3b4a59687;
+
    RAM32X6_SDP
-     #( .INITA(64'h0),
-        .INITB(64'h0),
-        .INITC(64'h0),
-        .INITD(64'h0),
+     #( .INITA(INIT),
+        .INITB(INIT),
+        .INITC(INIT),
+        .INITD(INIT),
         .DELAY(3)
         ) RAM32X6_SDP_COS [3:0]
        (.WCLK(clk_x),
@@ -175,16 +201,14 @@ module correlator_DSP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qcos),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dcos),
-        .DID(2'b0),
-        .DOD()
+        .DO(dcos)
         );
 
    RAM32X6_SDP
-     #( .INITA(64'h0),
-        .INITB(64'h0),
-        .INITC(64'h0),
-        .INITD(64'h0),
+     #( .INITA(INIT),
+        .INITB(INIT),
+        .INITC(INIT),
+        .INITD(INIT),
         .DELAY(3)
         ) RAM32X6_SDP_SIN [3:0]
        (.WCLK(clk_x),
@@ -192,9 +216,7 @@ module correlator_DSP
         .WADDR({{5-TBITS{1'b0}}, wr}),
         .DI(qsin),
         .RADDR({{5-TBITS{1'b0}}, rd}),
-        .DO(dsin),
-        .DID(2'b0),
-        .DOD()
+        .DO(dsin)
         );
 
 

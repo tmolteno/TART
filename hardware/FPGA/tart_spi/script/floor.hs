@@ -33,6 +33,7 @@ import Data.Bool
 import Data.Bits
 import Data.List
 import Data.Maybe
+import Data.Tuple
 import Data.Monoid
 -- import Data.IntSet (IntSet)
 -- import qualified Data.IntSet as Set
@@ -129,12 +130,13 @@ placeRAM32M w l (SLICE x y) c p = toUCF $ zipWith (++) ix ls
     ls = map ((' ':) . showLOC . slice x . (y+)) [0..w'-1]
     pf = \i -> "INST " ++ show (p ++ "/CORRELATOR" ++ show c ++ '/':l ++ showIndex i ++ "/RAM32M0")
 
-placeRAMB8 :: Width -> LOC -> Prefix -> String
-placeRAMB8 w (RAMB8 x y) p = toUCF $ zipWith (++) ix ls
+placeRAMB8 :: Bool -> Width -> LOC -> Prefix -> String
+placeRAMB8 dbl w (RAMB8 x y) p = toUCF $ zipWith (++) ix ls
   where
     w' = (w `shiftL` 3 + 35) `div` 36
     ix = map pf [0..w'-1]
-    ls = map ((' ':) . showLOC . RAMB8 x . (y+)) [0..w'-1]
+    hx = [ bool j (j+j) dbl | j <- [0..w'-1] ]
+    ls = map ((' ':) . showLOC . RAMB8 x . (y+)) hx
     pf = \i -> "INST " ++ show (p ++ showIndex i ++ "/SRAM0")
 
 placeDSP48 :: LOC -> Prefix -> String
@@ -170,16 +172,20 @@ floorDSP p n =
 floorSDP :: Prefix -> Z -> String
 floorSDP p d =
   let n  = 6 - d
---       ps = [ p ++ show i ++ "/CORRELATOR" ++ show j | i <- [d..5], j <- [0..3] ]
-      ps = [ p ++ show i ++ "/CORRELATOR" ++ show j ++ "/CORR_COS_SIN0" | i <- [d..5], j <- [0..3] ]
+--       ps = [printf "%s%d/CORRELATOR%d/CORR_COS_SIN0" p i j | i <- [d..5], j <- [0..3]]
 --       ls = [ SLICE 18 (i*6+2) | i <- [0..4*n-1] ]
 --       ax = zipWith floorADD  ps ls
+      dbl = False -- heightSDP >= 24
       ax = [""]
-      ds = [ SLICE 16 (i*16+2) | i <- [0..pred n] ]
+      ds = [ SLICE 16 (i*hl+2) | i <- [0..pred n] ]
       qs = [ p ++ show i | i <- [d..5] ]
       rs = zipWith floorRAMD qs ds
-      bx = [ floorBLK (p ++ show (d+i)) (RAMB8 1 (i*8+2)) (SLICE 22 (i*16+2)) | i <- [0..n-1] ]
+      (mo, hb, hl) = (hl `shiftR` 2 + 2, hl `shiftR` 1, heightSDP)
+      bx = [ floorBLK dbl (p ++ show (d+i)) (RAMB8 1 (i*hb+4)) (SLICE 22 (i*hl+mo)) | i <- [0..n-1] ]
   in  concat $ ax ++ rs ++ bx
+
+heightSDP :: Z
+heightSDP  = 24
 
 -- | Floorplans the adders (of the correlators) by floorplanning their output
 --   registers.
@@ -214,10 +220,10 @@ floorAddr p l@(SLICE x y) =
 ------------------------------------------------------------------------------
 -- | Places block RAM's, and their output MUX's, at locations that are
 --   determined from the inputs.
-floorBLK :: Prefix -> LOC -> LOC -> String
-floorBLK p ram mux = bx ++ mx
+floorBLK :: Bool -> Prefix -> LOC -> LOC -> String
+floorBLK dbl p ram mux = bx ++ mx
   where
-    bx = placeRAMB8 24 ram $ p ++ "/VISRAM"
+    bx = placeRAMB8 dbl 24 ram $ p ++ "/VISRAM"
     mx = floorMUX p mux
 
 -- | Needs to know the number of DSP48's that are being used.
@@ -229,7 +235,7 @@ floorRAMB p n = concat $ bi ++ mi
     mx = map (slice 6) [ shiftL i 4 + o*4+2 | i <- bs ]
     ps = [ p ++ show i | i <- bs ]
     pb = [ q ++ "/VISRAM" | q <- ps ]
-    bi = zipWith (placeRAMB8 24) bx pb
+    bi = zipWith (placeRAMB8 False 24) bx pb
     mi = zipWith (placeMUX 24) mx ps
     bs = [0..n-1]
 
@@ -248,14 +254,31 @@ floorplan p d =
   floorRAMB p d ++
   "# Standard adder-based correlator layout:\n" ++
   floorSDP  p d ++
+  "\n# Instance `AREA_GROUP's:\n" ++
+  instsGRP  p d ++
   []
+
+-- | Construct the `AREA_GROUP's.
+instsGRP :: Prefix -> Z -> String
+instsGRP p d =
+  let ix = [printf "INST \"%s%d\" AREA_GROUP=\"cblk%d\";" p i i | i <- [0..5 :: Z]]
+      jk = [(2, 15), (16, 31), (32, 47), (48 :: Z, 61 :: Z)]
+      dx = take d [(SLICE 0 j, SLICE 11 k) | (j, k) <- jk]
+      js = [0,heightSDP..]
+      sx = [(SLICE 12 (j+2), SLICE 23 (j+heightSDP+1)) | j <- js]
+      lx = [(0 :: Z)..] `zip` take 6 (dx ++ sx)
+      l :: (LOC, LOC) -> String
+      l (SLICE x y, _) = printf "SLICE_X%dY%d" x y
+      r  = l . swap
+      px = [printf "AREA_GROUP \"cblk%d\" RANGE=%s:%s;" i (l x) (r x) | (i,x) <- lx]
+  in  unlines ix ++ '\n':unlines px
 
 floortest :: String
 floortest  =
   "# DSP48 Placement:\n" ++
   placeDSP48  (DSP48 0 1) "" ++
   "# RAMB8 Placement:\n" ++
-  placeRAMB8 24 (RAMB8 0 2) "/VISRAM" ++
+  placeRAMB8 False 24 (RAMB8 0 2) "/VISRAM" ++
   "# Cosine SRAM Placement:\n" ++
   placeRAM32M 24 "RAM32X6_SDP_COS" (SLICE 4 4) 0 "" ++
   "# Sine SRAM Placement:\n" ++
@@ -300,7 +323,7 @@ main  = do
 --   stdout " == TART floorplanner for the hardware correlators =="
   Settings md mp mo <- options "" parser
 --   stdout "\nCorrelator block parameters:"
-  let p = maybe "DSP/CORRELATOR/CXBLOCK" toString mp
+  let p = maybe "DSP/COR/CXBLOCK" toString mp
       d = fromMaybe 4 md
       u = fromString $ floorplan p d
   maybe (stdout u) (`output` u) mo

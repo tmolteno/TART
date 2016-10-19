@@ -31,6 +31,8 @@
 module tart_control
   #(parameter WIDTH = 8,
     parameter MSB   = WIDTH-1,
+    parameter COUNT = 24,
+    parameter CSB   = COUNT-1,
     parameter RTIME = 4,
     parameter DELAY = 3)
    (
@@ -46,14 +48,12 @@ module tart_control
     output [MSB:0] dat_o,
 
     input [MSB:0]  status_i,
-    input          overflow_i,
-    input          underrun_i,
     input          reset_ni,
-    output         reset_o
+    output         reset_o,
+    input [CSB:0]  checksum_i
     );
 
-   wire [7:0]      extraflags = {6'b110011, overflow_i, underrun_i};
-   reg [MSB:0]     c_dat, misc = 8'h3e;
+   reg [MSB:0]     c_dat;
    reg             c_ack = 0;                 
 
    assign ack_o = c_ack;
@@ -68,16 +68,10 @@ module tart_control
      if (cyc_i && stb_i && !we_i)
        case (adr_i)
          0: c_dat <= #DELAY status_i;
-         1: c_dat <= #DELAY extraflags;
-         2: c_dat <= #DELAY misc;
-         3: c_dat <= #DELAY 8'h5c;
+         1: c_dat <= #DELAY checksum_i[7:0];
+         2: c_dat <= #DELAY checksum_i[15:8];
+         3: c_dat <= #DELAY checksum_i[23:16];
        endcase // case (adr_i)
-
-   always @(posedge clk_i)
-     if (rst_i)
-       misc <= #DELAY 8'h3e;
-     else if (cyc_i && stb_i && we_i && adr_i == 2'b10)
-       misc <= #DELAY dat_i;
 
 
    //-------------------------------------------------------------------------

@@ -29,13 +29,40 @@
  *    "tails" of a transaction are one cycle too long;
  *  + compute the exponent of the count-size;
  *  + status registers, and correctly handle overflows;
+ *  + disable the correlators to prevent overwriting data, if that mode has
+ *    been selected;
  * 
  */
 
 `include "tartcfg.v"
 
 module tart_dsp
-   #(parameter NREAD = `READ_COUNT, // Number of visibilities to read back
+   #(//  Visibilities/correlator settings:
+     parameter AXNUM = 24,      // Number of antennae
+     parameter ACCUM = 24,      // Bit-width of the accumulators
+     parameter BLOCK = ACCUM,   // Maximum #bits of the block-size
+     parameter MSB   = BLOCK-1, // Data transfer MSB
+     parameter TRATE = 12,      // Time-multiplexing rate
+     parameter TBITS = 4,       // Number of bits for TMUX counter
+
+     //  Visibilities-bus settings:
+     parameter NREAD = 576,     // Number of visibilities to read back
+     parameter RBITS = 10,      // = ceiling{log2(NREAD)}
+     parameter RSB   = RBITS-1, // MSB of read-back address
+     parameter XBITS = 4,       // Bit-width of the block-counter
+     parameter XSB   = XBITS-1, // MSB of the block-counter
+
+     //  Correlator-bus settings:
+     parameter CBITS = XBITS+RBITS,
+     parameter CSB   = CBITS-1,
+
+     //  Wishbone settings:
+     parameter BBITS = 8,       // Bit-width of the SoC Wishbone bus
+     parameter BSB   = BBITS-1, // Bus data MSB
+     parameter WSB   = BBITS-2, // SPI -> WB bus address-width
+     parameter ABITS = 12,      // WB bus address bit-width
+     parameter ASB   = ABITS-1, // Address MSB
+
      parameter DELAY = 3)
    (
     input          clk_x,
@@ -48,16 +75,25 @@ module tart_dsp
     input          aq_we_i, // writes only work for system registers
     input          aq_bst_i, // Bulk Sequential Transfer?
     output         aq_ack_o,
-    input [XSB:0]  aq_blk_i, // upper address-space for registers
+    input [XSB:0]  aq_blk_i,
     input [7:0]    aq_dat_i,
     output [7:0]   aq_dat_o,
 
+    // Debugging signals.
+    output         stuck_o,
+    output         limp_o,
+
     // The real component of the signal from the antennas.
     input          aq_enable, // data acquisition is active
+    input          vx_enable, // correlation is active
+    output [XSB:0] vx_block,
+    input          overwrite, // overwrite when buffers full?
     output         switching, // NOTE: bus domain
     input [MSB:0]  blocksize, // block size - 1
     input [23:0]   antenna, // the raw antenna signal
 
+    (* ASYNC_REG = "TRUE" *)
+    output reg     overflow = 1'b0,
     output         newblock,
     output [MSB:0] checksum, // TODO:
     output         streamed
@@ -68,44 +104,47 @@ module tart_dsp
    //  TART's system-wide, Wishbone-like interconnect and peripherals.
    //
    //-------------------------------------------------------------------------
-   //  Visibilities/correlator settings.
-   parameter ACCUM = `ACCUM_BITS; // Bit-width of the accumulators
-   parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
-   parameter MSB   = BLOCK-1;     // Data transfer MSB
-   parameter TRATE = `TMUX_RATE;  // Time-multiplexing rate
-   parameter COUNT = `VISB_LOG2;  // (1 << 3) - 1;
-//    parameter NREAD = `READ_COUNT; // Number of visibilities to read back
-   parameter RBITS = `READ_BITS;  // = ceiling{log2(NREAD)};
-   parameter RSB   = RBITS-1;     // MSB of read-back address
-
-   //  Wishbone settings.
-   parameter BBITS = `WBBUS_BITS; // Bit-width of the SoC Wishbone bus
-   parameter BSB   = BBITS-1;     // Bus data MSB
-   parameter WSB   = BBITS-2;     // SPI -> WB bus address-width
-   parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
-   parameter ASB   = ABITS-1;     // Address MSB
-   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
-   parameter XSB   = XBITS-1;     // MSB of the block-counter
+   assign stuck_o = stuck;
+   assign limp_o  = limp;
 
 
    //-------------------------------------------------------------------------
+   //     
    //     SYNCHRONISE SIGNALS FROM THE WISHBONE CLOCK DOMAIN.
+   //     
    //-------------------------------------------------------------------------
-   (* KEEP = "TRUE" *) reg [MSB:0]  block_x  = 0;
-   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
+   reg [MSB:0]  block_x  = 0;
+   reg          enable_x = 1'b0;
 
-   (* KEEP = "TRUE" *) reg          enable_x = 0;
-   (* KEEP = "TRUE", ASYNC_REG = "TRUE" *) reg          enable_s = 0;
+   (* ASYNC_REG = "TRUE" *) reg [MSB:0]  block_s  = 0;
+   (* ASYNC_REG = "TRUE" *) reg          enable_s = 0;
 
    always @(posedge clk_x) begin
       block_s  <= #DELAY blocksize;
-      enable_s <= #DELAY aq_enable;
+      enable_s <= #DELAY vx_enable;
    end
 
    always @(posedge clk_x) begin
       block_x  <= #DELAY block_s;
       enable_x <= #DELAY enable_s;
    end
+
+
+   //-------------------------------------------------------------------------
+   //     
+   //     BANK OVERWRITE DETECTION LOGIC.
+   //     
+   //-------------------------------------------------------------------------
+`ifdef  __USE_OVERFLOW_DETECTION
+   wire               switch_x;
+   (* KEEP      = "TRUE" *) wire               overflow_x;
+   (* KEEP      = "TRUE" *) wire [XSB:0]       bank;
+
+   //  Assert overflow whenever a bank-switch causes new data to be written
+   //  to the bank currently being read back.
+   always @(posedge aq_clk_i)
+     overflow <= #DELAY overflow_x;
+`endif
 
 
    //-------------------------------------------------------------------------
@@ -125,7 +164,8 @@ module tart_dsp
    wire [MSB:0]       c_drx, c_dtx;
    wire               c_cyc, c_stb, c_bst, c_we, c_ack;
    wire               c_wat = 1'b0;
-
+   (* KEEP = "TRUE" *)
+   wire               c_err;    // Exempted from timing.
 
    //-------------------------------------------------------------------------
    //  Streaming, visibilities-read-back logic-core.
@@ -139,8 +179,8 @@ module tart_dsp
        ( .clk_i(aq_clk_i),
          .rst_i(rst_i),
 
-         .m_cyc_o(v_cyc),       // this bus prefetches visibilities, and
-         .m_stb_o(v_stb),       // sequentially
+         .m_cyc_o(v_cyc),     // this bus prefetches visibilities, and
+         .m_stb_o(v_stb),     // sequentially
          .m_we_o (v_we),
          .m_bst_o(v_bst),
          .m_ack_i(v_ack),
@@ -149,8 +189,8 @@ module tart_dsp
          .m_dat_i(v_drx),
          .m_dat_o(v_dtx),
 
-         .s_cyc_i(aq_cyc_i),       // visibilities are streamed from here to the
-         .s_stb_i(aq_stb_i),       // SPI module
+         .s_cyc_i(aq_cyc_i),  // visibilities are streamed from here to the
+         .s_stb_i(aq_stb_i),  // SPI module
          .s_we_i (aq_we_i),
          .s_bst_i(1'b0),
          .s_ack_o(aq_ack_o),
@@ -158,7 +198,7 @@ module tart_dsp
          .s_dat_i(8'bx),
          .s_dat_o(aq_dat_o),
 
-         .wrapped(streamed)     // strobes when block has been streamed
+         .wrapped(streamed)   // strobes when block has been streamed
          );
 
 
@@ -169,8 +209,9 @@ module tart_dsp
      #(  .BLOCK (BLOCK),
          .COUNT (NREAD),
          .TRATE (TRATE),
+         .TBITS (TBITS),
          .DELAY (DELAY)
-         ) VISIBILITIES
+         ) VIZ
        ( .clk_i(aq_clk_i),
          .rst_i(rst_i),
 
@@ -189,14 +230,22 @@ module tart_dsp
          .we_o (c_we),          // visibilities
          .bst_o(c_bst),
          .ack_i(c_ack),
+         .err_i(c_err),
          .wat_i(c_wat),
          .adr_o(c_adr),
          .dat_i(c_drx),
          .dat_o(c_dtx),
 
+         .streamed (streamed),  // signals that a bank has been sent
+         .overwrite(overwrite), // overwrite when buffers full?
          .switching(switching), // strobes at every bank-switch (bus domain)
          .available(newblock),  // strobes when new block is available
-         .checksum (checksum)   // computed checksum of block
+         .checksum (checksum),  // computed checksum of block
+
+         //  Correlator-domain signals:
+         .clk_x    (clk_x),
+         .switch_x (switch_x),
+         .overflow_x(overflow_x)
          );
 
 
@@ -205,8 +254,10 @@ module tart_dsp
    //-------------------------------------------------------------------------
    tart_correlator
      #(  .BLOCK (BLOCK),
+         .AXNUM (AXNUM),
+         .ABITS (CBITS),
          .DELAY (DELAY)
-         ) CORRELATOR
+         ) COR
        ( .clk_x(clk_x),         // 12x data-rate sampling clock
          .rst  (rst_i),
          .clk_i(aq_clk_i),
@@ -216,16 +267,62 @@ module tart_dsp
          .we_i (c_we),
          .bst_i(c_bst),
          .ack_o(c_ack),
+         .err_o(c_err),
          .adr_i(c_adr),
          .dat_i(c_dtx),
          .dat_o(c_drx),
 
          .enable(enable_x),     // begins correlating once asserted
          .blocksize(block_x),   // number of samples per visibility sum
-         .strobe(strobe),       // indicates arrival of a new sample
+         .bankindex(bank),   // the current bank-address being written to
+//          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
+         .swap_x(switch_x),
          .switch(switching)     // asserts on bank-switch (sample domain)
          );
+
+
+   //-------------------------------------------------------------------------
+   //     
+   //     DEBUGGING STUFF.
+   //     
+   //-------------------------------------------------------------------------
+`ifdef __RELEASE_BUILD
+   wire               stuck = 1'b0;
+   wire               limp  = 1'b0;
+
+`else
+   reg                stuck = 1'b0;
+   reg                limp  = 1'b1;
+   reg [5:0]          count = 6'b0;
+   wire [5:0]         cnext = count[4:0] + 1'b1;
+
+   //  Assert 'stuck` if transfers are taking too long.
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       {count, stuck} <= #DELAY 7'b0;
+     else if (c_cyc && c_ack) begin
+        if (!count[5])
+          {count, stuck} <= #DELAY {cnext, stuck};
+        else
+          {count, stuck} <= #DELAY {count, 1'b1};
+     end
+     else if (!c_cyc)
+       {count, stuck} <= #DELAY {6'b0, stuck};
+
+   //  Clear `limp` if the device is prefetching visibilities.
+   always @(posedge aq_clk_i)
+     if (rst_i)
+       limp <= #DELAY 1'b1;
+     else if (c_cyc && c_ack && vx_enable)
+       limp <= #DELAY 1'b0;
+
+   always @(posedge aq_clk_i)
+     if (stuck) begin
+        #10 $display("%12t: WB stuck.", $time);
+        #80 $finish;
+     end
+`endif // !`ifdef __RELEASE_BUILD
 
 
 endmodule // tart_dsp
