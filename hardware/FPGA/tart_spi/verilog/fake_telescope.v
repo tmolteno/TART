@@ -27,7 +27,9 @@
 module fake_telescope
   #(parameter WIDTH = 24,
     parameter MSB   = WIDTH-1,
-    parameter RNG   = 1,
+    parameter RNG   = 1,      // use random (MFSR) data for testing?
+    parameter CONST = 0,      // use constant data for testing correlators?
+    parameter CDATA = 24'h0,
     parameter DELAY = 3)
    (
     input          clk,
@@ -38,8 +40,10 @@ module fake_telescope
    wire [31:0]     mfsr_new;
    reg [31:0]      mfsr_reg = RNG;
    reg [MSB:0]     data_reg = RNG;
+   wire [MSB:0]    tick_data;
 
-   assign write_data = RNG == 0 ? data_reg : mfsr_reg[MSB:0];
+   assign tick_data = RNG   == 0 ? data_reg  : mfsr_reg[MSB:0];
+   assign fake_data = CONST == 0 ? tick_data : CDATA;
 
    always @(posedge clk)
      if (fake_enable) begin

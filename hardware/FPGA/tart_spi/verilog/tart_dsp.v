@@ -37,7 +37,32 @@
 `include "tartcfg.v"
 
 module tart_dsp
-   #(parameter NREAD = `READ_COUNT, // Number of visibilities to read back
+   #(//  Visibilities/correlator settings:
+     parameter AXNUM = 24,      // Number of antennae
+     parameter ACCUM = 24,      // Bit-width of the accumulators
+     parameter BLOCK = ACCUM,   // Maximum #bits of the block-size
+     parameter MSB   = BLOCK-1, // Data transfer MSB
+     parameter TRATE = 12,      // Time-multiplexing rate
+     parameter TBITS = 4,       // Number of bits for TMUX counter
+
+     //  Visibilities-bus settings:
+     parameter NREAD = 576,     // Number of visibilities to read back
+     parameter RBITS = 10,      // = ceiling{log2(NREAD)}
+     parameter RSB   = RBITS-1, // MSB of read-back address
+     parameter XBITS = 4,       // Bit-width of the block-counter
+     parameter XSB   = XBITS-1, // MSB of the block-counter
+
+     //  Correlator-bus settings:
+     parameter CBITS = XBITS+RBITS,
+     parameter CSB   = CBITS-1,
+
+     //  Wishbone settings:
+     parameter BBITS = 8,       // Bit-width of the SoC Wishbone bus
+     parameter BSB   = BBITS-1, // Bus data MSB
+     parameter WSB   = BBITS-2, // SPI -> WB bus address-width
+     parameter ABITS = 12,      // WB bus address bit-width
+     parameter ASB   = ABITS-1, // Address MSB
+
      parameter DELAY = 3)
    (
     input          clk_x,
@@ -79,33 +104,14 @@ module tart_dsp
    //  TART's system-wide, Wishbone-like interconnect and peripherals.
    //
    //-------------------------------------------------------------------------
-   //  Visibilities/correlator settings.
-   parameter AXNUM = `NUM_ANTENNA;// Number of antennae
-   parameter ACCUM = `ACCUM_BITS; // Bit-width of the accumulators
-   parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
-   parameter MSB   = BLOCK-1;     // Data transfer MSB
-   parameter TRATE = `TMUX_RATE;  // Time-multiplexing rate
-   parameter COUNT = `VISB_LOG2;  // (1 << 3) - 1;
-//    parameter NREAD = `READ_COUNT; // Number of visibilities to read back
-   parameter RBITS = `READ_BITS;  // = ceiling{log2(NREAD)};
-   parameter RSB   = RBITS-1;     // MSB of read-back address
-
-   //  Wishbone settings.
-   parameter BBITS = `WBBUS_BITS; // Bit-width of the SoC Wishbone bus
-   parameter BSB   = BBITS-1;     // Bus data MSB
-   parameter WSB   = BBITS-2;     // SPI -> WB bus address-width
-   parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
-   parameter ASB   = ABITS-1;     // Address MSB
-   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
-   parameter XSB   = XBITS-1;     // MSB of the block-counter
-
-
    assign stuck_o = stuck;
    assign limp_o  = limp;
 
 
    //-------------------------------------------------------------------------
+   //     
    //     SYNCHRONISE SIGNALS FROM THE WISHBONE CLOCK DOMAIN.
+   //     
    //-------------------------------------------------------------------------
    reg [MSB:0]  block_x  = 0;
    reg          enable_x = 1'b0;
@@ -125,9 +131,10 @@ module tart_dsp
 
 
    //-------------------------------------------------------------------------
-   //  BANK OVERWRITE LOGIC.
+   //     
+   //     BANK OVERWRITE DETECTION LOGIC.
+   //     
    //-------------------------------------------------------------------------
-`define __USE_OVERFLOW_DETECTION
 `ifdef  __USE_OVERFLOW_DETECTION
    wire               switch_x;
    (* KEEP      = "TRUE" *) wire               overflow_x;
@@ -138,29 +145,6 @@ module tart_dsp
    always @(posedge aq_clk_i)
      overflow <= #DELAY overflow_x;
 `endif
-
-   /*
-   always @(posedge aq_clk_i)
-     if (rst_i)
-       overflow <= #DELAY 1'b0;
-     else if (bank_next == aq_blk_i && switching && !overwrite)
-       overflow <= #DELAY 1'b1;
-
-   //  TODO: Disable the correlators to prevent banks being overwritten.
-   (* ASYNC_REG = "TRUE" *) reg [XSB:0]        bank_sync = {XBITS{1'b0}};
-   reg [XBITS:0]      bank_slow = {XBITS{1'b0}};
-
-   (* KEEP      = "TRUE" *)
-   wire [XBITS:0]     bank_next = bank_slow + 1;
-
-   assign vx_block  = bank_next;
-
-   //  Bring the correlator `bank` signal into the Wishbone clock domain.
-   always @(posedge aq_clk_i) begin
-      bank_sync <= #DELAY bank;
-      bank_slow <= #DELAY bank_sync;
-   end
-    */
 
 
    //-------------------------------------------------------------------------
@@ -180,9 +164,8 @@ module tart_dsp
    wire [MSB:0]       c_drx, c_dtx;
    wire               c_cyc, c_stb, c_bst, c_we, c_ack;
    wire               c_wat = 1'b0;
-
-   //  Keep (it's name the same), so that it can be exempted from timing.
-   (* KEEP = "TRUE" *) wire c_err;
+   (* KEEP = "TRUE" *)
+   wire               c_err;    // Exempted from timing.
 
    //-------------------------------------------------------------------------
    //  Streaming, visibilities-read-back logic-core.
@@ -226,6 +209,7 @@ module tart_dsp
      #(  .BLOCK (BLOCK),
          .COUNT (NREAD),
          .TRATE (TRATE),
+         .TBITS (TBITS),
          .DELAY (DELAY)
          ) VIZ
        ( .clk_i(aq_clk_i),
@@ -271,7 +255,7 @@ module tart_dsp
    tart_correlator
      #(  .BLOCK (BLOCK),
          .AXNUM (AXNUM),
-         .ABITS (RBITS + XBITS),
+         .ABITS (CBITS),
          .DELAY (DELAY)
          ) COR
        ( .clk_x(clk_x),         // 12x data-rate sampling clock
@@ -303,6 +287,11 @@ module tart_dsp
    //     DEBUGGING STUFF.
    //     
    //-------------------------------------------------------------------------
+`ifdef __RELEASE_BUILD
+   wire               stuck = 1'b0;
+   wire               limp  = 1'b0;
+
+`else
    reg                stuck = 1'b0;
    reg                limp  = 1'b1;
    reg [5:0]          count = 6'b0;
@@ -333,6 +322,7 @@ module tart_dsp
         #10 $display("%12t: WB stuck.", $time);
         #80 $finish;
      end
+`endif // !`ifdef __RELEASE_BUILD
 
 
 endmodule // tart_dsp

@@ -75,29 +75,35 @@ module tart_capture
 
    (* IOB = "TRUE" *)
    reg [MSB:0]     ax_real;
-   reg             en_fake = 1'b0;
    reg [MSB:0]     ax_data;
-   wire [MSB:0]    ax_fake;
    wire [MSB:0]    ax_data_w;
 
 
    //-------------------------------------------------------------------------
    //     DATA CAPTURE
    //-------------------------------------------------------------------------
+   assign ax_data_o = ax_data;
+
+`ifdef __RELEASE_BUILD
+   assign ax_data_w = ax_real;
+`else
+   reg             en_fake = 1'b0;
+   wire [MSB:0]    ax_fake;
+
    // Antenna source MUX, for choosing real data or fake data
    assign ax_data_w = aq_debug_i ? ax_fake : ax_real;
-   assign ax_data_o = ax_data;
+
+   //  Enable the fake-data generator when in debug-mode.
+   always @(posedge clk_i)
+     if (rst_i) en_fake <= #DELAY 1'b0;
+     else       en_fake <= #DELAY (vx_ce_i || aq_ce_i) && aq_debug_i;
+`endif // !`ifdef __RELEASE_BUILD
 
    //  TODO: Use a more robust data-capture circuit.
    always @(posedge clk_e) begin
       ax_real <= #DELAY ax_data_i;
       ax_data <= #DELAY ax_data_w;
    end
-
-   //  Enable the fake-data generator when in debug-mode.
-   always @(posedge clk_i)
-     if (rst_i) en_fake <= #DELAY 1'b0;
-     else       en_fake <= #DELAY (vx_ce_i || aq_ce_i) && aq_debug_i;
 
 
    //-------------------------------------------------------------------------
@@ -107,12 +113,13 @@ module tart_capture
    wire [MSB:0] aq_read_data;
    wire [8:0]   aq_bb_rd_address;
    wire [8:0]   aq_bb_wr_address;
-   
+
+`ifndef __RELEASE_BUILD   
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for debugging.
    fake_telescope #( .WIDTH(AXNUM), .RNG(RNG) ) FAKE_TART0
      ( .clk(clk_e), .fake_enable(en_fake), .fake_data(ax_fake) );
-
+`endif
 
    //-------------------------------------------------------------------------
    //  Programmable delay.

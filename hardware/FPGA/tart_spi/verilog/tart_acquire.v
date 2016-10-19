@@ -63,16 +63,15 @@
 `define VX_STATUS 4'h9
 `define VX_SYSTEM 4'ha
 
-// Allow SPI to set the block-address/counter?
-`define __USE_SETTABLE_BLOCK_COUNTER
-
 module tart_acquire
   #(parameter WIDTH = 8,        // WB-like bus data-width
     parameter MSB   = WIDTH-1,
-    parameter ACCUM = 32,       // #bits of the viz accumulators
+    parameter ACCUM = 24,       // #bits of the viz accumulators
     parameter XSB   = ACCUM-1,
-    parameter BBITS = `BLOCK_BITS,
+    parameter BBITS = 4,
     parameter BSB   = BBITS-1,
+    parameter AXNUM = 24,
+    parameter NSB   = AXNUM-1,
     parameter DELAY = 3)
    (
     // Wishbone-like bus interface:
@@ -91,7 +90,7 @@ module tart_acquire
     //   `data_ready` is asserted.
     input              data_ready,
     output             data_request,
-    input [23:0]       data_in,
+    input [NSB:0]      data_in,
 
     // SPI status flags:
     input              spi_busy,
@@ -284,7 +283,6 @@ module tart_acquire
 
    //-------------------------------------------------------------------------
    //  Set the blocksize when a write is performed to the control-register.
-`define __LOOKUP_BLOCKSIZE
    always @(posedge clk_i) begin
       bs_upd <= #DELAY bs_new_w && !bs_upd;
       if (bs_upd)

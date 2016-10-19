@@ -32,6 +32,7 @@
 -- TODO:
 --  + only inputs `a == 24, b == 6, m == 12` are correctly supported;
 --  + finish the refactoring (to use `Pair`, etc.);
+--  + rewrite in `Python`?
 -- 
 ------------------------------------------------------------------------------
 

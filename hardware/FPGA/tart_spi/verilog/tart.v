@@ -7,6 +7,37 @@
 //   |_|   /_/   \_\ |_| \_\   |_|
 //
 
+/*
+ * Module      : verilog/tart.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * TART hardware description for data-acquisition, and real-time computation
+ * of visibilities.
+ * 
+ * Changelog:
+ *  + ??/??/2013  --  initial file;
+ *  + 11/05/2016  --  rebuilt the SPI module to be faster, have a Wishbone-
+ *                    like interconnect, and to separate out some TART-
+ *                    specific functionality;
+ *  + 09/06/2016  --  started adding the hardware correlators;
+ *  + 25/06/2016  --  finished refactoring the top-level modules, for the new
+ *                    SPI and correlators;
+ *  + 05/09/2016  --  floorplanning complete, and now meets timing;
+ *  + 15/10/2016  --  numerous improvements to get it to a releasable state;
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 `include "tartcfg.v"
 
 module tart
@@ -87,14 +118,23 @@ module tart
    (* KEEP = "TRUE" *) wire limp;
    (* KEEP = "TRUE" *) wire [NSB:0] ax_dat;
 
-//    assign led = tart_state >= 2; // asserted when data can be read back
-   (* KEEP = "TRUE" *) reg [27:0] cnt28 = 28'b0;
+   //-------------------------------------------------------------------------
+   //  Additional (optional) debugging outputs.
+`ifdef __RELEASE_BUILD
+   assign led = 1'b0;
+	 assign rx_clk_test_pin = 1'b0;
 
+`else
+   (* KEEP = "TRUE" *) reg [27:0] cnt28 = 28'b0;
+   wire [28:0]         cnt28_next = cnt28 + 1;
+
+//    assign led = tart_state >= 2; // asserted when data can be read back
    assign led = tart_state >= 2 && cnt28[27];
 	 assign rx_clk_test_pin = rx_clk;
 
    always @(posedge clk_x)
-     cnt28 <= #DELAY cnt28 + 1'b1;
+     cnt28 <= #DELAY cnt28_next[27:0];
+`endif // !`ifdef __RELEASE_BUILD
 
 
    //-------------------------------------------------------------------------
@@ -216,7 +256,7 @@ module tart
 
    //-------------------------------------------------------------------------
    //
-   //  TART's system-wide, Wishbone-like interconnect and peripherals.
+   //     ADDITIONAL TART SETTINGS
    //
    //-------------------------------------------------------------------------
    //  Visibilities/correlator settings.
@@ -224,6 +264,7 @@ module tart
    parameter BLOCK = ACCUM;       // Maximum #bits of the block-size
    parameter MSB   = BLOCK-1;     // Data transfer MSB
    parameter TRATE = `TMUX_RATE;  // Time-multiplexing rate
+   parameter TBITS = `TMUX_BITS;   // TMUX bits
    parameter COUNT = `VISB_LOG2;  // (1 << 3) - 1;
    parameter NREAD = `READ_COUNT; // Number of visibilities to read back
    parameter RBITS = `READ_BITS;  // = ceiling{log2(NREAD)};
@@ -235,9 +276,21 @@ module tart
    parameter WSB   = BBITS-2;     // SPI -> WB bus address-width
    parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
    parameter ASB   = ABITS-1;     // Address MSB
-   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
+
+   //  Settings for the visibilities data banks:
+   parameter XBITS = `BANK_BITS;  // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 
+   //  Internal correlator data-bus settings:
+   parameter CBITS = `BANK_BITS + `READ_BITS;
+   parameter CSB   = CBITS-1;
+
+
+   //-------------------------------------------------------------------------
+   //
+   //     TART'S SYSTEM-WIDE, WISHBONE-LIKE INTERCONNECT AND PERIPHERALS.
+   //
+   //-------------------------------------------------------------------------
    //  SPI -> WB bus signals.
    wire [BSB:0] b_dtx;   // bus master's signals
    wire [BSB:0] b_drx;
@@ -416,10 +469,15 @@ module tart
    //-------------------------------------------------------------------------
  `ifdef __USE_FAKE_DSP
    tart_fake_dsp
+     #(.NREAD(NREAD)
  `else
    tart_dsp
+     #(.AXNUM(ANTENNAE),
+       .ACCUM(ACCUM),
+       .TRATE(TRATE),
+       .TBITS(TBITS),
+       .NREAD(NREAD)
  `endif
-     #(.NREAD(NREAD)
        ) DSP
      ( .clk_x(clk_x),
        .rst_i(reset),

@@ -52,7 +52,7 @@ module correlator_block_DSP
      parameter TRATE = 12,            // Time-multiplexing rate
      parameter TBITS = 4,
      parameter TSB   = TBITS-1,
-     parameter BBITS = `BLOCK_BITS,   // Block-buffer address bits
+     parameter BBITS = 4,       // Block-buffer address bits
      parameter BSB   = BBITS-1,
      parameter NSRAM = ACCUM>>2,      // #<block SRAM> for read-back
      parameter ABITS = 3+TBITS+BBITS, // External I/O address bits

@@ -150,44 +150,36 @@ module tart_correlator
    reg          cyc = 1'b0, we = 1'b0, bst = 1'b0; // TODO:
    wire [5:0]   acks;
    wire         we_w = 1'b0, ack_w = |acks;
+   wire         upd_stb;
 
 `ifdef __WB_CORRELATOR_CLASSIC
+   wire         ack_slo;
+
+   //  Hold the strobe constant until a transfer completes.
+   assign upd_stb = stb_i && !ack_w && !ack_o;
+   assign ack_slo = cyc_i && stb_i && !ack_o;
+
    //-------------------------------------------------------------------------
    //  Pass through (and pipeline) the bus transactions.
    always @(posedge clk_i)
-     if (rst)                         cyc <= #DELAY 1'b0;
-     else if (cyc_i && stb_i && !cyc && !ack_o) cyc <= #DELAY 1'b1;
-     else if (cyc)                    cyc <= #DELAY !ack_o && !ack_w;
-     else                             cyc <= #DELAY cyc;
+     if (rst)                   cyc <= #DELAY 1'b0;
+     else if (ack_slo && !cyc)  cyc <= #DELAY 1'b1;
+     else if (cyc )             cyc <= #DELAY !ack_o && !ack_w;
+     else                       cyc <= #DELAY cyc;
 
    always @(posedge clk_i)
      if (rst)        {we, bst}      <= #DELAY 2'b0;
      else if (cyc_i) {we, bst, adr} <= #DELAY {we_i, 1'b0, adr_i};
 
    //-------------------------------------------------------------------------
-   //  Address decoders -- that sets the strobes for each of the sub-units.
-   always @(posedge clk_i)
-     if (stb_i && !ack_w && !ack_o)
-       case (adr_i[9:7])
-         0: stbs <= #DELAY 6'b000001;
-         1: stbs <= #DELAY 6'b000010;
-         2: stbs <= #DELAY 6'b000100;
-         3: stbs <= #DELAY 6'b001000;
-         4: stbs <= #DELAY 6'b010000;
-         5: stbs <= #DELAY 6'b100000;
-         default:
-           stbs <= #DELAY 6'h0;
-       endcase
-     else
-       stbs <= #DELAY 6'h0;
-
-   //-------------------------------------------------------------------------
    //  Route throught the acknowledges from the correct device.
    always @(posedge clk_i)
      if (rst) ack_o <= #DELAY 1'b0;
-     else     ack_o <= #DELAY !ack_o && cyc_i && stb_i && ack_w;
+     else     ack_o <= #DELAY ack_slo && ack_w;
 
 `else // !`ifdef __WB_CORRELATOR_CLASSIC
+   assign upd_stb = stb_i;
+
    //-------------------------------------------------------------------------
    //  Pass through (and pipeline) the bus transactions.
    always @(posedge clk_i)
@@ -201,9 +193,16 @@ module tart_correlator
      else if (cyc_i) {we, bst, adr} <= #DELAY {we_i, bst_i, adr_i};
 
    //-------------------------------------------------------------------------
+   //  Route throught the acknowledges from the correct device.
+   always @(posedge clk_i)
+     if (rst) ack_o <= #DELAY 1'b0;
+     else     ack_o <= #DELAY ack_w;
+`endif // !`ifdef __WB_CORRELATOR_CLASSIC
+
+   //-------------------------------------------------------------------------
    //  Address decoders -- that sets the strobes for each of the sub-units.
    always @(posedge clk_i)
-     if (stb_i)
+     if (upd_stb)
        case (adr_i[9:7])
          0: stbs <= #DELAY 6'b000001;
          1: stbs <= #DELAY 6'b000010;
@@ -218,17 +217,10 @@ module tart_correlator
        stbs <= #DELAY 6'h0;
 
    //-------------------------------------------------------------------------
-   //  Route throught the acknowledges from the correct device.
-   always @(posedge clk_i)
-     if (rst) ack_o <= #DELAY 1'b0;
-     else     ack_o <= #DELAY ack_w;
-`endif // !`ifdef __WB_CORRELATOR_CLASSIC
-
-   //-------------------------------------------------------------------------
    //  Assert a bus address error, for attempted accesses to unmapped address-
    //  space.
    always @(posedge clk_i)
-     if (stb_i && adr_i[9:7] > 5)
+     if (stb_i && adr_i[9:7] > 3'h5)
        err_o <= #DELAY 1'b1;
      else
        err_o <= #DELAY 1'b0;

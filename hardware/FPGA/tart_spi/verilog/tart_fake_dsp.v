@@ -86,7 +86,7 @@ module tart_fake_dsp
    parameter BSB   = BBITS-1;     // Bus data MSB
    parameter ABITS = `WBADR_BITS; // Correlator bus address bit-width
    parameter ASB   = ABITS-1;     // Address MSB
-   parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
+   parameter XBITS = `BANK_BITS; // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 
 

@@ -123,33 +123,6 @@ module tart_visibilities
    //-------------------------------------------------------------------------
    //  State-machine that tracks the contents of the prefetch buffer.
    //-------------------------------------------------------------------------
-`ifdef __USE_OLD_PREFETCH_CONTROL
-   reg                 empty = 1'b1, ready = 1'b0, start = 1'b0;
-
-   //  Prefetch buffer is empty on reset, or once all of its data has been
-   //  streamed out.
-   always @(posedge clk_i)
-     if (rst_i || streamed)
-       empty <= #DELAY 1'b1;
-     else if (available)
-       empty <= #DELAY 1'b0;
-
-   //  Data is ready to prefetch after the correlators perform a bank-switch.
-   always @(posedge clk_i)
-     if (rst_i || start)
-       ready <= #DELAY 1'b0;
-     else if (switching)
-       ready <= #DELAY 1'b1;
-
-   //  If the prefetch buffer is empty, and visibilities data is ready to be
-   //  prefetched, then start a prefetch.
-   always @(posedge clk_i)
-     if (rst_i || start)
-       start <= #DELAY 1'b0;
-     else if (empty && ready)
-       start <= #DELAY 1'b1;
-
-`else // !`ifdef __USE_OLD_PREFETCH_CONTROL
    reg                 empty = 1'b1, start = 1'b0;
    wire                prefetch_empty, prefetch_full;
 
@@ -167,6 +140,9 @@ module tart_visibilities
      else if (empty && !prefetch_empty)
        start <= #DELAY 1'b1;
 
+`ifdef __USE_OVERFLOW_DETECTION
+   //-------------------------------------------------------------------------
+   //  If the bank-full FIFO overflows, then assert the overflow flag.
    always @(posedge clk_x)
      if (rst_i)
        overflow_x <= #DELAY 1'b0;
@@ -174,6 +150,7 @@ module tart_visibilities
        overflow_x <= #DELAY 1'b1;
      else
        overflow_x <= #DELAY overflow_x;
+`endif //  `ifdef __USE_OVERFLOW_DETECTION
 
    //-------------------------------------------------------------------------
    //  Use an asynchronous FIFO's control-logic to synchronise data-ready
@@ -191,12 +168,11 @@ module tart_visibilities
        .rempty_o (prefetch_empty),
        .wfull_o  (prefetch_full)
        );
-`endif // !`ifdef __USE_OLD_PREFETCH_CONTROL
 
 
    //-------------------------------------------------------------------------
-   //  Cores that prefetch and store visibility data, to be transferred off-
-   //  board via SPI.
+   //  Visibilities data is prefetched from SRAM's that are local to the
+   //  correlators, and buffered for fast access by the SPI interface.
    //-------------------------------------------------------------------------
    wire [MSB:0] p_val, p_dat;
    wire [CSB:0] p_adr, adr_w;
