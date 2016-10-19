@@ -16,7 +16,7 @@ if __name__ == '__main__':
   
   args = parser.parse_args()
   
-  num_bytes = np.power(2,args.bramexp)
+  num_words = np.power(2,args.bramexp)
   tart = TartSPI(speed=args.speed*1000000)
   tart.reset(True)
   tart.reset()
@@ -35,7 +35,13 @@ if __name__ == '__main__':
   tart.debug(on=int(args.internal), noisy=True)
   tart.start_acquisition(sleeptime=1.1, noisy=True)
 
-  data = tart.read_data(num_bytes=num_bytes, blocksize=1024)
+  t0   = time.time()
+#   t0   = time.clock()
+  data = tart.read_data(num_words=num_words, blocksize=1024)
+  t1   = time.time()
+#   t1   = time.clock()
+  print 'elapsed time:\t%2.3f' % (t1-t0)
+
   print 'generate 24bit integer'
   resp_dec = (np.array(data[:,0],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,2],dtype='uint32'))
   print np.info(resp_dec)

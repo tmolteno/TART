@@ -8,6 +8,9 @@ if __name__ == '__main__':
     tart.reset(noisy=True)
     tart.debug(True, noisy=True)
     tart.start(noisy=True)
-    tart.vis_read(noisy=True)
-    tart.status(noisy=True)
+    for i in range(10):
+        res = tart.vis_read(noisy=False)
+        tart.status(noisy=True)
+        print res
+        print
     tart.close(noisy=True)
