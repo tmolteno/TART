@@ -280,6 +280,12 @@ class TartSPI:
     vis = self.read_visibilities(noisy)
     return vis
 
+  def load_permute(self, noisy=False):
+    pp = numpy.loadtxt("data/permute.txt", dtype='int')
+    return pp
+
+#endclass TartSPI
+
 
 ##----------------------------------------------------------------------------
 ##  Basic device querying and verification functionality.

@@ -29,6 +29,7 @@
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/par.xmsgs"/>
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/trce.xmsgs"/>
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/xst.xmsgs"/>
+    <file xil_pn:fileType="FILE_TIMING_TXT_REPORT" xil_pn:name="smartpreview.twr"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_BITGEN_REPORT" xil_pn:name="tart.bgn" xil_pn:subbranch="FPGAConfiguration"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_BIT" xil_pn:name="tart.bit" xil_pn:subbranch="FPGAConfiguration"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGDBUILD_LOG" xil_pn:name="tart.bld"/>
@@ -106,7 +107,7 @@
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1476830421" xil_pn:in_ck="-636239885220538995" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="5050132534591747037" xil_pn:start_ts="1476830372">
+    <transform xil_pn:end_ts="1476840187" xil_pn:in_ck="-636239885220538995" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="5050132534591747037" xil_pn:start_ts="1476840138">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -124,11 +125,11 @@
       <outfile xil_pn:name="webtalk_pn.xml"/>
       <outfile xil_pn:name="xst"/>
     </transform>
-    <transform xil_pn:end_ts="1476830195" xil_pn:in_ck="3365922956548144140" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="123229027436179517" xil_pn:start_ts="1476830195">
+    <transform xil_pn:end_ts="1476840797" xil_pn:in_ck="3365922956548144140" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="123229027436179517" xil_pn:start_ts="1476840797">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1476830434" xil_pn:in_ck="-3736750513579650995" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-5880821926154873280" xil_pn:start_ts="1476830421">
+    <transform xil_pn:end_ts="1476840810" xil_pn:in_ck="-3736750513579650995" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-5880821926154873280" xil_pn:start_ts="1476840797">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <outfile xil_pn:name="_ngo"/>
@@ -137,7 +138,7 @@
       <outfile xil_pn:name="tart.ngd"/>
       <outfile xil_pn:name="tart_ngdbuild.xrpt"/>
     </transform>
-    <transform xil_pn:end_ts="1476830567" xil_pn:in_ck="-3736750513579650994" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="-3188509700205785181" xil_pn:start_ts="1476830434">
+    <transform xil_pn:end_ts="1476840944" xil_pn:in_ck="-3736750513579650994" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="-3188509700205785181" xil_pn:start_ts="1476840810">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -152,7 +153,7 @@
       <outfile xil_pn:name="tart_summary.xml"/>
       <outfile xil_pn:name="tart_usage.xml"/>
     </transform>
-    <transform xil_pn:end_ts="1476830640" xil_pn:in_ck="7316502586510792295" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="93661965788626211" xil_pn:start_ts="1476830567">
+    <transform xil_pn:end_ts="1476841016" xil_pn:in_ck="7316502586510792295" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="93661965788626211" xil_pn:start_ts="1476840944">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -167,7 +168,7 @@
       <outfile xil_pn:name="tart_pad.txt"/>
       <outfile xil_pn:name="tart_par.xrpt"/>
     </transform>
-    <transform xil_pn:end_ts="1476830667" xil_pn:in_ck="5073612556222" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1476830640">
+    <transform xil_pn:end_ts="1476841043" xil_pn:in_ck="5073612556222" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1476841016">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -196,7 +197,7 @@
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="InputRemoved"/>
     </transform>
-    <transform xil_pn:end_ts="1476830640" xil_pn:in_ck="-3736750513579651126" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1476830625">
+    <transform xil_pn:end_ts="1476841016" xil_pn:in_ck="-3736750513579651126" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1476841001">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
