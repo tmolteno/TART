@@ -22,7 +22,7 @@ SIM =$(XIL)/DSP48A1.v $(XIL)/RAMB16_S9_S36.v
 
 DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(RTL)/dram_prefetch.v
 OLD =$(SPI)/spi_target.v $(RTL)/tart_spi.v
-COR =$(RTL)/tart_visibilities.v $(RTL)/tart_correlator.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_block_DSP.v $(RTL)/correlator_SDP.v $(RTL)/correlator_DSP.v $(RTL)/rmw_address_unit.v $(RTL)/correlate_cos_sin.v $(RTL)/correlate_cos_sin_DSP.v $(RTL)/fake_hilbert.v $(RTL)/ones_count.v
+COR =$(RTL)/tart_visibilities.v $(RTL)/tart_correlator.v $(RTL)/tart_bank_switch.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_block_DSP.v $(RTL)/correlator_SDP.v $(RTL)/correlator_DSP.v $(RTL)/rmw_address_unit.v $(RTL)/correlate_cos_sin.v $(RTL)/correlate_cos_sin_DSP.v $(RTL)/fake_hilbert.v $(RTL)/ones_count.v
 DSP =$(COR) $(RTL)/tart_dsp.v
 FAK =$(COR) $(RTL)/tart_fake_dsp.v
 

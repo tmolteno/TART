@@ -6,7 +6,6 @@ pairs:
 
 .PHONY: permute
 permute:
-	@mkdir data
 	runhaskell script/pairs.hs --antennae=24 --blocksize=6 --multiplex=12 --permute --outfile data/permute.txt
 
 .PHONY: floor

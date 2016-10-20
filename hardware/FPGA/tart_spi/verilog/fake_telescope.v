@@ -41,13 +41,18 @@ module fake_telescope
    reg [31:0]      mfsr_reg = RNG;
    reg [MSB:0]     data_reg = RNG;
    wire [MSB:0]    tick_data;
+   wire [WIDTH:0]  next_data;
 
    assign tick_data = RNG   == 0 ? data_reg  : mfsr_reg[MSB:0];
    assign fake_data = CONST == 0 ? tick_data : CDATA;
+   assign next_data = data_reg + 1;
 
+
+   //-------------------------------------------------------------------------
+   //  Generate registered, fake data, when enabled.
    always @(posedge clk)
      if (fake_enable) begin
-        data_reg <= #DELAY data_reg + 1;
+        data_reg <= #DELAY next_data[MSB:0];
         mfsr_reg <= #DELAY mfsr_new;
      end
 

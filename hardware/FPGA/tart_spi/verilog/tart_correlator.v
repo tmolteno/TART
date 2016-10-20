@@ -68,89 +68,30 @@ module tart_correlator
     output             swap_x, // NOTE: correlator domain
     input [NSB:0]      antenna,// the real component from each antenna
 
-    output reg         switch = 1'b0 // NOTE: bus domain
+    output             switch // NOTE: bus domain
     );
 
-   reg                 sw = 1'b0;
    wire                go;
    wire [NSB:0]        re;
    wire [NSB:0]        im;
 
-   assign swap_x = sw;
-
 
    //-------------------------------------------------------------------------
    //  
-   //  Hardware-correlator control logic.
-   //  
-   //-------------------------------------------------------------------------
-   //  Fill a block with visibilities, and then switch banks.
-   wire [BLOCK:0]      next_blk = wrap_blk ? {(BLOCK+1){1'b0}} : blk+1;
-   wire                wrap_blk = blk == blocksize;
-   reg [MSB:0]         blk = {BLOCK{1'b0}};
-   reg [3:0]           delays = 4'h0;
-
-   //  Compose address:     UNIT       BLOCK       VALUE
-   wire [ASB-3:0]      c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
-   wire [MSB:0]        dat_w;
-
-   //-------------------------------------------------------------------------
-   // Activate the Hilbert transform and correlators once this module has been
-   // enabled, and when the first valid data arrives.
-   always @(posedge clk_x)
-     if (rst) begin
-        sw  <= #DELAY 1'b0;
-        blk <= #DELAY {BLOCK{1'b0}};
-     end
-     else if (go) begin
-        sw  <= #DELAY delays[3] && wrap_blk; // signal an upcoming bank-swap
-        blk <= #DELAY strobe ? next_blk[MSB:0] : blk;
-     end
-     else begin
-        sw  <= #DELAY 1'b0;
-        blk <= #DELAY blk;
-     end
-
-   always @(posedge clk_x)
-     delays <= #DELAY {delays[2:0], !rst && strobe};
-
-
-   //-------------------------------------------------------------------------
-   //  Synchronise the bank-switching signal to the bus domain.
-   //  NOTE: Keeps `sw_b` asserted until acknowledged.
-   //-------------------------------------------------------------------------
-   reg sw_x = 0, sw_d = 0;      // acquisition domain
-   (* ASYNC_REG = "TRUE" *) reg sw_b = 1'b0; // bus domain
-
-   always @(posedge clk_x)
-     if (rst || strobe) sw_x <= #DELAY 1'b0;
-     else if (sw)       sw_x <= #DELAY 1'b1;
-     else               sw_x <= #DELAY sw_x;
-
-   always @(posedge clk_x)
-     if (rst) sw_d <= #DELAY 0;
-     else     sw_d <= #DELAY sw_x && strobe;
-
-   always @(posedge clk_i or posedge sw_d)
-     if (sw_d)               sw_b <= #DELAY 1'b1;
-     else if (rst || switch) sw_b <= #DELAY 1'b0;
-
-   always @(posedge clk_i)
-     if (rst) switch <= #DELAY 1'b0;
-     else     switch <= #DELAY sw_b && !switch;
-
-
-   //-------------------------------------------------------------------------
    //  Bus interface.
+   //  
    //-------------------------------------------------------------------------
-   wire [MSB:0] dats [0:5];
-   reg [5:0]    stbs = 6'h0;
-   reg [2:0]    dev = 3'h0;
-   reg [ASB:0]  adr = {ABITS{1'b0}};
-   reg          cyc = 1'b0, we = 1'b0, bst = 1'b0; // TODO:
-   wire [5:0]   acks;
-   wire         we_w = 1'b0, ack_w = |acks;
-   wire         upd_stb;
+   //  Compose address:     UNIT       BLOCK       VALUE
+   wire [ASB-3:0] c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
+   wire [MSB:0]   dat_w;
+   wire [MSB:0]   dats [0:5];
+   reg [5:0]      stbs = 6'h0;
+   reg [2:0]      dev = 3'h0;
+   reg [ASB:0]    adr = {ABITS{1'b0}};
+   reg            cyc = 1'b0, we = 1'b0, bst = 1'b0; // TODO:
+   wire [5:0]     acks;
+   wire           we_w = 1'b0, ack_w = |acks;
+   wire           upd_stb;
 
 `ifdef __WB_CORRELATOR_CLASSIC
    wire         ack_slo;
@@ -248,6 +189,7 @@ module tart_correlator
        .x(dat_w)
        );
 
+
    //-------------------------------------------------------------------------
    //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
@@ -261,6 +203,21 @@ module tart_correlator
         .re(re),
         .im(im)
         );
+
+
+   //-------------------------------------------------------------------------
+   //  TART bank-switching unit.
+   //-------------------------------------------------------------------------
+   tart_bank_switch #( .COUNT(BLOCK) ) SW0
+     ( .clk_x(clk_x),
+       .clk_i(clk_i),
+       .rst_i(rst),
+       .ce_i (go),
+       .strobe_i(strobe),
+       .bcount_i(blocksize),
+       .swap_x(swap_x),
+       .swap_o(switch)
+       );
 
 
    //-------------------------------------------------------------------------
@@ -295,7 +252,7 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[0]),
 
-         .sw_i(sw),
+         .sw_i(swap_x),
          .en_i(go),
          .re_i(re),
          .im_i(im),
@@ -325,7 +282,7 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[1]),
 
-         .sw_i(sw),
+         .sw_i(swap_x),
          .en_i(go),
          .re_i(re),
          .im_i(im)
@@ -353,7 +310,7 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[2]),
 
-         .sw_i(sw),
+         .sw_i(swap_x),
          .en_i(go),
          .re_i(re),
          .im_i(im)
@@ -381,7 +338,7 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[3]),
 
-         .sw_i(sw),
+         .sw_i(swap_x),
          .en_i(go),
          .re_i(re),
          .im_i(im)
@@ -409,7 +366,7 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[4]),
 
-         .sw_i(sw),
+         .sw_i(swap_x),
          .en_i(go),
          .re_i(re),
          .im_i(im)
@@ -437,7 +394,7 @@ module tart_correlator
          .dat_i({BLOCK{1'bx}}),
          .dat_o(dats[5]),
 
-         .sw_i(sw),
+         .sw_i(swap_x),
          .en_i(go),
          .re_i(re),
          .im_i(im)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import spidev
-import numpy as np
+import numpy
 import time
 import argparse
 
@@ -196,7 +196,7 @@ class TartSPI:
     '''Read back the requested number of 24-bit words.'''
     num = int(blocksize*3)
     blk = [self.AX_STREAM, 0xff,] + [0,0,0,]*blocksize
-    dat = np.zeros(num_words*3)
+    dat = numpy.zeros(num_words*3)
     ptr = int(0)
     for i in range(0, int(num_words/blocksize)):
       dat[range(ptr, ptr+num)] = self.spi.xfer(blk)[2:]
@@ -213,7 +213,7 @@ class TartSPI:
       dat += self.spi.xfer(blk)[2:]
     lst = num_words % blocksize
     dat += self.spi.xfer([self.AX_STREAM, 0xff,] + [0,0,0,]*lst)[2:]
-    dat = np.array(dat).reshape(-1,3)
+    dat = numpy.array(dat).reshape(-1,3)
     return dat
 
   def read_test(self, noisy=True):
@@ -259,11 +259,12 @@ class TartSPI:
   def read_visibilities(self, noisy=True):
     '''Read back visibilities data.'''
     res = self.spi.xfer([self.VX_STREAM, 0x0,] + [0x0, 0x0, 0x0, 0x0]*576)
-    val = np.array(res[2:])
+#     print res[2:]
+    val = self.vis_convert(res[2:])
     if noisy:
       tim = time.clock()
       print self.show_status(self.VIZ_STATS, res[1])
-      print " Visibilities (@t = %g): \t%s (sum = %d)\n" % (tim, val, sum(val))
+      print " Visibilities (@t = %g): \t%s (sum = %d)" % (tim, val, sum(val))
     return val
 
   def vis_ready(self, noisy=False):
@@ -280,8 +281,19 @@ class TartSPI:
     vis = self.read_visibilities(noisy)
     return vis
 
-  def load_permute(self, noisy=False):
-    pp = numpy.loadtxt("data/permute.txt", dtype='int')
+  def vis_convert(self, viz):
+    arr = numpy.zeros(576, dtype='int')
+    for i in range(0,576):
+      j = i*4
+      x = viz[j] | (viz[j+1] << 8) | (viz[j+2] << 16) | ((viz[j+3] & 0x7f) << 24)
+      if viz[j+3] > 0x7f:
+        x = -x
+      arr[i] = x
+    return arr
+
+  def load_permute(self, filepath='../FPGA/tart_spi/data/permute.txt', noisy=False):
+    '''Load a permutation vector from the file at the given filepath.'''
+    pp = numpy.loadtxt(filepath, dtype='int')
     return pp
 
 #endclass TartSPI
@@ -292,7 +304,7 @@ class TartSPI:
 ##----------------------------------------------------------------------------
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
-  parser.add_argument('--speed', default=8, type=float, help='Specify the SPI CLK speed (in MHz)')
+  parser.add_argument('--speed', default=64, type=float, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=11, type=int, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data.')
   parser.add_argument('--blocksize', default=24, type=int, help='exponent of correlator block-size')
@@ -328,17 +340,19 @@ if __name__ == '__main__':
   tart.start_acquisition(1.1, True)
 
   print "\nSetting up correlators (block-size = 2^%d):" % args.blocksize
-#   tart.set_blocksize_and_start(args.blocksize, True)
   tart.start(args.blocksize, True)
   tart.get_blocksize(True)
 
   if args.monitor:
+    print "\nLoading permutation vector:"
+#     pp = tart.load_permute()
+    pp = numpy.array(range(0,576), dtype='int')
+#     print pp
+
     print "\nMonitoring visibilities:"
     while True:
-#       viz = tart.vis_read(False)
-#       tim = time.clock()
-#       print " Visibilities (@t = %g): \t%s (sum = %d)" % (tim, viz, sum(viz))
       viz = tart.vis_read(True)
+      print "Reordered visibilities:\n%s" % viz[pp]
 
   else:
     print tart.read_test(True)

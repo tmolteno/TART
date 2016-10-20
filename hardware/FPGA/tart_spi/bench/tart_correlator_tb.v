@@ -18,11 +18,7 @@ module tart_correlator_tb;
    parameter BREAD = NREAD << 2;
    parameter XBITS = `BLOCK_BITS; // Bit-width of the block-counter
    parameter XSB   = XBITS-1;     // MSB of the block-counter
-`ifdef __USE_SDP_DSRAM
    parameter CBITS = 14;
-`else
-   parameter CBITS = 10;
-`endif
    parameter CSB   = CBITS-1;
 
    wire [MSB:0] c_dat, c_val, blocksize, checksum;
@@ -284,21 +280,22 @@ module tart_correlator_tb;
 
        .data_ready(ready),
        .data_request(aq_request),
-       .data_in(data_w),
+       .data_in  (data_w),
 
-       .spi_busy(spi_busy),
+       .spi_busy (spi_busy),
 
-       .vx_cyc_o(s_cyc),
-       .vx_stb_o(s_stb),
-       .vx_we_o (s_we ),
-       .vx_ack_i(s_ack),
-       .vx_blk_o(v_blk),
-       .vx_dat_i(s_dat),
-       .newblock(newblock),
-       .streamed(streamed), // has an entire block finished streaming?
-       .accessed(accessed),
+       .vx_cyc_o (s_cyc),
+       .vx_stb_o (s_stb),
+       .vx_we_o  (s_we ),
+       .vx_ack_i (s_ack),
+       .vx_blk_o (v_blk),
+       .vx_dat_i (s_dat),
+       
+       .newblock (newblock),
+       .streamed (streamed), // has an entire block finished streaming?
+       .accessed (accessed),
        .available(available),
-       .checksum(checksum),
+       .checksum (checksum),
        .blocksize(blocksize),
 
        .aq_debug_mode(aq_debug_mode),
@@ -361,11 +358,7 @@ module tart_correlator_tb;
          .we_i (v_we),
          .ack_o(v_ack),
          .wat_o(v_wat),
-  `ifdef __USE_SDP_DSRAM
          .adr_i({v_blk, v_adr}),
-  `else
-         .adr_i(v_adr),
-  `endif
          .byt_i(v_dtx),
          .byt_o(v_drx),
 

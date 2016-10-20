@@ -2,7 +2,7 @@
 
 `include "tartcfg.v"
 
-module tart_dsp_tb;
+module tart_block_tb;
 
    //-------------------------------------------------------------------------
    //
@@ -36,15 +36,13 @@ module tart_dsp_tb;
    parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
-`ifdef __USE_FAKE_DSP
-   parameter NREAD = 9;
-`else
+
+   //  Read-back settings:
 //    parameter NREAD = 24;
    parameter NREAD = 96;
 //    parameter NREAD = 120;
 //    parameter NREAD = `READ_COUNT >> 2;
 //    parameter NREAD = `READ_COUNT;
-`endif
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
@@ -69,6 +67,7 @@ module tart_dsp_tb;
    reg [NSB:0]  data [0:255];
    reg [31:0]   viz = 32'h0;
    reg [4:0]    log_bsize = COUNT[4:0];
+   wire         sw, switch;
 
    assign dsp_en = vx_enabled;
 
@@ -355,92 +354,70 @@ module tart_dsp_tb;
 
 
    //-------------------------------------------------------------------------
-   //  Controls data-aquisition, and correlator registers.
-   tart_acquire
-     #( .WIDTH(BBITS), .ACCUM(ACCUM), .BBITS(XBITS)
-        ) TART_ACQUIRE0
-     ( .clk_i(b_clk),
-       .rst_i(rst),
-       .cyc_i(cyc),
-       .stb_i(stb),
-       .we_i (we),
-       .ack_o(ack),
-       .adr_i(adr),
-       .dat_i(dtx),
-       .dat_o(drx),
+   //  Hilbert transform to recover imaginaries.
+   //-------------------------------------------------------------------------
+   fake_hilbert #( .WIDTH(AXNUM) ) HILB0
+     (  .clk(clk_x),
+        .rst(rst),
+        .en(enable),
+        .d(antenna),
+        .valid(go),
+        .strobe(strobe), // `antenna` data is valid
+        .re(re),
+        .im(im)
+        );
 
-       .data_ready(ready),
-       .data_request(aq_request),
-       .data_in(data_w),
-
-       .spi_busy(spi_busy),
-
-       .vx_cyc_o(dsp_cyc),
-       .vx_stb_o(dsp_stb),
-       .vx_we_o (dsp_we ),
-       .vx_ack_i(dsp_ack),
-       .vx_blk_o(dsp_blk),
-       .vx_dat_i(dsp_dat),
-
-       .overflow (overflow),
-       .newblock (newblock),
-       .streamed (streamed), // has an entire block finished streaming?
-       .accessed (accessed),
-       .available(available),
-       .checksum (checksum),
-       .blocksize(blocksize),
-
-       .vx_enabled(vx_enabled),
-       .vx_overwrite(overwrite),
-       .vx_stuck_i(stuck),
-       .vx_limp_i (limp),
-
-       .aq_debug_mode(aq_debug_mode),
-       .aq_enabled(aq_enabled),
-       .aq_sample_delay(aq_sample_delay),
-       .aq_adr_i(25'b0)
-       );
 
    //-------------------------------------------------------------------------
-   //  The visibilities are computed by 24 correlators, each with 12x time-
-   //  multiplexing, so that 576 correlations are performed for each antenna
-   //  sample.
-`ifdef __USE_FAKE_DSP
-   tart_fake_dsp FAKE_DSP
-`else
-   tart_dsp
-     #(.AXNUM(AXNUM),
-       .ACCUM(ACCUM),
-       .TRATE(TRATE),
-       .TBITS(TBITS),
-       .NREAD(NREAD)
-       ) TART_DSP
- `endif
-    ( .clk_x(clk_x),
-      .rst_i(rst),
-      .aq_clk_i(b_clk),
-      .aq_cyc_i(dsp_cyc),
-      .aq_stb_i(dsp_stb),
-      .aq_we_i (dsp_we ),
-      .aq_bst_i(dsp_bst),
-      .aq_ack_o(dsp_ack),
-      .aq_blk_i(dsp_blk),
-      .aq_dat_i(dsp_val),
-      .aq_dat_o(dsp_dat),
-
-      .aq_enable(aq_enabled),
-      .vx_enable(vx_enabled),
-      .overwrite(overwrite),
-      .antenna  (antenna),
-      .switching(switching),
-      .blocksize(blocksize),
-      .stuck_o  (stuck),
-      .limp_o   (limp),
-
-      .newblock (newblock),
-      .checksum (checksum),
-      .streamed (streamed)
-      );
+   //  TART bank-switching unit.
+   //-------------------------------------------------------------------------
+   tart_bank_switch #( .COUNT(BLOCK) ) SW0
+     ( .clk_x(clk_x),
+       .clk_i(b_clk),
+       .rst_i(rst),
+       .ce_i (go),
+       .strobe_i(strobe),
+       .bcount_i(blocksize),
+       .swap_x(swap_x),
+       .swap_o(switch)
+       );
 
 
-endmodule // tart_dsp_tb
+   //-------------------------------------------------------------------------
+   //  A single block of 4 correlators, and implemented using the Xilinx DSP48
+   //  primitives.
+   //-------------------------------------------------------------------------
+   //  The configuration file includes the parameters that determine which
+   //  antannae connect to each of the correlators.
+`include "../include/tart_pairs.v"
+   correlator_block_DSP
+     #(  .ACCUM (BLOCK),
+         .PAIRS0(PAIRS00_00),
+         .PAIRS1(PAIRS00_01),
+         .PAIRS2(PAIRS00_02),
+         .PAIRS3(PAIRS00_03),
+         .DELAY (DELAY)
+         ) BLOCK0
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(b_clk),
+         .cyc_i(cyc),
+         .stb_i(stb),
+         .we_i (1'b0),
+         .bst_i(bst),
+         .ack_o(ack),
+         .adr_i(adr),
+         .dat_i({BLOCK{1'bx}}),
+         .dat_o(dat),
+
+         .sw_i(swap_x),
+         .en_i(go),
+         .re_i(re),
+         .im_i(im),
+
+         .bank_o(bankindex)
+         );
+
+
+endmodule // tart_block_tb

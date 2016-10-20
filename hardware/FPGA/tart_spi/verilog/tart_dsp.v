@@ -13,8 +13,12 @@
  * Top-level of the TART DSP units, which contain the time-multiplexed block
  * of correlator-blocks.
  * 
+ * The visibilities are computed by 24 correlators, each with 12x time-
+ * multiplexing, so that 576 correlations are performed for each antenna
+ * sample (with default settings).
+ * 
  * NOTE:
- *  + hardwired for a 24 antenna setup;
+ *  + currently specialied for a 24 antenna setup;
  *  + the correlators are set to use 12:1 time-multiplexing, so `clk_x` must
  *    be 12x the frequency of the sampling clock;
  *  + the upper 3-bits of the address determine either:
