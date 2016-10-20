@@ -81,7 +81,7 @@ module tart_correlator
    //  Bus interface.
    //  
    //-------------------------------------------------------------------------
-   //  Compose address:     UNIT       BLOCK       VALUE
+   //  Compose address:    BANK ADDR    TMUX IDX   CORR#    COS/SIN
    wire [ASB-3:0] c_adr = {adr[ASB:10], adr[4:1], adr[6:5], adr[0]};
    wire [MSB:0]   dat_w;
    wire [MSB:0]   dats [0:5];
@@ -208,7 +208,7 @@ module tart_correlator
    //-------------------------------------------------------------------------
    //  TART bank-switching unit.
    //-------------------------------------------------------------------------
-   tart_bank_switch #( .COUNT(BLOCK) ) SW0
+   tart_bank_switch #( .COUNT(BLOCK), .TICKS(4) ) SW0
      ( .clk_x(clk_x),
        .clk_i(clk_i),
        .rst_i(rst),

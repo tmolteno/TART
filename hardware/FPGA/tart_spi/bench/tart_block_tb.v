@@ -1,12 +1,43 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/tart_block_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * The purpose of this testbench is to test that the correlator computation is
+ * correct, and to ensure that the data is read back faithfully.
+ * 
+ * NOTE:
+ *  + tests just one block (which contains four correlators);
+ * 
+ * TODO:
+ * 
+ */
 
 `include "tartcfg.v"
+
+//----------------------------------------------------------------------------
+//  There are two correlator-block modules, one that uses DSP48 accumulators,
+//  and the other uses standard carry-chain accumulators.
+`define __TEST_DSP_BLOCK
+// `undef  __TEST_DSP_BLOCK
+
+//----------------------------------------------------------------------------
+//  Use a more compact print-out of the visibilities, or use a column of them?
+// `define __USE_COLUMN_DISPLAY
+`undef  __USE_COLUMN_DISPLAY
 
 module tart_block_tb;
 
    //-------------------------------------------------------------------------
    //
-   //  Settings.
+   //  SIMULATION SETTINGS.
    //
    //-------------------------------------------------------------------------
    //  Antenna + accumulator settings:
@@ -17,32 +48,33 @@ module tart_block_tb;
    parameter MSB   = BLOCK-1;      // Accumulator MSB
    parameter TRATE = `TMUX_RATE;   // Time-multiplexing rate
    parameter TBITS = `TMUX_BITS;   // TMUX bits
+   parameter TSB   = TBITS-1;      // MSB of TBITS
+
+   //  Read-back settings:
+   parameter RSIZE = TRATE*2;      // Number of sine & cosine values that are
+   parameter RBITS = TBITS+1;      // stored within a correlator, and the
+   parameter RSB   = RBITS-1;      // number of counter-bits needed
 
    //  Settings for the visibilities data banks:
    parameter BREAD = NREAD << 2;
    parameter XBITS = `BANK_BITS; // Bank-counter bit-width; of the b
    parameter XSB   = XBITS-1;    // MSB of the bank-counter
+   parameter BANKS = 1 << XBITS; // Number of visibilities banks
 
    //  Internal correlator data-bus settings:
-   parameter CBITS = `BANK_BITS + `READ_BITS;
-   parameter CSB   = CBITS-1;
+   parameter CBITS = XBITS+FBITS; // Correlator-bus address bit-width
+   parameter CSB   = CBITS-1;     // MSB of correlator-bus address
 
-   //  External Wishbone-like bus setttings:
-   parameter ABITS = `WBADR_BITS;  // Address bit-width
-   parameter ASB   = ABITS-1;      // Address MSB
-   parameter BBITS = `WBBUS_BITS;  // Bit-width for the SoC WB bus
-   parameter BSB   = BBITS-1;      // Bus MSB
-
-   parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
-//    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
-//    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
+   //  Correlator-block Wishbone-like bus setttings:
+   parameter ABITS = 2+XBITS+RBITS; // Address bit-width
+   parameter ASB   = ABITS-1;       // Address MSB
 
    //  Read-back settings:
-//    parameter NREAD = 24;
+   parameter FBITS = `READ_BITS; // Fetch-counter bit-width
+   parameter FSB   = FBITS-1;    // MSB of fetch-counter
    parameter NREAD = 96;
-//    parameter NREAD = 120;
-//    parameter NREAD = `READ_COUNT >> 2;
-//    parameter NREAD = `READ_COUNT;
+   parameter COUNT = 6;
+   parameter BSIZE = (1 << COUNT) - 1;
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
@@ -51,32 +83,45 @@ module tart_block_tb;
 
    //-------------------------------------------------------------------------
    //
-   //  Signals.
+   //  SIMULATION SIGNALS.
    //
    //-------------------------------------------------------------------------
-   wire [MSB:0] c_dat, c_val, blocksize, checksum;
-   wire [CSB:0] c_adr;
-   wire [BSB:0] dat, val, drx;
-   reg          clk_x = 1, b_clk = 1, rst = 0;
-   reg          cyc = 0, stb = 0, we = 0, bst = 0;
-   reg [3:0]    adr;
-   reg [BSB:0]  dtx;
-   reg          set = 0, get = 0, fin = 0;
-   wire         dsp_en, stuck, limp, ack;
-   wire         c_cyc, c_stb, c_we, c_bst, c_ack;
+   //  Fake antenna signals:
+   wire [NSB:0] antenna;
+   reg          enable = 1'b0;
    reg [NSB:0]  data [0:255];
-   reg [31:0]   viz = 32'h0;
-   reg [4:0]    log_bsize = COUNT[4:0];
-   wire         sw, switch;
 
-   assign dsp_en = vx_enabled;
+   //  Global control signals:
+   reg          clk_x = 1'b1, b_clk = 1'b1, rst = 1'b0;
+   wire         b_rst = rst;         
+
+   //  Fake Hilbert-transform signals:
+   wire [NSB:0] re, im;
+   wire         valid, strobe;
+
+   //  Correlator signals:
+   reg [MSB:0]  blocksize;
+   wire [XSB:0] bank;
+   wire         swap_x, switch;
+
+   //  Bus signals:
+   wire         b_cyc, b_stb, b_we, b_bst, b_ack, b_wat, b_err;
+   wire [RSB:0] b_adr;
+   wire [MSB:0] b_dat, b_vis, b_viz;
+
+   //  Read-back signals:
+   reg          fetch = 1'b0, read = 1'b0;
+   wire         done;
 
 
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION STIMULI.
+   //
    //-------------------------------------------------------------------------
    //  Setup correlator and bus clocks, respectively.
    always #`CLK_X  clk_x <= ~clk_x;
    always #`CLK_B  b_clk <= ~b_clk;
-//    always #10 b_clk <= ~b_clk;
 
 
    //-------------------------------------------------------------------------
@@ -85,27 +130,19 @@ module tart_block_tb;
    integer      ptr = 0;
    initial begin : SIM_BLOCK
       if (COUNT < 7) begin
-`ifdef __USE_FAKE_DSP
-         $dumpfile ("fake_tb.vcd");
-`else
-         $dumpfile ("dsp_tb.vcd");
-`endif
+         $dumpfile ("vcd/block_tb.vcd");
          $dumpvars;
       end
 
       //----------------------------------------------------------------------
-      $display("\n%12t: TART DSP settings:", $time);
-      $display(  "%12t:  TART I/O bus settings:", $time);
-      $display(  "%12t:   SPI data-bus bit-width:  \t\t%3d", $time, BBITS);
-      $display(  "%12t:   Number of visibilities banks:    \t%3d", $time, XBITS);
-      $display(  "%12t:  TART visibilities read-back settings:", $time);
-      $display(  "%12t:   Visibility-data address-width:   \t%3d", $time, ABITS);
-      $display(  "%12t:   Data prefetch block-size (words):\t%3d", $time, NREAD);
-      $display(  "%12t:   Data prefetch block-size (bytes):\t%3d", $time, BREAD);
-      $display(  "%12t:  TART correlator settings:", $time);
+      $display("\n%12t: TART correlator settings:", $time);
+      $display(  "%12t:  Simulated correlator settings:", $time);
       $display(  "%12t:   Accumulator bit-width:   \t\t%3d", $time, ACCUM);
-      $display(  "%12t:   Correlator bus data-width:       \t%3d", $time, BLOCK);
-      $display(  "%12t:   Correlator bus address-width:    \t%3d", $time, CBITS);
+      $display(  "%12t:   Correlator bus data-width:       \t%3d", $time, ACCUM);
+      $display(  "%12t:   Correlator bus address-width:    \t%3d", $time, ABITS);
+      $display(  "%12t:   Number of correlator banks:      \t%3d", $time, BANKS);
+      $display(  "%12t:   Number of samples/bank:          \t%3d", $time, BSIZE);
+      $display(  "%12t:   Data prefetch block-size (words):\t%3d", $time, RSIZE);
 
       //----------------------------------------------------------------------
       $display("\n%12t: Generating fake antenna data:", $time);
@@ -124,41 +161,24 @@ module tart_block_tb;
 
       //----------------------------------------------------------------------
       $display("\n%12t: Setting block-size & beginning correlation (bank 0)", $time);
-      #40 set <= 1; num <= 1; dtx <= {1'b1, 2'b00, log_bsize}; ptr <= 4'ha;
-      while (!fin) #10;
-
-//       //----------------------------------------------------------------------
-//       $display("%12t: Beginning data-acquisition (bank 0):", $time);
-//       #40 set <= 1; num <= 1; dtx <= 8'h80; ptr <= 4'h7;
-//       while (!fin) #10;
+      #40 blocksize <= BSIZE; enable <= 1'b1;
 
       //----------------------------------------------------------------------
+      while (!switch) #10; while (switch) #10;
       $display("%12t: Switching banks (bank 1)", $time);
-      while (!switching) #10;
-      while (switching) #10;
 
       //----------------------------------------------------------------------
-      while (!newblock) #10;
-      #10 $display("\n%12t: Reading back visibilities (bank 0)", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
-      while (!fin) #10;
+      #10 $display("\n%12t: Fetching back visibilities (bank 0)", $time);
+      #10 fetch <= 1'b1; #10 while (fetch) #10;
 
       //----------------------------------------------------------------------
-      while (!switching) #10; while (switching) #10;
+      while (!switch) #10; while (switch) #10;
       $display("\n%12t: Stopping data-correlation (bank 1)", $time);
-      #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 4'ha;
-      while (!fin) #10;
+      #10 enable <= 1'b0;
 
       //----------------------------------------------------------------------
-      while (!newblock) #10;
-      #10 $display("\n%12t: Reading back visibilities (bank 1)", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
-      while (!fin) #10;
-
-      //----------------------------------------------------------------------
-//       $display("\n%12t: Reading back counts (bank 1):", $time);
-//       #80 get <= 1;
-//       while (!fin) #10;
+      #10 $display("\n%12t: Fetching back visibilities (bank 1)", $time);
+      #10 fetch <= 1'b1; #10 while (fetch) #10;
 
       //----------------------------------------------------------------------
       #80 $display("\n%12t: Simulation finished:", $time);
@@ -167,8 +187,33 @@ module tart_block_tb;
 
 
    //-------------------------------------------------------------------------
-   //  Exit if the simulation appears to have stalled.
+   //
+   //  SIMULATION FAKE-DATA.
+   //
    //-------------------------------------------------------------------------
+   //  Generate fake antenna data, from the fake DRAM contents.
+   reg [TSB:0]  cnt = 0;
+   wire [TSB:0] next_cnt = wrap_cnt ? 0 : cnt + 1 ;
+   wire         wrap_cnt = cnt == TRATE-1;
+   integer      rd_adr = 0;
+
+   assign antenna = data[rd_adr[7:0]];
+
+   always @(posedge clk_x)
+     if (rst) cnt <= #DELAY 0;
+     else     cnt <= #DELAY enable ? next_cnt : cnt;
+
+   always @(posedge clk_x)
+     if (rst) rd_adr <= #DELAY 0;
+     else     rd_adr <= #DELAY enable && wrap_cnt ? rd_adr + 1 : rd_adr;
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION TERMINATION.
+   //
+   //-------------------------------------------------------------------------
+   //  Exit if the simulation appears to have stalled.
    parameter LIMIT = 1000 + (1 << COUNT) * 320;
 
    initial begin : SIM_FAILED
@@ -177,180 +222,75 @@ module tart_block_tb;
       $finish;
    end // SIM_FAILED
 
-   always @(posedge b_clk)
-     if (newblock)
-       $display("%12t: New block available.", $time);
-
 
    //-------------------------------------------------------------------------
-   //  Read back visibility data, from the correlators' registers.
+   //
+   //  SIMULATION RESULTS.
+   //
    //-------------------------------------------------------------------------
-   wire       cyc_n = cyc && rxd == 1 && ack;
-   integer    rxd = 0;
+   wire [FBITS:0] f_nxt = f_adr + 1;
+   reg [MSB:0]    fetched [0:NREAD-1];
+   reg [FSB:0]    f_adr = {FBITS{1'b0}};
 
-`ifndef __WB_CLASSIC
-   always @(posedge b_clk)
-     if (rst) bst <= #DELAY 0;
-     else if ((set || get) && num > 2) bst <= #DELAY 1;
-     else if (bst && num == 2 && !wat) bst <= #DELAY 0;
+   //  Display bank-switch events.
+   always @(posedge b_clk) begin
+      if (switch)
+        $display("%12t: New block available.", $time);
+   end
+
+`ifdef  __USE_COLUMN_DISPLAY
+   //  Display the data, and which correlator and register it is from.
+   always @(posedge b_clk) begin
+      if (b_cyc && !b_we && b_ack)
+        $display("%12t: Vis = %08x (d: %8d)", $time, b_viz, b_viz);
+   end
 `endif
 
    always @(posedge b_clk)
-     if (rst) begin
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 0;
+     if (rst || !fetch) begin
+        f_adr <= #DELAY {FBITS{1'b0}};
      end
-     else if (set) begin
-        $display("%12t: write beginning (num = %1d)", $time, num);
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 7;
-     end
-     else if (get) begin
-        $display("%12t: read beginning (num = %1d)", $time, num);
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 6;
-     end
-     else if (cyc) begin
-        if (!stb && ack) $display("%12t: transfer ending", $time);
-`ifdef __WB_CLASSIC
-        {fin, get, set} <= #DELAY { cyc_n, get, set};
-        {cyc, stb, we } <= #DELAY {!cyc_n, !cyc_n, we && !cyc_n};
-`else
-        {fin, get, set} <= #DELAY { cyc_n, get, set};
-        {cyc, stb, we } <= #DELAY {!cyc_n, bst || wat, we && !cyc_n};
-`endif
-     end
-     else begin
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 0;
+     else if (b_cyc && !b_we && b_ack) begin
+        f_adr <= #DELAY f_nxt;
+        fetched[f_adr] <= #DELAY b_viz;
      end
 
-   always @(posedge b_clk)
-     if (set || get) adr <= #DELAY ptr;
-
-`ifdef __WB_CLASSIC
-   always @(posedge b_clk)
-     if (cyc && stb && ack) num <= #DELAY num - 1;
-`else
-   always @(posedge b_clk)
-     if (cyc && stb && !wat) num <= #DELAY num - 1;
-`endif // __WB_CLASSIC
-
-   always @(posedge b_clk)
-     if (get || set) rxd <= num;
-     else if (cyc && ack) rxd <= #DELAY rxd - 1;
-
-   //-------------------------------------------------------------------------
-   // Display the data, and which correlator and register it is from.
-   reg [10:0]   adr_r;
-   reg [5:0]    ci;
-   reg [4:0]    ri;
-   reg [3:0]    rdys = 0, vals = 0;
-   wire         rdy = cyc && !we && ack;
-
-//    assign dat = |{rdys, rdy} ? drx : 'bz;
-//    assign val = |{vals, set} ? dtx : 'bz;
-   wire [2:0]   dst = cyc ? adr : 'bz;
-   assign val = cyc && we ? dtx : 'bz;
-//    assign dat = rdy || (|rdys) && cyc ? drx : 'bz;
-   assign dat = rdy || rdys[0] ? drx : 'bz;
-
-   always @(posedge b_clk) begin
-      rdys <= #DELAY {rdys[2:0], rdy};
-      vals <= #DELAY {vals[2:0], set};
-   end
-
-   reg [1:0] rxc = 0;
-   always @(posedge b_clk) begin
-      adr_r    <= #DELAY rd_adr;
-      {ci, ri} <= #DELAY adr_r;
-      if (cyc && stb && !we && ack) begin
-         rxc <= #DELAY rxc + 1;
-         viz = {dat, viz[31:8]};
-         if (rxc == 2'b11)
-           $display("%12t: Vis = %08x (d: %8d, c: %02x, r:%02x)", $time, viz, viz, ci, ri);
-//            $display("%12t: Vis = %08x (c: %02x, r:%02x)", $time, viz, ci, ri);
-      end
-   end
-
-
-   //-------------------------------------------------------------------------
-   //  Generate fake DRAM contents.
-   //-------------------------------------------------------------------------
-   wire [NSB:0] data_w = data[data_index[7:0]];
-   integer     data_index = 0;
-   reg         ready = 0;
-   reg         aq_start = 0, aq_done = 1;
-   wire        spi_busy, aq_request;
-   wire [2:0]  aq_sample_delay;
-
-   always @(posedge b_clk)
-     if (rst)
-       {aq_done, aq_start} <= #DELAY 2'b10;
-     else if (!aq_start && aq_done && aq_enabled)
-       {aq_done, aq_start} <= #DELAY 2'b01;
-     else if (!aq_done && aq_start && aq_enabled)
-       aq_start <= #DELAY 0;
-     else
-       aq_done  <= #DELAY aq_done ? aq_done : !aq_enabled;
-
-   always @(posedge b_clk)
-     if (rst)
-       ready <= #DELAY 0;
-     else if (aq_start || aq_request)
-       ready <= #DELAY 1;
-     else
-       ready <= #DELAY 0;
-
-   always @(posedge b_clk)
-     if (rst)
-       data_index <= #DELAY 0;
-     else if (aq_request)
-       data_index <= #DELAY data_index + 1;
-     else
-       data_index <= #DELAY data_index;
-
-   //-------------------------------------------------------------------------
-   //  Generate fake antenna data, from the fake DRAM contents.
-   wire [NSB:0] antenna;
-   reg [3:0]  cnt = 0;
-   wire [3:0] next_cnt = wrap_cnt ? 0 : cnt + 1 ;
-   wire       wrap_cnt = cnt == TRATE-1;
-   integer    rd_adr = 0;
-
-   assign antenna = data[rd_adr[7:0]];
-
-   always @(posedge clk_x)
-     if (rst) cnt <= #DELAY 0;
-     else     cnt <= #DELAY dsp_en ? next_cnt : cnt;
-
-   always @(posedge clk_x)
-     if (rst) rd_adr <= #DELAY 0;
-     else     rd_adr <= #DELAY dsp_en && wrap_cnt ? rd_adr + 1 : rd_adr;
+   always @(negedge fetch)
+     if (f_adr > 0) begin
+        $display("\n%12t: Fetched visibilities (num = %d):", $time, f_adr);
+        for (ptr = 0; ptr < NREAD; ptr = ptr + TRATE) begin
+           $write("\t");
+           for (num = 0; num < TRATE; num = num + 1)
+             $write("%06x ", fetched[ptr + num]);
+           $write("\n");
+        end
+     end
 
 
    //-------------------------------------------------------------------------
    //     
-   //     DATA-ACQUISITION CONTROL AND READ-BACK.
+   //     VISIBILITIES-DATA CONTROL AND READ-BACK.
    //     
    //-------------------------------------------------------------------------
-   wire [BSB:0] s_dat;
-   wire [XSB:0] v_blk;
-   wire         s_cyc, s_stb, s_we, s_ack;
-   reg          wat = 0;
-   wire         overflow, newblock, streamed, accessed, available, switching;
-   wire         aq_debug_mode, aq_enabled, vx_enabled, overwrite;
+   wire [XBITS:0] n_blk = c_blk + 1;
+   wire [2:0]     n_cor = c_cor + 1;
+   reg [XSB:0]    c_blk = {XBITS{1'b0}};
+   reg [1:0]      c_cor = 2'b00;
+   wire [ASB:0]   c_adr = {c_blk, b_adr[RSB:1], c_cor, b_adr[0]};
 
-   wire         dsp_cyc, dsp_stb, dsp_we, dsp_bst, dsp_ack;
-   wire [XSB:0] dsp_blk;
-   wire [7:0]   dsp_dat, dsp_val;
+   assign b_viz = fetch ? b_vis : {ACCUM{1'bz}};
 
-   assign dsp_bst = 1'b0;
-
-// `ifdef __WB_CLASSIC
    always @(posedge b_clk)
-     wat <= #DELAY stb && bst && !ack;
-// `endif
+     if (b_rst)
+       {fetch, read, c_blk, c_cor} <= #DELAY {XBITS+4{1'b0}};
+     else if (fetch && done && c_cor == 2'b11) // end
+       {fetch, c_blk} <= #DELAY {1'b0, n_blk[XSB:0]};
+     else if (fetch && done) // read next correlator
+       {read, c_cor} <= #DELAY {1'b1, n_cor[1:0]};
+     else if (fetch && !b_cyc && !read) // begin
+       {read, c_cor} <= #DELAY 3'b100;
+     else
+       read <= #DELAY 1'b0;
 
 
    //-------------------------------------------------------------------------
@@ -361,7 +301,7 @@ module tart_block_tb;
         .rst(rst),
         .en(enable),
         .d(antenna),
-        .valid(go),
+        .valid(valid),
         .strobe(strobe), // `antenna` data is valid
         .re(re),
         .im(im)
@@ -375,7 +315,7 @@ module tart_block_tb;
      ( .clk_x(clk_x),
        .clk_i(b_clk),
        .rst_i(rst),
-       .ce_i (go),
+       .ce_i (valid),
        .strobe_i(strobe),
        .bcount_i(blocksize),
        .swap_x(swap_x),
@@ -390,7 +330,11 @@ module tart_block_tb;
    //  The configuration file includes the parameters that determine which
    //  antannae connect to each of the correlators.
 `include "../include/tart_pairs.v"
+`ifdef  __TEST_DSP_BLOCK
    correlator_block_DSP
+`else
+   correlator_block_SDP
+`endif
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
@@ -402,21 +346,47 @@ module tart_block_tb;
          .rst(rst),
 
          .clk_i(b_clk),
-         .cyc_i(cyc),
-         .stb_i(stb),
+         .cyc_i(b_cyc),
+         .stb_i(b_stb),
          .we_i (1'b0),
-         .bst_i(bst),
-         .ack_o(ack),
-         .adr_i(adr),
-         .dat_i({BLOCK{1'bx}}),
-         .dat_o(dat),
+         .bst_i(b_bst),
+         .ack_o(b_ack),
+         .adr_i(c_adr),
+         .dat_i(b_dat),
+         .dat_o(b_vis),
 
          .sw_i(swap_x),
-         .en_i(go),
+         .en_i(valid),
          .re_i(re),
          .im_i(im),
 
-         .bank_o(bankindex)
+         .bank_o(bank)
+         );
+
+
+   //-------------------------------------------------------------------------
+   //  Address-generation unit, for each block.
+   //-------------------------------------------------------------------------
+   assign b_we  = 1'b0;
+   assign b_wat = 1'b0;
+   assign b_err = 1'b0;
+
+   wb_get_block
+     #(.BSIZE(RSIZE), .BBITS(RBITS), .DELAY(DELAY)
+       ) FETCH0
+       ( .clk_i(b_clk),
+         .rst_i(b_rst),
+         .cyc_o(b_cyc),
+         .stb_o(b_stb),
+         .we_o (b_we),
+         .bst_o(b_bst),
+         .ack_i(b_ack),
+         .wat_i(b_wat),
+         .err_i(b_err),
+         .adr_o(b_adr),
+
+         .read_i(read),
+         .done_o(done)
          );
 
 

@@ -37,7 +37,7 @@ module wb_get_block
     input          ack_i,
     input          wat_i,
     input          err_i,
-    output [BSB:0] blk_o,
+    output [BSB:0] adr_o,
 
     input          read_i,
     output reg     done_o = 0
@@ -52,7 +52,7 @@ module wb_get_block
    wire [BBITS:0]  blk_nxt = blk + 1;
 
    assign we_o  = 0;
-   assign blk_o = blk;
+   assign adr_o = blk;
 
 
    //-------------------------------------------------------------------------

@@ -33,17 +33,16 @@ module tart_dsp_tb;
    parameter BBITS = `WBBUS_BITS;  // Bit-width for the SoC WB bus
    parameter BSB   = BBITS-1;      // Bus MSB
 
-   parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
-//    parameter COUNT = 9; // count down from:  (1 << COUNT) - 1;
-//    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
+   //  Read-back settings:
+   parameter FBITS = `READ_BITS; // Fetch-counter bit-width
+   parameter FSB   = FBITS-1;    // MSB of fetch-counter
+   parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
 `ifdef __USE_FAKE_DSP
    parameter NREAD = 9;
 `else
-//    parameter NREAD = 24;
-   parameter NREAD = 96;
-//    parameter NREAD = 120;
-//    parameter NREAD = `READ_COUNT >> 2;
-//    parameter NREAD = `READ_COUNT;
+   parameter NREAD = 48;
+//    parameter NREAD = 96;
 `endif
 
    //  Additional simulation settings:
@@ -87,9 +86,9 @@ module tart_dsp_tb;
    initial begin : SIM_BLOCK
       if (COUNT < 7) begin
 `ifdef __USE_FAKE_DSP
-         $dumpfile ("fake_tb.vcd");
+         $dumpfile ("vcd/fake_tb.vcd");
 `else
-         $dumpfile ("dsp_tb.vcd");
+         $dumpfile ("vcd/dsp_tb.vcd");
 `endif
          $dumpvars;
       end
@@ -134,24 +133,18 @@ module tart_dsp_tb;
 //       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      $display("%12t: Switching banks (bank 1)", $time);
-      while (!switching) #10;
-      while (switching) #10;
-
-      //----------------------------------------------------------------------
       while (!newblock) #10;
       #10 $display("\n%12t: Reading back visibilities (bank 0)", $time);
       #10 get <= 1; num <= BREAD; ptr <= 4'h8;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      while (!switching) #10; while (switching) #10;
+      while (!newblock) #10;
       $display("\n%12t: Stopping data-correlation (bank 1)", $time);
       #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 4'ha;
       while (!fin) #10;
 
       //----------------------------------------------------------------------
-      while (!newblock) #10;
       #10 $display("\n%12t: Reading back visibilities (bank 1)", $time);
       #10 get <= 1; num <= BREAD; ptr <= 4'h8;
       while (!fin) #10;
@@ -181,6 +174,10 @@ module tart_dsp_tb;
    always @(posedge b_clk)
      if (newblock)
        $display("%12t: New block available.", $time);
+
+   always @(posedge b_clk)
+      if (switching)
+        $display("%12t: Switching banks (bank 1)", $time);
 
 
    //-------------------------------------------------------------------------
@@ -241,6 +238,56 @@ module tart_dsp_tb;
      if (get || set) rxd <= num;
      else if (cyc && ack) rxd <= #DELAY rxd - 1;
 
+
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION RESULTS.
+   //
+   //-------------------------------------------------------------------------
+   wire [FBITS:0] f_nxt = f_adr + 1;
+   reg [MSB:0]    fetched [0:NREAD-1];
+   reg [FSB:0]    f_adr = {FBITS{1'b0}};
+   reg [MSB:0]    f_dat = {ACCUM{1'b0}};
+   reg [1:0]      f_cnt = 2'b00;
+
+   wire [2:0]     dst = cyc ? adr : 'bz;
+   wire           rdy = cyc && !we && ack;
+
+   assign val = cyc && we ? dtx : 'bz;
+   assign dat = rdy ? drx : 'bz;
+
+`ifdef  __USE_COLUMN_DISPLAY
+   //  Display the data, and which correlator and register it is from.
+   always @(posedge b_clk) begin
+      if (rdy)
+        $display("%12t: Vis = %08x (d: %8d)", $time, dat, dat);
+   end
+`endif
+
+   always @(posedge b_clk)
+     if (rst || fin) begin
+        f_cnt <= #DELAY 2'b00;
+        f_adr <= #DELAY {FBITS{1'b0}};
+     end
+     else if (rdy && stb) begin
+        f_cnt <= #DELAY f_cnt + 1;
+        f_adr <= #DELAY f_cnt == 2'b11 ? f_nxt : f_adr;
+        f_dat <= #DELAY {dat, f_dat[MSB:BBITS]};
+        fetched[f_adr] <= #DELAY f_dat;
+     end
+
+   always @(posedge fin)
+     if (f_adr >= NREAD-1) begin
+        $display("\n%12t: Fetched visibilities (num = %d):", $time, f_adr);
+        for (ptr = 0; ptr < NREAD; ptr = ptr + TRATE) begin
+           $write("\t");
+           for (num = 0; num < TRATE; num = num + 1)
+             $write("%06x ", fetched[ptr + num]);
+           $write("\n");
+        end
+     end
+
+   /*
    //-------------------------------------------------------------------------
    // Display the data, and which correlator and register it is from.
    reg [10:0]   adr_r;
@@ -251,8 +298,6 @@ module tart_dsp_tb;
 
 //    assign dat = |{rdys, rdy} ? drx : 'bz;
 //    assign val = |{vals, set} ? dtx : 'bz;
-   wire [2:0]   dst = cyc ? adr : 'bz;
-   assign val = cyc && we ? dtx : 'bz;
 //    assign dat = rdy || (|rdys) && cyc ? drx : 'bz;
    assign dat = rdy || rdys[0] ? drx : 'bz;
 
@@ -273,6 +318,7 @@ module tart_dsp_tb;
 //            $display("%12t: Vis = %08x (c: %02x, r:%02x)", $time, viz, ci, ri);
       end
    end
+    */
 
 
    //-------------------------------------------------------------------------

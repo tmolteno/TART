@@ -282,7 +282,7 @@ module tart
    parameter XSB   = XBITS-1;     // MSB of the block-counter
 
    //  Internal correlator data-bus settings:
-   parameter CBITS = `BANK_BITS + `READ_BITS;
+   parameter CBITS = XBITS+RBITS; // Correlator-bus address bit-width
    parameter CSB   = CBITS-1;
 
 
@@ -476,7 +476,10 @@ module tart
        .ACCUM(ACCUM),
        .TRATE(TRATE),
        .TBITS(TBITS),
-       .NREAD(NREAD)
+       .NREAD(NREAD),
+       .RBITS(RBITS),
+       .XBITS(XBITS),
+       .CBITS(CBITS)
  `endif
        ) DSP
      ( .clk_x(clk_x),

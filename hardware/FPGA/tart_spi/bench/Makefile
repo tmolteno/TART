@@ -44,6 +44,10 @@ dsp: ${DEP} ${DSP} tart_dsp_tb.v
 fak: ${DEP} ${FAK} tart_dsp_tb.v
 	$(IVC) $(OPT) -D__USE_FAKE_DSP -o $(OUT)/tart.out $(DEP) $(FAK) $(SIM) tart_dsp_tb.v
 
+blk: ${DEP} ${DSP} tart_block_tb.v
+	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(DSP) $(SIM) tart_block_tb.v
+
+
 .PHONY: run
 run: all
 	@$(OUT)/tart.out

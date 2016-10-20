@@ -92,22 +92,25 @@ module correlator_block_DSP
    wire [XSB:0]        dat;
    wire                vld;
 
+   //  Optionally register these signals, if required to meet timing.
 `ifdef __USE_DSP_SLOW
    wire                sw = sw_i;
    wire                en = en_i;
    wire [ISB:0]        re = re_i;
    wire [ISB:0]        im = im_i;
+   wire                clr;
 `else
    (* KEEP = "TRUE" *) reg         sw = 1'b0;
    (* KEEP = "TRUE" *) reg         en = 1'b0;
    (* KEEP = "TRUE" *) reg [ISB:0] re = {IBITS{1'b0}};
    (* KEEP = "TRUE" *) reg [ISB:0] im = {IBITS{1'b0}};
+   reg                 clr = 1'b1;
 
    always @(posedge clk_x) begin
       {sw, en} <= #DELAY {sw_i, en_i};
       {im, re} <= #DELAY {im_i, re_i};
    end
-`endif // !`ifdef __USE_SLOW
+`endif // !`ifdef __USE_DSP_SLOW
 
    assign bank_o = block;
 
@@ -222,6 +225,15 @@ module correlator_block_DSP
      else if (wrap_x_rd_adr && clear) // finished restarting counters
         clear <= #DELAY 1'b0;
 
+   //  Add an extra cycle of latency to clearing the SRAM's, if using an
+   //  additional cycle of pipelining.
+`ifdef __USE_DSP_SLOW
+   assign clr = clear;
+`else
+   always @(posedge clk_x)
+     clr <= #DELAY clear;
+`endif
+
    //  Increment the block-counter two cycles later, so that the correct data
    //  is stored within the SRAM's.
    always @(posedge clk_x)
@@ -260,7 +272,7 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -281,7 +293,7 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -302,7 +314,7 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -328,7 +340,7 @@ module correlator_block_DSP
        ( .clk_x(clk_x),
          .rst(rst),
 
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -346,8 +358,10 @@ module correlator_block_DSP
 
 
    //-------------------------------------------------------------------------
-   //  Explicit instantiation, because XST sometimes gets it wrong.
+   //  Explicit instantiation, because explicitly placing them is needed to
+   //  consistently meet timing (and XST sometimes gets the primitive wrong).
    //-------------------------------------------------------------------------
+   //  TODO: Parameterise the number of block SRAM's?
    RAMB8X32_SDP #(.DELAY(DELAY)) VISRAM [NSRAM-1:0]
      ( .WCLK(clk_x),
        .WE(vld),

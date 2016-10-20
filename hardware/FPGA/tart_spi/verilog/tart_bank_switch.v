@@ -22,6 +22,8 @@
 module tart_bank_switch
   #( parameter COUNT = 24,
      parameter MSB   = COUNT-1,
+     parameter TICKS = 4,
+     parameter TSB   = TICKS-1,
      parameter DELAY = 3)
    (
     input         clk_x, // correlator clock
@@ -50,8 +52,8 @@ module tart_bank_switch
    //-------------------------------------------------------------------------
    wire [COUNT:0]      next_count = wrap_count ? {(COUNT+1){1'b0}} : count+1;
    wire                wrap_count = count == bcount_i;
-   reg [MSB:0]         count = {COUNT{1'b0}};
-   reg [3:0]           delays = 4'h0;
+   reg [MSB:0]         count  = {COUNT{1'b0}};
+   reg [TSB:0]         delays = {TICKS{1'b0}};
 
    //-------------------------------------------------------------------------
    //  Count the number of correlations for the current bank, and signal a
@@ -62,7 +64,7 @@ module tart_bank_switch
         count <= #DELAY {COUNT{1'b0}};
      end
      else if (ce_i) begin
-        sw    <= #DELAY delays[3] && wrap_count; // signal an upcoming bank-swap
+        sw    <= #DELAY delays[TSB] && wrap_count; // signal an upcoming bank-swap
         count <= #DELAY strobe_i ? next_count[MSB:0] : count;
      end
      else begin
@@ -71,7 +73,7 @@ module tart_bank_switch
      end
 
    always @(posedge clk_x)
-     delays <= #DELAY {delays[2:0], !rst_i && strobe_i};
+     delays <= #DELAY {delays[TSB-1:0], !rst_i && strobe_i};
 
 
    //-------------------------------------------------------------------------

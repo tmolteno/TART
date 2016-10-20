@@ -194,7 +194,7 @@ module wb_prefetch
          .ack_i(a_ack_i),
          .wat_i(a_wat_i),
          .err_i(a_err_i),
-         .blk_o(a_blk),
+         .adr_o(a_blk),
 
          .read_i(read),
          .done_o(done)
