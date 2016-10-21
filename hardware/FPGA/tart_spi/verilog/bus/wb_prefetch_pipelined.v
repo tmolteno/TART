@@ -206,7 +206,7 @@ module wb_prefetch_pipelined
 
 
    //-------------------------------------------------------------------------
-   //  Wishbone to SRAM interface for storing the prefetched visibilities.
+   //  Wishbone to SRAM interface for storing the prefetched data.
    //-------------------------------------------------------------------------
    wb_sram_interface #( .WIDTH(WIDTH), .ABITS(9) ) WB0
      ( .clk_i(clk_i),
@@ -233,7 +233,7 @@ module wb_prefetch_pipelined
 
 
    //-------------------------------------------------------------------------
-   //  Wishbone to SRAM interface for retrieving the prefetched visibilities.
+   //  Wishbone to SRAM interface for retrieving the prefetched data.
    //-------------------------------------------------------------------------
    wb_sram_interface #( .WIDTH(8), .ABITS(11) ) WB1
      ( .clk_i(clk_i),
@@ -260,7 +260,7 @@ module wb_prefetch_pipelined
 
 
    //-------------------------------------------------------------------------
-   //  SRAM for the prefetched visibilities.
+   //  SRAM for the prefetched data.
    //-------------------------------------------------------------------------
    RAMB16X32X8_TDP
      #(.DELAY(3)) SRAM0
