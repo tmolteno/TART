@@ -264,7 +264,7 @@ class TartSPI:
     if noisy:
       tim = time.clock()
       print self.show_status(self.VIZ_STATS, res[1])
-      print " Visibilities (@t = %g): \t%s (sum = %d)" % (tim, val, sum(val))
+      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val, sum(val))
     return val
 
   def vis_ready(self, noisy=False):
@@ -311,6 +311,8 @@ if __name__ == '__main__':
   parser.add_argument('--status', action='store_true', help='just query the device')
   parser.add_argument('--reset', action='store_true', help='just reset the device')
   parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
+  parser.add_argument('--correlate', action='store_true', help='perform a single correlation')
+  parser.add_argument('--verbose', action='store_true', help='extra debug output')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)
@@ -330,38 +332,52 @@ if __name__ == '__main__':
     tart.close()
     exit(0)
 
-  print "\nCycling through sampling-delays:"
-  for i in range(6):
-    tart.set_sample_delay(i)
-    tart.read_sample_delay(True)
-
-  print "\nTesting acquisition:"
-  tart.debug(on=True, noisy=True)
-  tart.start_acquisition(1.1, True)
-
-  print "\nSetting up correlators (block-size = 2^%d):" % args.blocksize
-  tart.start(args.blocksize, True)
-  tart.get_blocksize(True)
-
-  if args.monitor:
-    print "\nLoading permutation vector:"
-#     pp = tart.load_permute()
-    pp = numpy.array(range(0,576), dtype='int')
+  if args.monitor or args.correlate:
+    print "\nLoading permutation vector"
+    pp = tart.load_permute()
+#     pp = numpy.array(range(0,576), dtype='int')
 #     print pp
 
-    print "\nMonitoring visibilities:"
+    print "Enabling DEBUG mode"
+    tart.debug(on=True, noisy=True)
+    tart.read_status(True)
+
+    print "Setting up correlators (block-size = 2^%d):" % args.blocksize
+    tart.start(args.blocksize, True)
+
+    print "Monitoring visibilities:"
     while True:
-      viz = tart.vis_read(True)
-      print "Reordered visibilities:\n%s" % viz[pp]
+      if args.verbose:
+        tart.vis_read(True)
+      else:
+        viz = tart.vis_read(False)
+        tim = time.clock()
+        print " Reordered visibilities (@t = %g):\n%s (sum = %d)" % (tim, viz[pp], sum(viz))
+      if args.correlate:
+        tart.close()
+        exit(0)
 
   else:
+    print "\nCycling through sampling-delays:"
+    for i in range(6):
+      tart.set_sample_delay(i)
+      tart.read_sample_delay(True)
+
+    print "\nTesting acquisition:"
+    tart.debug(on=True, noisy=True)
+    tart.start_acquisition(1.1, True)
+
+    print "\nSetting up correlators (block-size = 2^%d):" % args.blocksize
+    tart.start(args.blocksize, True)
+    tart.get_blocksize(True)
+
     print tart.read_test(True)
     print tart.read_data(num_words=2**args.bramexp)
     print tart.read_test(True)
 
     print "\nReading visibilities:"
     viz = tart.vis_read(False)
-    print " Visibilities: %s (sum = %d)" % (viz, sum(viz))
+    print " Visibilities:\n%s (sum = %d)" % (viz, sum(viz))
 #     tart.read_visibilities(True)
 
     print "\nStatus flags:"

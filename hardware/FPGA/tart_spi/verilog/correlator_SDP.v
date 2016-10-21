@@ -48,7 +48,6 @@ module correlator_SDP
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
-    input          rst,
 
     // Real and imaginary components from the antennas.
     input          sw, // switch banks
@@ -91,12 +90,11 @@ module correlator_SDP
    parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
    parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
 
-`define __licarus
-`ifdef  __licarus
-// `ifdef __icarus
-   // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
-   //   the wire values;
    wire [9:0]   pairs[0:11];
+   wire [4:0]   a_index, b_index;
+   reg          go = 0, ar, br, bi, hi;
+//    wire         sum = SUMHI && rd[3:1] == 3'b101;
+   wire         sum = SUMHI && {rd[3], rd[1]} == 2'b11;
 
    assign pairs[00] = PAIRS00;
    assign pairs[01] = PAIRS01;
@@ -110,15 +108,6 @@ module correlator_SDP
    assign pairs[09] = PAIRS09;
    assign pairs[10] = PAIRS0A;
    assign pairs[11] = PAIRS0B;
-`else
-   wire [9:0]   pairs[0:11] = {PAIRS00, PAIRS01, PAIRS02, PAIRS03,
-                               PAIRS04, PAIRS05, PAIRS06, PAIRS07,
-                               PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
-`endif
-   wire [4:0]   a_index, b_index;
-   reg          go = 0, ar, br, bi, hi;
-//    wire         sum = SUMHI && rd[3:1] == 3'b101;
-   wire         sum = SUMHI && {rd[3], rd[1]} == 2'b11;
 
    assign {b_index, a_index} = pairs[rd];
 
@@ -144,7 +133,6 @@ module correlator_SDP
    correlate_cos_sin
      #(  .ACCUM(ACCUM), .SUMHI(SUMHI), .DELAY(DELAY) ) CORR_COS_SIN0
        ( .clk(clk_x),
-         .rst(rst),
 
          // Antenna enables and inputs:
          .en(go),

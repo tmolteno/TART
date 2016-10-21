@@ -94,8 +94,9 @@
 
 //----------------------------------------------------------------------------
 //  Constant data can be used to test correlators.
-`define CONST_DATA 0
-`define CONST_WORD 24'hF0F0F0
+// `define CONST_DATA 0
+`define CONST_DATA 1
+`define CONST_WORD 24'h000000
 
 
 
@@ -223,6 +224,18 @@
 `define CLK_B  5.0
 `define CLK_E 30.0
 `define CLK_S  8.0
+
+//----------------------------------------------------------------------------
+//  Output format of the read-back visibilities.
+// `define __USE_COLUMN_DISPLAY
+`undef  __USE_COLUMN_DISPLAY
+
+//----------------------------------------------------------------------------
+//  Selects whether to simulate Xilinx primitives, or to use (hopefully)
+//  equivalent code instead.
+// `define __SIMULATE_XILINX_PRIMITIVES
+`undef  __SIMULATE_XILINX_PRIMITIVES
+
 
 
 //----------------------------------------------------------------------------

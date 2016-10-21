@@ -33,47 +33,6 @@ TIMESPEC TSx_to_e=FROM "GRP_X" TO "GRP_E" 5.0ns DATAPATHONLY;
 # TIMESPEC TSb_to_s=FROM "GRP_B" TO "GRP_S" 8.0ns DATAPATHONLY;
 
 
-#
-# Exempt some signals from timing consideration.
-# NOTE: These are typically exempted because they're not performance-critical.
-#
-# TODO: Rewrite some of these using `FROM/TO` constraints.
-#
-NET "reset" TIG;
-
-# NET "aq_enabled" TIG;
-# NET "aq_delay<*>" TIG;
-# NET "aq_debug" TIG;
-# NET "ax_dat<*>" TIG;
-
-NET "cnt28<*>" TIG;
-# NET "vx_enabled" TIG;
-NET "stuck" TIG;
-NET "limp" TIG;
-
-# NET "checksum<*>" TIG;
-NET "overflow" TIG;
-NET "overwrite" TIG;
-NET "DSP/overflow_x" TIG;
-# NET "DSP/blocksize<*>" TIG;
-# NET "DSP/bank<*>" TIG;
-# NET "DSP/bank_next<*>" TIG;
-
-NET "uflow" TIG;
-NET "oflow" TIG;
-NET "DSP/c_err" TIG;
-# NET "DSP/COR/sw_d" TIG;
-# NET "DSP/COR/sw_b" TIG;
-# NET "TART_CONTROL0/WB_RESET0/reset_o" TIG;
-
-# # Fake constraints:
-# NET "DSP/sw_d" TIG;
-# NET "DSP/sw_b" TIG;
-# # INST "DSP/block_s" TIG;
-# # INST "DSP/block_x" TIG;
-# # NET "DSP/enable_s" TIG;
-# # NET "DSP/enable_x" TIG;
-
 
 ##############################################################################
 # UCF file for the Papilio Pro board

@@ -48,7 +48,6 @@ module correlator_DSP
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
-    input          rst,
 
     // Real and imaginary components from the antennas.
     input          sw, // switched banks
@@ -110,12 +109,13 @@ module correlator_DSP
    parameter PAIRS0A = (PAIRS >> 100) & 10'h3ff;
    parameter PAIRS0B = (PAIRS >> 110) & 10'h3ff;
 
-`define __licarus
-`ifdef  __licarus
-// `ifdef __icarus
-   // NOTE: Icarus Verilog doesn't seem to support curly-braces for setting
-   //   the wire values;
    wire [9:0]   pairs[0:11];
+   wire [4:0]   a_index, b_index;
+//    wire         hi = SUMHI && rd[3:1] == 3'b101;
+   wire         hi = SUMHI && {rd[3], rd[1]} == 2'b11;
+   wire         ar = re[a_index];
+   wire         br = re[b_index];
+   wire         bi = im[b_index];
 
    assign pairs[00] = PAIRS00;
    assign pairs[01] = PAIRS01;
@@ -129,17 +129,6 @@ module correlator_DSP
    assign pairs[09] = PAIRS09;
    assign pairs[10] = PAIRS0A;
    assign pairs[11] = PAIRS0B;
-`else
-   wire [9:0]   pairs[0:11] = {PAIRS00, PAIRS01, PAIRS02, PAIRS03,
-                               PAIRS04, PAIRS05, PAIRS06, PAIRS07,
-                               PAIRS08, PAIRS09, PAIRS0A, PAIRS0B};
-`endif
-   wire [4:0]   a_index, b_index;
-//    wire         hi = SUMHI && rd[3:1] == 3'b101;
-   wire         hi = SUMHI && {rd[3], rd[1]} == 2'b11;
-   wire         ar = re[a_index];
-   wire         br = re[b_index];
-   wire         bi = im[b_index];
 
    assign {b_index, a_index} = pairs[rd];
 
@@ -150,7 +139,6 @@ module correlator_DSP
    correlate_cos_sin_DSP
      #(  .ACCUM(ACCUM), .SUMHI(SUMHI), .DELAY(DELAY) ) CORR_COS_SIN0
        ( .clk(clk_x),
-         .rst(rst),
          .clr(sw),
 
 `ifdef __USE_DSP_SLOW

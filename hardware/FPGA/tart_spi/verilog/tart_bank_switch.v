@@ -32,7 +32,7 @@ module tart_bank_switch
     input         ce_i,
 
     input [MSB:0] bcount_i, // block size - 1
-    input         strobe_i, // new antenna data
+    input         frame_i,  // new antenna data
     output        swap_x,   // NOTE: correlator domain
     output        swap_o    // NOTE: bus domain
     );
@@ -50,7 +50,7 @@ module tart_bank_switch
    //  Hardware-correlator bank-switching control logic.
    //  
    //-------------------------------------------------------------------------
-   wire [COUNT:0]      next_count = wrap_count ? {(COUNT+1){1'b0}} : count+1;
+   wire [COUNT:0]      next_count = wrap_count ? {COUNT+1{1'b0}} : count+1;
    wire                wrap_count = count == bcount_i;
    reg [MSB:0]         count  = {COUNT{1'b0}};
    reg [TSB:0]         delays = {TICKS{1'b0}};
@@ -65,7 +65,7 @@ module tart_bank_switch
      end
      else if (ce_i) begin
         sw    <= #DELAY delays[TSB] && wrap_count; // signal an upcoming bank-swap
-        count <= #DELAY strobe_i ? next_count[MSB:0] : count;
+        count <= #DELAY frame_i ? next_count[MSB:0] : count;
      end
      else begin
         sw    <= #DELAY 1'b0;
@@ -73,19 +73,19 @@ module tart_bank_switch
      end
 
    always @(posedge clk_x)
-     delays <= #DELAY {delays[TSB-1:0], !rst_i && strobe_i};
+     delays <= #DELAY {delays[TSB-1:0], !rst_i && frame_i};
 
 
    //-------------------------------------------------------------------------
    //  Synchronise the bank-switching signal to the bus domain.
    always @(posedge clk_x)
-     if (rst_i || strobe_i) sw_x <= #DELAY 1'b0;
+     if (rst_i || frame_i) sw_x <= #DELAY 1'b0;
      else if (sw)           sw_x <= #DELAY 1'b1;
      else                   sw_x <= #DELAY sw_x;
 
    always @(posedge clk_x)
      if (rst_i) sw_d <= #DELAY 0;
-     else       sw_d <= #DELAY sw_x && strobe_i;
+     else       sw_d <= #DELAY sw_x && frame_i;
 
    always @(posedge clk_i or posedge sw_d)
      if (sw_d)                 sw_b <= #DELAY 1'b1;

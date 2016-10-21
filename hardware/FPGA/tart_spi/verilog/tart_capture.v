@@ -40,6 +40,8 @@ module tart_capture
     parameter ABITS = 20,
     parameter ASB   = ABITS-2,
     parameter RNG   = 1,
+    parameter CONST = 0,
+    parameter CDATA = 24'h0,
     parameter DELAY = 3)
    (
     input          clk_i, // bus clock
@@ -117,8 +119,13 @@ module tart_capture
 `ifndef __RELEASE_BUILD   
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for debugging.
-   fake_telescope #( .WIDTH(AXNUM), .RNG(RNG) ) FAKE_TART0
-     ( .clk(clk_e), .fake_enable(en_fake), .fake_data(ax_fake) );
+   fake_telescope
+     #( .WIDTH(AXNUM), .RNG(RNG), .CONST(CONST), .CDATA(CDATA)
+        ) FAKE_TART0
+       ( .clk(clk_e),
+         .fake_enable(en_fake),
+         .fake_data(ax_fake)
+         );
 `endif
 
    //-------------------------------------------------------------------------

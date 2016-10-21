@@ -72,7 +72,7 @@ module tart_visibilities
     output [MSB:0]     dat_o,
 
     // Status flags for the correlators and visibilities.
-    input              streamed, // signals that a bank has been sent
+    input              streamed,  // signals that a bank has been sent
     input              overwrite, // overwrite when buffer is full?
     input              switching, // inicates that banks have switched
     output             available, // asserted when a window is accessed
@@ -91,6 +91,14 @@ module tart_visibilities
    parameter BSIZE = TRATE*2;
    parameter BBITS = TBITS+1;
    parameter BSB   = BBITS-1;
+
+   //-------------------------------------------------------------------------
+   //  The incoming address, `adr_i`, has fields:
+   //    { BANK[3:0], CORRELATOR[4:0], TIME[3:0], SIN/COS, BYTE[1:0] }
+   wire [XSB:0]        bnk_w = adr_i[ASB+2:CBITS+2];
+   wire [CSB:0]        adr_w;
+
+   assign adr_o = {bnk_w, adr_w};
 
 
    initial begin : VIS_PARAMS
@@ -175,12 +183,11 @@ module tart_visibilities
    //  correlators, and buffered for fast access by the SPI interface.
    //-------------------------------------------------------------------------
    wire [MSB:0] p_val, p_dat;
-   wire [CSB:0] p_adr, adr_w;
+   wire [CSB:0] p_adr;
    wire         p_cyc, p_stb, p_we, p_bst, p_ack, p_wat;
 
    //  Swap the LSB with the real/complex bank-select signal, so that real +
    //  complex pairs are read out together.
-   assign adr_o = {adr_i[ASB+2:CBITS+2], adr_w};
    assign wat_o = 1'b0;
 
    //  Prefetches data from the various correlators after each bank-switch,

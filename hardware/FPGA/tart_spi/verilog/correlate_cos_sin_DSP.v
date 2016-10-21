@@ -20,7 +20,6 @@ module correlate_cos_sin_DSP
      parameter DELAY = 3)
    (
     input          clk,
-    input          rst,
     input          clr,
     input          en,
     input          vld,
@@ -91,7 +90,7 @@ module correlate_cos_sin_DSP
          .C(c),
 
          .CARRYOUTF(),          // sine overflow
-         .RSTP(rst),            // output register
+         .RSTP(1'b0),            // output register
          .CEP(vld),
          .P({qsin, qcos})
          );

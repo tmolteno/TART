@@ -33,6 +33,8 @@
 // `define __USE_COLUMN_DISPLAY
 `undef  __USE_COLUMN_DISPLAY
 
+`define __USE_DECIMAL_DISPLAY
+
 module tart_block_tb;
 
    //-------------------------------------------------------------------------
@@ -75,6 +77,7 @@ module tart_block_tb;
    parameter NREAD = 96;
    parameter COUNT = 6;
    parameter BSIZE = (1 << COUNT) - 1;
+   parameter READS = 2;         // Banks of visibilities to read
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
@@ -97,7 +100,7 @@ module tart_block_tb;
 
    //  Fake Hilbert-transform signals:
    wire [NSB:0] re, im;
-   wire         valid, strobe;
+   wire         valid, strobe, frame;
 
    //  Correlator signals:
    reg [MSB:0]  blocksize;
@@ -137,12 +140,13 @@ module tart_block_tb;
       //----------------------------------------------------------------------
       $display("\n%12t: TART correlator settings:", $time);
       $display(  "%12t:  Simulated correlator settings:", $time);
-      $display(  "%12t:   Accumulator bit-width:   \t\t%3d", $time, ACCUM);
-      $display(  "%12t:   Correlator bus data-width:       \t%3d", $time, ACCUM);
-      $display(  "%12t:   Correlator bus address-width:    \t%3d", $time, ABITS);
-      $display(  "%12t:   Number of correlator banks:      \t%3d", $time, BANKS);
-      $display(  "%12t:   Number of samples/bank:          \t%3d", $time, BSIZE);
-      $display(  "%12t:   Data prefetch block-size (words):\t%3d", $time, RSIZE);
+      $display(  "%12t:   Accumulator bit-width:   \t\t%4d", $time, ACCUM);
+      $display(  "%12t:   Correlator bus data-width:       \t%4d", $time, ACCUM);
+      $display(  "%12t:   Correlator bus address-width:    \t%4d", $time, ABITS);
+      $display(  "%12t:   Number of correlator banks:      \t%4d", $time, BANKS);
+      $display(  "%12t:   Number of counter bits:          \t%4d", $time, COUNT);
+      $display(  "%12t:   Max count value (samples/bank):  \t%4d", $time, BSIZE);
+      $display(  "%12t:   Data prefetch block-size (words):\t%4d", $time, RSIZE);
 
       //----------------------------------------------------------------------
       $display("\n%12t: Generating fake antenna data:", $time);
@@ -197,7 +201,11 @@ module tart_block_tb;
    wire         wrap_cnt = cnt == TRATE-1;
    integer      rd_adr = 0;
 
-   assign antenna = data[rd_adr[7:0]];
+`ifdef CONST_DATA
+   assign antenna = `CONST_WORD;
+`else
+   assign antenna = RNG ? mfsr_reg : data[rd_adr[7:0]];
+`endif
 
    always @(posedge clk_x)
      if (rst) cnt <= #DELAY 0;
@@ -206,6 +214,20 @@ module tart_block_tb;
    always @(posedge clk_x)
      if (rst) rd_adr <= #DELAY 0;
      else     rd_adr <= #DELAY enable && wrap_cnt ? rd_adr + 1 : rd_adr;
+
+   //-------------------------------------------------------------------------
+   //  Generate random antenna data using a MFSR.
+   //-------------------------------------------------------------------------
+   wire [31:0]     mfsr_new;
+   reg [31:0]      mfsr_reg = RNG;
+
+   always @(posedge clk_x)
+     if (rst) mfsr_reg <= #DELAY RNG;
+     else     mfsr_reg <= #DELAY enable && wrap_cnt ? mfsr_new : mfsr_reg;
+
+   //-------------------------------------------------------------------------
+   //  One of Roy's MFSR's (which is similar to a LFSR, but fewer gates).
+   mfsr32 MFSR32 (.count_i(mfsr_reg), .count_o(mfsr_new));
 
 
    //-------------------------------------------------------------------------
@@ -239,13 +261,17 @@ module tart_block_tb;
    end
 
 `ifdef  __USE_COLUMN_DISPLAY
+   //-------------------------------------------------------------------------
    //  Display the data, and which correlator and register it is from.
    always @(posedge b_clk) begin
       if (b_cyc && !b_we && b_ack)
         $display("%12t: Vis = %08x (d: %8d)", $time, b_viz, b_viz);
    end
-`endif
+`else
 
+   //-------------------------------------------------------------------------
+   //  Assemble bytes into words, and stored them until the transfer has been
+   //  completed.
    always @(posedge b_clk)
      if (rst || !fetch) begin
         f_adr <= #DELAY {FBITS{1'b0}};
@@ -255,16 +281,23 @@ module tart_block_tb;
         fetched[f_adr] <= #DELAY b_viz;
      end
 
+   //-------------------------------------------------------------------------
+   //  Format and display the retrieved visibilities.
    always @(negedge fetch)
      if (f_adr > 0) begin
         $display("\n%12t: Fetched visibilities (num = %d):", $time, f_adr);
         for (ptr = 0; ptr < NREAD; ptr = ptr + TRATE) begin
            $write("\t");
            for (num = 0; num < TRATE; num = num + 1)
+ `ifdef __USE_DECIMAL_DISPLAY
+             $write("%7d ", fetched[ptr + num]);
+ `else
              $write("%06x ", fetched[ptr + num]);
+ `endif
            $write("\n");
         end
      end
+`endif // !`ifdef __USE_COLUMN_DISPLAY
 
 
    //-------------------------------------------------------------------------
@@ -303,6 +336,7 @@ module tart_block_tb;
         .d(antenna),
         .valid(valid),
         .strobe(strobe), // `antenna` data is valid
+        .frame(frame),   // last cycle for `antenna` data to be valid
         .re(re),
         .im(im)
         );
@@ -316,7 +350,7 @@ module tart_block_tb;
        .clk_i(b_clk),
        .rst_i(rst),
        .ce_i (valid),
-       .strobe_i(strobe),
+       .frame_i(frame),
        .bcount_i(blocksize),
        .swap_x(swap_x),
        .swap_o(switch)
@@ -331,17 +365,27 @@ module tart_block_tb;
    //  antannae connect to each of the correlators.
 `include "../include/tart_pairs.v"
 `ifdef  __TEST_DSP_BLOCK
-   correlator_block_DSP
+   assign b_ack = dsp_ack;
+   assign b_vis = dsp_vis;
+   assign bank  = dsp_bank;
 `else
-   correlator_block_SDP
+   assign b_ack = sdp_ack;
+   assign b_vis = sdp_vis;
+   assign bank  = sdp_bank;
 `endif
+
+   wire           dsp_ack;
+   wire [MSB:0]   dsp_vis;
+   wire [XSB:0]   dsp_bank;
+
+   correlator_block_DSP
      #(  .ACCUM (BLOCK),
          .PAIRS0(PAIRS00_00),
          .PAIRS1(PAIRS00_01),
          .PAIRS2(PAIRS00_02),
          .PAIRS3(PAIRS00_03),
          .DELAY (DELAY)
-         ) BLOCK0
+         ) DSPB
        ( .clk_x(clk_x),
          .rst(rst),
 
@@ -350,17 +394,50 @@ module tart_block_tb;
          .stb_i(b_stb),
          .we_i (1'b0),
          .bst_i(b_bst),
-         .ack_o(b_ack),
+         .ack_o(dsp_ack),
          .adr_i(c_adr),
          .dat_i(b_dat),
-         .dat_o(b_vis),
+         .dat_o(dsp_vis),
 
          .sw_i(swap_x),
          .en_i(valid),
          .re_i(re),
          .im_i(im),
 
-         .bank_o(bank)
+         .bank_o(dsp_bank)
+         );
+
+   wire           sdp_ack;
+   wire [MSB:0]   sdp_vis;
+   wire [XSB:0]   sdp_bank;
+
+   correlator_block_SDP
+     #(  .ACCUM (BLOCK),
+         .PAIRS0(PAIRS00_00),
+         .PAIRS1(PAIRS00_01),
+         .PAIRS2(PAIRS00_02),
+         .PAIRS3(PAIRS00_03),
+         .DELAY (DELAY)
+         ) SDPB
+       ( .clk_x(clk_x),
+         .rst(rst),
+
+         .clk_i(b_clk),
+         .cyc_i(b_cyc),
+         .stb_i(b_stb),
+         .we_i (1'b0),
+         .bst_i(b_bst),
+         .ack_o(sdp_ack),
+         .adr_i(c_adr),
+         .dat_i(b_dat),
+         .dat_o(sdp_vis),
+
+         .sw_i(swap_x),
+         .en_i(valid),
+         .re_i(re),
+         .im_i(im),
+
+         .bank_o(sdp_bank)
          );
 
 

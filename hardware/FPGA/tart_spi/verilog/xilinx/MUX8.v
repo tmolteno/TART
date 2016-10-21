@@ -1,4 +1,38 @@
 `timescale 1ns/100ps
+/*
+ * Module      : verilog/xilinx/MUX8.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * An 8:1 multiplexor (MUX) that is built using explicit instantiation of
+ * Xilinx primitives, so that it can be floorplanned easily.
+ * 
+ * NOTE:
+ *  + can be simulated behaviourally, or using suitable modules for the Xilinx
+ *    primitives (to ensure that both behaviours match);
+ * 
+ * TODO:
+ * 
+ */
+
+//----------------------------------------------------------------------------
+//  Set this to simulate the Xilinx primitives.
+// `define __SIMULATE_XILINX_PRIMITIVES
+
+`ifdef __icarus
+ `ifdef __SIMULATE_XILINX_PRIMITIVES
+  `define __DONT_USE_BEHAVIOURAL
+ `endif
+`else
+ `define __DONT_USE_BEHAVIOURAL
+`endif
+
 module MUX8
   #( parameter WIDTH = 24,
      parameter MSB   = WIDTH-1,
@@ -16,10 +50,14 @@ module MUX8
     output [MSB:0] x
     );
 
-`ifdef __icarus
+`ifndef __DONT_USE_BEHAVIOURAL
    reg [MSB:0]     lx, ux;
 
    assign x = s[2] ? ux : lx;
+
+   initial begin : SIM_MUX8
+      $display("Module : MUX8 (Behavioural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
+   end
 
    always @*
      case (s[1:0])
@@ -28,9 +66,13 @@ module MUX8
        2: {ux, lx} = {g, c};
        3: {ux, lx} = {h, d};
      endcase // case (s[1:0])
+`else // !`ifndef __DONT_USE_BEHAVIOURAL
 
-`else // !`ifdef __icarus
    wire [MSB:0]    lx, ux;
+
+   initial begin : SIM_MUX8
+      $display("Module : MUX8 (Structural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
+   end
 
    LUT6_L
      #( .INIT(64'b1111111100000000111100001111000011001100110011001010101010101010)
@@ -62,6 +104,7 @@ module MUX8
        .S(s[2]),
        .O(x)
        );
-`endif // !`ifdef __icarus
+`endif // !`ifndef __DONT_USE_BEHAVIOURAL
+
 
 endmodule // MUX8

@@ -71,7 +71,7 @@ module tart_correlator
     output             switch // NOTE: bus domain
     );
 
-   wire                go;
+   wire                go, frame;
    wire [NSB:0]        re;
    wire [NSB:0]        im;
 
@@ -200,6 +200,7 @@ module tart_correlator
         .d(antenna),
         .valid(go),
         .strobe(strobe), // `antenna` data is valid
+        .frame(frame),   // last cycle for `antenna` data to be valid
         .re(re),
         .im(im)
         );
@@ -213,7 +214,7 @@ module tart_correlator
        .clk_i(clk_i),
        .rst_i(rst),
        .ce_i (go),
-       .strobe_i(strobe),
+       .frame_i(frame),
        .bcount_i(blocksize),
        .swap_x(swap_x),
        .swap_o(switch)

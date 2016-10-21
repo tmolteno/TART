@@ -24,7 +24,7 @@ module tart_dsp_tb;
    parameter XSB   = XBITS-1;    // MSB of the bank-counter
 
    //  Internal correlator data-bus settings:
-   parameter CBITS = `BANK_BITS + `READ_BITS;
+   parameter CBITS = XBITS+FBITS;
    parameter CSB   = CBITS-1;
 
    //  External Wishbone-like bus setttings:
@@ -36,14 +36,16 @@ module tart_dsp_tb;
    //  Read-back settings:
    parameter FBITS = `READ_BITS; // Fetch-counter bit-width
    parameter FSB   = FBITS-1;    // MSB of fetch-counter
-   parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
-//    parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
+   parameter COUNT = 10; // count down from:  (1 << COUNT) - 1;
 `ifdef __USE_FAKE_DSP
    parameter NREAD = 9;
 `else
-   parameter NREAD = 48;
-//    parameter NREAD = 96;
+//    parameter NREAD = 48;
+//    parameter NREAD = 192;
+   parameter NREAD = 576;
 `endif
+   parameter READS = 2;         // Banks of visibilities to read
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
@@ -68,15 +70,21 @@ module tart_dsp_tb;
    reg [NSB:0]  data [0:255];
    reg [31:0]   viz = 32'h0;
    reg [4:0]    log_bsize = COUNT[4:0];
+   reg [XSB:0]  bank = {XBITS{1'b0}};
+   wire [XSB:0] vx_bank;
+   reg          busy = 1'b0;
 
    assign dsp_en = vx_enabled;
 
 
    //-------------------------------------------------------------------------
+   //
+   //  SIMULATION STIMULI.
+   //
+   //-------------------------------------------------------------------------
    //  Setup correlator and bus clocks, respectively.
    always #`CLK_X  clk_x <= ~clk_x;
    always #`CLK_B  b_clk <= ~b_clk;
-//    always #10 b_clk <= ~b_clk;
 
 
    //-------------------------------------------------------------------------
@@ -96,16 +104,16 @@ module tart_dsp_tb;
       //----------------------------------------------------------------------
       $display("\n%12t: TART DSP settings:", $time);
       $display(  "%12t:  TART I/O bus settings:", $time);
-      $display(  "%12t:   SPI data-bus bit-width:  \t\t%3d", $time, BBITS);
-      $display(  "%12t:   Number of visibilities banks:    \t%3d", $time, XBITS);
+      $display(  "%12t:   SPI data-bus bit-width:  \t\t%4d", $time, BBITS);
+      $display(  "%12t:   Number of visibilities banks:    \t%4d", $time, XBITS);
       $display(  "%12t:  TART visibilities read-back settings:", $time);
-      $display(  "%12t:   Visibility-data address-width:   \t%3d", $time, ABITS);
-      $display(  "%12t:   Data prefetch block-size (words):\t%3d", $time, NREAD);
-      $display(  "%12t:   Data prefetch block-size (bytes):\t%3d", $time, BREAD);
+      $display(  "%12t:   Visibility-data address-width:   \t%4d", $time, ABITS);
+      $display(  "%12t:   Data prefetch block-size (words):\t%4d", $time, NREAD);
+      $display(  "%12t:   Data prefetch block-size (bytes):\t%4d", $time, BREAD);
       $display(  "%12t:  TART correlator settings:", $time);
-      $display(  "%12t:   Accumulator bit-width:   \t\t%3d", $time, ACCUM);
-      $display(  "%12t:   Correlator bus data-width:       \t%3d", $time, BLOCK);
-      $display(  "%12t:   Correlator bus address-width:    \t%3d", $time, CBITS);
+      $display(  "%12t:   Accumulator bit-width:   \t\t%4d", $time, ACCUM);
+      $display(  "%12t:   Correlator bus data-width:       \t%4d", $time, BLOCK);
+      $display(  "%12t:   Correlator bus address-width:    \t%4d", $time, CBITS);
 
       //----------------------------------------------------------------------
       $display("\n%12t: Generating fake antenna data:", $time);
@@ -119,45 +127,49 @@ module tart_dsp_tb;
       end
 
       //----------------------------------------------------------------------
-      #20 $display("\n%12t: Issuing RESET.\n", $time);
+      #20 $display("\n%12t: Issuing RESET.", $time);
       #13 rst <= 1; #40 rst <= 0;
 
       //----------------------------------------------------------------------
-      $display("\n%12t: Setting block-size & beginning correlation (bank 0)", $time);
+      $display("%12t: Setting block-size (2^%1d)", $time, log_bsize);
+      $display("%12t: Beginning correlation (bank %1d)", $time, bank);
       #40 set <= 1; num <= 1; dtx <= {1'b1, 2'b00, log_bsize}; ptr <= 4'ha;
       while (!fin) #10;
 
-//       //----------------------------------------------------------------------
-//       $display("%12t: Beginning data-acquisition (bank 0):", $time);
-//       #40 set <= 1; num <= 1; dtx <= 8'h80; ptr <= 4'h7;
-//       while (!fin) #10;
-
       //----------------------------------------------------------------------
-      while (!newblock) #10;
-      #10 $display("\n%12t: Reading back visibilities (bank 0)", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
-      while (!fin) #10;
+      //  Fill two banks with visibilities, then stop.
+      while (vx_bank < READS) begin
+         while (!switching) #10; while (switching) #10;
+         $display("%12t: Bank switched (to bank %1d)", $time, vx_bank);
+      end
 
-      //----------------------------------------------------------------------
-      while (!newblock) #10;
-      $display("\n%12t: Stopping data-correlation (bank 1)", $time);
+      while (busy) #10;
+      $display("%12t: Stopping data-correlation.", $time);
       #10 set <= 1; num <= 1; dtx <= 8'h00; ptr <= 4'ha;
       while (!fin) #10;
 
-      //----------------------------------------------------------------------
-      #10 $display("\n%12t: Reading back visibilities (bank 1)", $time);
-      #10 get <= 1; num <= BREAD; ptr <= 4'h8;
-      while (!fin) #10;
+      $display("%12t: Waiting for all visibilities to be fetched.", $time);
+      #10 while (bank < READS) #80;
 
       //----------------------------------------------------------------------
-//       $display("\n%12t: Reading back counts (bank 1):", $time);
-//       #80 get <= 1;
-//       while (!fin) #10;
-
-      //----------------------------------------------------------------------
-      #80 $display("\n%12t: Simulation finished:", $time);
+      #80 $display("%12t: Simulation finished:", $time);
       $finish;
-   end
+   end // block: SIM_BLOCK
+
+
+   //-------------------------------------------------------------------------
+   //  Trigger visibilities read-backs.
+   //-------------------------------------------------------------------------
+   initial begin : SIM_READ
+      while (1'b1) begin
+         while (!newblock) #10;
+         while (busy) #10;
+         #10 $display("%12t: Reading back visibilities (bank %1d)", $time, bank);
+         #10 get <= 1; num <= BREAD; ptr <= 4'h8;
+         while (!fin) #10;
+         bank <= bank + 1;
+      end
+   end // block: SIM_READ
 
 
    //-------------------------------------------------------------------------
@@ -175,56 +187,70 @@ module tart_dsp_tb;
      if (newblock)
        $display("%12t: New block available.", $time);
 
-   always @(posedge b_clk)
-      if (switching)
-        $display("%12t: Switching banks (bank 1)", $time);
-
 
    //-------------------------------------------------------------------------
-   //  Read back visibility data, from the correlators' registers.
+   //  
+   //  SIMULATED WISHBONE BUS MASTER.
+   //  
    //-------------------------------------------------------------------------
    wire       cyc_n = cyc && rxd == 1 && ack;
    integer    rxd = 0;
 
-`ifndef __WB_CLASSIC
+   //-------------------------------------------------------------------------
+   //  The `busy` flag is so that other bus-masters can tell if the another
+   //  master is using the bus.
    always @(posedge b_clk)
-     if (rst) bst <= #DELAY 0;
-     else if ((set || get) && num > 2) bst <= #DELAY 1;
-     else if (bst && num == 2 && !wat) bst <= #DELAY 0;
+     if (rst || fin)
+       busy <= #DELAY 1'b0;
+     else if (get || set)
+       busy <= #DELAY 1'b1;
+     else
+       busy <= #DELAY busy;
+
+`ifndef __WB_CLASSIC
+   //-------------------------------------------------------------------------
+   //  Control the burst-transfer control-signal.
+   always @(posedge b_clk)
+     if (rst)                          bst <= #DELAY 1'b0;
+     else if ((set || get) && num > 2) bst <= #DELAY 1'b1;
+     else if (bst && num == 2 && !wat) bst <= #DELAY 1'b0;
 `endif
 
    always @(posedge b_clk)
      if (rst) begin
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 0;
+        {fin, get, set} <= #DELAY 3'h0;
+        {cyc, stb, we } <= #DELAY 3'h0;
      end
      else if (set) begin
-        $display("%12t: write beginning (num = %1d)", $time, num);
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 7;
+        $display("%12t: WB write beginning (bytes = %1d)", $time, num);
+        {fin, get, set} <= #DELAY 3'h0;
+        {cyc, stb, we } <= #DELAY 3'h7;
      end
      else if (get) begin
-        $display("%12t: read beginning (num = %1d)", $time, num);
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 6;
+        $display("%12t: WB read beginning (bytes = %1d)", $time, num);
+        {fin, get, set} <= #DELAY 3'h0;
+        {cyc, stb, we } <= #DELAY 3'h6;
      end
      else if (cyc) begin
-        if (!stb && ack) $display("%12t: transfer ending", $time);
 `ifdef __WB_CLASSIC
         {fin, get, set} <= #DELAY { cyc_n, get, set};
         {cyc, stb, we } <= #DELAY {!cyc_n, !cyc_n, we && !cyc_n};
 `else
+        if (!stb && ack) $display("%12t: WB transfer ending", $time);
         {fin, get, set} <= #DELAY { cyc_n, get, set};
         {cyc, stb, we } <= #DELAY {!cyc_n, bst || wat, we && !cyc_n};
 `endif
      end
      else begin
-        {fin, get, set} <= #DELAY 0;
-        {cyc, stb, we } <= #DELAY 0;
+        {fin, get, set} <= #DELAY 3'h0;
+        {cyc, stb, we } <= #DELAY 3'h0;
      end
 
    always @(posedge b_clk)
      if (set || get) adr <= #DELAY ptr;
+
+   always @(posedge fin)
+     $display("%12t: WB transfer ending", $time);
 
 `ifdef __WB_CLASSIC
    always @(posedge b_clk)
@@ -262,8 +288,11 @@ module tart_dsp_tb;
       if (rdy)
         $display("%12t: Vis = %08x (d: %8d)", $time, dat, dat);
    end
-`endif
+`else
 
+   //-------------------------------------------------------------------------
+   //  Assemble bytes into words, and stored them until the transfer has been
+   //  completed.
    always @(posedge b_clk)
      if (rst || fin) begin
         f_cnt <= #DELAY 2'b00;
@@ -276,53 +305,26 @@ module tart_dsp_tb;
         fetched[f_adr] <= #DELAY f_dat;
      end
 
+   //-------------------------------------------------------------------------
+   //  Format and display the retrieved visibilities.
    always @(posedge fin)
      if (f_adr >= NREAD-1) begin
-        $display("\n%12t: Fetched visibilities (num = %d):", $time, f_adr);
+        $display("\n%12t: Fetched visibilities (num = %1d):", $time, f_adr);
         for (ptr = 0; ptr < NREAD; ptr = ptr + TRATE) begin
            $write("\t");
            for (num = 0; num < TRATE; num = num + 1)
              $write("%06x ", fetched[ptr + num]);
            $write("\n");
         end
+        $write("\n");
      end
-
-   /*
-   //-------------------------------------------------------------------------
-   // Display the data, and which correlator and register it is from.
-   reg [10:0]   adr_r;
-   reg [5:0]    ci;
-   reg [4:0]    ri;
-   reg [3:0]    rdys = 0, vals = 0;
-   wire         rdy = cyc && !we && ack;
-
-//    assign dat = |{rdys, rdy} ? drx : 'bz;
-//    assign val = |{vals, set} ? dtx : 'bz;
-//    assign dat = rdy || (|rdys) && cyc ? drx : 'bz;
-   assign dat = rdy || rdys[0] ? drx : 'bz;
-
-   always @(posedge b_clk) begin
-      rdys <= #DELAY {rdys[2:0], rdy};
-      vals <= #DELAY {vals[2:0], set};
-   end
-
-   reg [1:0] rxc = 0;
-   always @(posedge b_clk) begin
-      adr_r    <= #DELAY rd_adr;
-      {ci, ri} <= #DELAY adr_r;
-      if (cyc && stb && !we && ack) begin
-         rxc <= #DELAY rxc + 1;
-         viz = {dat, viz[31:8]};
-         if (rxc == 2'b11)
-           $display("%12t: Vis = %08x (d: %8d, c: %02x, r:%02x)", $time, viz, viz, ci, ri);
-//            $display("%12t: Vis = %08x (c: %02x, r:%02x)", $time, viz, ci, ri);
-      end
-   end
-    */
+`endif // !`ifdef __USE_COLUMN_DISPLAY
 
 
    //-------------------------------------------------------------------------
-   //  Generate fake DRAM contents.
+   //  
+   //  GENERATE FAKE DRAM CONTENTS.
+   //  
    //-------------------------------------------------------------------------
    wire [NSB:0] data_w = data[data_index[7:0]];
    integer     data_index = 0;
@@ -394,10 +396,8 @@ module tart_dsp_tb;
 
    assign dsp_bst = 1'b0;
 
-// `ifdef __WB_CLASSIC
    always @(posedge b_clk)
      wat <= #DELAY stb && bst && !ack;
-// `endif
 
 
    //-------------------------------------------------------------------------
@@ -459,7 +459,10 @@ module tart_dsp_tb;
        .ACCUM(ACCUM),
        .TRATE(TRATE),
        .TBITS(TBITS),
-       .NREAD(NREAD)
+       .NREAD(NREAD),
+       .RBITS(FBITS),
+       .XBITS(XBITS),
+       .CBITS(CBITS)
        ) TART_DSP
  `endif
     ( .clk_x(clk_x),
@@ -474,8 +477,9 @@ module tart_dsp_tb;
       .aq_dat_i(dsp_val),
       .aq_dat_o(dsp_dat),
 
-      .aq_enable(aq_enabled),
       .vx_enable(vx_enabled),
+      .vx_stream(busy),
+      .vx_block (vx_bank),
       .overwrite(overwrite),
       .antenna  (antenna),
       .switching(switching),

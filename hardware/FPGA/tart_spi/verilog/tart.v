@@ -58,6 +58,8 @@ module tart
     parameter ANTENNAE = `NUM_ANTENNA,
     parameter NSB      = ANTENNAE-1,
     parameter RNG      = `RANDOM_DATA,
+    parameter CONST    = `CONST_DATA,
+    parameter CDATA    = `CONST_WORD,
 
     //  Simulation parameters:
     parameter DELAY    = `DELAY)     // Simulation gate-delay setting
@@ -170,7 +172,9 @@ module tart
    tart_capture
      #(.AXNUM(ANTENNAE),
        .ABITS(SDRAM_ADDRESS_WIDTH),
-       .RNG  (RNG)
+       .RNG  (RNG),
+       .CONST(CONST),
+       .CDATA(CDATA)
        ) CAP0
      ( .clk_i     (fpga_clk),
        .clk_x     (clk_x),
@@ -497,8 +501,8 @@ module tart
        .stuck_o  (stuck),
        .limp_o   (limp),
 
-       .aq_enable(aq_enabled),
        .vx_enable(vx_enabled),
+       .vx_stream(spi_busy),
        .vx_block (c_blk),
        .overwrite(overwrite),
        .antenna  (ax_dat),

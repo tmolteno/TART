@@ -76,7 +76,7 @@ module wb_stream
    wire                inc      = m_cyc_o && m_stb_o && !m_wat_i;
 `endif
    wire                wrap_adr = m_adr_o == LAST;
-   wire [ASB:0]        next_adr = wrap_adr ? START : m_adr_o + STEP;
+   wire [WBITS:0]      next_adr = wrap_adr ? START : m_adr_o + STEP;
 
    //-------------------------------------------------------------------------
    //  Just pass through all of the signals, except for the address, which is
@@ -101,12 +101,12 @@ module wb_stream
    //  Address generation.
    always @(posedge clk_i)
      if (rst_i)    m_adr_o <= #DELAY START;
-     else if (inc) m_adr_o <= #DELAY next_adr;
+     else if (inc) m_adr_o <= #DELAY next_adr[ASB:0];
 
    //  Strobe the `wrapped` signal after each complete transfer.
    always @(posedge clk_i)
      if (!rst_i && inc) wrapped <= #DELAY wrap_adr;
-     else               wrapped <= #DELAY 0;
+     else               wrapped <= #DELAY 1'b0;
 
 
 endmodule // wb_stream

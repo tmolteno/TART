@@ -18,7 +18,7 @@ LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_a
 
 # Simulation-only files:
 XIL =xilinx
-SIM =$(XIL)/DSP48A1.v $(XIL)/RAMB16_S9_S36.v
+SIM =$(XIL)/DSP48A1.v $(XIL)/RAMB16_S9_S36.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
 
 DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(RTL)/dram_prefetch.v
 OLD =$(SPI)/spi_target.v $(RTL)/tart_spi.v
@@ -44,8 +44,10 @@ dsp: ${DEP} ${DSP} tart_dsp_tb.v
 fak: ${DEP} ${FAK} tart_dsp_tb.v
 	$(IVC) $(OPT) -D__USE_FAKE_DSP -o $(OUT)/tart.out $(DEP) $(FAK) $(SIM) tart_dsp_tb.v
 
-blk: ${DEP} ${DSP} tart_block_tb.v
-	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(DSP) $(SIM) tart_block_tb.v
+BLK =$(RTL)/tart_bank_switch.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_block_DSP.v $(RTL)/correlator_SDP.v $(RTL)/correlator_DSP.v $(RTL)/rmw_address_unit.v $(RTL)/correlate_cos_sin.v $(RTL)/correlate_cos_sin_DSP.v $(RTL)/fake_hilbert.v $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/MUX8.v $(BUS)/wb_get_block.v $(RTL)/mfsr/mfsr32.v
+
+blk: ${BLK} tart_block_tb.v
+	$(IVC) $(OPT) -o $(OUT)/tart.out $(BLK) $(SIM) tart_block_tb.v
 
 
 .PHONY: run

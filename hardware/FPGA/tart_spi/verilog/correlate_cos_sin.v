@@ -17,7 +17,6 @@ module correlate_cos_sin
      parameter DELAY = 3)
    (
     input          clk,
-    input          rst,
     input          en,
 
     input          hi,
@@ -37,8 +36,7 @@ module correlate_cos_sin
    wire        c1 = SUMHI && hi ? ar == 1'b1 : ar == bi;
 
    always @(posedge clk)
-     if (rst) valid <= #DELAY 0;
-     else     valid <= #DELAY en;
+     valid <= #DELAY en;
 
 `define __licarus
 `ifdef  __licarus
@@ -53,11 +51,7 @@ module correlate_cos_sin
    assign qsin = r_sin;
 
    always @(posedge clk)
-     if (rst) begin
-        r_cos <= #DELAY 0;
-        r_sin <= #DELAY 0;
-     end
-     else if (en) begin
+     if (en) begin
         r_cos <= #DELAY w_cos[MSB:0];
         r_sin <= #DELAY w_sin[MSB:0];
      end
@@ -67,10 +61,10 @@ module correlate_cos_sin
    wire [MSB:0] w_sin = c1 ? dsin + 1 : dsin;
 
    FDRE #( .INIT(0)) RCOS [MSB:0]
-     ( .D(w_cos), .C(clk), .R(rst), .CE(en), .Q(qcos));
+     ( .D(w_cos), .C(clk), .R(1'b0), .CE(en), .Q(qcos));
 
    FDRE #(.INIT(0)) RSIN [MSB:0]
-     ( .D(w_sin), .C(clk), .R(rst), .CE(en), .Q(qsin));
+     ( .D(w_sin), .C(clk), .R(1'b0), .CE(en), .Q(qsin));
 `endif // !`ifdef __icarus
 
 

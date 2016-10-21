@@ -84,12 +84,19 @@ module correlator_block_SDP
 
 
    //-------------------------------------------------------------------------
+   //  Setting for the latency of the computation:
+   //    Read -> Correlate -> Write
+   //-------------------------------------------------------------------------
+   parameter TICKS = 3;
+
+
+   //-------------------------------------------------------------------------
    //  Visibilities buffer.
    //-------------------------------------------------------------------------
    reg [BSB:0]         block = {BBITS{1'b0}};
    wire [XSB:0]        vis;
    wire [XSB:0]        dat;
-   wire                vld;
+   wire                vld, clr;
 
    //  Optionally register these signals, if required to meet timing.
 `ifdef __USE_SDP_SLOW
@@ -97,13 +104,11 @@ module correlator_block_SDP
    wire                en = en_i;
    wire [ISB:0]        re = re_i;
    wire [ISB:0]        im = im_i;
-   wire                clr;
 `else
    (* KEEP = "TRUE" *) reg         sw = 1'b0;
    (* KEEP = "TRUE" *) reg         en = 1'b0;
    (* KEEP = "TRUE" *) reg [ISB:0] re = {IBITS{1'b0}};
    (* KEEP = "TRUE" *) reg [ISB:0] im = {IBITS{1'b0}};
-   reg                 clr = 1'b1;
 
    always @(posedge clk_x) begin
       {sw, en} <= #DELAY {sw_i, en_i};
@@ -118,24 +123,19 @@ module correlator_block_SDP
    //  Wishbone-like bus interface.
    //-------------------------------------------------------------------------
    reg                 ack = 1'b0;
-   reg [2:0]           adr = 1'b0; // used to select correlator & Re/Im data
+   reg [2:0]           adr = 3'b0; // used to select correlator & Re/Im data
    wire [MSB:0]        dat_w;        
 
    //  Acknowledge any request, even if ignored.
 `ifdef __WB_CORRELATOR_CLASSIC
    always @(posedge clk_i)
-     if (rst) begin
-        ack_o <= #DELAY 1'b0;
-        ack   <= #DELAY 1'b0;
-     end
-     else begin
+     begin
         ack_o <= #DELAY cyc_i && stb_i &&  ack && !ack_o;
         ack   <= #DELAY cyc_i && stb_i && !ack && !ack_o;
      end
 `else // !`ifdef __WB_CORRELATOR_CLASSIC
    always @(posedge clk_i)
-     if (rst) {ack_o, ack} <= #DELAY 2'b00;
-     else     {ack_o, ack} <= #DELAY {cyc_i && ack, cyc_i && stb_i};
+     {ack_o, ack} <= #DELAY {cyc_i && ack, cyc_i && stb_i};
 `endif // !`ifdef __WB_CORRELATOR_CLASSIC
 
    //  Put data onto the WB bus, in two steps.
@@ -155,7 +155,7 @@ module correlator_block_SDP
    wire                wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(3)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(TICKS)
          ) RMW0
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -173,7 +173,7 @@ module correlator_block_SDP
    wire         wrap_x_rd_adr, wrap_x_wr_adr;
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(3)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(TICKS)
          ) RMW0
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -185,7 +185,7 @@ module correlator_block_SDP
          );
 
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(3)
+     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(TICKS)
          ) RMW1
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -224,14 +224,16 @@ module correlator_block_SDP
      else if (wrap_x_rd_adr && clear) // finished restarting counters
         clear <= #DELAY 1'b0;
 
+   //-------------------------------------------------------------------------
    //  Add an extra cycle of latency to clearing the SRAM's, if using an
    //  additional cycle of pipelining.
-`ifdef __USE_DSP_SLOW
-   assign clr = clear;
-`else
+   reg                 clr_r = 1'b1;
+
+   assign clr = TICKS == 3 ? clear : clr_r;
+
    always @(posedge clk_x)
-     clr <= #DELAY clear;
-`endif
+     clr_r <= #DELAY clear;
+
 
    //  Increment the block-counter two cycles later, so that the correct data
    //  is stored within the SRAM's.
@@ -269,9 +271,7 @@ module correlator_block_SDP
          .DELAY(DELAY)
          ) CORRELATOR0
        ( .clk_x(clk_x),
-         .rst(rst),
-
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -290,9 +290,7 @@ module correlator_block_SDP
          .DELAY(DELAY)
          ) CORRELATOR1
        ( .clk_x(clk_x),
-         .rst(rst),
-
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -311,9 +309,7 @@ module correlator_block_SDP
          .DELAY(DELAY)
          ) CORRELATOR2
        ( .clk_x(clk_x),
-         .rst(rst),
-
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),
@@ -337,9 +333,7 @@ module correlator_block_SDP
          .DELAY(DELAY)
          ) CORRELATOR3
        ( .clk_x(clk_x),
-         .rst(rst),
-
-         .sw(clear),
+         .sw(clr),
          .en(en),
          .re(re),
          .im(im),

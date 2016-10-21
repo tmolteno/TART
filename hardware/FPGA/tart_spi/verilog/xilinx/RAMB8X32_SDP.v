@@ -96,6 +96,8 @@ module RAMB8X32_SDP #(parameter DELAY = 3)
        .SRVAL_A(18'h00000),
        .SRVAL_B(18'h00000),
        // WRITE_MODE_A/WRITE_MODE_B: "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
+//        .WRITE_MODE_A("READ_FIRST"),
+//        .WRITE_MODE_B("READ_FIRST") 
        .WRITE_MODE_A("WRITE_FIRST"),
        .WRITE_MODE_B("WRITE_FIRST") 
    )
@@ -129,4 +131,4 @@ module RAMB8X32_SDP #(parameter DELAY = 3)
 `endif // !`ifdef __icarus
 
 
-endmodule
+endmodule // RAMB8X32_SDP

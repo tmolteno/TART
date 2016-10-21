@@ -88,8 +88,8 @@ module tart_dsp
     output         limp_o,
 
     // The real component of the signal from the antennas.
-    input          aq_enable, // data acquisition is active
     input          vx_enable, // correlation is active
+    input          vx_stream, // is the data being streamed out?
     output [XSB:0] vx_block,
     input          overwrite, // overwrite when buffers full?
     output         switching, // NOTE: bus domain
@@ -172,6 +172,17 @@ module tart_dsp
    wire               c_err;    // Exempted from timing.
 
    //-------------------------------------------------------------------------
+   //  When the SPI (or any other off-board I/O) interface is inactive, hold
+   //  the streaming read-back module in the reset state.
+   //  NOTE: This is required for the SPI module as it prefetches ahead, and
+   //    then discards any unused data, causing some visibilities to be lost.
+   reg                stream_reset = 1'b1;
+
+   always @(posedge aq_clk_i)
+     stream_reset <= #DELAY ~vx_stream;
+
+
+   //-------------------------------------------------------------------------
    //  Streaming, visibilities-read-back logic-core.
    //-------------------------------------------------------------------------
    wb_stream
@@ -181,7 +192,7 @@ module tart_dsp
          .DELAY (DELAY)
          ) STREAM
        ( .clk_i(aq_clk_i),
-         .rst_i(rst_i),
+         .rst_i(stream_reset),
 
          .m_cyc_o(v_cyc),     // this bus prefetches visibilities, and
          .m_stb_o(v_stb),     // sequentially
@@ -276,9 +287,9 @@ module tart_dsp
          .dat_i(c_dtx),
          .dat_o(c_drx),
 
-         .enable(enable_x),     // begins correlating once asserted
-         .blocksize(block_x),   // number of samples per visibility sum
-         .bankindex(bank),   // the current bank-address being written to
+         .enable(enable_x),    // begins correlating once asserted
+         .blocksize(block_x),  // number of samples per visibility sum
+         .bankindex(vx_block), // the current bank-address being written to
 //          .strobe(strobe),       // indicates arrival of a new sample
          .antenna(antenna),     // antenna data
          .swap_x(switch_x),
