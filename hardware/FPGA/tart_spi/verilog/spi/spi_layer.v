@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 /*
  * Module      : verilog/spi/spi_layer.v
  * Copyright   : (C) Tim Molteno     2016
@@ -63,17 +63,18 @@ module spi_layer
    ( // Wishbone-like (bus master) interface:
      input        clk_i,
      input        rst_i,
-     output       cyc_o,
-     output       get_o,
-     input        rdy_i,
-     output       wat_o,
-     input        ack_i,
+
+     output       cyc_o, // SPI physical layer is active
+     output       get_o, // Request TX data
+     input        rdy_i, // TX data ready
+     output       wat_o, // Asserted when no RX data
+     input        ack_i, // RX data stored if ACK
      input [7:0]  dat_i,
      output [7:0] dat_o,
 
      // Debug/diagnostic output, for when the recieve FIFO overflows.
-     output reg   overflow_o = 0,
-     output reg   underrun_o = 0,
+     output reg   overflow_o = 1'b0,
+     output reg   underrun_o = 1'b0,
 
      input        SCK_pin, // Raw pin connection, not a global clock
      input        SSEL,
@@ -143,7 +144,8 @@ module spi_layer
    //
    //-------------------------------------------------------------------------
    reg            tx_rst = 1'b1, tx_flg = 1'b0;
-   reg            spi_req = 0, dat_req_sync = 1, dat_req_done = 0, dat_req = 0;
+   reg            spi_req = 1'b0, dat_req = 1'b0;
+   reg            dat_req_sync = 1'b1, dat_req_done = 1'b0;
 
    //-------------------------------------------------------------------------
    //  Synchronise the SSEL signal across clock domains.
@@ -151,7 +153,7 @@ module spi_layer
    // SSEL is used to generate the bus transaction's framing signal, `cyc_o`,
    // but it must be synchronised across clock domains.
    reg            ssel_pos, ssel_neg;
-   reg            spi_select = 0, old_select = 0;
+   reg            spi_select = 1'b0, old_select = 1'b0;
 
    assign cyc_o = spi_select;
    assign get_o = dat_req;
@@ -160,18 +162,18 @@ module spi_layer
 
    //  SPI transaction beginning.
    always @(posedge clk_i or negedge SSEL)
-     if (!SSEL) ssel_neg <= #DELAY 1;
-     else       ssel_neg <= #DELAY 0;
+     if (!SSEL) ssel_neg <= #DELAY 1'b1;
+     else       ssel_neg <= #DELAY 1'b0;
 
    //  End of SPI transaction.
    always @(posedge clk_i or posedge SSEL)
-     if (SSEL)  ssel_pos <= #DELAY 1;
-     else       ssel_pos <= #DELAY 0;
+     if (SSEL)  ssel_pos <= #DELAY 1'b1;
+     else       ssel_pos <= #DELAY 1'b0;
 
    always @(posedge clk_i)
-     if (rst_i)         spi_select <= #DELAY 0;
-     else if (ssel_neg) spi_select <= #DELAY 1;
-     else if (ssel_pos) spi_select <= #DELAY 0;
+     if (rst_i)         spi_select <= #DELAY 1'b0;
+     else if (ssel_neg) spi_select <= #DELAY 1'b1;
+     else if (ssel_pos) spi_select <= #DELAY 1'b0;
      else               spi_select <= #DELAY spi_select;
 
 
@@ -180,11 +182,11 @@ module spi_layer
    //-------------------------------------------------------------------------
    //  After a bit has been sent/received, issue a prefetch for the next byte.
    always @(posedge SCK or posedge SSEL)
-     if (SSEL)    spi_req <= #DELAY 0;
-     else         spi_req <= #DELAY rx_count == 0;
+     if (SSEL)    spi_req <= #DELAY 1'b0;
+     else         spi_req <= #DELAY rx_count == 3'h0;
 
    always @(posedge clk_i or posedge spi_req)
-     if (spi_req)           dat_req_sync <= #DELAY 1;
+     if (spi_req)           dat_req_sync <= #DELAY 1'b1;
      else if (dat_req_sync) dat_req_sync <= #DELAY !dat_req_done;
      else                   dat_req_sync <= #DELAY dat_req_sync;
 
@@ -193,8 +195,8 @@ module spi_layer
    //  multiple requests for slow SPI clocks, using a one-shot.
    always @(posedge clk_i)
      if (rst_i) begin
-       dat_req_done <= #DELAY 0;
-       dat_req      <= #DELAY 0;
+       dat_req_done <= #DELAY 1'b0;
+       dat_req      <= #DELAY 1'b0;
      end
      else begin
         dat_req_done <= #DELAY dat_req_done ? dat_req_sync : dat_req && rdy_i;
@@ -233,7 +235,7 @@ module spi_layer
    //-------------------------------------------------------------------------
    wire [7:0] rx_data  = {rx_reg[6:0], MOSI};
    wire [3:0] rx_inc = rx_count + 1;
-   reg [2:0]  rx_count = 0;
+   reg [2:0]  rx_count = 3'h0;
    reg [6:0]  rx_reg;
    wire       rx_push  = rx_count == 7;
 
@@ -245,23 +247,23 @@ module spi_layer
      rx_reg <= #DELAY {rx_reg[5:0], MOSI};
 
    always @(posedge SCK or posedge SSEL)
-     if (SSEL) rx_count <= #DELAY 0;
+     if (SSEL) rx_count <= #DELAY 3'h0;
      else      rx_count <= #DELAY rx_inc[2:0];
 
    // RX FIFO overflow detection.
    always @(posedge SCK or posedge rst_i)
      if (rst_i)
-       overflow_o  <= #DELAY 0;
+       overflow_o  <= #DELAY 1'b0;
      else if (rx_push && rx_full)
-       overflow_o  <= #DELAY 1;
+       overflow_o  <= #DELAY 1'b1;
 
    //-------------------------------------------------------------------------
    //  Transmission logic.
    //-------------------------------------------------------------------------
    wire [7:0] tx_data;
    reg [6:0]  tx_reg = HEADER_BYTE[6:0];
-   reg [2:0]  tx_count = 0;
-   reg        tx_pull = 0;
+   reg [2:0]  tx_count = 3'h0;
+   reg        tx_pull = 1'b0;
    wire       tx_next  = tx_count == 7;
    wire [3:0] tx_inc = tx_count + 1;
 
@@ -279,13 +281,13 @@ module spi_layer
      else              MISO <= #DELAY tx_reg[6];
 
    always @(`TX_EDGE SCK or posedge SSEL)
-     if (SSEL) tx_count <= #DELAY 0;
+     if (SSEL) tx_count <= #DELAY 3'h0;
      else      tx_count <= #DELAY tx_inc[2:0];
 
    // Add a cycle of delay, avoiding an additional read just before a SPI
    // transaction completes.
    always @(`TX_EDGE SCK or posedge SSEL)
-     if (SSEL) tx_pull <= #DELAY 0;
+     if (SSEL) tx_pull <= #DELAY 1'b0;
      else      tx_pull <= #DELAY tx_next;
 
    // TX FIFO underrun detection.

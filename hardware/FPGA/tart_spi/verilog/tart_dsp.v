@@ -35,6 +35,7 @@
  *  + status registers, and correctly handle overflows;
  *  + disable the correlators to prevent overwriting data, if that mode has
  *    been selected;
+ *  + upgrade to WB SPEC B4;
  * 
  */
 
@@ -77,9 +78,14 @@ module tart_dsp
     input          aq_cyc_i,
     input          aq_stb_i,
     input          aq_we_i, // writes only work for system registers
+`ifndef __WB_SPEC_B4
     input          aq_bst_i, // Bulk Sequential Transfer?
+`endif
     output         aq_ack_o,
-    input [XSB:0]  aq_blk_i,
+    output         aq_wat_o,
+    output         aq_rty_o,
+    output         aq_err_o,
+    input [XSB:0]  aq_adr_i,
     input [7:0]    aq_dat_i,
     output [7:0]   aq_dat_o,
 
@@ -108,8 +114,8 @@ module tart_dsp
    //  TART's system-wide, Wishbone-like interconnect and peripherals.
    //
    //-------------------------------------------------------------------------
-   assign stuck_o = stuck;
-   assign limp_o  = limp;
+   assign stuck_o  = stuck;
+   assign limp_o   = limp;
 
 
    //-------------------------------------------------------------------------
@@ -160,26 +166,29 @@ module tart_dsp
    //  stored within a block SRAM).
    wire [BSB:0] v_drx, v_dtx;
    wire [ASB:0] v_adr;
-   wire         v_cyc, v_stb, v_bst, v_we, v_ack, v_wat;
+   wire         v_cyc, v_stb, v_bst, v_we;  // Master WB control signals
+   wire         v_ack, v_wat, v_rty, v_err; // Slave WB response signals
 
    //  WB signals between the visibilities-prefetch logic-core and the block
    //  of correlators.
-   wire [RSB+XBITS:0] c_adr;
-   wire [MSB:0]       c_drx, c_dtx;
-   wire               c_cyc, c_stb, c_bst, c_we, c_ack;
-   wire               c_wat = 1'b0;
-   (* KEEP = "TRUE" *)
-   wire               c_err;    // Exempted from timing.
+   wire [CSB:0] c_adr;
+   wire [MSB:0] c_drx, c_dtx;
+   wire         c_cyc, c_stb, c_bst, c_we;
+   wire         c_ack, c_wat, c_rty, c_err;
 
    //-------------------------------------------------------------------------
    //  When the SPI (or any other off-board I/O) interface is inactive, hold
    //  the streaming read-back module in the reset state.
    //  NOTE: This is required for the SPI module as it prefetches ahead, and
    //    then discards any unused data, causing some visibilities to be lost.
+`ifdef __USE_ASYNC_FETCH
+   wire               stream_reset = ~vx_stream;
+`else   
    reg                stream_reset = 1'b1;
 
    always @(posedge aq_clk_i)
      stream_reset <= #DELAY ~vx_stream;
+`endif
 
 
    //-------------------------------------------------------------------------
@@ -197,9 +206,13 @@ module tart_dsp
          .m_cyc_o(v_cyc),     // this bus prefetches visibilities, and
          .m_stb_o(v_stb),     // sequentially
          .m_we_o (v_we),
+`ifndef __WB_SPEC_B4
          .m_bst_o(v_bst),
+`endif
          .m_ack_i(v_ack),
          .m_wat_i(v_wat),
+         .m_rty_i(v_rty),
+         .m_err_i(v_err),
          .m_adr_o(v_adr),
          .m_dat_i(v_drx),
          .m_dat_o(v_dtx),
@@ -207,9 +220,13 @@ module tart_dsp
          .s_cyc_i(aq_cyc_i),  // visibilities are streamed from here to the
          .s_stb_i(aq_stb_i),  // SPI module
          .s_we_i (aq_we_i),
+`ifndef __WB_SPEC_B4
          .s_bst_i(1'b0),
+`endif
          .s_ack_o(aq_ack_o),
-         .s_wat_o(),
+         .s_wat_o(aq_wat_o),
+         .s_rty_o(aq_rty_o),
+         .s_err_o(aq_err_o),
          .s_dat_i(8'bx),
          .s_dat_o(aq_dat_o),
 
@@ -230,27 +247,37 @@ module tart_dsp
        ( .clk_i(aq_clk_i),
          .rst_i(rst_i),
 
+         //  Wishbone interconnect between correlators and prefetch SRAM.
          .cyc_i(v_cyc),         // this bus accesses the prefetched bank of
          .stb_i(v_stb),         // visibilities -- which are prefetched after
          .we_i (v_we),          // every bank-switch
+`ifndef __WB_SPEC_B4
          .bst_i(v_bst),
+`endif
          .ack_o(v_ack),
          .wat_o(v_wat),
-         .adr_i({aq_blk_i, v_adr}),
+         .rty_o(v_rty),
+         .err_o(v_err),
+         .adr_i({aq_adr_i, v_adr}),
          .byt_i(v_dtx),
          .byt_o(v_drx),
 
+         //  Wishbone interconnect to external I/O interface (e.g., SPI).
          .cyc_o(c_cyc),         // master interface that connects to the
          .stb_o(c_stb),         // correlators, to read back their computed
          .we_o (c_we),          // visibilities
+`ifndef __WB_SPEC_B4
          .bst_o(c_bst),
+`endif
          .ack_i(c_ack),
-         .err_i(c_err),
          .wat_i(c_wat),
+         .rty_i(c_rty),
+         .err_i(c_err),
          .adr_o(c_adr),
          .dat_i(c_drx),
          .dat_o(c_dtx),
 
+         //  Control and status signals (Wishbone domain).
          .streamed (streamed),  // signals that a bank has been sent
          .overwrite(overwrite), // overwrite when buffers full?
          .switching(switching), // strobes at every bank-switch (bus domain)
@@ -258,8 +285,8 @@ module tart_dsp
          .checksum (checksum),  // computed checksum of block
 
          //  Correlator-domain signals:
-         .clk_x    (clk_x),
-         .switch_x (switch_x),
+         .clk_x     (clk_x),
+         .switch_x  (switch_x),
          .overflow_x(overflow_x)
          );
 
@@ -280,8 +307,12 @@ module tart_dsp
          .cyc_i(c_cyc),         // the correlator connects to the read-back
          .stb_i(c_stb),         // unit for the visibilities, via this bus
          .we_i (c_we),
+`ifndef __WB_SPEC_B4
          .bst_i(c_bst),
+`endif
          .ack_o(c_ack),
+         .wat_o(c_wat),
+         .rty_o(c_rty),
          .err_o(c_err),
          .adr_i(c_adr),
          .dat_i(c_dtx),

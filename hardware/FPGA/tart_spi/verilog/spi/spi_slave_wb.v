@@ -38,19 +38,29 @@
 `define SPI_PUSH 4'h4
 `define SPI_PULL 4'h8
 
-module spi_slave
-  #( parameter WIDTH = 8,       // TODO: currently must be `8`!
+module spi_slave_wb
+  #( // Bus bit-widths:
+     parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
      parameter ASB   = WIDTH-2,
+
+     // Wishbone modes/parameters:
+     parameter ASYNC = 1,
+     parameter PIPED = 1,
+     parameter CHECK = 1,
+
      parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
      parameter DELAY = 3)
    ( // Wishbone-like (bus master) interface:
      input              clk_i,
      input              rst_i,
-     output reg         cyc_o = 1'b0,
-     output reg         stb_o = 1'b0,
+     output             cyc_o,
+     output             stb_o,
      output             we_o,
      input              ack_i,
+     input              wat_i,
+     input              rty_i,
+     input              err_i,
      output reg [ASB:0] adr_o,
      input [MSB:0]      dat_i,
      output reg [MSB:0] dat_o,
@@ -92,7 +102,7 @@ module spi_slave
    //  FSM for the Wishbone-like bus (master) interface.
    //-------------------------------------------------------------------------
    always @(posedge clk_i)
-     if (rst_i || !l_cyc)
+     if (!l_cyc)
        spi <= #DELAY `SPI_IDLE;
      else
        case (spi)
@@ -105,9 +115,10 @@ module spi_slave
               spi <= #DELAY a_we || !l_get ? `SPI_BUSY : `SPI_PULL;
            end
 
+         // arriving data is to be put onto the Wishbone bus, and requested
+         // data from the bus:
          `SPI_BUSY: begin
             if (l_get && !b_we && !r_rdy) // TODO: verify that this is OK!?
-//             if (l_get && !b_we && !x_rdy)
               spi <= #DELAY `SPI_PULL; // pull data from the WB bus
             else if (!l_wat && b_we && !l_ack)
               spi <= #DELAY `SPI_PUSH; // push data onto the WB bus
@@ -115,8 +126,8 @@ module spi_slave
               spi <= #DELAY spi;       // and writes when in read-mode
          end
 
-         `SPI_PUSH: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
-         `SPI_PULL: spi <= #DELAY ack_i ? `SPI_BUSY : spi;
+         `SPI_PUSH: spi <= #DELAY done ? `SPI_BUSY : spi;
+         `SPI_PULL: spi <= #DELAY done ? `SPI_BUSY : spi;
          default:   spi <= #DELAY 4'bx;
        endcase // case (spi)
 
@@ -162,13 +173,13 @@ module spi_slave
    always @(posedge clk_i)
      if (!rst_i && !l_wat && !l_ack)
        case (spi)
-         `SPI_ADDR: l_ack <= #DELAY 1;
-         `SPI_BUSY: l_ack <= #DELAY 1;
+         `SPI_ADDR: l_ack <= #DELAY 1'b1;
+         `SPI_BUSY: l_ack <= #DELAY 1'b1;
          `SPI_PUSH: l_ack <= #DELAY ack_i;
-         default:   l_ack <= #DELAY 0;
+         default:   l_ack <= #DELAY 1'b0;
        endcase // case (spi)
      else
-       l_ack <= #DELAY 0;
+       l_ack <= #DELAY 1'b0;
 
    //-------------------------------------------------------------------------
    //  Data requested by `spi_layer` needs to be flagged as ready.
@@ -176,14 +187,14 @@ module spi_slave
    //    when `cyc_o` is asserted, for bus read cycles), fall right through,
    //    without being registered first, saving a cycle of latency.
    reg                  r_rdy = 1'b0, r_wat = 1'b0;
-   wire                 x_rdy = r_rdy || r_wat && ack_i;
+   wire                 x_rdy = r_rdy || done;
    wire                 i_rdy = i_spi || a_we && a_spi || b_we && b_spi;
 
    //  Internal readies are registered.
    //  `r_wat` is asserted when waiting for data from the bus.
    always @(posedge clk_i) begin
      r_rdy <= #DELAY rst_i || r_rdy ? 1'b0 : l_get && i_rdy;
-     r_wat <= #DELAY rst_i || ack_i ? 1'b0 : cyc_o && !b_we;
+     r_wat <= #DELAY done ? 1'b0 : cyc_o && !b_we;
    end
 
    //-------------------------------------------------------------------------
@@ -195,6 +206,33 @@ module spi_slave
    //  bus write cycle.
    always @(posedge clk_i)
      dat_o <= #DELAY !l_wat && !l_ack ? l_drx : dat_o;
+
+
+   //-------------------------------------------------------------------------
+   //  Frame the external Wishbone bus cycles.
+   //-------------------------------------------------------------------------
+   wire                 busy, done, fail;
+
+   wb_cycle
+     #( .ASYNC(ASYNC),
+        .PIPED(PIPED),
+        .CHECK(CHECK),
+        .DELAY(DELAY)
+        ) RWCYC
+       (
+        .clk_i  (clk_i),
+        .rst_i  (rst_i),
+        .cyc_o  (cyc_o),
+        .stb_o  (stb_o),
+        .ack_i  (ack_i),
+        .wat_i  (wat_i),
+        .rty_i  (rty_i),
+        .err_i  (err_i),
+        .start_i(l_get || !l_wat),
+        .busy_o (busy),
+        .done_o (done),
+        .fail_o (fail)
+        );
 
 
    //-------------------------------------------------------------------------
@@ -222,4 +260,4 @@ module spi_slave
        );
 
    
-endmodule // spi_slave
+endmodule // spi_slave_wb

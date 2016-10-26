@@ -36,8 +36,8 @@ module tart_dsp_tb;
    //  Read-back settings:
    parameter FBITS = `READ_BITS; // Fetch-counter bit-width
    parameter FSB   = FBITS-1;    // MSB of fetch-counter
-//    parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
-   parameter COUNT = 10; // count down from:  (1 << COUNT) - 1;
+   parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 10; // count down from:  (1 << COUNT) - 1;
 `ifdef __USE_FAKE_DSP
    parameter NREAD = 9;
 `else
@@ -60,11 +60,11 @@ module tart_dsp_tb;
    wire [MSB:0] c_dat, c_val, blocksize, checksum;
    wire [CSB:0] c_adr;
    wire [BSB:0] dat, val, drx;
-   reg          clk_x = 1, b_clk = 1, rst = 0;
-   reg          cyc = 0, stb = 0, we = 0, bst = 0;
+   reg          clk_x = 1'b1, b_clk = 1'b1, rst = 1'b0;
+   reg          cyc = 1'b0, stb = 1'b0, we = 1'b0, bst = 1'b0;
    reg [3:0]    adr;
    reg [BSB:0]  dtx;
-   reg          set = 0, get = 0, fin = 0;
+   reg          set = 1'b0, get = 1'b0, fin = 1'b0;
    wire         dsp_en, stuck, limp, ack;
    wire         c_cyc, c_stb, c_we, c_bst, c_ack;
    reg [NSB:0]  data [0:255];
@@ -175,7 +175,7 @@ module tart_dsp_tb;
    //-------------------------------------------------------------------------
    //  Exit if the simulation appears to have stalled.
    //-------------------------------------------------------------------------
-   parameter LIMIT = 1000 + (1 << COUNT) * 320;
+   parameter LIMIT = 1000 + (1 << COUNT) * 320 + NREAD * 80;
 
    initial begin : SIM_FAILED
       $display("%12t: Simulation TIMEOUT limit:\t%12d", $time, LIMIT);
@@ -183,9 +183,17 @@ module tart_dsp_tb;
       $finish;
    end // SIM_FAILED
 
+
+   //-------------------------------------------------------------------------
+   //  Display simulation progress waypoints.
+   //-------------------------------------------------------------------------
    always @(posedge b_clk)
      if (newblock)
        $display("%12t: New block available.", $time);
+
+   always @(posedge b_clk)
+     if (streamed)
+       $display("%12t: Block streamed (bank = %2d).", $time, bank);
 
 
    //-------------------------------------------------------------------------
@@ -194,6 +202,7 @@ module tart_dsp_tb;
    //  
    //-------------------------------------------------------------------------
    wire       cyc_n = cyc && rxd == 1 && ack;
+   wire       stb_w = stb && (rxd > 2 || wat);
    integer    rxd = 0;
 
    //-------------------------------------------------------------------------
@@ -206,15 +215,6 @@ module tart_dsp_tb;
        busy <= #DELAY 1'b1;
      else
        busy <= #DELAY busy;
-
-`ifndef __WB_CLASSIC
-   //-------------------------------------------------------------------------
-   //  Control the burst-transfer control-signal.
-   always @(posedge b_clk)
-     if (rst)                          bst <= #DELAY 1'b0;
-     else if ((set || get) && num > 2) bst <= #DELAY 1'b1;
-     else if (bst && num == 2 && !wat) bst <= #DELAY 1'b0;
-`endif
 
    always @(posedge b_clk)
      if (rst) begin
@@ -238,7 +238,7 @@ module tart_dsp_tb;
 `else
         if (!stb && ack) $display("%12t: WB transfer ending", $time);
         {fin, get, set} <= #DELAY { cyc_n, get, set};
-        {cyc, stb, we } <= #DELAY {!cyc_n, bst || wat, we && !cyc_n};
+        {cyc, stb, we } <= #DELAY {!cyc_n, stb_w, we && !cyc_n};
 `endif
      end
      else begin
@@ -261,7 +261,7 @@ module tart_dsp_tb;
 `endif // __WB_CLASSIC
 
    always @(posedge b_clk)
-     if (get || set) rxd <= num;
+     if (get || set)      rxd <= #DELAY num;
      else if (cyc && ack) rxd <= #DELAY rxd - 1;
 
 
@@ -298,7 +298,11 @@ module tart_dsp_tb;
         f_cnt <= #DELAY 2'b00;
         f_adr <= #DELAY {FBITS{1'b0}};
      end
+ `ifdef __WB_CLASSIC
      else if (rdy && stb) begin
+ `else
+     else if (rdy) begin
+ `endif
         f_cnt <= #DELAY f_cnt + 1;
         f_adr <= #DELAY f_cnt == 2'b11 ? f_nxt : f_adr;
         f_dat <= #DELAY {dat, f_dat[MSB:BBITS]};
@@ -386,18 +390,20 @@ module tart_dsp_tb;
    wire [BSB:0] s_dat;
    wire [XSB:0] v_blk;
    wire         s_cyc, s_stb, s_we, s_ack;
-   reg          wat = 0;
+   reg          wat = 1'b0;
    wire         overflow, newblock, streamed, accessed, available, switching;
    wire         aq_debug_mode, aq_enabled, vx_enabled, overwrite;
 
-   wire         dsp_cyc, dsp_stb, dsp_we, dsp_bst, dsp_ack;
+   wire         dsp_cyc, dsp_stb, dsp_we;
+   wire         dsp_ack, dsp_wat, dsp_rty, dsp_err;
    wire [XSB:0] dsp_blk;
    wire [7:0]   dsp_dat, dsp_val;
 
-   assign dsp_bst = 1'b0;
 
+`ifdef __WB_CLASSIC
    always @(posedge b_clk)
-     wat <= #DELAY stb && bst && !ack;
+     wat <= #DELAY stb && !ack;
+`endif
 
 
    //-------------------------------------------------------------------------
@@ -411,6 +417,7 @@ module tart_dsp_tb;
        .stb_i(stb),
        .we_i (we),
        .ack_o(ack),
+//        .wat_o(wat),
        .adr_i(adr),
        .dat_i(dtx),
        .dat_o(drx),
@@ -425,7 +432,10 @@ module tart_dsp_tb;
        .vx_stb_o(dsp_stb),
        .vx_we_o (dsp_we ),
        .vx_ack_i(dsp_ack),
-       .vx_blk_o(dsp_blk),
+       .vx_wat_i(dsp_wat),
+       .vx_rty_i(dsp_rty),
+       .vx_err_i(dsp_err),
+       .vx_adr_o(dsp_blk),
        .vx_dat_i(dsp_dat),
 
        .overflow (overflow),
@@ -471,9 +481,14 @@ module tart_dsp_tb;
       .aq_cyc_i(dsp_cyc),
       .aq_stb_i(dsp_stb),
       .aq_we_i (dsp_we ),
-      .aq_bst_i(dsp_bst),
+ `ifndef __WB_SPEC_B4
+       .aq_bst_i(1'b0),
+ `endif
       .aq_ack_o(dsp_ack),
-      .aq_blk_i(dsp_blk),
+      .aq_wat_o(dsp_wat),
+      .aq_rty_o(dsp_rty),
+      .aq_err_o(dsp_err),
+      .aq_adr_i(dsp_blk),
       .aq_dat_i(dsp_val),
       .aq_dat_o(dsp_dat),
 

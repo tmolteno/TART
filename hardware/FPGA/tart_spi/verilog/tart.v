@@ -308,7 +308,7 @@ module tart
    wire [BSB:0] a_drx;   // data-acquisition controller's signals
    wire [BSB:0] a_dtx;
    wire [3:0]   a_adr = b_adr[3:0];
-   wire         a_stb, a_ack;
+   wire         a_stb, a_ack, a_wat, a_rty, a_err;
 
    reg          r_sel = 0;
    reg          a_sel = 0;
@@ -316,7 +316,7 @@ module tart
    //  WB signals for the streaming interface to the visibilities data.
    wire [BSB:0] s_dat;
    wire [XSB:0] v_blk;
-   wire         s_cyc, s_stb, s_we, s_ack;
+   wire         s_cyc, s_stb, s_we, s_ack, s_wat, s_rty, s_err;
 
    //  Acquisition-unit signals.
    wire         newblock, streamed, accessed, available;
@@ -424,6 +424,9 @@ module tart
        .stb_i(a_stb),
        .we_i (b_we),
        .ack_o(a_ack),
+       .wat_o(a_wat),
+       .rty_o(a_rty),
+       .err_o(a_err),
        .adr_i(a_adr),
        .dat_i(a_dtx),
        .dat_o(a_drx),
@@ -440,7 +443,10 @@ module tart
        .vx_stb_o(s_stb),
        .vx_we_o (s_we ),
        .vx_ack_i(s_ack),
-       .vx_blk_o(v_blk),
+       .vx_wat_i(s_wat),
+       .vx_rty_i(s_rty),
+       .vx_err_i(s_err),
+       .vx_adr_o(v_blk),
        .vx_dat_i(s_dat),
 
        .overflow (overflow),
@@ -492,9 +498,14 @@ module tart
        .aq_cyc_i(s_cyc),
        .aq_stb_i(s_stb),
        .aq_we_i (s_we),
+ `ifndef __WB_SPEC_B4
        .aq_bst_i(1'b0),
+ `endif
        .aq_ack_o(s_ack),
-       .aq_blk_i(v_blk),
+       .aq_wat_o(s_wat),
+       .aq_rty_o(s_rty),
+       .aq_err_o(s_err),
+       .aq_adr_i(v_blk),
        .aq_dat_i(8'bx),
        .aq_dat_o(s_dat),
 

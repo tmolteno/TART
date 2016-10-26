@@ -19,6 +19,9 @@
  * 
  * TODO:
  *  + currently untested;
+ *  + support for the additional Xilinx output registers?
+ *  + (some level of support for) parameterised bit-widths?
+ *  + (some level of support for) parameterised sizes?
  * 
  * Changelog:
  *  + 21/10/2016  --  initial file;
@@ -53,14 +56,14 @@ module RAMB16X32X8_TDP #(parameter DELAY = 3)
     input [3:0]   WEA,
     input [8:0]   ADDRA,
     input [31:0]  DIA,
-    input [31:0]  DOA,
+    output [31:0] DOA,
 
     input         CLKB, // Port B
     input         ENB,
     input         WEB,
     input [10:0]  ADDRB,
-    input [7:0]  DIB,
-    output [7:0] DOB
+    input [7:0]   DIB,
+    output [7:0]  DOB
     );
 
 
@@ -126,7 +129,6 @@ module RAMB16X32X8_TDP #(parameter DELAY = 3)
        .INIT_A(36'h0),
        .INIT_B(36'h0),
        .INIT_FILE("NONE"),
-       .RAM_MODE("TDP"),
        .RSTTYPE("SYNC"),
        .RST_PRIORITY_A("CE"),
        .RST_PRIORITY_B("CE"),
@@ -139,27 +141,27 @@ module RAMB16X32X8_TDP #(parameter DELAY = 3)
    )
    SRAM0
      ( // Port A (32-bits):
-       .CLKAWRCLK(CLKA),        // 1-bit input: Write clock
+       .CLKA(CLKA),             // 1-bit input: Write clock
        .RSTA(1'b0),             // 1-bit input: A port set/reset
        .REGCEA(1'b0),           // 1-bit input: A port register enable
-       .ENAWREN(ENA),           // 1-bit input: Write enable
-       .WEAWEL(WEA),            // 4-bit input: A port write enable
-       .ADDRAWRADDR(ADRA),      // 14-bit input: Write address
-       .DIADI(DIA),             // 32-bit input: LSB data
-       .DIPADIP(4'h0),          // 4-bit input: LSB parity
-       .DOADO(DOA),             // 32-bit output: LSB data
-       .DOPADOP(),              // 4-bit output: LSB parity
+       .ENA(ENA),               // 1-bit input: Write enable
+       .WEA({2'b00, WEA}),      // 4-bit input: A port write enable
+       .ADDRA(ADRA),            // 14-bit input: Write address
+       .DIA({16'h0, DIA}),      // 32-bit input: LSB data
+       .DIPA(4'h0),             // 4-bit input: LSB parity
+       .DOA(DOA),               // 32-bit output: LSB data
+       .DOPA(),                 // 4-bit output: LSB parity
        // Port B (8-bits):
-       .CLKBRDCLK(CLKB),        // 1-bit input: Read clock
-       .RSTBRST(1'b0),          // 1-bit input: B port set/reset
-       .REGCEBREGCE(1'b0),      // 1-bit input: Register enable
-       .ENBRDEN(ENB),           // 1-bit input: Read enable
-       .WEBWEU({3'b000, WEB}),  // 4-bit input: B port write enable
-       .ADDRBRDADDR(ADRB),      // 14-bit input: Read address
-       .DIBDI({24'h0, DIB}),    // 32-bit input: MSB data
-       .DIPBDIP(4'h0),          // 4-bit input: MSB parity
-       .DOBDO(DOB_w),           // 32-bit output: MSB data
-       .DOPBDOP()               // 4-bit output: MSB parity
+       .CLKB(CLKB),             // 1-bit input: Read clock
+       .RSTB(1'b0),             // 1-bit input: B port set/reset
+       .REGCEB(1'b0),           // 1-bit input: Register enable
+       .ENB(ENB),               // 1-bit input: Read enable
+       .WEB({3'h0, WEB}),       // 4-bit input: B port write enable
+       .ADDRB(ADRB),            // 14-bit input: Read address
+       .DIB({24'h0, DIB}),      // 32-bit input: MSB data
+       .DIPB(4'h0),             // 4-bit input: MSB parity
+       .DOB(DOB_w),             // 32-bit output: MSB data
+       .DOPB()                  // 4-bit output: MSB parity
        );
 `endif // !`ifdef __icarus
 

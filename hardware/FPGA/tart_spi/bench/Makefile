@@ -11,10 +11,12 @@ BUS =$(RTL)/bus
 SPI =$(RTL)/spi
 
 # Some Wishbone-like cores:
-WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_prefetch.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v $(BUS)/wb_sram_interface.v $(BUS)/wb_chunk.v
+WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v $(BUS)/wb_sram_interface.v $(BUS)/wb_chunk.v $(BUS)/wb_prefetch_pipelined.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_read.v $(BUS)/wb_write.v $(BUS)/wb_transfer.v
+
+# WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_prefetch.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v $(BUS)/wb_sram_interface.v $(BUS)/wb_chunk.v $(BUS)/wb_prefetch_pipelined.v $(BUS)/wb_fetch.v
 
 # Common library cores:
-LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_acquire.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v
+LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_acquire.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v $(RTL)/xilinx/RAMB16X16X4_TDP.v
 
 # Simulation-only files:
 XIL =xilinx
@@ -48,6 +50,15 @@ BLK =$(RTL)/tart_bank_switch.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_b
 
 blk: ${BLK} tart_block_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(BLK) $(SIM) tart_block_tb.v
+
+
+#
+#  Simulate Wishbone (B4 spec) pipelined BURST READS & WRITES.
+#
+FCH =$(BUS)/wb_fetch.v $(BUS)/wb_store.v $(BUS)/wb_sram_interface.v $(RTL)/xilinx/RAMB16X32X8_TDP.v
+
+fch: ${FCH} bus/wb_fetch_tb.v
+	$(IVC) $(OPT) -o $(OUT)/tart.out $(FCH) bus/wb_fetch_tb.v
 
 
 .PHONY: run

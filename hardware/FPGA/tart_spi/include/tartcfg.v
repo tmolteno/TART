@@ -94,8 +94,8 @@
 
 //----------------------------------------------------------------------------
 //  Constant data can be used to test correlators.
-// `define CONST_DATA 0
-`define CONST_DATA 1
+`define CONST_DATA 0
+// `define CONST_DATA 1
 `define CONST_WORD 24'h000000
 
 
@@ -160,7 +160,8 @@
 //----------------------------------------------------------------------------
 //  Choose whether to use classic Wishbone bus cycles, or faster, pipelined,
 //  burst-mode transfers.
-`define __WB_CLASSIC
+// `define __WB_CLASSIC
+`undef  __WB_CLASSIC
 // `define __WB_BURSTMODE
 
 `ifdef  __WB_CLASSIC
@@ -170,6 +171,14 @@
  `undef  __WB_CLASSIC
  `define __WB_PIPELINED
 `endif // !__WB_CLASSIC
+
+`define __USE_ASYNC_FETCH
+`define __USE_FANCY_PREFETCH
+
+//----------------------------------------------------------------------------
+//  Enable Wishbone SPEC B4 pipelined, burst-mode transfers for devices that
+//  support them.
+// `define __WB_SPEC_B4
 
 //----------------------------------------------------------------------------
 //  Choose whether to use classic, or burst-mode, transfers when prefetching

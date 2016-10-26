@@ -55,6 +55,7 @@ module tart_correlator
     input              bst_i, // Bulk Sequential Transfer?
     output reg         ack_o = 1'b0,
     output reg         wat_o = 1'b0,
+    output             rty_o,
     output reg         err_o = 1'b0,
     input [ASB:0]      adr_i,
     input [MSB:0]      dat_i,
@@ -74,6 +75,8 @@ module tart_correlator
    wire                go, frame;
    wire [NSB:0]        re;
    wire [NSB:0]        im;
+
+   assign rty_o = 1'b0;
 
 
    //-------------------------------------------------------------------------

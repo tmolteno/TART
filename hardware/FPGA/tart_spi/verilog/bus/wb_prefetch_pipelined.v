@@ -34,26 +34,33 @@
  */
 
 module wb_prefetch_pipelined
-  #(parameter WIDTH = 32,       // word bit-width (32-bit is max)
+  #(// Wishbone bus parameters:
+    parameter WIDTH = 32,       // word bit-width (32-bit is max)
     parameter MSB   = WIDTH-1,  // word MSB
     parameter BYTES = WIDTH>>3, // Byte-select bits
     parameter SSB   = BYTES-1,  // MSB of the byte-selects
     parameter ABITS = CBITS+BBITS, // address bit-width
     parameter ASB   = ABITS-1,     // address MSB
-    parameter COUNT = 24,       // <block count>
+    parameter ESB   = ASB+2,       // address MSB for byte-wide access
+
+    //  Prefetcher, block-size parameters:
+    parameter COUNT = 24,       // blocks per complete prefetch
     parameter CBITS = 5,        // block-counter bits
     parameter CSB   = CBITS-1,  // block-counter MSB
-    parameter BSIZE = 24,       // <word count>
+    parameter CMAX  = COUNT-1,  // maximum (block-)counter value
+    parameter BSIZE = 24,       // words/block
     parameter BBITS = 5,        // word-counter bits
     parameter BSB   = BBITS-1,  // word-counter MSB
+    parameter BMAX  = BSIZE-1,  // maximum (word-)counter value
+
     parameter DELAY = 3)
    (
-    input          rst_i,
     input          clk_i,
+    input          rst_i,
 
     //  Prefetcher control & status signals:
     input          begin_i,
-    output reg     ready_o = 0,
+    output reg     ready_o = 1'b0,
 
     //  The "prefetch" master Wishbone-like bus interface:
     output         a_cyc_o,
@@ -61,6 +68,7 @@ module wb_prefetch_pipelined
     output         a_we_o,
     input          a_ack_i,
     input          a_wat_i,
+    input          a_rty_i,
     input          a_err_i,
     output [ASB:0] a_adr_o,
     output [SSB:0] a_sel_o,
@@ -75,122 +83,116 @@ module wb_prefetch_pipelined
     output         b_wat_o,
     output         b_rty_o,
     output         b_err_o,
-    input [ASB:0]  b_adr_i,
-    input [SSB:0]  b_sel_i,
-    input [MSB:0]  b_dat_i,
-    output [MSB:0] b_dat_o
+    input [ESB:0]  b_adr_i,
+    input [7:0]    b_dat_i,
+    output [7:0]   b_dat_o
     );
 
-   reg [CSB:0]         count = 0;
-   reg [CBITS:0]       count_nxt;
-   reg                 count_end = 0;
-   reg                 read = 0;
+
+   //-------------------------------------------------------------------------
+   //  Prefetcher signal definitions.
+   //-------------------------------------------------------------------------
+   //  Block-fetcher (lower-address) control signals.
+   reg                 read = 1'b0;
    wire                done;
+   wire [BSB:0]        lower;
+
+   //  Block (upper-address) counter.
+   reg [CSB:0]         block = {CBITS{1'b0}};
+   reg [CSB:0]         block_nxt;
+   reg                 block_end = 1'b0;
+   wire [CBITS:0]      block_inc = block + 1;
+
+   //  Local address counter.
+   reg [ASB:0]         count = {ABITS{1'b0}};
+   wire [ABITS:0]      count_inc = count + 1;
+
+   //  SRAM signals.
+   wire                sram_a_ce, sram_b_ce, sram_b_we;
+   wire [3:0]          sram_a_bes;
+   wire [9:0]          sram_a_adr;
+   wire [11:0]         sram_b_adr;
+   wire [31:0]         wb_to_sram;
+   wire [7:0]          sram_to_wb;
 
 
+   //-------------------------------------------------------------------------
+   //  Additional Wishbone master interface signals.
+   //-------------------------------------------------------------------------
+   assign a_adr_o = {block, lower};
    assign a_sel_o = {BYTES{1'b1}};
-
-
-   initial begin : PREFETCH_BLOCK
-      $display("\nModule : wb_prefetch\n\tWIDTH\t= %4d\n\tCOUNT\t= %4d\n\tSBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n\tBSTEP\t= %4d\n\tUBITS\t= %4d\n", WIDTH, COUNT, SBITS, BSIZE, BBITS, BSTEP, UBITS);
-   end // PREFETCH_BLOCK
+   assign a_dat_o = dat_q[MSB:0];
 
 
    //-------------------------------------------------------------------------
-   //  Prefetcher control-signals.
+   //  Block address.
    //-------------------------------------------------------------------------
+   //  Increment the blocker after each block has been prefetched.
    always @(posedge clk_i)
-     if (rst_i || begin_i) count <= #DELAY {SBITS{1'b0}};
-     else if (done)        count <= #DELAY count_nxt;
-
-   //  Strobe the `ready_o` signal when a prefetch has been completed.
-   always @(posedge clk_i)
-     if (rst_i || begin_i) ready_o <= #DELAY 0;
-     else                  ready_o <= #DELAY count_end && done;
+     if (begin_i)
+       block <= #DELAY {CBITS{1'b0}};
+     else if (done)
+       block <= #DELAY block_nxt;
 
    //  Pipeline these signals, since the block-prefetches take several clock-
    //  cycles to complete.
-   always @(posedge clk_i) begin
-      count_nxt <= #DELAY count + BSIZE;
-      count_end <= #DELAY !begin_i && count_nxt >= COUNT;
-   end
-
-
-   //-------------------------------------------------------------------------
-   //  Port A master Wishbone-like bus interface.
-   //-------------------------------------------------------------------------
-   reg [ASB:0]         a_adr = {ABITS{1'b0}};
-   wire [ABITS:0]      a_adr_nxt = a_adr + 1;
-   wire [BSB:0]        a_blk;
-
-   assign a_adr_o = {a_adr, a_blk};
-   assign a_dat_o = {WIDTH{1'bx}};
-
-   //-------------------------------------------------------------------------
-   //  Keep prefetching blocks, until at least `COUNT` words have been
-   //  transferred.
    always @(posedge clk_i)
-     if (rst_i)
-       {a_adr, read} <= #DELAY {(UBITS+1){1'b0}};
-     else if (begin_i)
-       {a_adr, read} <= #DELAY {{UBITS{1'b0}}, 1'b1};
-     else if (done && count_nxt < COUNT)
-       {a_adr, read} <= #DELAY {a_adr_nxt[USB:0], 1'b1};
-     else
-       {a_adr, read} <= #DELAY {a_adr, 1'b0};
+     begin
+        block_nxt <= #DELAY block_inc[CSB:0];
+        block_end <= #DELAY !begin_i && block_nxt == COUNT;
+     end
 
 
    //-------------------------------------------------------------------------
-   //  Port B master Wishbone-like bus interface.
+   //  Strobe the `ready_o` signal when a prefetch has been completed.
    //-------------------------------------------------------------------------
-   //  Port B state and bus-control signals.
-   reg [BSB:0]         b_blk = 0;
-   wire [BBITS:0]      b_nxt = b_blk + 1;
-   wire                b_run = a_cyc_o && a_ack_i && !b_cyc_o;
-   wire                b_cyc = b_stb_o || !b_ack_i;
-   wire                b_stb;
-
-   assign b_we_o = b_cyc_o;
-
-   always @(posedge clk_i)
-     if (rst_i)
-       {b_cyc_o, b_stb_o} <= #DELAY 2'b00;
-     else if (b_run)
-       {b_cyc_o, b_stb_o} <= #DELAY 2'b11;
-     else if (b_cyc_o)
-       {b_cyc_o, b_stb_o} <= #DELAY {b_cyc, b_stb};
-     else
-       {b_cyc_o, b_stb_o} <= #DELAY 2'b00;
-
-   //-------------------------------------------------------------------------
-   //  Address generation.
-   wire [SBITS:0]      b_adr_next = b_adr_o + 1;
-
    always @(posedge clk_i)
      if (rst_i || begin_i)
-       b_adr_o <= #DELAY {SBITS{1'b0}};
-     else if (b_cyc_o && (!b_wat_i || !b_cyc))
-       b_adr_o <= #DELAY b_adr_next[ASB:0];
+       ready_o <= #DELAY 1'b0;
+     else
+       ready_o <= #DELAY block_end && done;
 
-   //  Transfer incoming data to the output bus.
-   always @(posedge clk_i)
-     if (a_ack_i) b_dat_o <= #DELAY a_dat_i;
 
    //-------------------------------------------------------------------------
-   //  Block-counter, for computing burst transfers.
+   //  Local SRAM address/counter.
+   //-------------------------------------------------------------------------
+   //  Increment the counter after each word has been transferred over the
+   //  Wishbone master interface.
    always @(posedge clk_i)
-     if (rst_i || b_run) b_blk <= #DELAY {BBITS{1'b0}};
-     else                b_blk <= #DELAY b_bst_o ? b_nxt[BSB:0] : b_blk;
+     if (begin_i)
+       count <= #DELAY {ABITS{1'b0}};
+     else if (a_cyc_o && a_ack_i)
+       count <= #DELAY count_inc[ASB:0];
 
 
    //-------------------------------------------------------------------------
    //  Address-generation unit, for each block.
    //-------------------------------------------------------------------------
-   wb4_get_block
-     #(.BSIZE(BSIZE), .BBITS(BBITS), .DELAY(DELAY)
-       ) FETCH0
+   wire read_w = begin_i || done && !block_end;
+
+   always @(posedge clk_i)
+     if (begin_i || done && !block_end)
+       read <= #DELAY 1'b1;
+     else
+       read <= #DELAY 1'b0;
+
+
+   //-------------------------------------------------------------------------
+   //  Wishbone pipelined BURST READS functional unit.
+   //-------------------------------------------------------------------------
+   wb_fetch
+     #(  .FETCH(BSIZE), .FBITS(BBITS), .DELAY(DELAY)
+         ) FETCH0
        ( .clk_i(clk_i),
          .rst_i(rst_i),
+
+`ifdef  __USE_ASYNC_FETCH
+         .fetch_i(read_w),
+`else
+         .fetch_i(read),
+`endif
+         .ready_o(done),
+
          .cyc_o(a_cyc_o),
          .stb_o(a_stb_o),
          .we_o (a_we_o),
@@ -198,89 +200,129 @@ module wb_prefetch_pipelined
          .wat_i(a_wat_i),
          .rty_i(a_rty_i),
          .err_i(a_err_i),
-         .adr_o(a_blk),
-
-         .read_i(read),
-         .done_o(done)
+         .adr_o(lower)
          );
 
 
    //-------------------------------------------------------------------------
    //  Wishbone to SRAM interface for storing the prefetched data.
    //-------------------------------------------------------------------------
-   wb_sram_interface #( .WIDTH(WIDTH), .ABITS(9) ) WB0
-     ( .clk_i(clk_i),
-       .rst_i(rst_i),
-       .cyc_i(a_cyc_o),
-       .stb_i(a_ack_i),
-       .we_i (a_we_o),
-       .ack_o(),
-       .wat_o(),
-       .rty_o(),
-       .err_o(),
-       .adr_i(s_adr),
-       .sel_i(4'b1111),
-       .dat_i(a_dat_i),
-       .dat_o(a_dat_o),
+   //  NOTE: The maximum supported bit-width is 32-bits, to port A of the
+   //    SRAM, and only storing upto 1024 words.
+   wire [31:0] dat_w, dat_s, dat_q;
 
-       .sram_ce_o (sram_a_ce),
-       .sram_we_o (),
-       .sram_bes_o(sram_a_bes),
-       .sram_adr_o(sram_a_adr),
-       .sram_dat_i({WIDTH{1'b0}}),
-       .sram_dat_o(wb_to_sram)
-       );
+   //  Swizzle the nibbles.
+   assign dat_w = {{32-WIDTH{1'b0}}, a_dat_i};
+   assign dat_s = {dat_w[31:28], dat_w[23:20], dat_w[15:12], dat_w[7:4],
+                   dat_w[27:24], dat_w[19:16], dat_w[11:8] , dat_w[3:0]};
+
+   wb_sram_interface
+     #(  .WIDTH(32),
+         .ABITS(10)
+         ) PORTA
+       ( .clk_i(clk_i),
+         .rst_i(rst_i),
+         .cyc_i(a_cyc_o),
+         .stb_i(a_ack_i),
+         .we_i (a_cyc_o),      // TODO: allowed to change, before ACK?
+         .ack_o(),
+         .wat_o(),
+         .rty_o(),
+         .err_o(),
+         .adr_i(count),
+         .sel_i(4'b1111),
+         .dat_i(dat_s),
+         .dat_o(dat_q),
+
+         .sram_ce_o (sram_a_ce),
+         .sram_we_o (),
+         .sram_bes_o(sram_a_bes),
+         .sram_adr_o(sram_a_adr),
+         .sram_dat_i(32'hx),
+         .sram_dat_o(wb_to_sram)
+         );
 
 
    //-------------------------------------------------------------------------
    //  Wishbone to SRAM interface for retrieving the prefetched data.
    //-------------------------------------------------------------------------
-   wb_sram_interface #( .WIDTH(8), .ABITS(11) ) WB1
-     ( .clk_i(clk_i),
-       .rst_i(rst_i),
-       .cyc_i(b_cyc_i),
-       .stb_i(b_stb_i),
-       .we_i (b_we_i),
-       .ack_o(b_ack_o),
-       .wat_o(b_wat_o),
-       .rty_o(b_rty_o),
-       .err_o(b_err_o),
-       .adr_i(s_adr),
-       .sel_i(4'b1111),
-       .dat_i(a_dat_i),
-       .dat_o(a_dat_o),
+   //  NOTE: This is an 8-bit interface to port B of the SRAM.
+   wb_sram_interface
+     #(  .WIDTH(8),
+         .ABITS(12)
+         ) PORTB
+       ( .clk_i(clk_i),
+         .rst_i(rst_i),
+         .cyc_i(b_cyc_i),
+         .stb_i(b_stb_i),
+         .we_i (b_we_i),
+         .ack_o(b_ack_o),
+         .wat_o(b_wat_o),
+         .rty_o(b_rty_o),
+         .err_o(b_err_o),
+         .adr_i(b_adr_i),
+         .sel_i(1'b1),
+         .dat_i(b_dat_i),
+         .dat_o(b_dat_o),
 
-       .sram_ce_o (sram_b_ce),
-       .sram_we_o (sram_b_we),
-       .sram_bes_o(),
-       .sram_adr_o(sram_b_adr),
-       .sram_dat_i({WIDTH{1'b0}}),
-       .sram_dat_o(wb_to_sram)
-       );
+         .sram_ce_o (sram_b_ce),
+         .sram_we_o (sram_b_we),
+         .sram_bes_o(),
+         .sram_adr_o(sram_b_adr),
+         .sram_dat_i(sram_to_wb),
+         .sram_dat_o()
+         );
 
 
    //-------------------------------------------------------------------------
-   //  SRAM for the prefetched data.
+   //  SRAM's for the prefetched data.
    //-------------------------------------------------------------------------
-   RAMB16X32X8_TDP
-     #(.DELAY(3)) SRAM0
+   //  Stores the lower nibbles of the visibilities.
+   RAMB16X16X4_TDP
+     #( .DELAY(3)) SRAM0
        (.CLKA (clk_i),
         .ENA  (sram_a_ce),
-        .WEA  (sram_a_bes),
+        .WEA  (sram_a_bes[1:0]),
         .ADDRA(sram_a_adr),
-        .DIA  (wb_to_sram),
+        .DIA  (wb_to_sram[15:0]),
         .DOA  (),
 
         .CLKB (clk_i),
         .ENB  (sram_b_ce),
         .WEB  (sram_b_we),
         .ADDRB(sram_b_adr),
-        .DIB  ({WIDTH{1'b0}}),
-        .DOB  (sram_to_wb)
+        .DIB  (16'hx),
+        .DOB  (sram_to_wb[3:0])
+        );
+
+   //  Stores the upper nibbles of the visibilities.
+   RAMB16X16X4_TDP
+     #( .DELAY(3)) SRAM1
+       (.CLKA (clk_i),
+        .ENA  (sram_a_ce),
+        .WEA  (sram_a_bes[3:2]),
+        .ADDRA(sram_a_adr),
+        .DIA  (wb_to_sram[31:16]),
+        .DOA  (),
+
+        .CLKB (clk_i),
+        .ENB  (sram_b_ce),
+        .WEB  (sram_b_we),
+        .ADDRB(sram_b_adr),
+        .DIB  (16'hx),
+        .DOB  (sram_to_wb[7:4])
         );
 
 
 `ifdef __icarus
+   //-------------------------------------------------------------------------
+   //  Debug information.
+   //-------------------------------------------------------------------------
+   initial begin : PREFETCH_BLOCK
+      $display("\nModule : wb_prefetch_pipelined\n\tWIDTH\t= %4d\n\tBYTES\t= %4d\n\tABITS\t= %4d\n\tCOUNT\t= %4d\n\tCBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n", WIDTH, BYTES, ABITS, COUNT, CBITS, BSIZE, BBITS);
+   end // PREFETCH_BLOCK
+
+
    //-------------------------------------------------------------------------
    //  Count the number of prefetched words.
    //-------------------------------------------------------------------------

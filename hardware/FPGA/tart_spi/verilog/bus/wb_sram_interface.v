@@ -28,7 +28,7 @@
 module wb_sram_interface
   #(parameter ABITS = 10,       // Address bit-width
     parameter ASB   = ABITS-1,  // MSB of address
-    parameter USEBE = 1,        // Use individual byte-enables (0/1)?
+    parameter USEBE = 1,        // Use individual write byte-enables (0/1)?
     parameter BYTES = WIDTH>>3, // Number of byte-enables
     parameter BSB   = BYTES-1,  // MSB of byte-enables
     parameter WIDTH = 32,       // Data bit-width
@@ -79,10 +79,10 @@ module wb_sram_interface
    assign err_o = 1'b0;
    assign dat_o = sram_dat_i;
 
-   assign sram_ce_o  = cyc_i && stb_i;
-   assign sram_we_o  = we_i;
+   assign sram_ce_o  = cyc_i;
+   assign sram_we_o  = we_i && stb_i;
    assign sram_adr_o = adr_i;
-   assign sram_bes_o = sel_i;
+   assign sram_bes_o = USEBE ? {BYTES{sram_we_o}} & sel_i : sel_i;
    assign sram_dat_o = dat_i;
 
 

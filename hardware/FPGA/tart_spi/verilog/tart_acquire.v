@@ -38,6 +38,7 @@
  *  + the block-access mechanism is currently not very flexible -- ideally,
  *    the block-counter would increment once all visibilities have been read
  *    back from the current block?
+ *  + upgrade to WB SPEC B4;
  * 
  */
 
@@ -80,10 +81,13 @@ module tart_acquire
     input              cyc_i,
     input              stb_i,
     input              we_i,
-    output reg         ack_o = 0,
+    output reg         ack_o = 1'b0,
+    output             wat_o,
+    output             rty_o,
+    output             err_o,
     input [3:0]        adr_i,
     input [MSB:0]      dat_i,
-    output reg [MSB:0] dat_o = 0,
+    output reg [MSB:0] dat_o = {WIDTH{1'b0}},
 
     // Streaming data interface:
     // NOTE: Doesn't need to initiate transfers, but data is valid whenever
@@ -100,7 +104,10 @@ module tart_acquire
     output             vx_stb_o, // for reading back visibilities
     output             vx_we_o,
     input              vx_ack_i,
-    output reg [BSB:0] vx_blk_o = {BBITS{1'b0}}, // Visibilities block to access
+    input              vx_wat_i,
+    input              vx_rty_i,
+    input              vx_err_i,
+    output reg [BSB:0] vx_adr_o = {BBITS{1'b0}}, // Visibilities block to access
     input [MSB:0]      vx_dat_i,
     input              overflow,
     input              newblock,
@@ -127,6 +134,10 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Signals for the WishBone-like bus, for streaming back visibilities.
    //-------------------------------------------------------------------------
+   assign wat_o    = 1'b0;  // these aren't used/needed by this module
+   assign rty_o    = 1'b0;
+   assign err_o    = 1'b0;     // TODO: pass out any submodule errors?
+
    assign vx_cyc_o = cyc_i;
    assign vx_stb_o = stb_i && adr_i == `VX_STREAM;
    assign vx_we_o  = 1'b0;
@@ -147,7 +158,7 @@ module tart_acquire
    wire [MSB:0]        vx_stream, vx_status, vx_system;
    reg [4:0]           log_block = 0; // = log2(#viz/block);
 
-   assign vx_status = {available, accessed, overflow, {(5-BBITS){1'b0}}, vx_blk_o};
+   assign vx_status = {available, accessed, overflow, {(5-BBITS){1'b0}}, vx_adr_o};
    assign vx_system = {vx_enabled, vx_overwrite, {(WIDTH-7){1'b0}}, log_block};
 
 
@@ -172,11 +183,20 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Wishbone-like (slave) bus interface logic.
    //-------------------------------------------------------------------------
+   //  Classic, pipelined Wishbone bus cycles can require at least one wait-
+   //  state between each transfer, which is achieved here by preventing ACK
+   //  being asserted for two consecutive cycles.
+`ifdef __WB_CLASSIC
+   wire                ack_c = ack_o;
+`else
+   wire                ack_c = 1'b0;
+`endif
+
    //  Generate acknowledges for incoming requests.
    always @(posedge clk_i)
      if (rst_i)
        ack_o <= #DELAY 1'b0;
-     else if (cyc_i && stb_i && !ack_o) begin
+     else if (cyc_i && stb_i && !ack_c) begin
         if (adr_i == `VX_STREAM)
           ack_o <= #DELAY vx_ack_i;
         else
@@ -188,11 +208,7 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Aqusition & visibilities register reads.
    always @(posedge clk_i)
-`ifdef __WB_CLASSIC
-     if (cyc_i && stb_i && !we_i && !ack_o)
-`else
-     if (cyc_i && stb_i && !we_i)
-`endif
+     if (cyc_i && stb_i && !we_i && !ack_c)
        case (adr_i)
          //  Antenna-data access registers:
          `AX_STREAM: dat_o <= #DELAY ax_stream;
@@ -227,11 +243,7 @@ module tart_acquire
         aq_sample_delay <= #DELAY 3'h0;
         upd_blk         <= #DELAY 1'b0;
      end
-`ifdef __WB_CLASSIC
-     else if (cyc_i && stb_i && we_i && !ack_o)
-`else
-     else if (cyc_i && stb_i && we_i)
-`endif
+     else if (cyc_i && stb_i && we_i && !ack_c)
        case (adr_i)
          `AQ_DEBUG:  begin
             aq_debug_mode   <= #DELAY dat_i[MSB];
@@ -327,17 +339,17 @@ module tart_acquire
    //  becomes available, the block-counter is incremented.
    //  TODO: Should there be some mechanism for controlling which block is to
    //    be accessed?
-   wire [BBITS:0] vx_next = vx_blk_o + 1;
+   wire [BBITS:0] vx_next = vx_adr_o + 1;
 
    always @(posedge clk_i)
      if (rst_i)
-       vx_blk_o <= #DELAY {BBITS{1'b0}};
+       vx_adr_o <= #DELAY {BBITS{1'b0}};
 `ifdef __USE_SETTABLE_BLOCK_COUNTER
      else if (upd_blk)
-       vx_blk_o <= #DELAY new_blk;
+       vx_adr_o <= #DELAY new_blk;
 `endif
      else
-       vx_blk_o <= #DELAY streamed ? vx_next[BSB:0] : vx_blk_o;
+       vx_adr_o <= #DELAY streamed ? vx_next[BSB:0] : vx_adr_o;
 
 
    //-------------------------------------------------------------------------
