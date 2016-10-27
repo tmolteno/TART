@@ -83,6 +83,7 @@ module tart_acquire
     parameter PIPED = 1,     // pipelined (SPEC B4) transfers (0/1)?
     parameter CHECK = 0,     // TODO: extra sanity-checking (0/1)?
 
+    // Simulation-only parameters:
     parameter DELAY = 3)
    (input              clk_i,   // System & Wishbone bus clocks
     input              rst_i,
