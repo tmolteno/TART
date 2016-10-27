@@ -23,26 +23,37 @@
  *  + supports both classic and pipelined transfers;
  * 
  * TODO:
+ *  + upgrade to Wishbone SPEC B4;
  * 
  */
 
 `include "tartcfg.v"
 
 module tart_control
-  #(parameter WIDTH = 8,
-    parameter MSB   = WIDTH-1,
-    parameter COUNT = 24,
-    parameter CSB   = COUNT-1,
-    parameter RTIME = 4,
-    parameter DELAY = 3)
-   (
-    // Wishbone-like bus interface:
-    input          clk_i,
+  #(// Wishbone bus-width parameters:
+    parameter WIDTH = 8,        // SPI data-bus bit-width
+    parameter MSB   = WIDTH-1,  // MSB of bus bit-width
+    parameter COUNT = 24,       // checksum and accumulator bit-widths
+    parameter CSB   = COUNT-1,  // MSB of checksum
+    parameter RTIME = 4,        // sets the reset pulse duration
+
+    // Wishbone bus mode parameters:
+    parameter PIPED = 1,        // pipelined Wishbone transfers (0/1)?
+    parameter CHECK = 1,        // TODO: extra sanity-checking (0/1)?
+
+    // Simulation-only parameters:
+    parameter DELAY = 3)        // simulation combinational delay
+   (input          clk_i,
     input          rst_i,
+
+    // Wishbone (SPEC B4) bus interface:
     input          cyc_i,
     input          stb_i,
     input          we_i,
     output         ack_o,
+    output         wat_o,
+    output         rty_o,
+    output         err_o,
     input [1:0]    adr_i,
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
@@ -53,32 +64,45 @@ module tart_control
     input [CSB:0]  checksum_i
     );
 
-   reg [MSB:0]     c_dat;
-   reg             c_ack = 0;                 
+   reg [MSB:0]     dat;
+   reg             ack = 1'b0;
+   wire            ack_w, r_stb;
 
-   assign ack_o = c_ack;
-   assign dat_o = c_dat;
+   assign ack_o = ack;
+   assign wat_o = 1'b0;
+   assign rty_o = 1'b0;
+   assign err_o = 1'b0;
+   assign dat_o = dat;
+
+   //  Pipelined transfers generate an ACK for each cycle that STB is
+   //  asserted; whereas classic transfers expect STB to be asserted until
+   //  an ACK response.
+   assign ack_w = PIPED ? cyc_i && stb_i : cyc_i && stb_i && !ack;
+
+   //  Reset module address-decoder.
+   assign r_stb = stb_i && adr_i == 2'b11;
 
 
+   //-------------------------------------------------------------------------
+   //  Drive the Wishbone slave's response signals.
    always @(posedge clk_i)
-     if (rst_i) c_ack <= #DELAY 0;
-     else       c_ack <= #DELAY cyc_i && stb_i && !c_ack;
+     if (rst_i) ack <= #DELAY 1'b0;
+     else       ack <= #DELAY ack_w;
 
+   //  TODO: Put status and reset onto the same register?
    always @(posedge clk_i)
      if (cyc_i && stb_i && !we_i)
        case (adr_i)
-         0: c_dat <= #DELAY status_i;
-         1: c_dat <= #DELAY checksum_i[7:0];
-         2: c_dat <= #DELAY checksum_i[15:8];
-         3: c_dat <= #DELAY checksum_i[23:16];
+         0: dat <= #DELAY status_i;
+         1: dat <= #DELAY checksum_i[7:0];
+         2: dat <= #DELAY checksum_i[15:8];
+         3: dat <= #DELAY checksum_i[23:16];
        endcase // case (adr_i)
 
 
    //-------------------------------------------------------------------------
    //     RESET HANDLER
    //-------------------------------------------------------------------------
-   wire            r_stb = stb_i && adr_i == 2'b11;
-
    wb_reset #( .WIDTH(WIDTH), .RTIME(RTIME) ) WB_RESET0
      ( .clk_i(clk_i),
        .rst_i(rst_i),

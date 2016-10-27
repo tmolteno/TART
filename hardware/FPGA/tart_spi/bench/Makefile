@@ -22,7 +22,7 @@ LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_a
 XIL =xilinx
 SIM =$(XIL)/DSP48A1.v $(XIL)/RAMB16_S9_S36.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
 
-DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(RTL)/dram_prefetch.v
+DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(RTL)/dram_prefetch.v
 OLD =$(SPI)/spi_target.v $(RTL)/tart_spi.v
 COR =$(RTL)/tart_visibilities.v $(RTL)/tart_correlator.v $(RTL)/tart_bank_switch.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_block_DSP.v $(RTL)/correlator_SDP.v $(RTL)/correlator_DSP.v $(RTL)/rmw_address_unit.v $(RTL)/correlate_cos_sin.v $(RTL)/correlate_cos_sin_DSP.v $(RTL)/fake_hilbert.v $(RTL)/ones_count.v
 DSP =$(COR) $(RTL)/tart_dsp.v
@@ -31,7 +31,9 @@ FAK =$(COR) $(RTL)/tart_fake_dsp.v
 # TODO:
 TOP =$(DEP) $(COR) $(RTL)/tart_capture.v $(RTL)/tart.v
 
-all: ${DEP} tart_soc_tb.v
+all: soc
+
+soc: ${DEP} tart_soc_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(SIM) tart_soc_tb.v
 
 spi: ${DEP} tart_spi_tb.v

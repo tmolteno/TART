@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/tart_acquire.v
+ * Module      : verilog/tart_acquire_old.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -34,15 +34,11 @@
  * NOTE:
  *  + supports both classic and pipelined transfers;
  * 
- * Changelog:
- *  + 23/08/2016  --  initial file (refactored from elsewhere);
- *  + 27/10/2016  --  upgraded to Wishbone SPEC B4;
- * 
  * TODO:
  *  + the block-access mechanism is currently not very flexible -- ideally,
  *    the block-counter would increment once all visibilities have been read
  *    back from the current block?
- *  + more testing for the upgraded to Wishbone (SPEC B4) interface;
+ *  + upgrade to WB SPEC B4;
  * 
  */
 
@@ -68,7 +64,7 @@
 `define VX_STATUS 4'h9
 `define VX_SYSTEM 4'ha
 
-module tart_acquire
+module tart_acquire_old
   #(parameter WIDTH = 8,        // WB-like bus data-width
     parameter MSB   = WIDTH-1,
     parameter ACCUM = 24,       // #bits of the viz accumulators
@@ -77,27 +73,21 @@ module tart_acquire
     parameter BSB   = BBITS-1,
     parameter AXNUM = 24,
     parameter NSB   = AXNUM-1,
-
-    // Wishbone bus mode parameters:
-    parameter ASYNC = 1,     // combinational control signals (0/1/2)?
-    parameter PIPED = 1,     // pipelined (SPEC B4) transfers (0/1)?
-    parameter CHECK = 0,     // TODO: extra sanity-checking (0/1)?
-
     parameter DELAY = 3)
-   (input              clk_i,   // System & Wishbone bus clocks
-    input              rst_i,
-
+   (
     // Wishbone-like bus interface:
+    input              clk_i,
+    input              rst_i,
     input              cyc_i,
     input              stb_i,
     input              we_i,
-    output             ack_o,
+    output reg         ack_o = 1'b0,
     output             wat_o,
     output             rty_o,
     output             err_o,
     input [3:0]        adr_i,
     input [MSB:0]      dat_i,
-    output [MSB:0]     dat_o,
+    output reg [MSB:0] dat_o = {WIDTH{1'b0}},
 
     // Streaming data interface:
     // NOTE: Doesn't need to initiate transfers, but data is valid whenever
@@ -117,9 +107,8 @@ module tart_acquire
     input              vx_wat_i,
     input              vx_rty_i,
     input              vx_err_i,
-    output [BSB:0]     vx_adr_o, // Visibilities block to access
+    output reg [BSB:0] vx_adr_o = {BBITS{1'b0}}, // Visibilities block to access
     input [MSB:0]      vx_dat_i,
-
     input              overflow,
     input              newblock,
     input              streamed,
@@ -141,141 +130,111 @@ module tart_acquire
     input [24:0]       aq_adr_i
     );
 
-   //  Wishbone-to-SPI signals.
-   wire                ack_w, ack_c, x_ack;
-   reg                 ack = 1'b0, viz = 1'b0;
-   reg [MSB:0]         dat = {WIDTH{1'b0}};
-   wire [MSB:0]        dat_w;
-
-   //  Wishbone signals to the (visibilities) streaming read-back unit.
-   wire                read, busy, done, fail;
-   reg [BSB:0]         vx_adr = {BBITS{1'b0}};
-   wire [BBITS:0]      vx_next;
-
-   //  Internal status and control signals:
-   reg [BSB:0]         new_blk = {BBITS{1'b0}};
-   reg                 upd_blk = 1'b0;
-   wire                bs_new_w;
-   reg                 bs_upd = 1'b0;
-   reg                 vx_enable = 1'b0, vx_disable = 1'b0;
-   wire [MSB:0]        ax_stream, aq_status, aq_debug, aq_system;
-   wire [WIDTH*3-1:0]  ax_data;
-   wire [MSB:0]        vx_stream, vx_status, vx_system;
-   reg [4:0]           log_block = 5'h0; // = log2(#viz/block);
-
 
    //-------------------------------------------------------------------------
-   //  Map the output signals to the system WishBone bus.
+   //  Signals for the WishBone-like bus, for streaming back visibilities.
    //-------------------------------------------------------------------------
-   assign ack_o     = ASYNC > 0 ? ack_w : ack;
-   assign wat_o     = 1'b0;     // not used/needed by this module
-   assign rty_o     = 1'b0;
-   assign err_o     = 1'b0;     // TODO: pass out any errors?
-   assign dat_o     = ASYNC > 0 ? dat_w : dat;
+   assign wat_o    = 1'b0;  // these aren't used/needed by this module
+   assign rty_o    = 1'b0;
+   assign err_o    = 1'b0;     // TODO: pass out any submodule errors?
 
-   //  Drive the data bus with either visibilities, or system registers.
-   assign ack_w     = ack || viz && vx_ack_i;
-   assign dat_w     = viz ? vx_dat_i : dat;
-
-
-   //-------------------------------------------------------------------------
-   //  Wishbone <--> vizibilities signals.
-   //-------------------------------------------------------------------------
-   //  After every SPI transaction the visibilities streaming module is reset,
-   //  so unless reading back raw acquisition data, shouldn't cause banks to
-   //  be lost (and the bank index can be set via the SPI bus anyway).
    assign vx_cyc_o = cyc_i;
-   assign vx_stb_o = stb_i && (adr_i == `VX_STREAM || !CHECK);
+   assign vx_stb_o = stb_i && adr_i == `VX_STREAM;
    assign vx_we_o  = 1'b0;
-   assign vx_adr_o = vx_adr;
 
 
    //-------------------------------------------------------------------------
    //  Group signals into registers.
    //-------------------------------------------------------------------------
    //  Data acquisition streaming, status, and control registers.
+   wire [MSB:0]        ax_stream, aq_status, aq_debug, aq_system;
+   wire [WIDTH*3-1:0]  ax_data;
+
    assign aq_debug  = {aq_debug_mode, vx_stuck_i, vx_limp_i, {(WIDTH-3){1'b0}}};
    assign aq_status = {aq_adr_i[7:0]};
    assign aq_system = {aq_enabled, {(WIDTH-4){1'b0}}, aq_sample_delay};
 
    //  Visibilities registers.
-   assign vx_status = {available, accessed, overflow, {(5-BBITS){1'b0}}, vx_adr};
+   wire [MSB:0]        vx_stream, vx_status, vx_system;
+   reg [4:0]           log_block = 0; // = log2(#viz/block);
+
+   assign vx_status = {available, accessed, overflow, {(5-BBITS){1'b0}}, vx_adr_o};
    assign vx_system = {vx_enabled, vx_overwrite, {(WIDTH-7){1'b0}}, log_block};
 
 
    //-------------------------------------------------------------------------
    //  Manage system flags.
    //-------------------------------------------------------------------------
-   //  Has the visibilities data been accessed?
-   assign x_ack = cyc_i && stb_i && !we_i && adr_i == `VX_STREAM && vx_ack_i;
+   wire                x_ack;
 
-   //  Monitor access to each new bank.
-   //  TODO: Reading an old bank would still assert this flag, and is this
-   //    sensible behaviour?
-   always @(posedge clk_i)
-     if (newblock)
-       accessed <= #DELAY 1'b0;
-     else
-       accessed <= #DELAY accessed || x_ack;
+   assign x_ack = cyc_i && stb_i && !we_i && !ack_o &&
+                  adr_i == `VX_STREAM && vx_ack_i;
 
-   //  Monitor when a new bank becomes available.
    always @(posedge clk_i)
-     if (rst_i)
-       available <= #DELAY 1'b0;
-     else if (newblock)
-       available <= #DELAY 1'b1;
-     else if (x_ack)
-       available <= #DELAY 1'b0;
+     if (newblock) accessed <= #DELAY 1'b0;
+     else          accessed <= #DELAY accessed || x_ack;
+
+   always @(posedge clk_i)
+     if (rst_i)         available <= #DELAY 1'b0;
+     else if (newblock) available <= #DELAY 1'b1;
+     else if (x_ack)    available <= #DELAY 1'b0;
 
 
    //-------------------------------------------------------------------------
-   //  Wishbone (slave, SPEC B4) bus interface logic.
+   //  Wishbone-like (slave) bus interface logic.
    //-------------------------------------------------------------------------
    //  Classic, pipelined Wishbone bus cycles can require at least one wait-
    //  state between each transfer, which is achieved here by preventing ACK
    //  being asserted for two consecutive cycles.
-   assign ack_c = PIPED ? 1'b0 : ack;
+`ifdef __WB_CLASSIC
+   wire                ack_c = ack_o;
+`else
+   wire                ack_c = 1'b0;
+`endif
 
    //  Generate acknowledges for incoming requests.
    always @(posedge clk_i)
      if (rst_i)
-       ack <= #DELAY 1'b0;
+       ack_o <= #DELAY 1'b0;
      else if (cyc_i && stb_i && !ack_c) begin
         if (adr_i == `VX_STREAM)
-          ack <= #DELAY ASYNC == 0 && vx_ack_i;
+          ack_o <= #DELAY vx_ack_i;
         else
-          ack <= #DELAY 1'b1;
+          ack_o <= #DELAY 1'b1;
      end
      else
-       ack <= #DELAY 1'b0;
+       ack_o <= #DELAY 1'b0;
 
    //-------------------------------------------------------------------------
    //  Aqusition & visibilities register reads.
    always @(posedge clk_i)
-//      if (cyc_i && stb_i && !we_i && !ack_c)
-     if (cyc_i && (stb_i || viz))
+     if (cyc_i && stb_i && !we_i && !ack_c)
        case (adr_i)
          //  Antenna-data access registers:
-         `AX_STREAM: dat <= #DELAY ax_stream;
-         `AX_DATA1:  dat <= #DELAY ax_data[23:16];
-         `AX_DATA2:  dat <= #DELAY ax_data[15: 8];
-         `AX_DATA3:  dat <= #DELAY ax_data[ 7: 0];
+         `AX_STREAM: dat_o <= #DELAY ax_stream;
+         `AX_DATA1:  dat_o <= #DELAY ax_data[23:16];
+         `AX_DATA2:  dat_o <= #DELAY ax_data[15: 8];
+         `AX_DATA3:  dat_o <= #DELAY ax_data[ 7: 0];
 
          //  Acquisition status, and control, registers:
-         `AQ_STATUS: dat <= #DELAY aq_status;
-         `AQ_DEBUG:  dat <= #DELAY aq_debug;
-         `AQ_SYSTEM: dat <= #DELAY aq_system;
+         `AQ_STATUS: dat_o <= #DELAY aq_status;
+         `AQ_DEBUG:  dat_o <= #DELAY aq_debug;
+         `AQ_SYSTEM: dat_o <= #DELAY aq_system;
 
          //  Visibilities registers:
-         `VX_STREAM: dat <= #DELAY vx_dat_i;
-         `VX_STATUS: dat <= #DELAY vx_status;
-         `VX_SYSTEM: dat <= #DELAY vx_system;
+         `VX_STREAM: dat_o <= #DELAY vx_dat_i;
+         `VX_STATUS: dat_o <= #DELAY vx_status;
+         `VX_SYSTEM: dat_o <= #DELAY vx_system;
 
-         default:    dat <= #DELAY 8'bx;
+         default:    dat_o <= #DELAY 8'bx;
        endcase // case (adr_i)
 
    //-------------------------------------------------------------------------
    //  Aqusition & visibilities register writes.
+   reg [BSB:0] new_blk = {BBITS{1'b0}};
+   reg         upd_blk = 1'b0;
+   reg         vx_enable = 1'b0, vx_disable = 1'b0;
+
    always @(posedge clk_i)
      if (rst_i) begin
         vx_enable       <= #DELAY 1'b0;
@@ -318,8 +277,12 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Visibilities access and control circuit.
    //-------------------------------------------------------------------------
-   assign bs_new_w = cyc_i && stb_i && we_i && !ack_c && adr_i == `VX_SYSTEM;
+   wire                bs_new_w;
+   reg                 bs_upd = 1'b0;
 
+   assign bs_new_w = cyc_i && stb_i && we_i && !ack_o && adr_i == `VX_SYSTEM;
+
+   //-------------------------------------------------------------------------
    //  Enable the visibilities unit when a write is performed to the control-
    //  register, and disable it upon overflow, if overwrite mode is disabled.
    always @(posedge clk_i)
@@ -370,94 +333,50 @@ module tart_acquire
 `endif
    end
 
-
-   //-------------------------------------------------------------------------
-   //  Wishbone (SPEC B4) interface for reading back visibilities.
-   //-------------------------------------------------------------------------
-   assign read     = stb_i && (cyc_i && adr_i == `VX_STREAM || !CHECK);
-   assign vx_next  = vx_adr + 1;
-
    //-------------------------------------------------------------------------
    //  When using correlators in SDP-mode, there are `2^5 == 32` blocks of
-   //  stored visibilities that can be read back. Every time a block has been
-   //  streamed out of this device (via the SPI interface), the block-counter
-   //  is incremented.
+   //  stored visibilities that can be read back. Every time a new block
+   //  becomes available, the block-counter is incremented.
+   //  TODO: Should there be some mechanism for controlling which block is to
+   //    be accessed?
+   wire [BBITS:0] vx_next = vx_adr_o + 1;
+
    always @(posedge clk_i)
      if (rst_i)
-       vx_adr <= #DELAY {BBITS{1'b0}};
+       vx_adr_o <= #DELAY {BBITS{1'b0}};
 `ifdef __USE_SETTABLE_BLOCK_COUNTER
      else if (upd_blk)
-       vx_adr <= #DELAY new_blk;
+       vx_adr_o <= #DELAY new_blk;
 `endif
      else
-       vx_adr <= #DELAY streamed ? vx_next[BSB:0] : vx_adr;
-
-   //  At the beginning of each bus cycle, see if this is a register-access,
-   //  or a visibilities read-back.
-   always @(posedge clk_i)
-     if (cyc_i && stb_i)
-       viz <= #DELAY adr_i == `VX_STREAM;
-     else if (!cyc_i)
-       viz <= #DELAY 1'b0;
-     else
-       viz <= #DELAY viz;
+       vx_adr_o <= #DELAY streamed ? vx_next[BSB:0] : vx_adr_o;
 
 
    //-------------------------------------------------------------------------
    //  DRAM prefetcher-control logic.
    //-------------------------------------------------------------------------
-   reg                 data_sent = 1'b0;
-   reg [1:0]           index = 2'h0;
+   reg                 data_sent = 0;
+   reg [1:0]           index = 0;
    wire                send, wrap_index;
-   wire [2:0]          next_index = wrap_index ? 3'h0 : index + 1;
+   wire [1:0]          next_index = wrap_index ? 0 : index + 1;
 
    assign ax_stream  = index == 0 ? ax_data[23:16] :
                        index == 1 ? ax_data[15: 8] :
                        ax_data[7:0];
 
-   assign send       = cyc_i && stb_i && !we_i && !ack_c && adr_i == `AX_STREAM;
+   assign send       = cyc_i && stb_i && !we_i && !ack_o && adr_i == `AX_STREAM;
    assign wrap_index = index == 2;
 
    //-------------------------------------------------------------------------
    //  Increment the current antenna-data index, and prefetch more data as
    //  needed.
    always @(posedge clk_i)
-     if (rst_i) data_sent <= #DELAY 1'b0;
+     if (rst_i) data_sent <= #DELAY 0;
      else       data_sent <= #DELAY wrap_index && send;
 
    always @(posedge clk_i)
-     if (!spi_busy) index <= #DELAY 2'h0;
-     else if (send) index <= #DELAY next_index[1:0];
-
-
-   /*
-   //-------------------------------------------------------------------------
-   //  Wishbone (SPEC B4) read transaction control unit.
-   //-------------------------------------------------------------------------
-   wb_read
-     #( .ASYNC(ASYNC),   // should be `1` unless very slow clock rates
-        .PIPED(PIPED),   // should be `1` for Wishbone SPEC B4
-        .CHECK(CHECK),   // `0` is probably OK for point-to-point, else `1`
-        .DELAY(DELAY)
-        ) RDCYC
-       (
-        .clk_i (clk_i),
-        .rst_i (rst_i),
-
-        .cyc_o (),              // not used
-        .stb_o (),
-        .we_o  (vx_we_o),
-        .ack_i (vx_ack_i),
-        .wat_i (vx_wat_i),
-        .rty_i (vx_rty_i),
-        .err_i (vx_err_i),
-
-        .read_i(read),
-        .busy_o(busy),
-        .done_o(done),
-        .fail_o(fail)
-        );
-    */
+     if (!spi_busy) index <= #DELAY 0;
+     else if (send) index <= #DELAY next_index;
 
 
    //-------------------------------------------------------------------------
@@ -474,4 +393,4 @@ module tart_acquire
        );
 
 
-endmodule // tart_acquire
+endmodule // tart_acquire_old

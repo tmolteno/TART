@@ -17,12 +17,11 @@
  *  + XST synthesis achieves aboout 250 MHz on a Spartan VI;
  * 
  * TODO:
- *  + the design is still preliminary (as of 24/05/2016);
- *  + constrain the input and output OFFSET's;
+ *  + rename the signals, as their names are too similar to Wishbone names;
  *  + can the output-delay be run-time configurable?
- *  + change the RX-FIFO to just one bit wide, and deserialise in the bus
- *    domain? Can this cause problems for slow domains?
  *  + check the timings of the various TX & RX edge configurations;
+ *  + replace the RX FIFO to a smaller design; e.g., a shift-register, and a
+ *    synchroniser?
  * 
  */
 
@@ -40,11 +39,11 @@
 // or, pass this on the command-line:
 //   > iverilog -D__icarus ...
 //
-// If the SPI interface will be used with SCK below 32 MHz, then use legacy
-// mode:
+// If the SPI interface will be used with the SCK frequency below 32 MHz, then
+// use legacy mode:
 // `define __LEGACY_MODE
 
-// TODO: Move these into the above configuration file?
+// Sets the transmit edge, depending upon the mode.
 `ifdef __LEGACY_MODE
  `define TX_EDGE negedge
 `elsif __icarus
@@ -57,11 +56,10 @@ module spi_layer
   #( parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
      parameter ASB   = WIDTH-2,
-     parameter FSIZE = 2,            // FIFO size (log2)
-     parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
+     parameter FSIZE = 2,           // FIFO size (log2)
+     parameter HEADER_BYTE = 8'hA7, // Pattern to send as the first byte
      parameter DELAY = 3)
-   ( // Wishbone-like (bus master) interface:
-     input        clk_i,
+   ( input        clk_i,
      input        rst_i,
 
      output       cyc_o, // SPI physical layer is active

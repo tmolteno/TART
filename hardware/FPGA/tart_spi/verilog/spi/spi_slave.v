@@ -22,6 +22,8 @@
  * 
  * Changelog:
  *  + 18/06/2016  --  initial file;
+ *  + 27/10/2016  --  now OBSOLETE, as it has been replaced by `spi_slave_wb`
+ *                    which supports Wishbone SPEC B4;
  * 
  * TODO:
  *  + the design is still preliminary (as of 24/06/2016);

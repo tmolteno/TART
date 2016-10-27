@@ -148,8 +148,8 @@ module afifo_gray
 		 output [MSB:0] rd_data_o,
    
      // FIFO status flags:
-		 output reg     wfull_o = 0,
-		 output reg     rempty_o = 1
+		 output reg     wfull_o  = 1'b0,
+		 output reg     rempty_o = 1'b1
 	   );
 
 
@@ -169,8 +169,8 @@ module afifo_gray
 
    wire [ABITS:0]   wp_bin_x, rp_bin_x;
 
-   reg              rd_rst = 1, wr_rst = 1;
-   reg              rd_rst_r = 1, wr_rst_r = 1;
+   reg              rd_rst   = 1'b1, wr_rst   = 1'b1;
+   reg              rd_rst_r = 1'b1, wr_rst_r = 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -250,13 +250,13 @@ module afifo_gray
 
    always @(posedge rd_clk_i)
      if (rst_i)
-       rempty_o <= #DELAY 1;
+       rempty_o <= #DELAY 1'b1;
      else
        rempty_o <= #DELAY wp_s == rp_gray || rd_en_i && wp_s == rp_gray_next;
 
    always @(posedge wr_clk_i)
      if (rst_i)
-       wfull_o <= #DELAY 0;
+       wfull_o <= #DELAY 1'b0;
      else
        wfull_o <= #DELAY ((wp_bin[ASB:0] == rp_bin_x[ASB:0]) && (wp_bin[ABITS] != rp_bin_x[ABITS])) ||
                   (wr_en_i && (wp_bin_next[ASB:0] == rp_bin_x[ASB:0]) && (wp_bin_next[ABITS] != rp_bin_x[ABITS]));

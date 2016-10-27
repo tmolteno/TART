@@ -13,6 +13,18 @@
  * Generates the Wishbone, master, control address signals needed to perform
  * single READ bus transactions.
  * 
+ * Modes:
+ *  + ASYNC == 0  -- adds two cycles of latency, by registering CYC & STB, and
+ *                   then registering the result, before driving `done`;
+ *  + ASYNC == 1  -- adds a cycle of latency, by registering CYC & STB;
+ *  + ASYNC == 2  -- fully combinational;
+ *  + PIPED == 0  -- asserts STB until ACK (Wishbone Classic);
+ *  + PIPED == 1  -- asserts STB just once per transfer (SPEC B4);
+ *  + CHECK == 0  -- doesn't perform sanity-checking, nor performs filter of
+ *                   spurious bus signals, like extra ACK's, etc.; and
+ *  + CHECK == 1  -- sanity checking plus ignores bus chatter outside of bus
+ *                   cycles.
+ * 
  * NOTE:
  *  + Supports CLASSIC, Pipelined CLASSIC, and SPEC B4 SINGLE READ transfers;
  *  + Pipelined transfers assert `stb_o` once/transfer, whereas classic

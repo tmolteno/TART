@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/spi/spi_slave.v
+ * Module      : verilog/spi/spi_slave_wb.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -11,32 +11,27 @@
  * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
  * This SPI slave module wraps `spi_layer` to give address support to the
- * (pipelined, Wishbone-like) bus interface.
+ * (pipelined, Wishbone SPEC B4) bus interface.
  * 
  * NOTE:
- *  + XST synthesis achieves about 250 MHz on a Spartan VI;
- *  + currently, the SCK frequency can be slightly higher than that of the bus
- *    bus clock, or else data isn't available early enough, resulting in FIFO
- *    underruns -- but this could be solved by using an additional prefetch,
- *    though this hasn't been implemented;
+ *  + XST synthesis achieves about 250 MHz on a Spartan 6;
+ *  + currently, the SCK frequency can be only slightly-higher than that of
+ *    the bus bus clock, or else data isn't available early enough, resulting
+ *    in FIFO underruns -- but this could be solved by using an additional
+ *    prefetch, though this doesn't have a corresponding parameter, nor has it
+ *    been implemented;
  * 
  * Changelog:
- *  + 18/06/2016  --  initial file;
+ *  + 26/10/2016  --  initial file;
  * 
  * TODO:
- *  + the design is still preliminary (as of 24/06/2016);
- *  + reduce the fanout of `rst_i`;
+ *  + short and/or long addresses?
  * 
  */
 
-// TODO: Not very modular, as the rest of this module is not TART-specific.
-`include "tartcfg.v"
-
-`define SPI_IDLE 4'h0
-`define SPI_ADDR 4'h1
-`define SPI_BUSY 4'h2
-`define SPI_PUSH 4'h4
-`define SPI_PULL 4'h8
+`define SPI_IDLE 2'h0
+`define SPI_ADDR 2'h1
+`define SPI_BUSY 2'h2
 
 module spi_slave_wb
   #( // Bus bit-widths:
@@ -51,172 +46,184 @@ module spi_slave_wb
 
      parameter HEADER_BYTE  = 8'hA7, // Pattern to send as the first byte
      parameter DELAY = 3)
-   ( // Wishbone-like (bus master) interface:
-     input              clk_i,
-     input              rst_i,
-     output             cyc_o,
-     output             stb_o,
-     output             we_o,
-     input              ack_i,
-     input              wat_i,
-     input              rty_i,
-     input              err_i,
-     output reg [ASB:0] adr_o,
-     input [MSB:0]      dat_i,
-     output reg [MSB:0] dat_o,
+   ( // Wishbone (SPEC B4) interface:
+     input          clk_i,
+     input          rst_i,
+     output         cyc_o,
+     output         stb_o,
+     output         we_o,
+     input          ack_i,
+     input          wat_i,
+     input          rty_i,
+     input          err_i,
+     output [ASB:0] adr_o,
+     input [MSB:0]  dat_i,
+     output [MSB:0] dat_o,
      
      // Debug/diagnostic output, for when the recieve FIFO overflows.
-     output             active_o,
-     input [MSB:0]      status_i,
-     output             overflow_o,
-     output             underrun_o,
+     output         active_o,
+     input [MSB:0]  status_i,
+     output         overflow_o,
+     output         underrun_o,
 
-     input              SCK_pin, // Raw pin connection, not a global clock
-     input              SSEL,
-     input              MOSI,
-     output             MISO
+     input          SCK_pin, // Raw pin connection, not a global clock
+     input          SSEL,
+     input          MOSI,
+     output         MISO
      );
 
-   //  FSM state register, and some state-bit aliases:
-   reg [3:0]            spi = `SPI_IDLE;
-   wire                 a_spi = spi[0];
-   wire                 b_spi = spi[1];
-   wire                 i_spi = spi == `SPI_IDLE;
 
-   //  Signals to/from the SPI layer:
-   wire [7:0]           l_drx;
-   wire                 a_we = l_drx[MSB];   // address-mode WE
-   reg                  b_we = 0, l_ack = 0; // bus-mode WE
-   wire                 l_cyc, l_get, l_wat;
+   //-------------------------------------------------------------------------
+   //  SPI FSM register:
+   reg [1:0]        spi = `SPI_IDLE;
+   reg              frame = 1'b0;
+
+   //  SPI layer control signals:
+   wire             l_cyc, l_get, l_wat;
+   wire [7:0]       l_drx;
+   reg              l_rdy = 1'b0; // Fetched data ready
+   reg              l_ack = 1'b0; // Data received and acknowledged
+   wire [MSB:0]     x_dtx; // Just send status, unless Wishbone read
+   wire             x_rdy; // Internal or Wishbone ready?
+
+   //  Signals for decoding SPI commands:
+   wire             cmd_we  = l_drx[MSB];   // register read#/write
+   wire [ASB:0]     cmd_adr = l_drx[ASB:0]; // register address
+
+   //  Wishbone bus and control signals:
+   reg              we = 1'b1;
+   reg [ASB:0]      adr;
+   reg [MSB:0]      dat;
+   wire             busy, done, fail;
+   wire             start, first, fetch, store;
 
 
-`ifdef __icarus
-   assign we_o     = cyc_o && b_we; // more convenient in GtkWave
-`else
-   assign we_o     = b_we;
-`endif // __icarus
+   //-------------------------------------------------------------------------
+   //  Map signals to the module outputs.
+   assign we_o     = we;
+   assign adr_o    = adr;
+   assign dat_o    = dat;
+
    assign active_o = l_cyc;
 
 
    //-------------------------------------------------------------------------
-   //  FSM for the Wishbone-like bus (master) interface.
+   //
+   //  FINITE STATE MACHINE (FSM) FOR THE SPI SLAVE.
+   //
    //-------------------------------------------------------------------------
    always @(posedge clk_i)
      if (!l_cyc)
        spi <= #DELAY `SPI_IDLE;
      else
        case (spi)
-         // new SPI transaction beginning?
-         `SPI_IDLE: spi <= #DELAY l_get && r_rdy ? `SPI_ADDR : spi;
+         // To begin a new SPI transaction beginning, the SPI layer module
+         // requests the status-byte. Once this has been transferred, wait for
+         // the register mode & address.
+         `SPI_IDLE:
+           spi <= #DELAY l_get && l_rdy ? `SPI_ADDR : spi;
 
-         // first byte from SPI is the write-mode and address?
+         // If the first byte from SPI has its MSB asserted, then the transfer
+         // is a register-write, so change the state to waiting for data,
+         // otherwise begin a register-read transaction. OR, if a read is
+         // requested, by the SPI layer then??
          `SPI_ADDR:
-           if (!l_wat) begin
-              spi <= #DELAY a_we || !l_get ? `SPI_BUSY : `SPI_PULL;
-           end
+           if (l_get) spi <= #DELAY `SPI_BUSY;
 
-         // arriving data is to be put onto the Wishbone bus, and requested
-         // data from the bus:
-         `SPI_BUSY: begin
-            if (l_get && !b_we && !r_rdy) // TODO: verify that this is OK!?
-              spi <= #DELAY `SPI_PULL; // pull data from the WB bus
-            else if (!l_wat && b_we && !l_ack)
-              spi <= #DELAY `SPI_PUSH; // push data onto the WB bus
-            else                       // ignore reads when in write-mode,
-              spi <= #DELAY spi;       // and writes when in read-mode
-         end
+         // Arriving data is to be put onto the Wishbone bus, and requested
+         // data from the bus.
+         `SPI_BUSY:
+           spi <= #DELAY spi;
 
-         `SPI_PUSH: spi <= #DELAY done ? `SPI_BUSY : spi;
-         `SPI_PULL: spi <= #DELAY done ? `SPI_BUSY : spi;
-         default:   spi <= #DELAY 4'bx;
+         default:
+           spi <= #DELAY 2'bx;
        endcase // case (spi)
 
-   //-------------------------------------------------------------------------
-   //  Generate the Wishbone-like flow-control signals.
-   wire                 a_pull = l_get && !a_we && !r_rdy;
-   wire                 b_xfer = b_pull || b_push;
-   wire                 b_pull = l_get && !b_we && !r_rdy;
-   wire                 b_push = !l_wat && b_we && !l_ack;
-
+   //  Frames SPI transactions.
    always @(posedge clk_i)
-     if (rst_i)
-       {cyc_o, stb_o} <= #DELAY 2'b00;
-     else if (l_cyc)
-       case (spi)
-         `SPI_IDLE: {cyc_o, stb_o} <= #DELAY 2'b00;
-`ifdef __WB_CLASSIC
-         `SPI_ADDR: {cyc_o, stb_o} <= #DELAY {a_pull, a_pull};
-         `SPI_BUSY: {cyc_o, stb_o} <= #DELAY {b_xfer, b_xfer};
-         `SPI_PULL: {cyc_o, stb_o} <= #DELAY {!ack_i, !ack_i};
-         `SPI_PUSH: {cyc_o, stb_o} <= #DELAY {!ack_i, !ack_i};
-`else
-         `SPI_ADDR: {cyc_o, stb_o} <= #DELAY {a_pull || cyc_o && !ack_i, a_pull};
-         `SPI_BUSY: {cyc_o, stb_o} <= #DELAY {b_xfer || cyc_o && !ack_i, b_xfer};
-         `SPI_PULL: {cyc_o, stb_o} <= #DELAY {cyc_o && !ack_i, 1'b0};
-         `SPI_PUSH: {cyc_o, stb_o} <= #DELAY {!ack_i, 1'b0};
-`endif
-         default:   {cyc_o, stb_o} <= #DELAY 2'bx;
-       endcase // case (spi)
-     else
-       {cyc_o, stb_o} <= #DELAY 2'b00;
+     if (!l_cyc)
+       frame <= #DELAY 1'b0;
+     else if (spi == `SPI_IDLE && l_get && l_rdy)
+       frame <= #DELAY 1'b1;
+
 
    //-------------------------------------------------------------------------
-   //  Gets the read#/write mode, and address, from the first byte of the SPI
+   //
+   //  WISHBONE (SPEC B4) INTERCONNECT.
+   //
+   //-------------------------------------------------------------------------
+   //  Initiate a Wishbone transaction whenever:
+   //   a) register address received, and the command is READ;
+   //   b) SPI layer requests another register READ; or
+   //   c) register data received, to be written.
+   assign first = spi == `SPI_ADDR && !l_wat && !cmd_we;
+   assign fetch = spi == `SPI_BUSY &&  l_get && !we;
+   assign store = spi == `SPI_BUSY && !l_wat &&  we;
+
+   assign start = !busy && (first || fetch || store);
+
+
+   //-------------------------------------------------------------------------
+   //  Gets the read#/write mode from the first byte of the SPI transaction.
+   //  NOTE: `we` stores the last-requested bus read#/write mode, and is also
+   //    used to control the "internal readies" ;i.e., by pulling `we` HI at
+   //    the end of each transaction, then until a Wishbone READ command is
+   //    requested, all readies can be generated internally.
+   always @(posedge clk_i)
+     if (!l_cyc)
+       we <= #DELAY 1'b1;
+     else if (!l_wat && spi == `SPI_ADDR)
+       we <= #DELAY cmd_we;
+     else
+       we <= #DELAY we;
+
+   //  Capture the Wishbone address from the first byte of the SPI
    //  transaction.
-   //  NOTE: `b_we` stores the last-requested bus read#/write mode.
    always @(posedge clk_i)
-     if (!l_wat && !l_ack && a_spi)
-       {b_we, adr_o} <= #DELAY {l_drx[MSB], l_drx[ASB:0]};
+     if (!l_wat && spi == `SPI_ADDR) adr <= #DELAY cmd_adr;
 
-   //-------------------------------------------------------------------------
-   //  Data received from `spi_layer` needs to be acknowledged.
-   always @(posedge clk_i)
-     if (!rst_i && !l_wat && !l_ack)
-       case (spi)
-         `SPI_ADDR: l_ack <= #DELAY 1'b1;
-         `SPI_BUSY: l_ack <= #DELAY 1'b1;
-         `SPI_PUSH: l_ack <= #DELAY ack_i;
-         default:   l_ack <= #DELAY 1'b0;
-       endcase // case (spi)
-     else
-       l_ack <= #DELAY 1'b0;
-
-   //-------------------------------------------------------------------------
-   //  Data requested by `spi_layer` needs to be flagged as ready.
-   //  NOTE: Readies from the Wishbone-like SoC bus (which are just `ack_i`,
-   //    when `cyc_o` is asserted, for bus read cycles), fall right through,
-   //    without being registered first, saving a cycle of latency.
-   reg                  r_rdy = 1'b0, r_wat = 1'b0;
-   wire                 x_rdy = r_rdy || done;
-   wire                 i_rdy = i_spi || a_we && a_spi || b_we && b_spi;
-
-   //  Internal readies are registered.
-   //  `r_wat` is asserted when waiting for data from the bus.
-   always @(posedge clk_i) begin
-     r_rdy <= #DELAY rst_i || r_rdy ? 1'b0 : l_get && i_rdy;
-     r_wat <= #DELAY done ? 1'b0 : cyc_o && !b_we;
-   end
-
-   //-------------------------------------------------------------------------
-   //  Data MUX to select between the status and bus data-sources.
-   wire [MSB:0]         x_dtx = i_spi || a_spi ? status_i : dat_i;
-
-   //-------------------------------------------------------------------------
    //  Hold the data from `spi_layer` constant until the end of a `spi_layer`
    //  bus write cycle.
    always @(posedge clk_i)
-     dat_o <= #DELAY !l_wat && !l_ack ? l_drx : dat_o;
+     if (!l_wat && !busy) dat <= #DELAY l_drx;
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  SPI LAYER CONTROL.
+   //
+   //-------------------------------------------------------------------------
+   assign x_dtx = we ? status_i : dat_i;
+   assign x_rdy = l_rdy || !we && done;
+
+
+   //-------------------------------------------------------------------------
+   //  The `l_rdy` signal is for driving internal (to this module) data onto
+   //  the SPI bus. The cases where the data is considered "internal" are
+   //  when:
+   //   1) requests are for the status byte; or
+   //   2) "filler" is to be sent for register-write transactions.
+   always @(posedge clk_i)
+     if (l_get && we && !l_rdy)
+       l_rdy <= #DELAY 1'b1;
+     else
+       l_rdy <= #DELAY 1'b0;
+
+   //  The `l_ack` signal acknowledges any data received from the SPI layer.
+   always @(posedge clk_i)
+     if (frame && !l_wat && !l_ack)
+       l_ack <= #DELAY 1'b1;
+     else
+       l_ack <= #DELAY 1'b0;
 
 
    //-------------------------------------------------------------------------
    //  Frame the external Wishbone bus cycles.
    //-------------------------------------------------------------------------
-   wire                 busy, done, fail;
-
    wb_cycle
-     #( .ASYNC(ASYNC),
-        .PIPED(PIPED),
-        .CHECK(CHECK),
+     #( .ASYNC(ASYNC),   // should be `1` unless very slow clock rates
+        .PIPED(PIPED),   // should be `1` for Wishbone SPEC B4
+        .CHECK(CHECK),   // `0` is probably OK for point-to-point, else `1`
         .DELAY(DELAY)
         ) RWCYC
        (
@@ -228,7 +235,7 @@ module spi_slave_wb
         .wat_i  (wat_i),
         .rty_i  (rty_i),
         .err_i  (err_i),
-        .start_i(l_get || !l_wat),
+        .start_i(start),
         .busy_o (busy),
         .done_o (done),
         .fail_o (fail)
@@ -238,26 +245,30 @@ module spi_slave_wb
    //-------------------------------------------------------------------------
    //  SPI-layer, and the domain-crossing subcircuits, of the interface.
    //-------------------------------------------------------------------------
-   spi_layer #( .WIDTH(WIDTH), .FSIZE(2), .HEADER_BYTE(HEADER_BYTE)
-                ) SPI_LAYER0
-     ( .clk_i(clk_i),
-       .rst_i(rst_i),
-       .cyc_o(l_cyc),
-       .get_o(l_get),
-       .rdy_i(x_rdy),
-       .wat_o(l_wat),
-       .ack_i(l_ack),
-       .dat_i(x_dtx),
-       .dat_o(l_drx),
+   spi_layer
+     #( .WIDTH(WIDTH),
+        .FSIZE(2),
+        .HEADER_BYTE(HEADER_BYTE)
+        ) SPI_LAYER0
+       (
+        .clk_i(clk_i),
+        .rst_i(rst_i),
+        .cyc_o(l_cyc),          // asserted for SPI transfer duration
+        .get_o(l_get),          // reads are readied
+        .rdy_i(x_rdy),
+        .wat_o(l_wat),          // writes are acknowledged
+        .ack_i(l_ack),
+        .dat_i(x_dtx),
+        .dat_o(l_drx),
 
-       .overflow_o(overflow_o),
-       .underrun_o(underrun_o),
+        .overflow_o(overflow_o),
+        .underrun_o(underrun_o),
 
-       .SCK_pin(SCK_pin),
-       .SSEL(SSEL),
-       .MOSI(MOSI),
-       .MISO(MISO)
-       );
+        .SCK_pin(SCK_pin),
+        .SSEL(SSEL),
+        .MOSI(MOSI),
+        .MISO(MISO)
+        );
 
    
 endmodule // spi_slave_wb

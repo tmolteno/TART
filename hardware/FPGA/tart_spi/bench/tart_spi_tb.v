@@ -320,24 +320,5 @@ module tart_spi_tb;
        .MISO(MISO)
        );
 
-   /*
-   //-------------------------------------------------------------------------
-   //     RESET HANDLER
-   //-------------------------------------------------------------------------
-   wb_reset #( .WIDTH(WIDTH) ) SPI_SLAVE0
-     ( .clk_i(b_clk),
-       .rst_i(b_rst),
-       .cyc_o(b_cyc),
-       .stb_o(r_stb),
-       .we_o (b_we),
-       .ack_i(r_ack),
-       .dat_i(r_dtx),
-       .dat_o(r_drx),
-
-       .reset_ni(reset_n),
-       .reset_o(reset)
-       );
-    */
-
 
 endmodule // tart_spi_tb
