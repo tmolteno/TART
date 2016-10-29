@@ -48,7 +48,7 @@ module tart_correlator
     input              clk_x,
     input              rst,
 
-    //  Wishbone-like bus interface for reading visibilities.
+    //  Wishbone (SPEC B4) interface for reading back the visibilities:
     input              clk_i, // bus clock
     input              cyc_i,
     input              stb_i,

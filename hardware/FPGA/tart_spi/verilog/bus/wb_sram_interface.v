@@ -129,14 +129,14 @@ module wb_sram_interface
    assign err_o = 1'b0;
    assign dat_o = READ  ? sram_do_i : {WIDTH{1'bz}};
 
-   assign sram_ce_o = PIPED ? cyc_w : stb_w;
+   assign sram_ce_o = PIPED && READ ? cyc_w : stb_w;
    assign sram_we_o = WRITE ? we_w : 1'b0;
    assign sram_ad_o = adr_i;
    assign sram_be_o = USEBE ? {BYTES{sram_we_o}} & sel_i : sel_i; // TODO
    assign sram_di_o = WRITE ? dat_i : {WIDTH{1'bz}};
 
    //  Choose versions of these signals depending on the Wishbone mode
-   // settings.
+   //  settings.
    assign cyc_w = CHECK ? cyc_i : 1'b1;
    assign stb_w = cyc_w && stb_i;
    assign we_w  = stb_w && we_i;

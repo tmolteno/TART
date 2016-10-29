@@ -394,11 +394,9 @@ module tart
         .stb_o(b_stb),
         .we_o (b_we),
         .ack_i(b_ack),
-`ifdef __USE_SPI_SLAVE_WB
         .wat_i(b_wat),
         .rty_i(b_rty),
         .err_i(b_err),
-`endif
         .adr_o(b_adr),
         .dat_i(b_dtx),
         .dat_o(b_drx),
@@ -414,6 +412,7 @@ module tart
         .MISO(SPI_MISO),
         .SSEL(SPI_SSEL)
         );
+
 
    //-------------------------------------------------------------------------
    //     RESET HANDLER
@@ -454,15 +453,23 @@ module tart
        .dat_i(a_dtx),
        .dat_o(a_drx),
 
+       //  Antenna capture & acquisition controls:
+       .aq_debug_mode(aq_debug),
+       .aq_enabled(aq_enabled),
+       .aq_sample_delay(aq_delay),
+//        .aq_adr_i(cmd_address),
+       .aq_adr_i({21'h0, v_blk}),
+
        //  DRAM (streaming) read-back signals:
        .data_ready  (data_out_ready),
        .data_request(request_from_spi),
        .data_in     (data_out[MSB:0]),
 
+       //  SPI bus status input:
        .spi_busy(spi_busy),
 
-       //  Visibilities status & data access:
-       .vx_cyc_o(s_cyc),     // WB-like bus for visibilities read-back
+       //  Wishbone (SPEC B4) bus for accessing visibilities data:
+       .vx_cyc_o(s_cyc),
        .vx_stb_o(s_stb),
        .vx_we_o (s_we ),
        .vx_ack_i(s_ack),
@@ -472,25 +479,19 @@ module tart
        .vx_adr_o(v_blk),
        .vx_dat_i(s_dat),
 
+       //  Visibilities status & control signals:
+       .vx_enabled(vx_enabled),
+       .vx_overwrite(overwrite), // overwrite when buffers full?
+       .vx_stuck_i(stuck),
+       .vx_limp_i (limp),
+
        .overflow (overflow),
        .newblock (newblock), // strobes when new block ready
        .streamed (streamed), // has an entire block finished streaming?
        .accessed (accessed), // asserts once visibilities are read back
        .available(available),
        .checksum (checksum),
-       .blocksize(blocksize),
-
-       .vx_enabled(vx_enabled),
-       .vx_overwrite(overwrite), // overwrite when buffers full?
-       .vx_stuck_i(stuck),
-       .vx_limp_i (limp),
-
-       //  Antenna capture & acquisition controls:
-       .aq_debug_mode(aq_debug),
-       .aq_enabled(aq_enabled),
-       .aq_sample_delay(aq_delay),
-//        .aq_adr_i(cmd_address)
-       .aq_adr_i({21'h0, v_blk})
+       .blocksize(blocksize)
        );
 
 
@@ -516,25 +517,22 @@ module tart
  `endif
        ) DSP
      ( .clk_x(clk_x),
+       .clk_i(b_clk),
        .rst_i(reset),
-       .aq_clk_i(b_clk),        // Bus between DSP and acquisition unit
-       .aq_cyc_i(s_cyc),
-       .aq_stb_i(s_stb),
-       .aq_we_i (s_we),
- `ifndef __WB_SPEC_B4
-       .aq_bst_i(1'b0),
- `endif
-       .aq_ack_o(s_ack),
-       .aq_wat_o(s_wat),
-       .aq_rty_o(s_rty),
-       .aq_err_o(s_err),
-       .aq_adr_i(v_blk),
-       .aq_dat_i(8'bx),
-       .aq_dat_o(s_dat),
 
-       .stuck_o  (stuck),
-       .limp_o   (limp),
+       //  Wishbone (SPEC B4) bus between DSP and acquisition unit:
+       .cyc_i(s_cyc),
+       .stb_i(s_stb),
+       .we_i (s_we),
+       .ack_o(s_ack),
+       .wat_o(s_wat),
+       .rty_o(s_rty),
+       .err_o(s_err),
+       .adr_i(v_blk),
+       .dat_i(8'bx),
+       .dat_o(s_dat),
 
+       //  Correlator control & status signals:
        .vx_enable(vx_enabled),
        .vx_stream(spi_busy),
        .vx_block (c_blk),
@@ -545,7 +543,11 @@ module tart
        .overflow (overflow),
        .newblock (newblock),
        .checksum (checksum),
-       .streamed (streamed)
+       .streamed (streamed),
+
+       //  Miscellaneous debugging/status signals:
+       .stuck_o  (stuck),
+       .limp_o   (limp)
        );
  `endif //  `ifdef __USE_CORRELATORS
 

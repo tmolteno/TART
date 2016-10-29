@@ -18,6 +18,7 @@
  *    primitives (to ensure that both behaviours match);
  * 
  * TODO:
+ *  + initialisation value is wrong?
  * 
  */
 
@@ -56,7 +57,7 @@ module MUX8
    assign x = s[2] ? ux : lx;
 
    initial begin : SIM_MUX8
-      $display("Module : MUX8 (Behavioural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
+      $display("Module : MUX8 (%m, Behavioural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
    end
 
    always @*
@@ -70,10 +71,11 @@ module MUX8
 
    wire [MSB:0]    lx, ux;
 
-   initial begin : SIM_MUX8
-      $display("Module : MUX8 (Structural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
+   initial begin
+      $display("Module : MUX8 (%m, Structural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
    end
 
+   // FIXME: Initialisation value is wrong?
    LUT6_L
      #( .INIT(64'b1111111100000000111100001111000011001100110011001010101010101010)
         ) LUT0 [MSB:0]

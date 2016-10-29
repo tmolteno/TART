@@ -248,8 +248,8 @@
 //----------------------------------------------------------------------------
 //  Selects whether to simulate Xilinx primitives, or to use (hopefully)
 //  equivalent code instead.
-`define __SIMULATE_XILINX_PRIMITIVES
-// `undef  __SIMULATE_XILINX_PRIMITIVES
+// `define __SIMULATE_XILINX_PRIMITIVES
+`undef  __SIMULATE_XILINX_PRIMITIVES
 
 
 

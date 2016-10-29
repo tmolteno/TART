@@ -56,7 +56,6 @@
          .wat_o(wat),
          .rty_o(rty),
          .err_o(err),
-         .adr_i(adr),
          .sel_i(sel),
          .dat_i(din),
          .dat_o(dout),
@@ -66,7 +65,9 @@
          .sram_be_o(sram_be),
          .sram_ad_o(sram_ad),
          .sram_do_i(sram_do),
-         .sram_di_o(sram_di)
+         .sram_di_o(sram_di),
+ 
+         .wrapped_o(wrapped)
          );
 */
 
@@ -173,7 +174,7 @@ module wb_sram_stream
    //-------------------------------------------------------------------------
     wb_sram_interface
      #(  .WIDTH(WIDTH), // Data and address bit-widths
-         .ABITS(ABITS),
+         .ABITS(WBITS),
          .USEBE(USEBE), // Use individual byte-enables (0/1)?
          .BYTES(BYTES),
          .TICKS(TICKS), // SRAM latency
@@ -211,9 +212,9 @@ module wb_sram_stream
    //-------------------------------------------------------------------------
    //  Additional debug/configuration output.
    //-------------------------------------------------------------------------
-   initial begin : STREAM_BLOCK
+   initial begin
       $display("\nModule : wb_sram_stream (%m)\n\tWIDTH\t= %4d\n\tWORDS\t= %4d\n\tWBITS\t= %4d\n\tSTART\t= %4d\n\tSTEP\t= %4d\n\tLAST\t= %4d\n", WIDTH, WORDS, WBITS, START, STEP, LAST);
-   end // STREAM_BLOCK
+   end
 
 
 endmodule // wb_sram_stream

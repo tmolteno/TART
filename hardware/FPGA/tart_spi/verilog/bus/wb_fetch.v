@@ -51,7 +51,9 @@ module wb_fetch
 
     //  Additional mode parameters:
     parameter PIPED = 1,        // Pipelined (WB SPEC B4) transfers (0/1)?
-    parameter BURST = 1,        // Pipelined burst transfers (0/1)?
+    parameter CHECK = 1,        // Sanity-checking when sharing a bus (0/1)?
+
+    //  Simulation-only parameters:
     parameter DELAY = 3)        // combinational simulation delay (ns)
    (
     input          clk_i,

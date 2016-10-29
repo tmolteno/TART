@@ -68,8 +68,10 @@ module top_DSP
     parameter DUPS  = 0,        // Duplicate high-fanout registers (0/1)?
 
     //  SRAM address bits:
-    parameter ABITS = TBITS+XBITS, // External I/O address bits
-    parameter ASB   = ABITS-1,
+    parameter ABITS = TBITS+XBITS, // Internal address bits
+    parameter ASB   = ABITS-1,     // MSB of internal address
+    parameter JBITS = ABITS+3,     // External I/O address bits
+    parameter JSB   = JBITS-1,     // MSB of external address
 
     //  Simulation-only parameters:
     parameter DELAY = 3)
@@ -84,18 +86,22 @@ module top_DSP
     input [ISB:0]  re_i, // real component of imput
     input [ISB:0]  im_i, // imaginary component of input
 
+    output [XSB:0] bank_o,      // output the active correlator bank
+
     //  SRAM interface for reading back the visibilities:
     input          sram_ce_i,
-    input [ASB:0]  sram_adr_i,
-    output [QSB:0] sram_dat_o
-//     output [MSB:0] sram_dat_o   // NOTE: 2 cycles of read latency
+    input [JSB:0]  sram_ad_i,
+    output [MSB:0] sram_do_o    // NOTE: 2 cycles of read latency
     );
 
 
    wire [TSB:0]    x_rd_adr, x_wr_adr, y_rd_adr, y_wr_adr;
+   wire [XSB:0]    bank_adr;
    wire            sw, en;
-   wire [XSB:0]    bank;
    wire [ISB:0]    re, im;
+
+
+   assign bank_o = bank_adr;
 
 
    //-------------------------------------------------------------------------
@@ -120,9 +126,9 @@ module top_DSP
         .x_wr_adr_o(x_wr_adr),
         .y_rd_adr_o(y_rd_adr),
         .y_wr_adr_o(y_wr_adr),
+        .bank_o    (bank_adr), // active visibilities bank
         .swap_o    (sw), // bank-swap in progress
         .en_o      (en),
-        .bank_o    (bank), // active visibilities bank
         .real_o    (re),
         .imag_o    (im)
         );
@@ -154,16 +160,17 @@ module top_DSP
         .x_wr_adr_i(x_wr_adr),
         .y_rd_adr_i(y_rd_adr),
         .y_wr_adr_i(y_wr_adr),
+        .bank_adr_i(bank_adr),
 
         .sw_i(sw), // switch banks
         .en_i(en), // data is valid
         .re_i(re), // real component of imput
         .im_i(im), // imaginary component of input
 
-        .sram_clk_i(clk_i),
-        .sram_ce_i (sram_ce_i),
-        .sram_adr_i(sram_adr_i),
-        .sram_dat_o(sram_dat_o)
+        .sram_ck_i(clk_i),
+        .sram_ce_i(sram_ce_i),
+        .sram_ad_i(sram_ad_i),
+        .sram_do_o(sram_do_o)
         );
 
 

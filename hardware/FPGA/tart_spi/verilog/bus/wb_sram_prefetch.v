@@ -31,27 +31,78 @@
  * 
  */
 
+
+/*
+ Instantiation template:
+ 
+    wb_sram_prefetch
+     #(  .WIDTH(DATA), // Data and address bit-widths
+         .ABITS(ADDR),
+         .TICKS(1),    // Read latency of the attached SRAM
+         .READ (1),    // Support SRAM reads (0/1)?
+         .WRITE(1),    // Support SRAM writes (0/1)?
+         .USEBE(1),    // Use individual byte-enables (0/1)?
+         .BYTES(1),    // Number of byte-enables
+         .PIPED(1),    // Pipelined Wishbone (SPEC B4) transfers (0/1)?
+         .ASYNC(1),    // Combinational vs. synchronous (0/1/2)?
+         .CHECK(1),    // Sanity-checking of inputs (0/1)?
+         .DELAY(3)     // 3ns simulation combinational delay
+         ) SRAM_PORT
+       ( .clk_i(clk),
+         .rst_i(rst),
+
+         .begin_i(start), // Begins a prefetch
+         .ready_o(ready), // Strobes once complete
+ 
+         .cyc_i(cyc),
+         .stb_i(stb),
+         .we_i (we),
+         .ack_o(ack),
+         .wat_o(wat),
+         .rty_o(rty),
+         .err_o(err),
+         .adr_i(adr),
+         .sel_i(sel),
+         .dat_i(din),
+         .dat_o(dout),
+
+         .sram_ce_o(sram_ce),
+         .sram_we_o(sram_we),
+         .sram_be_o(sram_be),
+         .sram_ad_o(sram_ad),
+         .sram_do_i(sram_do),
+         .sram_di_o(sram_di)
+         );
+*/
+
 module wb_sram_prefetch
   #(// Wishbone bus parameters:
     parameter WIDTH = 32,       // word bit-width (32-bit is max)
     parameter MSB   = WIDTH-1,  // word MSB
+    parameter USEBE = 1,        // generate (write) byte-enables (0/1)?
     parameter BYTES = WIDTH>>3, // Byte-select bits
     parameter SSB   = BYTES-1,  // MSB of the byte-selects
     parameter ABITS = CBITS+BBITS, // address bit-width
     parameter ASB   = ABITS-1,     // address MSB
-    parameter ESB   = ASB+2,       // address MSB for byte-wide access
 
-    //  Prefetcher, block-size parameters:
+    //  Prefetch-blocks parameters:
     parameter COUNT = 24,       // blocks per complete prefetch
     parameter CBITS = 5,        // block-counter bits
     parameter CSB   = CBITS-1,  // block-counter MSB
     parameter CMAX  = COUNT-1,  // maximum (block-)counter value
+
+    //  Block-size parameters:
     parameter BSIZE = 24,       // words/block
     parameter BBITS = 5,        // word-counter bits
     parameter BSB   = BBITS-1,  // word-counter MSB
     parameter BMAX  = BSIZE-1,  // maximum (word-)counter value
 
-    parameter DELAY = 3)
+    //  Wishbone mode/settings parameters:
+    parameter PIPED = 1,        // SRAM supports pipelined transfers (0/1)?
+    parameter CHECK = 1,        // sanity-check when sharing a bus (0/1)?
+
+    //  Simulation-only parameters:
+    parameter DELAY = 3)        // simulation combinational delay (ns)
    (
     input          clk_i,
     input          rst_i,
@@ -87,25 +138,28 @@ module wb_sram_prefetch
    //  Prefetcher signal definitions.
    //-------------------------------------------------------------------------
    //  Block-fetcher (lower-address) control signals.
-   reg                 read = 1'b0;
-   wire                done;
-   wire [BSB:0]        lower;
+   reg             read = 1'b0;
+   wire            done;
+   wire [BSB:0]    lower;
 
    //  Block (upper-address) counter.
-   reg [CSB:0]         block = {CBITS{1'b0}};
-   reg [CSB:0]         block_nxt;
-   reg                 block_end = 1'b0;
-   wire [CBITS:0]      block_inc = block + 1;
+   reg [CSB:0]     block = {CBITS{1'b0}};
+   reg [CSB:0]     block_nxt;
+   reg             block_end = 1'b0;
+   wire [CBITS:0]  block_inc = block + 1;
 
    //  Local address counter.
-   reg [ASB:0]         count = {ABITS{1'b0}};
-   wire [ABITS:0]      count_inc = count + 1;
+   reg [ASB:0]     count = {ABITS{1'b0}};
+   wire [ABITS:0]  count_inc = count + 1;
 
    //  Fetch signals.
-   wire                f_cyc, f_stb, f_we, f_ack;
-   wire [ASB:0]        f_adr;
-   wire [SSB:0]        f_sel;
-   wire [MSB:0]        f_dat;
+   wire            f_cyc, f_stb, f_we, f_ack;
+   wire [ASB:0]    f_adr;
+   wire [SSB:0]    f_sel;
+   wire [MSB:0]    f_dat;
+
+   //  Internal Wishbone signals.
+   wire            stb_w, ack_w;
 
 
    //-------------------------------------------------------------------------
@@ -114,7 +168,6 @@ module wb_sram_prefetch
    //  External (master) Wishbone interface signals.
    assign adr_o = {block, lower};
    assign sel_o = {BYTES{1'b1}};
-   assign dat_o = dat_q[MSB:0];
 
    //  Internal (fetch) Wishbone interface signals.
    assign f_cyc = cyc_o;
@@ -123,6 +176,10 @@ module wb_sram_prefetch
    assign f_adr = count;
    assign f_sel = {BYTES{1'b1}};
    assign f_dat = dat_i;
+
+   //  Determine when a command has been received.
+   assign stb_w = CHECK ? cyc_o &&  stb_o : stb_o;
+   assign ack_w = PIPED ? stb_w && !wat_i : stb_w && ack_i;
 
 
    //-------------------------------------------------------------------------
@@ -162,7 +219,7 @@ module wb_sram_prefetch
    always @(posedge clk_i)
      if (begin_i)
        count <= #DELAY {ABITS{1'b0}};
-     else if (a_cyc_o && a_ack_i)
+     else if (ack_w)
        count <= #DELAY count_inc[ASB:0];
 
 
@@ -184,7 +241,9 @@ module wb_sram_prefetch
    //  Wishbone pipelined BURST READS functional unit.
    //-------------------------------------------------------------------------
    wb_fetch
-     #(  .FETCH(BSIZE), .FBITS(BBITS), .DELAY(DELAY)
+     #(  .FETCH(BSIZE),
+         .FBITS(BBITS),
+         .DELAY(DELAY)
          ) FETCH0
        ( .clk_i(clk_i),
          .rst_i(rst_i),
@@ -209,13 +268,13 @@ module wb_sram_prefetch
    wb_sram_interface
      #(  .WIDTH(WIDTH),
          .ABITS(ABITS),
-         .TICKS(TICKS),
+         .TICKS(1),             // ignored, as write-only
          .READ (0),
          .WRITE(1),
-         .USEBE(0),
+         .USEBE(USEBE),
          .BYTES(BYTES),
          .PIPED(1),
-         .ASYNC(1),
+         .ASYNC(0),             // synchronous ACK
          .CHECK(0),
          .DELAY(DELAY)
          ) SRAMWB
@@ -246,9 +305,9 @@ module wb_sram_prefetch
    //-------------------------------------------------------------------------
    //  Debug information.
    //-------------------------------------------------------------------------
-   initial begin : SRAM_PREFETCH
+   initial begin
       $display("\nModule : wb_sram_prefetch (%m)\n\tWIDTH\t= %4d\n\tBYTES\t= %4d\n\tABITS\t= %4d\n\tCOUNT\t= %4d\n\tCBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n", WIDTH, BYTES, ABITS, COUNT, CBITS, BSIZE, BBITS);
-   end // PREFETCH_BLOCK
+   end
 
 
    //-------------------------------------------------------------------------
@@ -257,8 +316,10 @@ module wb_sram_prefetch
    integer             rxd = 0;
 
    always @(posedge clk_i)
-     if (rst_i || begin_i) rxd <= #DELAY 0;
-     else if (a_cyc_o && a_ack_i) rxd <= #DELAY rxd+1;
+     if (rst_i || begin_i)
+       rxd <= #DELAY 0;
+     else if (ack_w)
+       rxd <= #DELAY rxd+1;
 `endif //  `ifdef __icarus
 
 

@@ -18,11 +18,12 @@
  *    and a system bus;
  *  + a bank-switch command causes accumulator values to be cleared upon first
  *    access after a switch, by giving the accumulator a zero input;
- *  + the bus clock can be much slower than the correlation clock, as multi-
- *    port SRAM's are used;
  *  + bus transactions read from the currently-innactive bank, to prevent
  *    possible metastability/corruption;
- *  + potentially uses quite a lot of the FPGA's distributed-RAM resources;
+ *  + the lower 3-bits of the SRAM read address select the SIN/COS# component
+ *    (LSB), and the correlator to read (bits [2:1]);
+ *  + SRAM read latency is 2 cycles, because the 8:1 MUX outputs are
+ *    registered;
  * 
  * Changelog:
  *  + 28/10/2016  --  initial file (rebuilt from `correlator_block_DSP.v`);
@@ -61,8 +62,10 @@ module block_DSP
     parameter NSRAM = ACCUM>>2, // #<block SRAM> for read-back
 
     //  SRAM address bits:
-    parameter ABITS = TBITS+XBITS, // External I/O address bits
-    parameter ASB   = ABITS-1,
+    parameter ABITS = TBITS+XBITS, // Internal address bits
+    parameter ASB   = ABITS-1,     // MSB of internal address
+    parameter JBITS = ABITS+3,     // External I/O address bits
+    parameter JSB   = JBITS-1,     // MSB of external address
 
     //  Simulation-only parameters:
     parameter DELAY = 3)
@@ -76,6 +79,8 @@ module block_DSP
     input [TSB:0]  y_rd_adr_i,
     input [TSB:0]  y_wr_adr_i,
 
+    input [XSB:0]  bank_adr_i,
+
     // Real and imaginary components from the antennas:
     input          sw_i, // switch banks
     input          en_i, // data is valid
@@ -83,10 +88,10 @@ module block_DSP
     input [ISB:0]  im_i, // imaginary component of input
 
     //  SRAM interface for reading back the visibilities:
-    input          sram_clk_i,
+    input          sram_ck_i,
     input          sram_ce_i,
-    input [ASB:0]  sram_adr_i,
-    output [QSB:0] sram_dat_o
+    input [JSB:0]  sram_ad_i,
+    output [MSB:0] sram_do_o
     );
 
 
@@ -94,8 +99,36 @@ module block_DSP
    wire [WSB:0]    vis0, vis1, vis2, vis3;
    wire [QSB:0]    vis;
 
+   //  SRAM address and data signals.
+   wire [2:0]      sram_sel;
+   wire [ASB:0]    sram_ad_w;
+   wire [QSB:0]    sram_do_w;
+   wire [MSB:0]    sram_do;
+   reg [MSB:0]     sram_dat;
+   wire [MSB:0]    sram_d0, sram_d2, sram_d4, sram_d6;
+   wire [MSB:0]    sram_d1, sram_d3, sram_d5, sram_d7;
 
+
+   //-------------------------------------------------------------------------
+   //  Output data assignment.
+   assign sram_do_o = sram_dat;
+
+   //  Assign the internal addresses, and device-selects.
+   assign sram_ad_w = sram_ad_i[JSB:3];
+   assign sram_sel  = sram_ad_i[2:0];
+
+   //  Data-signal assignments.
+   assign {sram_d7, sram_d6, sram_d5, sram_d4,
+           sram_d3, sram_d2, sram_d1, sram_d0} = sram_do_w;
+
+   //  Visibilities assignments.
    assign vis = {vis3, vis2, vis1, vis0};
+
+
+   //-------------------------------------------------------------------------
+   //  Capture MUX'd data.
+   always @(posedge sram_ck_i)
+     sram_dat <= #DELAY sram_do;
 
 
    //-------------------------------------------------------------------------
@@ -179,6 +212,24 @@ module block_DSP
 
 
    //-------------------------------------------------------------------------
+   //  Explicitly instantiate an 8:1 MUX for the output-data, so that it can
+   //  be floor-planned.
+   //-------------------------------------------------------------------------
+   MUX8 #( .WIDTH(ACCUM) ) DMUX
+     ( .a(sram_d0),
+       .b(sram_d1),
+       .c(sram_d2),
+       .d(sram_d3),
+       .e(sram_d4),
+       .f(sram_d5),
+       .g(sram_d6),
+       .h(sram_d7),
+       .s(sram_sel),
+       .x(sram_do)
+       );
+
+
+   //-------------------------------------------------------------------------
    //  Explicit instantiation, because explicitly placing them is needed to
    //  consistently meet timing (and XST sometimes gets the primitive wrong).
    //-------------------------------------------------------------------------
@@ -186,14 +237,14 @@ module block_DSP
      ( //  Write port.
        .WCLK (clk_x),
        .WE   (write),
-       .WADDR({bank_i, x_wr_adr_i}),
+       .WADDR({bank_adr_i, x_wr_adr_i}),
        .DI   (vis),
 
        //  Read port.
-       .RCLK (sram_clk_i),
+       .RCLK (sram_ck_i),
        .CE   (sram_ce_i),
-       .RADDR(sram_adr_i),
-       .DO   (sram_dat_o)
+       .RADDR(sram_ad_w),
+       .DO   (sram_do_w)
        );
 
 

@@ -11,7 +11,7 @@ BUS =$(RTL)/bus
 SPI =$(RTL)/spi
 
 # Some Wishbone-like cores:
-WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v $(BUS)/wb_sram_interface.v $(BUS)/wb_chunk.v $(BUS)/wb_prefetch_pipelined.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_read.v $(BUS)/wb_write.v $(BUS)/wb_transfer.v
+WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram_interface.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_sram_stream.v $(BUS)/wb_sram_prefetch.v
 
 # WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_prefetch.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v $(BUS)/wb_sram_interface.v $(BUS)/wb_chunk.v $(BUS)/wb_prefetch_pipelined.v $(BUS)/wb_fetch.v
 
@@ -20,13 +20,14 @@ LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_a
 
 # Simulation-only files:
 XIL =xilinx
-SIM =$(XIL)/DSP48A1.v $(XIL)/RAMB16_S9_S36.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
+SIM =$(XIL)/DSP48A1.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
 
 DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(RTL)/dram_prefetch.v
 OLD =$(SPI)/spi_target.v $(RTL)/tart_spi.v
 
 ##  Correlator files:
-COR =$(RTL)/tart_visibilities.v $(RTL)/tart_correlator.v $(RTL)/tart_bank_switch.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_block_DSP.v $(RTL)/correlator/correlator_SDP.v $(RTL)/correlator/correlator_DSP.v $(RTL)/correlator/rmw_address_unit.v $(RTL)/correlator/correlate_cos_sin.v $(RTL)/correlator/correlate_cos_sin_DSP.v $(RTL)/correlator/fake_hilbert.v $(RTL)/correlator/control.v
+COR =$(RTL)/tart_visibilities.v $(RTL)/tart_bank_switch.v $(RTL)/correlator_block_SDP.v $(RTL)/correlator_block_DSP.v $(RTL)/correlator/correlator_SDP.v $(RTL)/correlator/correlator_DSP.v $(RTL)/correlator/rmw_address_unit.v $(RTL)/correlator/correlate_cos_sin.v $(RTL)/correlator/correlate_cos_sin_DSP.v $(RTL)/correlator/fake_hilbert.v $(RTL)/correlator/control.v $(RTL)/correlator/block_DSP.v $(RTL)/correlator/top_DSP.v $(RTL)/correlator/top.v
+# $(RTL)/tart_correlator.v
 
 ##  DSP files:
 DSP =$(COR) $(RTL)/tart_dsp.v

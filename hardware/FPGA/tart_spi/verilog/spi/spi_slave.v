@@ -53,6 +53,9 @@ module spi_slave
      output reg         stb_o = 1'b0,
      output             we_o,
      input              ack_i,
+     input              wat_i,  // TODO: currently ignored
+     input              rty_i,  // TODO: currently ignored
+     input              err_i,  // TODO: currently ignored
      output reg [ASB:0] adr_o,
      input [MSB:0]      dat_i,
      output reg [MSB:0] dat_o,

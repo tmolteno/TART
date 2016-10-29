@@ -1,21 +1,21 @@
 [*]
-[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
-[*] Thu Oct 27 21:19:19 2016
+[*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
+[*] Sat Oct 29 08:03:26 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/dsp_tb.vcd"
-[dumpfile_mtime] "Thu Oct 27 21:17:24 2016"
-[dumpfile_size] 34357988
+[dumpfile_mtime] "Sat Oct 29 08:02:06 2016"
+[dumpfile_size] 7733474
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
-[timestart] 270000
-[size] 1920 1056
+[timestart] 3233000
+[size] 2560 1416
 [pos] -1 -1
-*-21.103737 8743000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.584072 4064100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
 [treeopen] tart_dsp_tb.TART_DSP.VIZ.
 [treeopen] tart_dsp_tb.TART_DSP.VIZ.BUF0.
-[sst_width] 225
-[signals_width] 158
+[sst_width] 223
+[signals_width] 150
 [sst_expanded] 1
 [sst_vpaned_height] 447
 @800200
@@ -55,7 +55,7 @@ tart_dsp_tb.val[7:0]
 tart_dsp_tb.dat[7:0]
 @1401200
 -Bus
-@c00200
+@800200
 -Fetch
 @28
 tart_dsp_tb.get
@@ -64,9 +64,8 @@ tart_dsp_tb.f_cnt[1:0]
 @22
 tart_dsp_tb.f_adr[9:0]
 tart_dsp_tb.f_dat[23:0]
-@1401200
--Fetch
 @1000200
+-Fetch
 -== TOP ==
 @800200
 -DSP Bus
@@ -94,35 +93,18 @@ tart_dsp_tb.TART_DSP.VIZ.empty
 tart_dsp_tb.TART_DSP.VIZ.start
 @800200
 -from
-@28
-tart_dsp_tb.TART_DSP.c_cyc
-tart_dsp_tb.TART_DSP.c_stb
-tart_dsp_tb.TART_DSP.c_we
-tart_dsp_tb.TART_DSP.c_ack
-tart_dsp_tb.TART_DSP.c_wat
-tart_dsp_tb.TART_DSP.c_err
 @22
 tart_dsp_tb.TART_DSP.c_adr[13:0]
-tart_dsp_tb.TART_DSP.c_drx[23:0]
 @1000200
 -from
-@28
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_cyc_i
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_stb_i
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_we_i
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_ack_o
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_wat_o
-@22
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_adr_i[11:0]
-tart_dsp_tb.TART_DSP.VIZ.BUF0.b_dat_o[7:0]
-@800201
+@800200
 -Fetch
-@29
+@28
 tart_dsp_tb.TART_DSP.VIZ.BUF0.read
 tart_dsp_tb.TART_DSP.VIZ.BUF0.done
-@23
+@22
 tart_dsp_tb.TART_DSP.VIZ.BUF0.count[9:0]
-@c00201
+@800200
 -Internal
 @28
 tart_dsp_tb.TART_DSP.VIZ.BUF0.FETCH0.cyc_w
@@ -131,84 +113,63 @@ tart_dsp_tb.TART_DSP.VIZ.BUF0.FETCH0.ack_i
 tart_dsp_tb.TART_DSP.VIZ.BUF0.FETCH0.cqi[1:0]
 @22
 tart_dsp_tb.TART_DSP.VIZ.BUF0.lower[4:0]
-@1401201
+@1000200
 -Internal
-@800201
+@800200
 -Port A
-@29
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_a_ce
-@23
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_a_bes[3:0]
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_a_adr[9:0]
-tart_dsp_tb.TART_DSP.VIZ.BUF0.wb_to_sram[31:0]
-@1000201
+@28
+tart_dsp_tb.TART_DSP.sram_a_ce
+tart_dsp_tb.TART_DSP.sram_a_we
+@22
+tart_dsp_tb.TART_DSP.sram_a_ad[9:0]
+tart_dsp_tb.TART_DSP.sram_a_be[3:0]
+tart_dsp_tb.TART_DSP.sram_a_lo[15:0]
+tart_dsp_tb.TART_DSP.sram_a_hi[15:0]
+@1000200
 -Port A
-@800201
+@800200
 -Port B
-@29
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_b_ce
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_b_we
-@23
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_b_adr[11:0]
-tart_dsp_tb.TART_DSP.VIZ.BUF0.sram_to_wb[7:0]
-@1000201
+@28
+tart_dsp_tb.TART_DSP.sram_b_ce
+tart_dsp_tb.TART_DSP.sram_b_we
+@22
+tart_dsp_tb.TART_DSP.sram_b_ad[11:0]
+@28
+tart_dsp_tb.TART_DSP.sram_b_be
+@22
+tart_dsp_tb.TART_DSP.sram_b_do[7:0]
+@1000200
 -Port B
 -Fetch
-@1000200
 -Prefetch
-@800200
+@800201
 -Stream
-@28
+@29
 tart_dsp_tb.TART_DSP.stream_reset
 tart_dsp_tb.TART_DSP.v_cyc
 tart_dsp_tb.TART_DSP.v_stb
 tart_dsp_tb.TART_DSP.v_we
-tart_dsp_tb.TART_DSP.v_bst
 tart_dsp_tb.TART_DSP.v_ack
 tart_dsp_tb.TART_DSP.v_wat
-@22
-tart_dsp_tb.TART_DSP.v_adr[11:0]
-tart_dsp_tb.TART_DSP.v_drx[7:0]
-@1000200
+@23
+tart_dsp_tb.TART_DSP.c_adr[13:0]
+tart_dsp_tb.TART_DSP.v_dtx[23:0]
+tart_dsp_tb.TART_DSP.v_drx[23:0]
+@1000201
 -Stream
+@1000200
 --- Viz --
-@c00200
+@800200
 --- Cor --
-@800200
--BLK0
--Bus
-@28
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.cyc_i
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.stb_i
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.we_i
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.bst_i
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.ack_o
 @22
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.adr_i[10:0]
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.dat_o[23:0]
+tart_dsp_tb.TART_DSP.COR.sram_d0[23:0]
+tart_dsp_tb.TART_DSP.COR.sram_d1[23:0]
+@28
+tart_dsp_tb.TART_DSP.COR.sel[2:0]
+@22
+tart_dsp_tb.TART_DSP.COR.sram_do[23:0]
+tart_dsp_tb.TART_DSP.COR.sram_out[23:0]
 @1000200
--Bus
-@28
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.clear
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.vld
-@22
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.block[3:0]
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.x_wr_adr[3:0]
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.vis[191:0]
-@800200
--DSP0
-@28
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.CORRELATOR0.sw
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.CORRELATOR0.vld
-@22
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.CORRELATOR0.dsin[23:0]
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.CORRELATOR0.dcos[23:0]
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.CORRELATOR0.qsin[23:0]
-tart_dsp_tb.TART_DSP.COR.CXBLOCK0.CORRELATOR0.qcos[23:0]
-@1000200
--DSP0
--BLK0
-@1401200
 --- Cor --
 [pattern_trace] 1
 [pattern_trace] 0
