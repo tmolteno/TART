@@ -33,28 +33,31 @@
 `include "tartcfg.v"
 
 module wb_stream
-  #(parameter WIDTH = 8,
+  #(//  Parameters for the bus bit-widths:
+    parameter WIDTH = 8,
     parameter MSB   = WIDTH-1,
     parameter WBITS = 10,
     parameter WORDS = 1 << WBITS,
     parameter ASB   = WBITS-1,
+
+    //  Counter parameters:
+    parameter RESET = 1,        // Resettable address counter?
     parameter START = {WIDTH{1'b0}},
     parameter LAST  = START+WORDS-1,
     parameter STEP  = 1,
 
-    // Wishbone bus mode parameters:
+    //  Wishbone bus mode parameters:
     parameter ASYNC = 1,     // combinational control signals (0/1/2)?
     parameter PIPED = 1,     // pipelined (SPEC B4) transfers (0/1)?
     parameter CHECK = 0,     // TODO: extra sanity-checking (0/1)?
 
-    // Simulation-only parameters:
+    //  Simulation-only parameters:
     parameter DELAY = 3)
    (
-    // Common system signals:
     input          clk_i,
     input          rst_i,
 
-    // Prefetching, Wishbone-like (master) bus interface, to block device:
+    //  Prefetching, Wishbone-like (master) bus interface, to block device:
     output         m_cyc_o,
     output         m_stb_o,
     output         m_we_o,
@@ -69,7 +72,7 @@ module wb_stream
     input [MSB:0]  m_dat_i,
     output [MSB:0] m_dat_o,
 
-    // Streaming/serial, Wishbone-like (slave) bus interface:
+    //  Streaming/serial, Wishbone-like (slave) bus interface:
     input          s_cyc_i,
     input          s_stb_i,
     input          s_we_i,
@@ -87,9 +90,9 @@ module wb_stream
     );
 
 
-   wire                inc, cyc_w, inc_w, wrap_adr;
-   reg [ASB:0]         adr = START;
-   wire [WBITS:0]      next_adr;
+   wire            inc, cyc_w, inc_w, wrap_adr;
+   reg [ASB:0]     adr = START;
+   wire [WBITS:0]  next_adr;
 
 
    //-------------------------------------------------------------------------
@@ -133,7 +136,7 @@ module wb_stream
 
    //  Strobe the `wrapped` signal after each complete transfer.
    always @(posedge clk_i)
-     if (!rst_i || !CHECK)
+     if (rst_i && RESET)
        wrapped <= #DELAY 1'b0;
      else if (inc)
        wrapped <= #DELAY wrap_adr;
@@ -145,7 +148,7 @@ module wb_stream
    //  Additional debug/configuration output.
    //-------------------------------------------------------------------------
    initial begin : STREAM_BLOCK
-      $display("\nModule : wb_stream\n\tWIDTH\t= %4d\n\tWORDS\t= %4d\n\tWBITS\t= %4d\n\tSTART\t= %4d\n\tSTEP\t= %4d\n\tLAST\t= %4d\n", WIDTH, WORDS, WBITS, START, STEP, LAST);
+      $display("\nModule : wb_stream (%m)\n\tWIDTH\t= %4d\n\tWORDS\t= %4d\n\tWBITS\t= %4d\n\tSTART\t= %4d\n\tSTEP\t= %4d\n\tLAST\t= %4d\n", WIDTH, WORDS, WBITS, START, STEP, LAST);
    end // STREAM_BLOCK
 
 

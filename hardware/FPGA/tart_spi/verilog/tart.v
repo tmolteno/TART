@@ -369,28 +369,51 @@ module tart
    //-------------------------------------------------------------------------
    //     SPI SLAVE CORE with a WISHBONE(-like) INTERCONNECT
    //-------------------------------------------------------------------------
-   spi_slave #( .WIDTH(BBITS) ) SPI_SLAVE0
-     ( .clk_i(b_clk),
-       .rst_i(b_rst),
-       .cyc_o(b_cyc),
-       .stb_o(b_stb),
-       .we_o (b_we),
-       .ack_i(b_ack),
-       .adr_o(b_adr),
-       .dat_i(b_dtx),
-       .dat_o(b_drx),
+`ifdef __USE_SPI_SLAVE_WB
+   wire  b_wat, b_rty, b_err;
 
-       .active_o(spi_busy),
-//        .status_i(spi_status),
-       .status_i(viz_status),
-       .overflow_o(oflow),
-       .underrun_o(uflow),
-       
-       .SCK_pin(SPI_SCK),
-       .MOSI(SPI_MOSI),
-       .MISO(SPI_MISO),
-       .SSEL(SPI_SSEL)
-       );
+   assign b_wat = 1'b0;
+   assign b_rty = 1'b0;
+   assign b_err = 1'b0;
+
+   spi_slave_wb
+     #( .WIDTH(BBITS),
+        .ASYNC(1),
+        .PIPED(1),
+        .CHECK(1)
+        ) SPI0
+`else
+   spi_slave
+     #( .WIDTH(BBITS)
+        ) SPI0
+`endif
+       (
+        .clk_i(b_clk),
+        .rst_i(b_rst),
+        .cyc_o(b_cyc),
+        .stb_o(b_stb),
+        .we_o (b_we),
+        .ack_i(b_ack),
+`ifdef __USE_SPI_SLAVE_WB
+        .wat_i(b_wat),
+        .rty_i(b_rty),
+        .err_i(b_err),
+`endif
+        .adr_o(b_adr),
+        .dat_i(b_dtx),
+        .dat_o(b_drx),
+
+        .active_o(spi_busy),
+        //        .status_i(spi_status),
+        .status_i(viz_status),
+        .overflow_o(oflow),
+        .underrun_o(uflow),
+        
+        .SCK_pin(SPI_SCK),
+        .MOSI(SPI_MOSI),
+        .MISO(SPI_MISO),
+        .SSEL(SPI_SSEL)
+        );
 
    //-------------------------------------------------------------------------
    //     RESET HANDLER

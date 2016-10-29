@@ -151,9 +151,12 @@ module correlator_block_DSP
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
 `ifdef __NO_DSP_DUPS
-   wire [TSB:0]        x_rd_adr;
-   wire [TSB:0]        x_wr_adr;
+   wire [TSB:0]        x_rd_adr, x_wr_adr;
+   wire [TSB:0]        y_rd_adr, y_wr_adr;
    wire                wrap_x_rd_adr, wrap_x_wr_adr;
+
+   assign y_rd_adr = x_rd_adr;
+   assign y_wr_adr = x_wr_adr;
 
    rmw_address_unit
      #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(TICKS)
@@ -166,7 +169,8 @@ module correlator_block_DSP
          .wr_adr_o(x_wr_adr),
          .wr_wrap_o(wrap_x_wr_adr)
          );
-`else
+`else // !`ifdef __NO_DSP_DUPS
+
    (* KEEP = "TRUE" *) wire [TSB:0] x_rd_adr;
    (* KEEP = "TRUE" *) wire [TSB:0] x_wr_adr;
    (* KEEP = "TRUE" *) wire [TSB:0] y_rd_adr;
@@ -196,7 +200,8 @@ module correlator_block_DSP
          .wr_adr_o(y_wr_adr),
          .wr_wrap_o()
          );
-`endif
+`endif // !`ifdef __NO_DSP_DUPS
+
 
    //-------------------------------------------------------------------------
    //  Banks are switched at the next address-wrap event.
@@ -314,13 +319,8 @@ module correlator_block_DSP
          .en(en),
          .re(re),
          .im(im),
-`ifdef __NO_DSP_DUPS
-         .rd(x_rd_adr),
-         .wr(x_wr_adr),
-`else
          .rd(y_rd_adr),
          .wr(y_wr_adr),
-`endif
 
          .vld(),
          .vis(vis[WIDTH+WIDTH+WSB:WIDTH+WIDTH])
@@ -338,13 +338,8 @@ module correlator_block_DSP
          .en(en),
          .re(re),
          .im(im),
-`ifdef __NO_DSP_DUPS
-         .rd(x_rd_adr),
-         .wr(x_wr_adr),
-`else
          .rd(y_rd_adr),
          .wr(y_wr_adr),
-`endif
 
          .vld(),
          .vis(vis[WIDTH+WIDTH+WIDTH+WSB:WIDTH+WIDTH+WIDTH])

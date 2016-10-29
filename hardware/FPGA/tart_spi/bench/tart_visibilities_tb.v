@@ -31,7 +31,7 @@ module tart_visibilities_tb;
    integer      num = 0;
    integer      ptr = 0;
    initial begin : SIM_BLOCK
-      $dumpfile ("correlator_tb.vcd");
+      $dumpfile ("vcd/correlator_tb.vcd");
       $dumpvars;
 
       //----------------------------------------------------------------------

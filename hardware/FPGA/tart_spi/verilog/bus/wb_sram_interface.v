@@ -20,28 +20,80 @@
  *  + supports burst transfers -- these are indicated by `bst_i` being
  *    asserted at the beginning of a transaction, and deasserted one cycle
  *    before the final (pipelined) `ack_o`;
+ *  + if CHECK == 0 the CYC signal is ignored, reducing the circuit-size when
+ *    using point-to-point interconnects;
  * 
  * TODO:
  * 
  */
 
+
+/*
+ Instantiation template:
+ 
+    wb_sram_interface
+     #(  .WIDTH(DATA), // Data and address bit-widths
+         .ABITS(ADDR),
+         .TICKS(1),    // Read latency of the attached SRAM
+         .READ (1),    // Support SRAM reads (0/1)?
+         .WRITE(1),    // Support SRAM writes (0/1)?
+         .USEBE(1),    // Use individual byte-enables (0/1)?
+         .BYTES(1),    // Number of byte-enables
+         .PIPED(1),    // Pipelined Wishbone (SPEC B4) transfers (0/1)?
+         .ASYNC(1),    // Combinational vs. synchronous (0/1/2)?
+         .CHECK(1),    // Sanity-checking of inputs (0/1)?
+         .DELAY(3)     // 3ns simulation combinational delay
+         ) SRAM_PORT
+       ( .clk_i(clk),
+         .rst_i(rst),
+
+         .cyc_i(cyc),
+         .stb_i(stb),
+         .we_i (we),
+         .ack_o(ack),
+         .wat_o(wat),
+         .rty_o(rty),
+         .err_o(err),
+         .adr_i(adr),
+         .sel_i(sel),
+         .dat_i(din),
+         .dat_o(dout),
+
+         .sram_ce_o(sram_ce),
+         .sram_we_o(sram_we),
+         .sram_be_o(sram_be),
+         .sram_ad_o(sram_ad),
+         .sram_do_i(sram_do),
+         .sram_di_o(sram_di)
+         );
+*/
+
 module wb_sram_interface
-  #(parameter ABITS = 10,       // Address bit-width
+  #(parameter WIDTH = 32,       // Data bit-width
+    parameter MSB   = WIDTH-1,  // MSB of data
+    parameter ABITS = 10,       // Address bit-width
     parameter ASB   = ABITS-1,  // MSB of address
+    parameter READ  = 1,        // Support SRAM reads (0/1)?
+    parameter WRITE = 1,        // Support SRAM writes (0/1)?
     parameter USEBE = 1,        // Use individual write byte-enables (0/1)?
     parameter BYTES = WIDTH>>3, // Number of byte-enables
     parameter BSB   = BYTES-1,  // MSB of byte-enables
-    parameter WIDTH = 32,       // Data bit-width
-    parameter MSB   = WIDTH-1,  // MSB of data
-    parameter PIPED = 1,        // SRAM supports pipelined transfers (0/1)?
+
+    //  SRAM latency parameters:
     parameter TICKS = 1,        // Read latency, in cycles
+    parameter TSB   = TICKS-1,  // MSB of ticks shifter-register
+
+    //  Wishbone mode/settings parameters:
+    parameter PIPED = 1,        // SRAM supports pipelined transfers (0/1)?
     parameter ASYNC = TICKS==0, // Asynchronous reads
-    parameter TSB   = TICKS-1,
+    parameter CHECK = 1,
+
+    //  Simulation-only parameters:
     parameter DELAY = 3)
-   (
-    // Wishbone-like bus interface:
-    input          clk_i,
+   (input          clk_i,
     input          rst_i,
+
+    //  Wishbone (SPEC B4) bus interface:
     input          cyc_i,
     input          stb_i,
     input          we_i,
@@ -54,45 +106,51 @@ module wb_sram_interface
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
 
+    //  SRAM control and data signals:
     output         sram_ce_o,
     output         sram_we_o,
-    output [ASB:0] sram_adr_o,
-    output [BSB:0] sram_bes_o,
-    input [MSB:0]  sram_dat_i,
-    output [MSB:0] sram_dat_o
+    output [ASB:0] sram_ad_o,
+    output [BSB:0] sram_be_o,
+    input [MSB:0]  sram_do_i,
+    output [MSB:0] sram_di_o
     );
 
-
-   //-------------------------------------------------------------------------
-   //  Output (shift-)registers.
-   //-------------------------------------------------------------------------
+   wire            cyc_w, stb_w, we_w;
    reg [TSB:0]     ack_out = {TICKS{1'b0}};
-   reg [TSB:0]     wat_out = {TICKS{1'b0}};
+   wire [TICKS:0]  ack_nxt;
 
 
    //-------------------------------------------------------------------------
    //  Line drivers for the WB and SRAM interfaces.
    //-------------------------------------------------------------------------
-   assign ack_o = ASYNC ? cyc_i && stb_i : ack_out[TSB];
-   assign wat_o = TICKS > 1 && !PIPED ? wat_out : 1'b0; // TODO
+   assign ack_o = ASYNC ? stb_w : ack_out[TSB];
+   assign wat_o = 1'b0; // TICKS > 1 && !PIPED ? wat_out : 1'b0; // TODO
    assign rty_o = 1'b0;
    assign err_o = 1'b0;
-   assign dat_o = sram_dat_i;
+   assign dat_o = READ  ? sram_do_i : {WIDTH{1'bz}};
 
-   assign sram_ce_o  = cyc_i;
-   assign sram_we_o  = we_i && stb_i;
-   assign sram_adr_o = adr_i;
-   assign sram_bes_o = USEBE ? {BYTES{sram_we_o}} & sel_i : sel_i;
-   assign sram_dat_o = dat_i;
+   assign sram_ce_o = PIPED ? cyc_w : stb_w;
+   assign sram_we_o = WRITE ? we_w : 1'b0;
+   assign sram_ad_o = adr_i;
+   assign sram_be_o = USEBE ? {BYTES{sram_we_o}} & sel_i : sel_i; // TODO
+   assign sram_di_o = WRITE ? dat_i : {WIDTH{1'bz}};
+
+   //  Choose versions of these signals depending on the Wishbone mode
+   // settings.
+   assign cyc_w = CHECK ? cyc_i : 1'b1;
+   assign stb_w = cyc_w && stb_i;
+   assign we_w  = stb_w && we_i;
+
+   assign ack_nxt = {ack_out, stb_w};
 
 
    //-------------------------------------------------------------------------
-   //  Wishbone bus interface.
+   //  Output (shift-)registers.
    //-------------------------------------------------------------------------
-   wire [TICKS:0]  ack_nxt = {ack_out, cyc_i && stb_i};
-
+   //  Wishbone requires that a single-cycle reset pulse is enough to reset a
+   //  device.
    always @(posedge clk_i)
-     if (rst_i)
+     if (rst_i && TICKS > 1)
        ack_out <= #DELAY {TICKS{1'b0}};
      else
        ack_out <= #DELAY ack_nxt[TSB:0];

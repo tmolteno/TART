@@ -138,10 +138,12 @@
 //  Generic SRAM's are more difficult to floorplan, than Xilinx-specific
 //  SRAM primitives.
 // `define __USE_GENERIC_SRAM
+`undef __USE_GENERIC_SRAM
 
 //----------------------------------------------------------------------------
 //  Enable a fake DSP unit, for testing & development of new correlators?
 // `define __USE_FAKE_DSP
+`undef __USE_FAKE_DSP
 
 //----------------------------------------------------------------------------
 //  Memory-map the block counter, to allow the SPI interface to set the block-
@@ -151,6 +153,10 @@
 //----------------------------------------------------------------------------
 //  Use a lookup-table for computing the blocksize?
 `define __LOOKUP_BLOCKSIZE
+
+//----------------------------------------------------------------------------
+//  Use a lookup-table for computing the blocksize?
+`define __USE_SPI_SLAVE_WB
 
 
 //----------------------------------------------------------------------------
@@ -178,7 +184,7 @@
 //----------------------------------------------------------------------------
 //  Enable Wishbone SPEC B4 pipelined, burst-mode transfers for devices that
 //  support them.
-// `define __WB_SPEC_B4
+`define __WB_SPEC_B4
 
 //----------------------------------------------------------------------------
 //  Choose whether to use classic, or burst-mode, transfers when prefetching
@@ -242,8 +248,8 @@
 //----------------------------------------------------------------------------
 //  Selects whether to simulate Xilinx primitives, or to use (hopefully)
 //  equivalent code instead.
-// `define __SIMULATE_XILINX_PRIMITIVES
-`undef  __SIMULATE_XILINX_PRIMITIVES
+`define __SIMULATE_XILINX_PRIMITIVES
+// `undef  __SIMULATE_XILINX_PRIMITIVES
 
 
 

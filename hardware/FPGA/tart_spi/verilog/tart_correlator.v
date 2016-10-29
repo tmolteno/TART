@@ -28,6 +28,7 @@
  *    "tails" of a transaction are one cycle too long;
  *  + compute the exponent of the count-size;
  *  + status registers, and correctly handle overflows;
+ *  + upgrade to Wishbone SPEC B4;
  * 
  */
 

@@ -22,7 +22,7 @@
  *    been implemented;
  * 
  * Changelog:
- *  + 26/10/2016  --  initial file;
+ *  + 26/10/2016  --  initial file (built from the old SPI module);
  * 
  * TODO:
  *  + short and/or long addresses?
