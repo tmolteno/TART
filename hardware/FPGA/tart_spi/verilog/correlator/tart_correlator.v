@@ -166,32 +166,37 @@ module tart_correlator
    //-------------------------------------------------------------------------
    //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
-   fake_hilbert #( .WIDTH(IBITS) ) HILB0
-     (  .clk   (clk_x),
-        .rst   (rst_i),
-        .en    (ce_x_i),
-        .d     (data_x_i),
-        .valid (go_x),
-        .strobe(strobe_x), // `antenna` data is valid
-        .frame (frame_x),  // last cycle for `antenna` data to be valid
-        .re    (re_x),
-        .im    (im_x)
-        );
+   fake_hilbert
+     #(  .WIDTH(IBITS)
+         ) HILB0
+       ( .clk   (clk_x),
+         .rst   (rst_i),
+         .en    (ce_x_i),
+         .d     (data_x_i),
+         .valid (go_x),
+         .strobe(strobe_x), // `antenna` data is valid
+         .frame (frame_x),  // last cycle for `antenna` data to be valid
+         .re    (re_x),
+         .im    (im_x)
+         );
 
 
    //-------------------------------------------------------------------------
    //  TART bank-switching unit.
    //-------------------------------------------------------------------------
-   tart_bank_switch #( .COUNT(ACCUM), .TICKS(4) ) SW0
-     ( .clk_x   (clk_x),
-       .clk_i   (clk_i),
-       .rst_i   (rst_i),
-       .ce_i    (go_x),
-       .frame_i (frame_x),
-       .bcount_i(sums_x_i),
-       .swap_x  (sw_x),
-       .swap_o  (switching_o)
-       );
+   bank_switch
+     #(  .COUNT(ACCUM),
+         .TICKS(4)
+         ) SW0
+       ( .clk_x   (clk_x),
+         .clk_i   (clk_i),
+         .rst_i   (rst_i),
+         .ce_i    (go_x),
+         .frame_i (frame_x),
+         .bcount_i(sums_x_i),
+         .swap_x  (sw_x),
+         .swap_o  (switching_o)
+         );
 
 
    //-------------------------------------------------------------------------

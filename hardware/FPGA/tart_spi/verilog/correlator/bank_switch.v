@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/tart_bank_switch.v
+ * Module      : verilog/bank_switch.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -19,7 +19,7 @@
  * 
  */
 
-module tart_bank_switch
+module bank_switch
   #( parameter COUNT = 24,
      parameter MSB   = COUNT-1,
      parameter TICKS = 4,
@@ -96,4 +96,4 @@ module tart_bank_switch
      else       switch <= #DELAY sw_b && !switch;
 
 
-endmodule // tart_bank_switch
+endmodule // bank_switch
