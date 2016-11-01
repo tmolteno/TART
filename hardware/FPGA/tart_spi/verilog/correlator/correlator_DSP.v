@@ -137,7 +137,7 @@ module correlator_DSP
    //  Time-multiplexed correlator.
    //-------------------------------------------------------------------------
    correlate_cos_sin_DSP
-     #(  .ACCUM(ACCUM), .SUMHI(SUMHI), .DELAY(DELAY) ) CORR_COS_SIN0
+     #(  .ACCUM(ACCUM), .SUMHI(SUMHI), .DELAY(DELAY) ) CS0
        ( .clk(clk_x),
          .clr(sw),
 
@@ -174,8 +174,8 @@ module correlator_DSP
    //-------------------------------------------------------------------------
    //  RAM32M's implemented the nerdy way.
    //-------------------------------------------------------------------------
-   //  TODO: Parameterise the accumulator width.
-   parameter INIT = 64'hf0e1d2c3b4a59687;
+//    parameter INIT = 64'hf0e1d2c3b4a59687;
+   parameter INIT = 64'h0;
 
    RAM32X6_SDP
      #( .INITA(INIT),
@@ -183,7 +183,7 @@ module correlator_DSP
         .INITC(INIT),
         .INITD(INIT),
         .DELAY(3)
-        ) RAM32X6_SDP_COS [3:0]
+        ) COSRAM [3:0]
        (.WCLK(clk_x),
         .WE(vld),
         .WADDR({{5-TBITS{1'b0}}, wr}),
@@ -198,7 +198,7 @@ module correlator_DSP
         .INITC(INIT),
         .INITD(INIT),
         .DELAY(3)
-        ) RAM32X6_SDP_SIN [3:0]
+        ) SINRAM [3:0]
        (.WCLK(clk_x),
         .WE(vld),
         .WADDR({{5-TBITS{1'b0}}, wr}),

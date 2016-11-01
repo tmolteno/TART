@@ -56,7 +56,7 @@ module MUX8
 
    assign x = s[2] ? ux : lx;
 
-   initial begin : SIM_MUX8
+   initial begin
       $display("Module : MUX8 (%m, Behavioural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
    end
 

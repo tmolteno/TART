@@ -113,11 +113,11 @@ module control
    //  Read -> Accumulate -> Write cycles of the correlators.
    //-------------------------------------------------------------------------
    assign x_rd_adr_o = x_rd_adr;
-   assign x_wr_adr_o = x_rd_adr;
+   assign x_wr_adr_o = x_wr_adr;
 
    //  Optionally duplicate high-fanout signals.
    assign y_rd_adr_o = DUPS ? y_rd_adr : x_rd_adr;
-   assign y_wr_adr_o = DUPS ? y_wr_adr : x_rd_adr;
+   assign y_wr_adr_o = DUPS ? y_wr_adr : x_wr_adr;
 
    assign w_swp = wrap_x_rd_adr && (sw || swap);
    assign w_inc = wrap_x_wr_adr && clear;
@@ -180,7 +180,10 @@ module control
    //  Correlator memory pointers.
    //-------------------------------------------------------------------------
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(TICKS)
+     #(  .ABITS(TBITS),
+         .UPPER(TRATE-1),
+         .TICKS(TICKS),
+         .DELAY(DELAY)
          ) RMWX
        ( .clk_i(clk_x),
          .rst_i(rst),
@@ -194,7 +197,10 @@ module control
    //  Due to the high-fanout, and long path-lengths, (optionally) duplicate
    //  the distributed SRAM address registers.
    rmw_address_unit
-     #(  .ABITS(TBITS), .UPPER(TRATE-1), .TICKS(TICKS)
+     #(  .ABITS(TBITS),
+         .UPPER(TRATE-1),
+         .TICKS(TICKS),
+         .DELAY(DELAY)
          ) RMWY
        ( .clk_i(clk_x),
          .rst_i(rst),

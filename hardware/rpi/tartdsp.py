@@ -349,6 +349,7 @@ if __name__ == '__main__':
     while True:
       if args.verbose:
         tart.vis_read(True)
+        tart.read_status(True)
       else:
         viz = tart.vis_read(False)
         tim = time.clock()

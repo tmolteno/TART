@@ -14,7 +14,6 @@ module block_buffer
    input [ASB:0]  write_address
    );
 
-// `define __USE_EXPLICT_BRAM
 `ifndef __USE_EXPLICT_BRAM
    reg [MSB:0] block_buffer [0:DEPTH-1];
    reg [MSB:0] block_data = {WIDTH{1'b0}};
@@ -32,11 +31,13 @@ module block_buffer
    end
 
 `else // !`ifndef __USE_EXPLICT_BRAM
-   // FIXME:
-   wire [13:0]      ADDRA = {read_address , {14-ADDR_WIDTH{1'b0}}};
-   wire [13:0]      ADDRB = {write_address, {14-ADDR_WIDTH{1'b0}}};
-   wire [31:0]      a_data = {{(32-DATA_WIDTH){1'b0}}, write_data};
-   wire [31:0]      b_data;
+   wire [13:0]      ADDRA = {read_address , {14-ABITS{1'b0}}};
+   wire [13:0]      ADDRB = {write_address, {14-ABITS{1'b0}}};
+   wire [31:0]      a_data;
+   wire [31:0]      b_data = {{(32-WIDTH){1'b0}}, write_data};
+
+   assign read_data = a_data[MSB:0];
+
 
    RAMB16BWER
      #(  // DATA_WIDTH_A/DATA_WIDTH_B: 0, 1, 2, 4, 9, 18, or 36
@@ -55,6 +56,7 @@ module block_buffer
          .SIM_DEVICE("SPARTAN6"),
          .INIT_A(36'h000000000),
          .INIT_B(36'h000000000),
+         .INIT_FILE("NONE"),
          .SRVAL_A(36'h000000000),
          .SRVAL_B(36'h000000000),
          // WRITE_MODE_A/WRITE_MODE_B: "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
@@ -66,7 +68,7 @@ module block_buffer
          .ENA(1'b1),
          .REGCEA(1'b0),         // A port register clock enable input
          .RSTA(1'b0),           // A port register set/reset input
-         .WEA(4'b1111),         // Port A byte-wide write enable input
+         .WEA(4'b0000),         // Port A byte-wide write enable input
          // Port A Data:
          .DIA(32'h0),           // 32-bit input: A port data input
          .DIPA(4'h0),           // 4-bit input: A port parity input
@@ -79,7 +81,7 @@ module block_buffer
          .ENB(1'b1),            // B port enable input
          .REGCEB(1'b0),         // B port register clock enable input
          .RSTB(1'b0),           // B port register set/reset input
-         .WEB(4'b0000),         // Port B byte-wide write enable input
+         .WEB(4'b1111),         // Port B byte-wide write enable input
          // Port B Data:
          .DIB(b_data),          // 32-bit input: B port data input
          .DIPB(4'h0),           // 4-bit input: B port parity input

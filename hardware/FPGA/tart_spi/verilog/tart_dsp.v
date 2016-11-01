@@ -96,19 +96,19 @@ module tart_dsp
      output         limp_o,
 
      // The real component of the signal from the antennas.
-     input          vx_enable, // correlation is active
-     input          vx_stream, // is the data being streamed out?
-     output [XSB:0] vx_block,
-     input          overwrite, // overwrite when buffers full?
-     output         switching, // NOTE: bus domain
-     input [MSB:0]  blocksize, // block size - 1
-     input [23:0]   antenna, // the raw antenna signal
+     input          vx_enable_i, // correlation is active
+     input          vx_stream_i, // is the data being streamed out?
+     output [XSB:0] vx_bank_x_o,
+     input          overwrite_i, // overwrite when buffers full?
+     output         switching_o, // NOTE: bus domain
+     input [MSB:0]  blocksize_i, // block size - 1
+     input [23:0]   antenna_i, // the raw antenna signal
 
      (* ASYNC_REG = "TRUE" *)
-     output reg     overflow = 1'b0,
-     output         newblock,
-     output [MSB:0] checksum, // TODO:
-     output         streamed
+     output reg     overflow_o = 1'b0,
+     output         newblock_o,
+     output [MSB:0] checksum_o, // TODO:
+     output         streamed_o
      );
 
 
@@ -133,6 +133,9 @@ module tart_dsp
    wire         sram_b_be;
    wire [7:0]   sram_b_di, sram_b_do;
 
+   wire         switching;
+   wire [31:0]  checksum;
+
 
    //-------------------------------------------------------------------------
    //
@@ -141,6 +144,9 @@ module tart_dsp
    //-------------------------------------------------------------------------
    assign stuck_o  = stuck;
    assign limp_o   = limp;
+
+   assign switching_o = switching;
+   assign checksum_o  = checksum[MSB:0];
 
 
    //-------------------------------------------------------------------------
@@ -155,8 +161,8 @@ module tart_dsp
    (* ASYNC_REG = "TRUE" *) reg          enable_s = 0;
 
    always @(posedge clk_x) begin
-      block_s  <= #DELAY blocksize;
-      enable_s <= #DELAY vx_enable;
+      block_s  <= #DELAY blocksize_i;
+      enable_s <= #DELAY vx_enable_i;
    end
 
    always @(posedge clk_x) begin
@@ -178,7 +184,7 @@ module tart_dsp
    //  Assert overflow whenever a bank-switch causes new data to be written
    //  to the bank currently being read back.
    always @(posedge clk_i)
-     overflow <= #DELAY overflow_x;
+     overflow_o <= #DELAY overflow_x;
 `endif
 
 
@@ -192,12 +198,12 @@ module tart_dsp
    //  NOTE: This is required for the SPI module as it prefetches ahead, and
    //    then discards any unused data, causing some visibilities to be lost.
 `ifdef __USE_ASYNC_FETCH
-   wire               stream_reset = ~vx_stream;
+   wire               stream_reset = ~vx_stream_i;
 `else   
    reg                stream_reset = 1'b1;
 
    always @(posedge clk_i)
-     stream_reset <= #DELAY ~vx_stream;
+     stream_reset <= #DELAY ~vx_stream_i;
 `endif
 
 
@@ -220,7 +226,7 @@ module tart_dsp
          .DELAY(DELAY)
          ) STREAM
        ( .clk_i(clk_i),
-         .rst_i(rst_i),
+         .rst_i(stream_reset),
 
          //  Wishbone (SPEC B4) interface to external I/O (SPI) device:
          .cyc_i(cyc_i),
@@ -242,7 +248,7 @@ module tart_dsp
          .sram_do_i(sram_b_do),
          .sram_di_o(sram_b_di),
  
-         .wrapped_o(streamed)  // strobes when block has been streamed
+         .wrapped_o(streamed_o)  // strobes when block has been streamed
          );
 
 
@@ -254,10 +260,9 @@ module tart_dsp
    parameter COUNT = 24;        // correlator number/count
    parameter NBITS = 5;
 
-   wire [31:0] v_dat, csum_w;
+   wire [31:0] v_dat;
 
    assign v_dtx    = v_dat[MSB:0];
-   assign checksum = csum_w[MSB:0];
 
    tart_visibilities
      #(  .WIDTH(32),            // SRAM data bit-width
@@ -292,11 +297,9 @@ module tart_dsp
          .sram_di_o(sram_a_di),
 
          //  Control and status signals (Wishbone domain).
-         .streamed_i (streamed),  // signals that a bank has been sent
-         .overwrite_i(overwrite), // overwrite when buffers full?
-         .switching_i(switching), // strobes at every bank-switch (bus domain)
-         .available_o(newblock),  // strobes when new block is available
-         .checksum_o (csum_w),    // computed checksum of block
+         .streamed_i(streamed_o),  // signals that a bank has been sent
+         .newblock_o(newblock_o),  // strobes when new block is available
+         .checksum_o(checksum),    // computed checksum of block
 
          //  Correlator-domain signals:
          .clk_x     (clk_x),
@@ -311,41 +314,7 @@ module tart_dsp
    //  Combined bank-index and visibility-address.
    assign c_adr = {adr_i, v_adr};
 
-// `define __USE_OLD_CORRELATOR
-`ifdef __USE_OLD_CORRELATOR
    tart_correlator
-     #(  .BLOCK (BLOCK),
-         .AXNUM (AXNUM),
-         .ABITS (CBITS),
-         .DELAY (DELAY)
-         ) COR
-       ( .clk_x(clk_x),         // 12x data-rate sampling clock
-         .rst  (rst_i),
-         .clk_i(clk_i),
-
-         .cyc_i(v_cyc),         // the correlator connects to the read-back
-         .stb_i(v_stb),         // unit for the visibilities, via this bus
-         .we_i (v_we),
-         .ack_o(v_ack),
-         .wat_o(v_wat),
-         .rty_o(v_rty),
-         .err_o(v_err),
-         .adr_i(c_adr),
-         .dat_i(v_dtx),
-         .dat_o(v_drx),
-
-         .enable(enable_x),    // begins correlating once asserted
-         .blocksize(block_x),  // number of samples per visibility sum
-         .bankindex(vx_block), // the current bank-address being written to
-//          .strobe(strobe),       // indicates arrival of a new sample
-         .antenna(antenna),     // antenna data
-         .swap_x(switch_x),     // asserts on bank-switch (sample domain)
-         .switch(switching)     // asserts on bank-switch (bus domain)
-         );
-
-
-`else // !`ifdef __USE_OLD_CORRELATOR
-   top
      #(  .ACCUM(BLOCK),         // accumulator bits
          .IBITS(AXNUM),         // data-input bits
          .ABITS(CBITS),         // correlator address bits
@@ -380,11 +349,10 @@ module tart_dsp
 
          .ce_x_i  (enable_x),  // begins correlating once asserted
          .sums_x_i(block_x),   // number of samples per visibility sum
-         .data_x_i(antenna),   // antenna data
+         .data_x_i(antenna_i), // antenna data
          .swap_x_o(switch_x),  // bank-switch strobe
-         .bank_x_o(vx_block)   // bank address
+         .bank_x_o(vx_bank_x_o)// bank address
          );
-`endif // !`ifdef __USE_OLD_CORRELATOR
 
 
    //-------------------------------------------------------------------------
@@ -471,7 +439,7 @@ module tart_dsp
    always @(posedge clk_i)
      if (rst_i)
        limp <= #DELAY 1'b1;
-     else if (v_cyc && v_ack && vx_enable)
+     else if (v_cyc && v_ack && vx_enable_i)
        limp <= #DELAY 1'b0;
 
    always @(posedge clk_i)

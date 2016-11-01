@@ -46,6 +46,11 @@ module tart_visibilities
     parameter ASB   = ABITS-1,
     parameter XBITS = 4,        // number of banks of visibilities
 
+    //  Wishbone parameters:
+    parameter PIPED = 1,
+    parameter CHECK = 1,
+    parameter RESET = 0,
+
     //  Simulation-only parameters:
     parameter DELAY = 3)
    (
@@ -75,9 +80,7 @@ module tart_visibilities
 
     // Status flags for the correlators and visibilities.
     input          streamed_i, // signals that a bank has been sent
-    input          overwrite_i, // overwrite when buffer is full?
-    input          switching_i, // inicates that banks have switched
-    output         available_o, // asserted when a window is accessed
+    output         newblock_o, // strobed when prefetch completes
     output [MSB:0] checksum_o,
 
     // Correlator clock-domain signals.
@@ -89,13 +92,15 @@ module tart_visibilities
 
    reg [MSB:0]     checksum = {WIDTH{1'b0}}; // TODO
    reg             empty = 1'b1, start = 1'b0;
-   wire            ready, prefetch_empty, prefetch_full;
+   wire            cyc_w, ready, prefetch_empty, prefetch_full;
 
 
    //-------------------------------------------------------------------------
    //  Map to status outputs.
-   assign checksum_o  = checksum;
-   assign available_o = ready;
+   assign checksum_o = checksum;
+   assign newblock_o = ready;
+
+   assign cyc_w      = CHECK ? cyc_o : 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -106,7 +111,7 @@ module tart_visibilities
 //      if (switching)
      if (rst_i)
        checksum <= #DELAY {WIDTH{1'b0}};
-     else if (cyc_o && ack_i)
+     else if (cyc_w && ack_i)
 //        checksum <= #DELAY checksum + dat_i;
        checksum <= #DELAY checksum ^ dat_i;
 
@@ -123,7 +128,7 @@ module tart_visibilities
        empty <= #DELAY 1'b0;
 
    always @(posedge clk_i)
-     if (rst_i || start)
+     if (rst_i && RESET || start)
        start <= #DELAY 1'b0;
      else if (empty && !prefetch_empty)
        start <= #DELAY 1'b1;

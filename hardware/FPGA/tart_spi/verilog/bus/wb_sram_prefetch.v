@@ -143,12 +143,14 @@ module wb_sram_prefetch
    wire [BSB:0]    lower;
 
    //  Block (upper-address) counter.
-   reg [CSB:0]     block = {CBITS{1'b0}};
-   reg [CSB:0]     block_nxt;
-   reg             block_end = 1'b0;
-   wire [CBITS:0]  block_inc = block + 1;
+   reg [CSB:0]     upper = {CBITS{1'b0}};
+   reg [CSB:0]     upper_nxt;
+   reg             upper_end = 1'b0;
+   wire [CBITS:0]  upper_inc = upper + 1;
 
    //  Local address counter.
+   //  NOTE: This is also the SRAM write-address; therefore, it lags the above
+   //    counters/addresses.
    reg [ASB:0]     count = {ABITS{1'b0}};
    wire [ABITS:0]  count_inc = count + 1;
 
@@ -159,14 +161,14 @@ module wb_sram_prefetch
    wire [MSB:0]    f_dat;
 
    //  Internal Wishbone signals.
-   wire            stb_w, ack_w;
+   wire            cyc_w, stb_w, ack_w;
 
 
    //-------------------------------------------------------------------------
    //  Additional Wishbone interface signals.
    //-------------------------------------------------------------------------
    //  External (master) Wishbone interface signals.
-   assign adr_o = {block, lower};
+   assign adr_o = {upper, lower};
    assign sel_o = {BYTES{1'b1}};
 
    //  Internal (fetch) Wishbone interface signals.
@@ -178,8 +180,9 @@ module wb_sram_prefetch
    assign f_dat = dat_i;
 
    //  Determine when a command has been received.
-   assign stb_w = CHECK ? cyc_o &&  stb_o : stb_o;
-   assign ack_w = PIPED ? stb_w && !wat_i : stb_w && ack_i;
+   assign cyc_w = CHECK ? cyc_o : 1'b1;
+   assign stb_w = cyc_w && stb_o;
+   assign ack_w = PIPED ? cyc_w && ack_i : stb_w && ack_i;
 
 
    //-------------------------------------------------------------------------
@@ -188,16 +191,16 @@ module wb_sram_prefetch
    //  Increment the block-counter after each block has been prefetched.
    always @(posedge clk_i)
      if (begin_i)
-       block <= #DELAY {CBITS{1'b0}};
+       upper <= #DELAY {CBITS{1'b0}};
      else if (done)
-       block <= #DELAY block_nxt;
+       upper <= #DELAY upper_nxt;
 
    //  Pipeline these signals, since the block-prefetches take several clock-
    //  cycles to complete.
    always @(posedge clk_i)
      begin
-        block_nxt <= #DELAY block_inc[CSB:0];
-        block_end <= #DELAY !begin_i && block_nxt == COUNT;
+        upper_nxt <= #DELAY upper_inc[CSB:0];
+        upper_end <= #DELAY !begin_i && upper_nxt == COUNT;
      end
 
 
@@ -208,7 +211,7 @@ module wb_sram_prefetch
      if (rst_i || begin_i)
        ready_o <= #DELAY 1'b0;
      else
-       ready_o <= #DELAY block_end && done;
+       ready_o <= #DELAY upper_end && done;
 
 
    //-------------------------------------------------------------------------
@@ -231,7 +234,7 @@ module wb_sram_prefetch
 `else
    wire read_s = read;
 `endif
-   wire read_w = begin_i || done && !block_end;
+   wire read_w = begin_i || done && !upper_end;
 
    always @(posedge clk_i)
      read <= #DELAY read_w;

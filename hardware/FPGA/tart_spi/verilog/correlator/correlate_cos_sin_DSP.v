@@ -60,7 +60,7 @@ module correlate_cos_sin_DSP
          .DREG (1),
          .MREG (0),
          .PREG (1)
-       ) DSP_COS_SIN0
+       ) DSPCS
        ( .CLK(clk),
          .RSTOPMODE(1'b0),
          .RSTCARRYIN(1'b0),

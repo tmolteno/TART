@@ -95,6 +95,7 @@ module block_DSP
     );
 
 
+   wire [7:0]      waddr = {bank_adr_i, x_wr_adr_i};
    wire            write;
    wire [WSB:0]    vis0, vis1, vis2, vis3;
    wire [QSB:0]    vis;
@@ -140,7 +141,7 @@ module block_DSP
          .TBITS(TBITS),
          .PAIRS(PAIRS0),
          .DELAY(DELAY)
-         ) CORRELATOR0
+         ) CORN0
        ( .clk_x(clk_x),
          .sw(sw_i),
          .en(en_i),
@@ -159,7 +160,7 @@ module block_DSP
          .TBITS(TBITS),
          .PAIRS(PAIRS1),
          .DELAY(DELAY)
-         ) CORRELATOR1
+         ) CORN1
        ( .clk_x(clk_x),
          .sw(sw_i),
          .en(en_i),
@@ -178,7 +179,7 @@ module block_DSP
          .TBITS(TBITS),
          .PAIRS(PAIRS2),
          .DELAY(DELAY)
-         ) CORRELATOR2
+         ) CORN2
        ( .clk_x(clk_x),
          .sw(sw_i),
          .en(en_i),
@@ -197,7 +198,7 @@ module block_DSP
          .TBITS(TBITS),
          .PAIRS(PAIRS3),
          .DELAY(DELAY)
-         ) CORRELATOR3
+         ) CORN3
        ( .clk_x(clk_x),
          .sw(sw_i),
          .en(en_i),
@@ -237,7 +238,7 @@ module block_DSP
      ( //  Write port.
        .WCLK (clk_x),
        .WE   (write),
-       .WADDR({bank_adr_i, x_wr_adr_i}),
+       .WADDR(waddr),
        .DI   (vis),
 
        //  Read port.

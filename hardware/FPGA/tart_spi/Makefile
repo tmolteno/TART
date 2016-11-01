@@ -10,7 +10,7 @@ permute:
 
 .PHONY: floor
 floor:
-	runhaskell script/floor.hs --numDSP=4 --prefix="DSP/COR/CXBLOCK" --outfile papilio/floor.ucf
+	runhaskell script/floor.hs --numDSP=4 --prefix="DSP/COR/CXB" --outfile papilio/floor.ucf
 
 .PHONY: clean
 clean:

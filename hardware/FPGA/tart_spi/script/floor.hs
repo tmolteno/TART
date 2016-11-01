@@ -72,6 +72,29 @@ toUCF :: [String] -> String
 toUCF  = (++ ";\n\n") . intercalate ";\n"
 
 
+-- * Names of design blocks.
+------------------------------------------------------------------------------
+-- | Local correlator (Xilinx "distributed") SRAM's.
+cosRAM     = "COSRAM" :: String
+sinRAM     = "SINRAM" :: String
+
+-- | Visibilities read-back SRAM's.
+visRAM0    = "SRAM0" :: String
+visRAM1    = "SRAM1" :: String
+
+-- | Block SRAM's, and MUX's, for correlator-blocks.
+corRAM     = "VISRAM" :: String
+corMUX     = "DMUX"   :: String -- TODO: currently ignored
+
+dataMUX    = "DMUX"  :: String
+
+correlator = "CORN"  :: String
+blockDSP   = "BDSP"  :: String
+blockSDP   = "BSDP"  :: String
+
+dspINST    = "CS0/DSPCS" :: String
+
+
 -- * Smart-constructors for locations.
 ------------------------------------------------------------------------------
 -- | The internal SLICE layout is not quite a regular grid. There are some
@@ -120,7 +143,7 @@ placeMUX w (SLICE x y) p = toUCF $ zipWith (++) ix ls
   where
     ix = map pf [0..w-1]
     ls = map ((' ':) . showLOC . SLICE x . (y+) . (`shiftR` 1)) [0..w-1]
-    pf = \i -> "INST " ++ show (p ++ "/MUXDAT0/MUXF7" ++ showIndex i)
+    pf = \i -> "INST " ++ show (p ++ '/':dataMUX ++ "/MUXF7" ++ showIndex i)
 
 placeRAM32M :: Width -> Label -> LOC -> Z -> Prefix -> String
 placeRAM32M w l (SLICE x y) c p = toUCF $ zipWith (++) ix ls
@@ -128,7 +151,8 @@ placeRAM32M w l (SLICE x y) c p = toUCF $ zipWith (++) ix ls
     w' = (w+5) `div` 6
     ix = map pf [0..w'-1]
     ls = map ((' ':) . showLOC . slice x . (y+)) [0..w'-1]
-    pf = \i -> "INST " ++ show (p ++ "/CORRELATOR" ++ show c ++ '/':l ++ showIndex i ++ "/RAM32M0")
+    p' = p ++ '/':correlator ++ show c
+    pf = \i -> "INST " ++ show (p' ++ '/':l ++ showIndex i ++ "/RAM32M0")
 
 placeRAMB8 :: Bool -> Width -> LOC -> Prefix -> String
 placeRAMB8 dbl w (RAMB8 x y) p = toUCF $ zipWith (++) ix ls
@@ -144,8 +168,8 @@ placeDSP48 (DSP48 x y) p = toUCF $ zipWith (++) ix ls
   where
     ix = map pf [0..3]
     ls = map ((' ':) . showLOC . DSP48 x . (y+)) [0..3]
-    cl = "/CORR_COS_SIN0/DSP_COS_SIN0"
-    pf = \i -> "INST " ++ show (p ++ "/CORRELATOR" ++ show i ++ cl)
+    cl = '/':dspINST
+    pf = \i -> "INST " ++ show (p ++ '/':correlator ++ show i ++ cl)
 
 
 -- * Some functional-unit placement stuff.
@@ -157,7 +181,7 @@ floorDSP p n =
         4 -> [0,4..12]
         _ -> [1,5..4*n-1]
       bs = [0..n-1]
-      ps = [ p ++ show i | i <- bs ]
+      ps = [ p ++ show i ++ '/':blockDSP | i <- bs ]
       o  = bool 4 0 (n == 4) :: Z
       dx = zipWith (\i -> placeDSP48 (DSP48 0 i)) ix ps
       rx = zipWith (\i -> let y = i `shiftL` 4 + o
@@ -178,10 +202,10 @@ floorSDP p d =
       dbl = False -- heightSDP >= 24
       ax = [""]
       ds = [ SLICE 16 (i*hl+2) | i <- [0..pred n] ]
-      qs = [ p ++ show i | i <- [d..5] ]
+      qs = [ p ++ show i ++ '/':blockSDP | i <- [d..5] ]
       rs = zipWith floorRAMD qs ds
       (mo, hb, hl) = (hl `shiftR` 2 + 2, hl `shiftR` 1, heightSDP)
-      bx = [ floorBLK dbl (p ++ show (d+i)) (RAMB8 1 (i*hb+4)) (SLICE 22 (i*hl+mo)) | i <- [0..n-1] ]
+      bx = [ floorBLK dbl (p ++ show (d+i) ++ '/':blockSDP) (RAMB8 1 (i*hb+4)) (SLICE 22 (i*hl+mo)) | i <- [0..n-1] ]
   in  concat $ ax ++ rs ++ bx
 
 heightSDP :: Z
@@ -189,6 +213,7 @@ heightSDP  = 24
 
 -- | Floorplans the adders (of the correlators) by floorplanning their output
 --   registers.
+--   FIXME: Currently the labelling is broken.
 floorADD :: Prefix -> LOC -> String
 floorADD p (SLICE x y) =
   let cx = (SLICE  x    y, SLICE  x    (y+5))
@@ -205,8 +230,8 @@ floorRAMD :: Prefix -> LOC -> String
 floorRAMD p (SLICE x y) =
   let (bs, ys) = ([0..3], [ y + j*4 | j <- bs ])
       (cx, sx) = (map (SLICE x) ys, map (SLICE (x+4)) ys)
-      ci = zipWith3 (placeRAM32M 24 "RAM32X6_SDP_COS") cx bs $ repeat p
-      si = zipWith3 (placeRAM32M 24 "RAM32X6_SDP_SIN") sx bs $ repeat p
+      ci = zipWith3 (placeRAM32M 24 cosRAM) cx bs $ repeat p
+      si = zipWith3 (placeRAM32M 24 sinRAM) sx bs $ repeat p
   in  concat $ ci `mix` si
 
 -- | Place an address-generation unit at the given (origin) location.
@@ -233,8 +258,8 @@ floorRAMB p n = concat $ bi ++ mi
     o  = bool 1 0 (n == 4) :: Z
     bx = map (RAMB8 0) [ shiftL i 3 + o     | i <- bs ]
     mx = map (slice 6) [ shiftL i 4 + o*4+2 | i <- bs ]
-    ps = [ p ++ show i | i <- bs ]
-    pb = [ q ++ "/VISRAM" | q <- ps ]
+    ps = [ p ++ show i ++ '/':blockDSP | i <- bs ]
+    pb = [ q ++ '/':corRAM | q <- ps ]
     bi = zipWith (placeRAMB8 False 24) bx pb
     mi = zipWith (placeMUX 24) mx ps
     bs = [0..n-1]
@@ -280,9 +305,9 @@ floortest  =
   "# RAMB8 Placement:\n" ++
   placeRAMB8 False 24 (RAMB8 0 2) "/VISRAM" ++
   "# Cosine SRAM Placement:\n" ++
-  placeRAM32M 24 "RAM32X6_SDP_COS" (SLICE 4 4) 0 "" ++
+  placeRAM32M 24 cosRAM (SLICE 4 4) 0 "" ++
   "# Sine SRAM Placement:\n" ++
-  placeRAM32M 24 "RAM32X6_SDP_SIN" (SLICE 8 4) 0 "" ++
+  placeRAM32M 24 sinRAM (SLICE 8 4) 0 "" ++
   "# Placement of the MUX's for the RAMB8 outputs:\n" ++
   placeMUX 24 (SLICE 6 6) "" ++
   []
@@ -323,7 +348,7 @@ main  = do
 --   stdout " == TART floorplanner for the hardware correlators =="
   Settings md mp mo <- options "" parser
 --   stdout "\nCorrelator block parameters:"
-  let p = maybe "DSP/COR/CXBLOCK" toString mp
+  let p = maybe "DSP/COR/CXB" toString mp
       d = fromMaybe 4 md
       u = fromString $ floorplan p d
   maybe (stdout u) (`output` u) mo

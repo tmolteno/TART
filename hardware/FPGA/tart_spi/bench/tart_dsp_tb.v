@@ -38,11 +38,12 @@ module tart_dsp_tb;
    parameter FSB   = FBITS-1;    // MSB of fetch-counter
    parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 10; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
 `ifdef __USE_FAKE_DSP
    parameter NREAD = 9;
 `else
 //    parameter NREAD = 48;
-//    parameter NREAD = 192;
+//    parameter NREAD = 144;
    parameter NREAD = 576;
 `endif
    parameter READS = 2;         // Banks of visibilities to read
@@ -73,6 +74,7 @@ module tart_dsp_tb;
    reg [XSB:0]  bank = {XBITS{1'b0}};
    wire [XSB:0] vx_bank;
    reg          busy = 1'b0;
+
 
    assign dsp_en = vx_enabled;
 
@@ -282,13 +284,6 @@ module tart_dsp_tb;
    assign val = cyc && we ? dtx : 'bz;
    assign dat = rdy ? drx : 'bz;
 
-`ifdef  __USE_COLUMN_DISPLAY
-   //  Display the data, and which correlator and register it is from.
-   always @(posedge b_clk) begin
-      if (rdy)
-        $display("%12t: Vis = %08x (d: %8d)", $time, dat, dat);
-   end
-`else
 
    //-------------------------------------------------------------------------
    //  Assemble bytes into words, and stored them until the transfer has been
@@ -298,11 +293,7 @@ module tart_dsp_tb;
         f_cnt <= #DELAY 2'b00;
         f_adr <= #DELAY {FBITS{1'b0}};
      end
- `ifdef __WB_CLASSIC
-     else if (rdy && stb) begin
- `else
      else if (rdy) begin
- `endif
         f_cnt <= #DELAY f_cnt + 1;
         f_adr <= #DELAY f_cnt == 2'b11 ? f_nxt : f_adr;
         f_dat <= #DELAY {dat, f_dat[MSB:BBITS]};
@@ -311,18 +302,23 @@ module tart_dsp_tb;
 
    //-------------------------------------------------------------------------
    //  Format and display the retrieved visibilities.
+   integer idx;
+   parameter CHUNK = NREAD / 6;
+
    always @(posedge fin)
      if (f_adr >= NREAD-1) begin
         $display("\n%12t: Fetched visibilities (num = %1d):", $time, f_adr);
-        for (ptr = 0; ptr < NREAD; ptr = ptr + TRATE) begin
-           $write("\t");
-           for (num = 0; num < TRATE; num = num + 1)
-             $write("%06x ", fetched[ptr + num]);
+        for (idx = 0; idx < NREAD; idx = idx + CHUNK) begin
+           for (ptr = 0; ptr < CHUNK; ptr = ptr + TRATE) begin
+              $write("\t");
+              for (num = 0; num < TRATE; num = num + 1)
+                $write("%06x ", fetched[idx + ptr + num]);
+              $write("\n");
+           end
            $write("\n");
         end
         $write("\n");
      end
-`endif // !`ifdef __USE_COLUMN_DISPLAY
 
 
    //-------------------------------------------------------------------------
@@ -438,16 +434,16 @@ module tart_dsp_tb;
        .vx_adr_o(dsp_blk),
        .vx_dat_i(dsp_dat),
 
-       .overflow (overflow),
-       .newblock (newblock),
-       .streamed (streamed), // has an entire block finished streaming?
-       .accessed (accessed),
-       .available(available),
-       .checksum (checksum),
-       .blocksize(blocksize),
+       .overflow_i (overflow),
+       .newblock_i (newblock),
+       .streamed_i (streamed), // has an entire block finished streaming?
+       .accessed_o (accessed),
+       .available_o(available),
+       .checksum_i (checksum),
+       .blocksize_o(blocksize),
 
-       .vx_enabled(vx_enabled),
-       .vx_overwrite(overwrite),
+       .vx_enabled_o(vx_enabled),
+       .vx_overwrite_o(overwrite),
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
@@ -489,19 +485,19 @@ module tart_dsp_tb;
       .dat_i(dsp_val),
       .dat_o(dsp_dat),
 
-      .vx_enable(vx_enabled),
-      .vx_stream(busy),
-      .vx_block (vx_bank),
-      .overwrite(overwrite),
-      .antenna  (antenna),
-      .switching(switching),
-      .blocksize(blocksize),
+      .vx_enable_i(vx_enabled),
+      .vx_stream_i(busy),
+      .vx_bank_x_o(vx_bank),
+      .overwrite_i(overwrite),
+      .antenna_i  (antenna),
+      .switching_o(switching),
+      .blocksize_i(blocksize),
       .stuck_o  (stuck),
       .limp_o   (limp),
 
-      .newblock (newblock),
-      .checksum (checksum),
-      .streamed (streamed)
+      .newblock_o (newblock),
+      .checksum_o (checksum),
+      .streamed_o (streamed)
       );
 
 

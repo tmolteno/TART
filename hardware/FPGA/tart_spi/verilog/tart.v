@@ -338,6 +338,7 @@ module tart
    wire [7:0]   spi_status = {uflow, oflow, request_from_spi, aq_enabled,
                               aq_debug, tart_state[2:0]};
    wire [7:0]   viz_status = {aq_debug, vx_enabled, available, overflow, v_blk};
+//    wire [7:0]   viz_status = {aq_debug, vx_enabled, available, overflow, c_blk};
 //    wire [7:0] viz_status = {c_blk, v_blk};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
@@ -480,22 +481,28 @@ module tart
        .vx_dat_i(s_dat),
 
        //  Visibilities status & control signals:
-       .vx_enabled(vx_enabled),
-       .vx_overwrite(overwrite), // overwrite when buffers full?
+       .vx_enabled_o(vx_enabled),
+       .vx_overwrite_o(overwrite), // overwrite when buffers full?
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
-       .overflow (overflow),
-       .newblock (newblock), // strobes when new block ready
-       .streamed (streamed), // has an entire block finished streaming?
-       .accessed (accessed), // asserts once visibilities are read back
-       .available(available),
-       .checksum (checksum),
-       .blocksize(blocksize)
+       .overflow_i(overflow),
+       .newblock_i(newblock), // strobes when new block ready
+       .streamed_i(streamed), // has an entire block finished streaming?
+       .accessed_o(accessed), // asserts once visibilities are read back
+       .available_o(available),
+       .checksum_i (checksum),
+       .blocksize_o(blocksize)
        );
 
 
-`ifdef __USE_CORRELATORS
+`ifndef __USE_CORRELATORS
+   assign streamed  = 1'b0;
+   assign newblock  = 1'b0;
+   assign available = 1'b0;
+   assign checksum  = 24'h0ff1ce;
+
+`else
    //-------------------------------------------------------------------------
    //     
    //     CORRELATOR / VISIBILITIES BLOCK.
@@ -533,17 +540,17 @@ module tart
        .dat_o(s_dat),
 
        //  Correlator control & status signals:
-       .vx_enable(vx_enabled),
-       .vx_stream(spi_busy),
-       .vx_block (c_blk),
-       .overwrite(overwrite),
-       .antenna  (ax_dat),
-       .blocksize(blocksize),
-       .switching(switching),
-       .overflow (overflow),
-       .newblock (newblock),
-       .checksum (checksum),
-       .streamed (streamed),
+       .vx_enable_i(vx_enabled),
+       .vx_stream_i(spi_busy),
+       .vx_bank_x_o(c_blk),
+       .overwrite_i(overwrite),
+       .antenna_i  (ax_dat),
+       .blocksize_i(blocksize),
+       .switching_o(switching),
+       .overflow_o (overflow),
+       .newblock_o (newblock),
+       .checksum_o (checksum),
+       .streamed_o (streamed),
 
        //  Miscellaneous debugging/status signals:
        .stuck_o  (stuck),

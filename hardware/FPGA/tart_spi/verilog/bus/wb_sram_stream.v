@@ -130,16 +130,16 @@ module wb_sram_stream
    reg [ASB:0]     adr = START;
    wire            cyc_w, stb_w, ack_w, inc_w, wrap_adr;
    wire [WBITS:0]  next_adr;
-   reg             wrap = 1'b0;
+   reg             wrap = 1'b0, wrapped = 1'b0;
 
 
    //-------------------------------------------------------------------------
    //  Signal whenever the address-counter wraps.
-   assign wrapped_o = wrap;
+   assign wrapped_o = wrap && !wrapped;
 
    //-------------------------------------------------------------------------
    //  Generate the signals that handle the addresses.
-   assign cyc_w    = CHECK ? !cyc_i : 1'b1;
+   assign cyc_w    = CHECK ? cyc_i : 1'b1;
    assign stb_w    = cyc_w && stb_i;
    assign ack_w    = PIPED ? stb_w && !wat_o : ack_o;
    assign inc_w    = cyc_w && ack_w;
@@ -152,21 +152,39 @@ module wb_sram_stream
    //  Address generation.
    //-------------------------------------------------------------------------
    always @(posedge clk_i)
-     if (rst_i)
+     if (rst_i && RESET)
        adr <= #DELAY START;
-     else if (inc_w)
+     else if (inc_w && !wrap_adr)
        adr <= #DELAY next_adr[ASB:0];
      else
        adr <= #DELAY adr;
 
    //  Strobe the `wrap` signal after each complete transfer.
    always @(posedge clk_i)
-     if (rst_i && CHECK)
+     if (rst_i && (CHECK || RESET))
        wrap <= #DELAY 1'b0;
      else if (inc_w)
        wrap <= #DELAY wrap_adr;
+//      else if (wrap_adr)
+//        wrap <= #DELAY 1'b1;
      else
-       wrap <= #DELAY 1'b0;
+       wrap <= #DELAY wrap;
+
+   //  Assert output `wrapped` after the bus transaction completes.
+   always @(posedge clk_i)
+     if (rst_i && (CHECK || RESET))
+       wrapped <= #DELAY 1'b0;
+     else
+       wrapped <= #DELAY wrap;
+
+   /*
+     if (rst_i && (CHECK || RESET) || wrapped)
+       wrapped <= #DELAY 1'b0;
+     else if (wrap && !cyc_i)
+       wrapped <= #DELAY 1'b1;
+     else
+       wrapped <= #DELAY 1'b0;
+    */
 
 
    //-------------------------------------------------------------------------
@@ -181,7 +199,7 @@ module wb_sram_stream
          .READ (READ ), // Streaming reads?
          .WRITE(WRITE), // Streaming writes?
          .PIPED(PIPED), // Pipelined Wishbone (SPEC B4) transfers (0/1)?
-         .ASYNC(ASYNC), // Combinational vs. synchronous (0/1/2)?
+         .ASYNC(0),     // Combinational vs. synchronous (0/1/2)?
          .CHECK(CHECK), // Sanity-checking of inputs (0/1)?
          .DELAY(DELAY)
          ) SRAMWB
@@ -196,8 +214,8 @@ module wb_sram_stream
          .rty_o(rty_o),
          .err_o(err_o),
          .adr_i(adr),
-         .sel_i(USEBE ? sel_i : {BYTES{1'bx}}),
-         .dat_i(WRITE ? dat_i : {WIDTH{1'bx}}),
+         .sel_i(USEBE ? sel_i : {BYTES{1'b0}}),
+         .dat_i(WRITE ? dat_i : {WIDTH{1'b0}}),
          .dat_o(dat_o),
 
          .sram_ce_o(sram_ce_o),

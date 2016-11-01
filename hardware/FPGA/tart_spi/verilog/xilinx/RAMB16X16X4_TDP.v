@@ -49,6 +49,21 @@ RAMB16X16X4_TDP
     );
 */
 
+/*
+// TODO:
+`ifdef __SIMULATE_XILINX_PRIMITIVES
+ `undef __icarus_behavioural
+`elif __icarus
+ `define __icarus_behavioural
+`endif
+*/
+
+`ifdef __icarus
+ `define __icarus_behavioural
+`else
+ `undef  __icarus_behavioural
+`endif
+
 module RAMB16X16X4_TDP #(parameter DELAY = 3)
    (
     input         CLKA, // Port A
@@ -67,7 +82,7 @@ module RAMB16X16X4_TDP #(parameter DELAY = 3)
     );
 
 
-`ifdef __icarus
+`ifdef __icarus_behavioural
    //-------------------------------------------------------------------------
    //  Behavioural description of the `RAMB16X16X4_TDP` core.
    //-------------------------------------------------------------------------
@@ -93,16 +108,16 @@ module RAMB16X16X4_TDP #(parameter DELAY = 3)
      if (ENB) begin
         if (WEB)
           case (ADDRB[1:0])
-            2'b00: sram0[ADDRB[10:2]] <= #DELAY DIB;
-            2'b01: sram1[ADDRB[10:2]] <= #DELAY DIB;
-            2'b10: sram2[ADDRB[10:2]] <= #DELAY DIB;
-            2'b11: sram3[ADDRB[10:2]] <= #DELAY DIB;
+            2'b00: sram0[ADDRB[11:2]] <= #DELAY DIB;
+            2'b01: sram1[ADDRB[11:2]] <= #DELAY DIB;
+            2'b10: sram2[ADDRB[11:2]] <= #DELAY DIB;
+            2'b11: sram3[ADDRB[11:2]] <= #DELAY DIB;
           endcase // case (ADDRB[1:0])
         case (ADDRB[1:0])
-          2'b00: reg_DOB <= #DELAY sram0[ADDRB[10:2]];
-          2'b01: reg_DOB <= #DELAY sram1[ADDRB[10:2]];
-          2'b10: reg_DOB <= #DELAY sram2[ADDRB[10:2]];
-          2'b11: reg_DOB <= #DELAY sram3[ADDRB[10:2]];
+          2'b00: reg_DOB <= #DELAY sram0[ADDRB[11:2]];
+          2'b01: reg_DOB <= #DELAY sram1[ADDRB[11:2]];
+          2'b10: reg_DOB <= #DELAY sram2[ADDRB[11:2]];
+          2'b11: reg_DOB <= #DELAY sram3[ADDRB[11:2]];
         endcase // case (ADDRB[1:0])
      end
 

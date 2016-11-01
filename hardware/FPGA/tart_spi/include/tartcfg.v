@@ -89,8 +89,8 @@
 //  Random data can be (internally) generated, for debugging purposes, and
 //  using a MFSR (Multiple-Feedback Shift Register, which is similar to a
 //  Linear-Feedback Shift Register).
-`define RANDOM_DATA  1          // Use a RNG for fake data?
-// `define RANDOM_DATA  0          // Use a RNG for fake data?
+// `define RANDOM_DATA  1          // Use a RNG for fake data?
+`define RANDOM_DATA  0          // Use a RNG for fake data?
 
 //----------------------------------------------------------------------------
 //  Constant data can be used to test correlators.
@@ -139,6 +139,9 @@
 //  SRAM primitives.
 // `define __USE_GENERIC_SRAM
 `undef __USE_GENERIC_SRAM
+
+`define __USE_EXPLICT_BRAM
+
 
 //----------------------------------------------------------------------------
 //  Enable a fake DSP unit, for testing & development of new correlators?
