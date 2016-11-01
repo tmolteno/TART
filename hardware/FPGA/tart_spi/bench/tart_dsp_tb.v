@@ -58,16 +58,14 @@ module tart_dsp_tb;
    //  Signals.
    //
    //-------------------------------------------------------------------------
-   wire [MSB:0] c_dat, c_val, blocksize, checksum;
-   wire [CSB:0] c_adr;
+   wire [MSB:0] blocksize, checksum;
    wire [BSB:0] dat, val, drx;
    reg          clk_x = 1'b1, b_clk = 1'b1, rst = 1'b0;
-   reg          cyc = 1'b0, stb = 1'b0, we = 1'b0, bst = 1'b0;
+   reg          cyc = 1'b0, stb = 1'b0, we = 1'b0;
    reg [3:0]    adr;
    reg [BSB:0]  dtx;
    reg          set = 1'b0, get = 1'b0, fin = 1'b0;
-   wire         dsp_en, stuck, limp, ack;
-   wire         c_cyc, c_stb, c_we, c_bst, c_ack;
+   wire         dsp_en, stuck, limp, ack, wat, rty, err;
    reg [NSB:0]  data [0:255];
    reg [31:0]   viz = 32'h0;
    reg [4:0]    log_bsize = COUNT[4:0];
@@ -331,7 +329,7 @@ module tart_dsp_tb;
    reg         ready = 0;
    reg         aq_start = 0, aq_done = 1;
    wire        spi_busy, aq_request;
-   wire [2:0]  aq_sample_delay;
+   wire [2:0]  aq_delay;
 
    always @(posedge b_clk)
      if (rst)
@@ -383,12 +381,8 @@ module tart_dsp_tb;
    //     DATA-ACQUISITION CONTROL AND READ-BACK.
    //     
    //-------------------------------------------------------------------------
-   wire [BSB:0] s_dat;
-   wire [XSB:0] v_blk;
-   wire         s_cyc, s_stb, s_we, s_ack;
-   reg          wat = 1'b0;
    wire         overflow, newblock, streamed, accessed, available, switching;
-   wire         aq_debug_mode, aq_enabled, vx_enabled, overwrite;
+   wire         aq_debug, aq_enabled, vx_enabled, overwrite;
 
    wire         dsp_cyc, dsp_stb, dsp_we;
    wire         dsp_ack, dsp_wat, dsp_rty, dsp_err;
@@ -396,16 +390,13 @@ module tart_dsp_tb;
    wire [7:0]   dsp_dat, dsp_val;
 
 
-`ifdef __WB_CLASSIC
-   always @(posedge b_clk)
-     wat <= #DELAY stb && !ack;
-`endif
-
-
    //-------------------------------------------------------------------------
    //  Controls data-aquisition, and correlator registers.
    tart_acquire
-     #( .WIDTH(BBITS), .ACCUM(ACCUM), .BBITS(XBITS)
+     #(  .ACCUM(ACCUM),
+         .AXNUM(AXNUM),
+         .BBITS(BBITS),
+         .XBITS(XBITS)
         ) TART_ACQUIRE0
      ( .clk_i(b_clk),
        .rst_i(rst),
@@ -413,7 +404,9 @@ module tart_dsp_tb;
        .stb_i(stb),
        .we_i (we),
        .ack_o(ack),
-//        .wat_o(wat),
+       .wat_o(wat),
+       .rty_o(rty),
+       .err_o(err),
        .adr_i(adr),
        .dat_i(dtx),
        .dat_o(drx),
@@ -422,7 +415,7 @@ module tart_dsp_tb;
        .data_request(aq_request),
        .data_in(data_w),
 
-       .spi_busy(spi_busy),
+       .spi_busy_i(spi_busy),
 
        .vx_cyc_o(dsp_cyc),
        .vx_stb_o(dsp_stb),
@@ -447,9 +440,9 @@ module tart_dsp_tb;
        .vx_stuck_i(stuck),
        .vx_limp_i (limp),
 
-       .aq_debug_mode(aq_debug_mode),
-       .aq_enabled(aq_enabled),
-       .aq_sample_delay(aq_sample_delay),
+       .aq_enabled_o(aq_enabled),
+       .aq_debug_o  (aq_debug),
+       .aq_delay_o  (aq_delay),
        .aq_adr_i(25'b0)
        );
 

@@ -69,9 +69,9 @@ module tart_control
    wire            ack_w, r_stb;
 
    assign ack_o = ack;
-   assign wat_o = 1'b0;
-   assign rty_o = 1'b0;
-   assign err_o = 1'b0;
+   assign wat_o = 1'b0;         // does not stall
+   assign rty_o = 1'b0;         // always completes
+   assign err_o = 1'b0;         // never causes errors
    assign dat_o = dat;
 
    //  Pipelined transfers generate an ACK for each cycle that STB is

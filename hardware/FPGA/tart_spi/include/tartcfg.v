@@ -94,8 +94,8 @@
 
 //----------------------------------------------------------------------------
 //  Constant data can be used to test correlators.
-`define CONST_DATA 0
-// `define CONST_DATA 1
+// `define CONST_DATA 0
+`define CONST_DATA 1
 `define CONST_WORD 24'h000000
 
 

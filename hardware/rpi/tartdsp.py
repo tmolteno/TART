@@ -41,6 +41,7 @@ class TartSPI:
 
   WRITE_CMD = 0x80
 
+  LATENCY   = 2
 
   ##--------------------------------------------------------------------------
   ##  TART SPI interface commands.
@@ -87,10 +88,11 @@ class TartSPI:
             self.SPI_STATS, # self.SPI_EXTRA, self.SPI_MISC]
             self.CHECKSUM1, self.CHECKSUM2, self.CHECKSUM3]
     for reg in regs:
-      ret = self.spi.xfer([reg, 0x0, 0x0])
-      vals.append(ret[2])
+      ret = self.spi.xfer([reg] + [0x0]*self.LATENCY)
+      val = ret[self.LATENCY]
+      vals.append(val)
       if noisy:
-        print self.show_status(reg, ret[2])
+        print self.show_status(reg, val)
 #         print '0x%02x: %s' % (reg, tobin(ret))
     return vals
 
@@ -124,16 +126,16 @@ class TartSPI:
   def debug(self, on=1, noisy=False):
     '''Read the debug register, and update the debug-mode flag, and then write back the new debug register value.'''
     if on:
-      val = self.spi.xfer([self.AQ_DEBUG, 0x0, 0x0])
-      val = val[2] | 0x80
+      val = self.spi.xfer([self.AQ_DEBUG] + [0x0]*self.LATENCY)
+      val = val[self.LATENCY] | 0x80
       self.pause()
       ret = self.spi.xfer([self.WRITE_CMD | self.AQ_DEBUG, val])
       if noisy:
         print tobin(ret)
         print ' debug now ON'
     else:
-      val = self.spi.xfer([self.AQ_DEBUG, 0x0, 0x0])
-      val = val[2] & 0x7F
+      val = self.spi.xfer([self.AQ_DEBUG] + [0x0]*self.LATENCY)
+      val = val[self.LATENCY] & 0x7F
       self.pause()
       ret = self.spi.xfer([self.WRITE_CMD | self.AQ_DEBUG, val])
       if noisy:
@@ -148,18 +150,18 @@ class TartSPI:
   ##--------------------------------------------------------------------------
   def read_sample_delay(self, noisy=False):
     '''Read back the data sampling delays.'''
-    ret = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
-    val = ret[2] & 0x07
+    ret = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
+    val = ret[self.LATENCY] & 0x07
     if noisy:
       print tobin(ret)
     self.pause()
     return val
 
-  def set_sample_delay(self, latency=0, noisy=False):
+  def set_sample_delay(self, phase=0, noisy=False):
     '''Read the sampling-delay register, and update the delay, and then write back, the new register value.'''
-    if (latency < 6 and latency >= 0):
-      val = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
-      val = val[2] & 0xF8 | int(latency)
+    if (phase < 6 and phase >= 0):
+      val = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
+      val = val[self.LATENCY] & 0xF8 | int(phase)
       self.pause()
       ret = self.spi.xfer([self.WRITE_CMD | self.AQ_SYSTEM, val])
       self.pause()
@@ -168,60 +170,60 @@ class TartSPI:
       return 1
     else:
       if noisy:
-        print 'WARNING: latency value (%d) not within [0,5]' % latency
+        print 'WARNING: phase value (%d) not within [0,5]' % phase
       return 0
 
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
-    old = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
+    old = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
     self.pause()
-    ret = self.spi.xfer([self.AQ_STATUS | self.WRITE_CMD, 0x0, 0x80 | old[2]])
+    ret = self.spi.xfer([self.AQ_STATUS | self.WRITE_CMD, 0x0, 0x80 | old[self.LATENCY]])
     self.pause()
-    res = self.spi.xfer([self.AQ_SYSTEM, 0x0, 0x0])
-    val = (res[2] >> 7) == 0x01
+    res = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
+    val = (res[self.LATENCY] >> 7) == 0x01
     if noisy:
       print ' attempting to set acquisition-mode to ON'
       print tobin(old)
       print tobin(ret)
     if val:
       self.pause(sleeptime)       # optionally wait for acquisition to end
-      res = self.spi.xfer([self.SPI_STATS, 0x0, 0x0])
+      res = self.spi.xfer([self.SPI_STATS] + [0x0]*self.LATENCY)
       self.pause()
       if noisy:
         print tobin(res)
-      fin = res[2] & 0x03 == 0x03
+      fin = res[self.LATENCY] & 0x03 == 0x03
     return val and fin
 
   def read_slow(self, num_words=2**21, blocksize=1024):
     '''Read back the requested number of 24-bit words.'''
     num = int(blocksize*3)
-    blk = [self.AX_STREAM, 0xff,] + [0,0,0,]*blocksize
+    blk = [self.AX_STREAM] + [0xff]*self.LATENCY + [0,0,0]*blocksize
     dat = numpy.zeros(num_words*3)
     ptr = int(0)
     for i in range(0, int(num_words/blocksize)):
-      dat[range(ptr, ptr+num)] = self.spi.xfer(blk)[2:]
+      dat[range(ptr, ptr+num)] = self.spi.xfer(blk)[self.LATENCY:]
       ptr += num
     lst = int(num_words % blocksize)
-    dat[range(ptr, ptr+lst*3)] = self.spi.xfer([self.AX_STREAM, 0xff,] + [0,0,0,]*lst)[2:]
+    dat[range(ptr, ptr+lst*3)] = self.spi.xfer([self.AX_STREAM] + [0xff]*self.LATENCY + [0,0,0]*lst)[self.LATENCY:]
     return dat.reshape(-1,3)
 
   def read_data(self, num_words=2**21, blocksize=1000):
     '''Read back the requested number of 24-bit words.'''
-    blk = [self.AX_STREAM, 0xff,] + [0,0,0,]*blocksize
+    blk = [self.AX_STREAM] + [0xff]*self.LATENCY + [0,0,0]*blocksize
     dat = []
     for i in range(0, int(num_words/blocksize)):
-      dat += self.spi.xfer(blk)[2:]
+      dat += self.spi.xfer(blk)[self.LATENCY:]
     lst = num_words % blocksize
-    dat += self.spi.xfer([self.AX_STREAM, 0xff,] + [0,0,0,]*lst)[2:]
+    dat += self.spi.xfer([self.AX_STREAM] + [0xff]*self.LATENCY + [0,0,0]*lst)[self.LATENCY:]
     dat = numpy.array(dat).reshape(-1,3)
     return dat
 
   def read_test(self, noisy=True):
     '''Read back just the current 24-bit word.'''
-    dat1 = self.spi.xfer([self.AX_DATA1, 0x0, 0x0])
-    dat2 = self.spi.xfer([self.AX_DATA2, 0x0, 0x0])
-    dat3 = self.spi.xfer([self.AX_DATA3, 0x0, 0x0])
-    return [dat1[2], dat2[2], dat3[2]]
+    dat1 = self.spi.xfer([self.AX_DATA1] + [0x0]*self.LATENCY)
+    dat2 = self.spi.xfer([self.AX_DATA2] + [0x0]*self.LATENCY)
+    dat3 = self.spi.xfer([self.AX_DATA3] + [0x0]*self.LATENCY)
+    return [dat1[self.LATENCY], dat2[self.LATENCY], dat3[self.LATENCY]]
 
 
   ##--------------------------------------------------------------------------
@@ -250,17 +252,16 @@ class TartSPI:
 
   def get_blocksize(self, noisy=False):
     '''Get the (exponent of the) correlator block-size.'''
-    ret = self.spi.xfer([self.VX_SYSTEM, 0x0, 0x0])
+    ret = self.spi.xfer([self.VX_SYSTEM] + [0x0]*self.LATENCY)
     self.pause()
     if noisy:
       print tobin(ret)
-    return ret[2] & 0x1F
+    return ret[self.LATENCY] & 0x1F
 
   def read_visibilities(self, noisy=True):
     '''Read back visibilities data.'''
-    res = self.spi.xfer([self.VX_STREAM, 0x0,] + [0x0, 0x0, 0x0, 0x0]*576)
-#     print res[2:]
-    val = self.vis_convert(res[2:])
+    res = self.spi.xfer([self.VX_STREAM] + [0x0]*self.LATENCY + [0x0, 0x0, 0x0, 0x0]*576)
+    val = self.vis_convert(res[self.LATENCY:])
     if noisy:
       tim = time.clock()
       print self.show_status(self.VIZ_STATS, res[1])
@@ -268,8 +269,8 @@ class TartSPI:
     return val
 
   def vis_ready(self, noisy=False):
-    res = self.spi.xfer([self.VX_STATUS, 0x0, 0x0])
-    rdy = res[2] & 0x80 != 0
+    res = self.spi.xfer([self.VX_STATUS] + [0x0]*self.LATENCY)
+    rdy = res[self.LATENCY] & 0x80 != 0
     if noisy:
       print '%s   \t(ready = %s)' % (tobin(res), rdy)
     return rdy
@@ -294,6 +295,7 @@ class TartSPI:
   def load_permute(self, filepath='../FPGA/tart_spi/data/permute.txt', noisy=False):
     '''Load a permutation vector from the file at the given filepath.'''
     pp = numpy.loadtxt(filepath, dtype='int')
+    self.perm = pp
     return pp
 
 #endclass TartSPI
@@ -313,6 +315,7 @@ if __name__ == '__main__':
   parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
   parser.add_argument('--correlate', action='store_true', help='perform a single correlation')
   parser.add_argument('--verbose', action='store_true', help='extra debug output')
+  parser.add_argument('--permute', action='store_true', help='permute the visibilities')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)

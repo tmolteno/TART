@@ -10,6 +10,9 @@
  * Stability   : Experimental
  * Portability : only tested with Icarus Verilog
  * 
+ * OBSOLETE:
+ *  + 02/11/2016  --  use `wb_sram_prefetch.v` instead;
+ * 
  * Has two master Wishbone-like buses, for prefetching data from one slave
  * device/bus, and then transferring this data to another slave device.
  * 
@@ -18,6 +21,9 @@
  * devices.
  * 
  * NOTE:
+ *  + not Wishbone SPEC B4 compliant;
+ *  + not robust, unless the storage device is a low-latency, deterministic
+ *    store, like a SRAM;
  *  + currently synchronous, and both bus interfaces share the same clock;
  *  + it would be unwise to change the input `count_i` value while this module
  *    is active;
@@ -26,6 +32,7 @@
  *  + 17/06/2016  --  initial file;
  *  + 20/08/2016  --  modified to explicitly break up transfers into smaller
  *                    blocks;
+ *  + 02/11/2016  --  obsoleted;
  * 
  * TODO:
  *  + more robust flow-control (by monitoring and generating bus wait-state
@@ -79,16 +86,16 @@ module wb_prefetch
     output reg [MSB:0] b_dat_o
     );
 
-   reg [ASB:0]         count = 0;
+   reg [ASB:0]         count = {ABITS{1'b0}};
    reg [SBITS:0]       count_nxt;
-   reg                 count_end = 0;
-   reg                 read = 0;
+   reg                 count_end = 1'b0;
+   reg                 read = 1'b0;
    wire                done;
 
 
-   initial begin : PREFETCH_BLOCK
-      $display("\nModule : wb_prefetch\n\tWIDTH\t= %4d\n\tCOUNT\t= %4d\n\tSIZE\t= %4d\n\tSBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n\tBSTEP\t= %4d\n\tUBITS\t= %4d\n", WIDTH, COUNT, SIZE, SBITS, BSIZE, BBITS, BSTEP, UBITS);
-   end // PREFETCH_BLOCK
+   initial begin
+      $display("\nModule : wb_prefetch (%m)\n\tWIDTH\t= %4d\n\tCOUNT\t= %4d\n\tSIZE\t= %4d\n\tSBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n\tBSTEP\t= %4d\n\tUBITS\t= %4d\n", WIDTH, COUNT, SIZE, SBITS, BSIZE, BBITS, BSTEP, UBITS);
+   end
 
 
    //-------------------------------------------------------------------------
@@ -100,7 +107,7 @@ module wb_prefetch
 
    //  Strobe the `ready_o` signal when a prefetch has been completed.
    always @(posedge clk_i)
-     if (rst_i || begin_i) ready_o <= #DELAY 0;
+     if (rst_i || begin_i) ready_o <= #DELAY 1'b0;
      else                  ready_o <= #DELAY count_end && done;
 
    //  Pipeline these signals, since the block-prefetches take several clock-
@@ -114,7 +121,7 @@ module wb_prefetch
    //-------------------------------------------------------------------------
    //  Port A master Wishbone-like bus interface.
    //-------------------------------------------------------------------------
-   reg [USB:0]         a_adr = 0;
+   reg [USB:0]         a_adr = {UBITS{1'b0}};
    wire [UBITS:0]      a_adr_nxt = a_adr + 1;
    wire [BSB:0]        a_blk;
 
@@ -175,8 +182,10 @@ module wb_prefetch
    //-------------------------------------------------------------------------
    //  Block-counter, for computing burst transfers.
    always @(posedge clk_i)
-     if (rst_i || b_run) b_blk <= #DELAY {BBITS{1'b0}};
-     else                b_blk <= #DELAY b_bst_o ? b_nxt[BSB:0] : b_blk;
+     if (rst_i || b_run)
+       b_blk <= #DELAY {BBITS{1'b0}};
+     else
+       b_blk <= #DELAY b_bst_o ? b_nxt[BSB:0] : b_blk;
 
 
    //-------------------------------------------------------------------------
@@ -208,8 +217,10 @@ module wb_prefetch
    integer             rxd = 0;
 
    always @(posedge clk_i)
-     if (rst_i || begin_i) rxd <= #DELAY 0;
-     else if (a_cyc_o && a_ack_i) rxd <= #DELAY rxd+1;
+     if (rst_i || begin_i)
+       rxd <= #DELAY 0;
+     else if (a_cyc_o && a_ack_i)
+       rxd <= #DELAY rxd+1;
 `endif //  `ifdef __icarus
 
 
