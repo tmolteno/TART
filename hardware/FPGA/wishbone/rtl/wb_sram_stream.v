@@ -179,7 +179,7 @@ module wb_sram_stream
    //-------------------------------------------------------------------------
    //  Wishbone to SRAM interface.
    //-------------------------------------------------------------------------
-    wb_sram_interface
+   wb_sram_interface
      #(  .WIDTH(WIDTH), // Data and address bit-widths
          .ABITS(WBITS),
          .USEBE(USEBE), // Use individual byte-enables (0/1)?
