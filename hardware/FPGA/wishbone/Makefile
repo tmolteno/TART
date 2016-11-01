@@ -1,0 +1,2 @@
+RTL=rtl
+SIM=bench

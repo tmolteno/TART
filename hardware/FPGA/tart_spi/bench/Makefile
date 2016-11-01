@@ -7,13 +7,12 @@ OUT=../build
 # Source directories:
 RTL =../verilog
 FIFO=$(RTL)/fifo
-BUS =$(RTL)/bus
+BUS =../../wishbone/rtl
 SPI =$(RTL)/spi
+ACQ =$(RTL)/acquire
 
 # Some Wishbone-like cores:
 WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram_interface.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_sram_stream.v $(BUS)/wb_sram_prefetch.v
-
-# WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram.v $(BUS)/wb_sram_dual_port.v $(BUS)/wb_prefetch.v $(BUS)/wb_get_block.v $(BUS)/wb_prefetch_classic.v $(BUS)/wb_stream.v $(BUS)/wb_sram_interface.v $(BUS)/wb_chunk.v $(BUS)/wb_prefetch_pipelined.v $(BUS)/wb_fetch.v
 
 # Common library cores:
 LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_acquire.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v $(RTL)/xilinx/RAMB16X16X4_TDP.v
@@ -22,7 +21,7 @@ LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(RTL)/tart_a
 XIL =xilinx
 SIM =$(XIL)/DSP48A1.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
 
-DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(RTL)/dram_prefetch.v
+DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(ACQ)/dram_prefetch.v
 OLD =$(SPI)/spi_target.v $(RTL)/tart_spi.v
 
 ##  Correlator files:
