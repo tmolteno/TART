@@ -157,9 +157,6 @@
 //  Use a lookup-table for computing the blocksize?
 `define __LOOKUP_BLOCKSIZE
 
-//----------------------------------------------------------------------------
-//  Use a lookup-table for computing the blocksize?
-`define __USE_SPI_SLAVE_WB
 
 
 //----------------------------------------------------------------------------

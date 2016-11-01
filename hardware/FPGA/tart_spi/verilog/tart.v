@@ -338,8 +338,6 @@ module tart
    wire [7:0]   spi_status = {uflow, oflow, request_from_spi, aq_enabled,
                               aq_debug, tart_state[2:0]};
    wire [7:0]   viz_status = {aq_debug, vx_enabled, available, overflow, v_blk};
-//    wire [7:0]   viz_status = {aq_debug, vx_enabled, available, overflow, c_blk};
-//    wire [7:0] viz_status = {c_blk, v_blk};
 
    assign r_dtx = b_drx;        // redirect output-data to slaves
    assign a_dtx = b_drx;
@@ -370,7 +368,6 @@ module tart
    //-------------------------------------------------------------------------
    //     SPI SLAVE CORE with a WISHBONE(-like) INTERCONNECT
    //-------------------------------------------------------------------------
-`ifdef __USE_SPI_SLAVE_WB
    wire  b_wat, b_rty, b_err;
 
    assign b_wat = 1'b0;
@@ -383,11 +380,6 @@ module tart
         .PIPED(1),
         .CHECK(1)
         ) SPI0
-`else
-   spi_slave
-     #( .WIDTH(BBITS)
-        ) SPI0
-`endif
        (
         .clk_i(b_clk),
         .rst_i(b_rst),
@@ -508,10 +500,6 @@ module tart
    //     CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
- `ifdef __USE_FAKE_DSP
-   tart_fake_dsp
-     #(.NREAD(NREAD)
- `else
    tart_dsp
      #(.AXNUM(ANTENNAE),
        .ACCUM(ACCUM),
@@ -521,7 +509,6 @@ module tart
        .RBITS(RBITS),
        .XBITS(XBITS),
        .CBITS(CBITS)
- `endif
        ) DSP
      ( .clk_x(clk_x),
        .clk_i(b_clk),

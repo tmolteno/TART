@@ -202,9 +202,9 @@ module control
          .TICKS(TICKS),
          .DELAY(DELAY)
          ) RMWY
-       ( .clk_i(clk_x),
-         .rst_i(rst),
-         .ce_i(en),
+       ( .clk_i(DUPS ? clk_x : 1'b0),
+         .rst_i(DUPS ? rst   : 1'b0),
+         .ce_i (DUPS ? en    : 1'b0),
          .rd_adr_o(y_rd_adr),
          .rd_wrap_o(),
          .wr_adr_o(y_wr_adr),

@@ -1,4 +1,7 @@
 `timescale 1ns/100ps
+
+`include "tartcfg.v"
+
 module block_buffer
   #(parameter WIDTH = 24,
     parameter MSB   = WIDTH-1,
