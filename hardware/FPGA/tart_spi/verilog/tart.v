@@ -552,8 +552,9 @@ module tart
        .RBITS(RBITS),
        .XBITS(XBITS),           // visibilities-bank address bit-width
        .CBITS(CBITS),           // correlator address bit-width
-       .PIPED(PIPED),           // Wishbone mode settings
-       .CHECK(CHECK),           // bus sanity-checking
+       .PIPED(PIPED),           // Wishbone pipelined mode?
+       .CHECK(CHECK),           // bus sanity-checking?
+       .VIZWR(VIZWR),           // bidirectional streaming access?
        .DELAY(DELAY)            // simulation-only settings
        ) DSP
      ( .clk_x(clk_x),           // correlator clock

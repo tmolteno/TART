@@ -165,8 +165,6 @@ module wb_sram_stream
        wrap <= #DELAY 1'b0;
      else if (inc_w)
        wrap <= #DELAY wrap_adr;
-//      else if (wrap_adr)
-//        wrap <= #DELAY 1'b1;
      else
        wrap <= #DELAY wrap;
 
@@ -176,15 +174,6 @@ module wb_sram_stream
        wrapped <= #DELAY 1'b0;
      else
        wrapped <= #DELAY wrap;
-
-   /*
-     if (rst_i && (CHECK || RESET) || wrapped)
-       wrapped <= #DELAY 1'b0;
-     else if (wrap && !cyc_i)
-       wrapped <= #DELAY 1'b1;
-     else
-       wrapped <= #DELAY 1'b0;
-    */
 
 
    //-------------------------------------------------------------------------

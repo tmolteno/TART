@@ -72,6 +72,7 @@ module tart_dsp
      //  Wishbone mode parameters:
      parameter PIPED = 1,       // Wishbone SPEC B4 mode (0/1)?
      parameter CHECK = 1,       // Sanity checking when on a bus (0/1)?
+     parameter VIZWR = 0,
 
      //  Simulation-only parameters:
      parameter DELAY = 3)
@@ -218,7 +219,7 @@ module tart_dsp
          .START(0),             // Start address
          .TICKS(1),             // Read latency of the attached SRAM's
          .READ (1),             // Stream from the SRAM's
-         .WRITE(0),             // Only need read access
+         .WRITE(VIZWR),         // Typically only need read access
          .USEBE(0),             // Single byte data
          .PIPED(PIPED),         // Pipelined (SPEC B4) transfers
          .ASYNC(1),             // Registered outputs
