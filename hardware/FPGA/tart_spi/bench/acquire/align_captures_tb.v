@@ -1,4 +1,23 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
+/*
+ * Module      : bench/signal_capture_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Testbench for testing TART's signal-capturing circuitry.
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 module align_captures_tb;
 
    parameter RATE = 12;
@@ -9,7 +28,7 @@ module align_captures_tb;
 
    wire [MSB:0] daq, sig, cap, strobes, lockeds, invalids;
    wire         ready, locked, invalid;
-   reg          clk12x = 1, clk = 1, rst = 0, ce = 0, ack = 0;
+   reg          clk12x = 1'b1, clk = 1'b1, rst = 1'b0, ce = 1'b0, ack = 1'b0;
    reg [MSB:0]  raw, acks = 0;
 
    always #2.50 clk12x <= ~clk12x;
@@ -20,7 +39,7 @@ module align_captures_tb;
       $dumpfile ("align_tb.vcd");
       $dumpvars;
       
-      #45 rst = 1; #90 rst = 0;
+      #43 rst = 1'b1; #90 rst = 1'b0;
 
       #720; #720; #720;
       #720 $finish;
@@ -30,18 +49,18 @@ module align_captures_tb;
    //-------------------------------------------------------------------------
    // Generate random data to be acquired.
    always @(posedge clk)
-     raw <= $random;
+     raw <= #DELAY $random;
 
    always @(posedge clk12x)
      if (ready) $display("%8t: DATA = %08b (%02x)", $time, daq, daq);
 
    // Start acquisition after a reset.
    always @(posedge clk)
-     ce <= !rst ? 1 : 0 ;
+     ce <= #DELAY !rst ? 1 : 0 ;
 
    // Acknowledge that invalid data was received.
    always @(posedge clk)
-     ack <= !ack && !rst && ce && |{invalid, invalids};
+     ack <= #DELAY !ack && !rst && ce && |{invalid, invalids};
 
 
    //-------------------------------------------------------------------------
@@ -71,15 +90,15 @@ module align_captures_tb;
         );
 
    signal_capture SIGCAP0 [MSB:0]
-     ( .clk(clk12x),
-       .rst(rst),
-       .ce(ce),
-       .d(sig),
-       .q(cap),
-       .ready(strobes),
-       .locked(lockeds),
-       .invalid(invalids),
-       .ack(acks)
+     ( .clk_i    (clk12x),
+       .rst_i    (rst),
+       .ce_i     (ce),
+       .dat_i    (sig),
+       .dat_o    (cap),
+       .ready_o  (strobes),
+       .locked_o (lockeds),
+       .invalid_o(invalids),
+       .ack_i    (acks)
        );
 
    // Offset and jitter the given signals.

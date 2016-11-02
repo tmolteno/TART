@@ -144,7 +144,10 @@ module tart_acquire
     input          vx_limp_i,
 
     output reg     aq_enabled_o = 1'b0,
+    input          aq_valid_i,
     output reg     aq_debug_o = 1'b0,
+    output reg     aq_shift_o = 1'b0,
+    output reg     aq_count_o = 1'b0,
 	  output [2:0]   aq_delay_o,
     input [24:0]   aq_adr_i
     );
@@ -213,9 +216,9 @@ module tart_acquire
    //  Group signals into registers.
    //-------------------------------------------------------------------------
    //  Data acquisition streaming, status, and control registers.
-   assign aq_debug  = {aq_debug_o, vx_stuck_i, vx_limp_i, {(BBITS-3){1'b0}}};
+   assign aq_debug  = {aq_debug_o, vx_stuck_i, vx_limp_i, {(BBITS-5){1'b0}}, aq_count_o, aq_shift_o};
    assign aq_status = {aq_adr_i[7:0]};
-   assign aq_system = {aq_enabled_o, {(BBITS-4){1'b0}}, aq_delay};
+   assign aq_system = {aq_enabled_o, aq_valid_i, {(BBITS-5){1'b0}}, aq_delay};
 
    assign aq_delay_o = aq_delay;
 
@@ -245,43 +248,24 @@ module tart_acquire
    end
 
 
-   
+
    //-------------------------------------------------------------------------
    //
-   //  MANAGE SYSTEM FLAGS.
+   //  WISHBONE (SLAVE, SPEC B4) BUS INTERFACE.
    //
-   //-------------------------------------------------------------------------
-   //  Has the visibilities data been accessed?
-   assign x_ack = PIPED ? viz && vx_ack_i : stb_w && vx_ack_i;
-//    assign x_ack = viz && vx_ack_i;
-
-   //  Monitor access to each new bank.
-   //  TODO: Reading an old bank would still assert this flag, and is this
-   //    sensible behaviour?
-   always @(posedge clk_i)
-     if (rst_i && RESET || newblock_i)
-       accessed <= #DELAY 1'b0;
-     else
-       accessed <= #DELAY accessed || x_ack;
-
-   //  Monitor when a new bank becomes available.
-   always @(posedge clk_i)
-     if (rst_i)
-       available <= #DELAY 1'b0;
-     else if (newblock_i)
-       available <= #DELAY 1'b1;
-     else if (x_ack)
-       available <= #DELAY 1'b0;
-
-
-   //-------------------------------------------------------------------------
-   //  Wishbone (slave, SPEC B4) bus interface logic.
    //-------------------------------------------------------------------------
    //  Classic, pipelined Wishbone bus cycles can require at least one wait-
    //  state between each transfer, which is achieved here by preventing ACK
    //  being asserted for two consecutive cycles.
    assign ack_c = PIPED ? 1'b0 : ack;
 
+   //  Visibilities data acknowledge?
+   assign x_ack = PIPED ? viz && vx_ack_i : stb_w && vx_ack_i;
+
+   assign nxt = adr + 1;
+
+
+   //-------------------------------------------------------------------------
    //  Generate acknowledges for incoming requests.
    always @(posedge clk_i)
      if (rst_i && RESET)
@@ -317,21 +301,60 @@ module tart_acquire
          default:    dat <= #DELAY 8'bx;
        endcase // case (adr_i)
 
+
+   //-------------------------------------------------------------------------
+   //  Wishbone (SPEC B4) bus for reading back visibilities.
+   //-------------------------------------------------------------------------
+   //  At the beginning of each bus cycle, see if this is a register-access,
+   //  or a visibilities read-back.
+   always @(posedge clk_i)
+     if (rst_i && RESET || !spi_busy_i)
+       viz <= #DELAY 1'b0;
+     else if (stb_w)
+       viz <= #DELAY adr_i == `VX_STREAM;
+     else
+       viz <= #DELAY viz;
+
+   //-------------------------------------------------------------------------
+   //  When using correlators in SDP-mode, there are `2^4 == 16` banks of
+   //  stored visibilities that can be read back. Every time a bank has been
+   //  streamed out of this device (via the SPI interface), the bank-counter
+   //  is incremented.
+   always @(posedge clk_i)
+     if (rst_i)
+       adr <= #DELAY {XBITS{1'b0}};
+`ifdef __USE_SETTABLE_BLOCK_COUNTER
+     else if (upd_blk)
+       adr <= #DELAY new_blk;
+`endif
+     else
+       adr <= #DELAY streamed_i ? nxt[XSB:0] : adr;
+
+
+   
+   //-------------------------------------------------------------------------
+   //
+   //  MANAGE SYSTEM FLAGS.
+   //
    //-------------------------------------------------------------------------
    //  Aqusition & visibilities register writes.
    always @(posedge clk_i)
      if (rst_i) begin
         vx_set         <= #DELAY 1'b0;
         vx_clr         <= #DELAY 1'b1;
-        aq_enabled_o     <= #DELAY 1'b0;
+        aq_enabled_o   <= #DELAY 1'b0;
         aq_delay       <= #DELAY 3'h0;
         upd_blk        <= #DELAY 1'b0;
-        aq_debug_o  <= #DELAY 1'b0;
+        aq_debug_o     <= #DELAY 1'b0;
+        aq_shift_o     <= #DELAY 1'b0;
+        aq_count_o     <= #DELAY 1'b0;
         vx_overwrite_o <= #DELAY 1'b0;
      end
      else if (cyc_w && we_i && !ack_c)
        case (adr_i)
          `AQ_DEBUG:  begin
+            aq_shift_o <= #DELAY dat_i[0];
+            aq_count_o <= #DELAY dat_i[1];
             aq_debug_o <= #DELAY dat_i[BSB];
          end
          //  Acquisition control register:
@@ -417,33 +440,24 @@ module tart_acquire
 
 
    //-------------------------------------------------------------------------
-   //  Wishbone (SPEC B4) interface for reading back visibilities.
-   //-------------------------------------------------------------------------
-   //  When using correlators in SDP-mode, there are `2^4 == 16` banks of
-   //  stored visibilities that can be read back. Every time a bank has been
-   //  streamed out of this device (via the SPI interface), the bank-counter
-   //  is incremented.
-   assign nxt = adr + 1;
+   //  Monitor access to each new bank.
+   //  TODO: Reading an old bank would still assert this flag, and is this
+   //    sensible behaviour?
+   always @(posedge clk_i)
+     if (rst_i && RESET || newblock_i)
+       accessed <= #DELAY 1'b0;
+     else
+       accessed <= #DELAY accessed || x_ack;
 
+   //  Monitor when a new bank becomes available.
    always @(posedge clk_i)
      if (rst_i)
-       adr <= #DELAY {XBITS{1'b0}};
-`ifdef __USE_SETTABLE_BLOCK_COUNTER
-     else if (upd_blk)
-       adr <= #DELAY new_blk;
-`endif
-     else
-       adr <= #DELAY streamed_i ? nxt[XSB:0] : adr;
+       available <= #DELAY 1'b0;
+     else if (newblock_i)
+       available <= #DELAY 1'b1;
+     else if (x_ack)
+       available <= #DELAY 1'b0;
 
-   //  At the beginning of each bus cycle, see if this is a register-access,
-   //  or a visibilities read-back.
-   always @(posedge clk_i)
-     if (rst_i && RESET || !spi_busy_i)
-       viz <= #DELAY 1'b0;
-     else if (stb_w)
-       viz <= #DELAY adr_i == `VX_STREAM;
-     else
-       viz <= #DELAY viz;
 
 
    //-------------------------------------------------------------------------
@@ -483,8 +497,8 @@ module tart_acquire
    //  DRAM prefetch logic core.
    //-------------------------------------------------------------------------
    dram_prefetch #( .WIDTH(24) ) DRAM_PREFETCH0
-     ( .clk(clk_i),
-       .rst(rst_i),
+     ( .clock_i(clk_i),
+       .reset_i(rst_i),
        .dram_ready(data_ready),
        .dram_request(data_request),
        .dram_data(data_in),

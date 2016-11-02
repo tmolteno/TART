@@ -32,6 +32,9 @@ TIMESPEC TSx_to_e=FROM "GRP_X" TO "GRP_E" 5.0ns DATAPATHONLY;
 TIMESPEC TSs_to_b=FROM "GRP_S" TO "GRP_B" 8.0ns DATAPATHONLY;
 TIMESPEC TSb_to_s=FROM "GRP_B" TO "GRP_S" 8.0ns DATAPATHONLY;
 
+# Antenna domain <-> WB domain constraints:
+TIMESPEC TSe_to_b=FROM "GRP_E" TO "GRP_B" 10.0ns DATAPATHONLY;
+TIMESPEC TSb_to_e=FROM "GRP_B" TO "GRP_E" 10.0ns DATAPATHONLY;
 
 
 ##############################################################################

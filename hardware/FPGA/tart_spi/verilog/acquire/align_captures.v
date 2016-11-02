@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 /*
  * Aligns a set of super-sampled signals, each with varying delay.
  * 

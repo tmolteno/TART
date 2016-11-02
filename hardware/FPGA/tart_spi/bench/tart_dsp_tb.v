@@ -1,4 +1,23 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/tart_dsp_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Simulates two visibility calculations, using TART's 'tart_dsp' logic core,
+ * and then reads them back, via a streaming data-transfer interface.
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
 
 `include "tartcfg.v"
 
@@ -382,7 +401,8 @@ module tart_dsp_tb;
    //     
    //-------------------------------------------------------------------------
    wire         overflow, newblock, streamed, accessed, available, switching;
-   wire         aq_debug, aq_enabled, vx_enabled, overwrite;
+   wire         aq_enabled, aq_valid, aq_debug, aq_shift, aq_count;
+   wire         vx_enabled, overwrite;
 
    wire         dsp_cyc, dsp_stb, dsp_we;
    wire         dsp_ack, dsp_wat, dsp_rty, dsp_err;
@@ -392,6 +412,8 @@ module tart_dsp_tb;
 
    //-------------------------------------------------------------------------
    //  Controls data-aquisition, and correlator registers.
+   assign aq_valid = aq_enabled;
+
    tart_acquire
      #(  .ACCUM(ACCUM),
          .AXNUM(AXNUM),
@@ -400,7 +422,8 @@ module tart_dsp_tb;
         ) TART_ACQUIRE0
      ( .clk_i(b_clk),
        .rst_i(rst),
-       .cyc_i(cyc),
+
+       .cyc_i(cyc),             // system bus (Wishbone SPEC B4)
        .stb_i(stb),
        .we_i (we),
        .ack_o(ack),
@@ -417,7 +440,7 @@ module tart_dsp_tb;
 
        .spi_busy_i(spi_busy),
 
-       .vx_cyc_o(dsp_cyc),
+       .vx_cyc_o(dsp_cyc),      // visibilities read-back bus
        .vx_stb_o(dsp_stb),
        .vx_we_o (dsp_we ),
        .vx_ack_i(dsp_ack),
@@ -441,10 +464,14 @@ module tart_dsp_tb;
        .vx_limp_i (limp),
 
        .aq_enabled_o(aq_enabled),
+       .aq_valid_i  (aq_valid),
        .aq_debug_o  (aq_debug),
+       .aq_shift_o  (aq_shift),
+       .aq_count_o  (aq_count),
        .aq_delay_o  (aq_delay),
-       .aq_adr_i(25'b0)
+       .aq_adr_i    (25'b0)
        );
+
 
    //-------------------------------------------------------------------------
    //  The visibilities are computed by 24 correlators, each with 12x time-
@@ -461,7 +488,11 @@ module tart_dsp_tb;
        .NREAD(NREAD),
        .RBITS(FBITS),
        .XBITS(XBITS),
-       .CBITS(CBITS)
+       .CBITS(CBITS),
+       .PIPED(1),
+       .CHECK(1),
+       .VIZWR(1),               // TODO: test
+       .DELAY(DELAY)
        ) TART_DSP
  `endif
     ( .clk_x(clk_x),

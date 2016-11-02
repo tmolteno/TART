@@ -57,6 +57,7 @@ module tart
     //  Antenna/signal parameters:
     parameter ANTENNAE = `NUM_ANTENNA,
     parameter NSB      = ANTENNAE-1,
+    parameter MULTI    = `MULTI_SOURCE,
     parameter RNG      = `RANDOM_DATA,
     parameter CONST    = `CONST_DATA,
     parameter CDATA    = `CONST_WORD,
@@ -163,7 +164,7 @@ module tart
    //  Acquisition (of antenna raw-data) signals:   
    wire aq_enabled;
    wire [2:0] aq_delay;
-   wire aq_debug;
+   wire aq_shift, aq_count, aq_debug, aq_valid;
    wire [NSB:0] ax_dat;
 
    //-------------------------------------------------------------------------
@@ -306,6 +307,7 @@ module tart
    tart_capture
      #(.AXNUM(ANTENNAE),
        .ABITS(SDRAM_ADDRESS_WIDTH),
+       .MULTI(MULTI),
        .RNG  (RNG),
        .CONST(CONST),
        .CDATA(CDATA)
@@ -326,6 +328,9 @@ module tart
        .aq_ce_i   (aq_enabled),
        .aq_delay_i(aq_delay),
        .aq_debug_i(aq_debug),
+       .aq_shift_i(aq_shift),
+       .aq_count_i(aq_count),
+       .aq_valid_o(aq_valid),
        .ax_data_i (antenna),
        .ax_data_o (ax_dat),
        .rd_req_i  (request_from_spi),
@@ -491,7 +496,10 @@ module tart
 
          //  Antenna data-capture & acquisition controls:
          .aq_enabled_o(aq_enabled),
+         .aq_valid_i  (aq_valid),
          .aq_debug_o  (aq_debug),
+         .aq_shift_o  (aq_shift),
+         .aq_count_o  (aq_count),
          .aq_delay_o  (aq_delay),
          //        .aq_adr_i(cmd_address),
          .aq_adr_i({21'h0, s_adr}),

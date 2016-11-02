@@ -106,7 +106,7 @@ class TartSPI:
     msgs = {
       # Acquisition registers:
       self.AQ_STATUS: 'AQ_STATUS:\taddress = %d' % val,
-      self.AQ_DEBUG:  'AQ_DEBUG: \tdebug = %s, stuck = %s, limp = %s' % (bits[7], bits[6], bits[5]),
+      self.AQ_DEBUG:  'AQ_DEBUG: \tdebug = %s, stuck = %s, limp = %s, count = %s, shift = %s' % (bits[7], bits[6], bits[5], bits[1], bits[0]),
       self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, delay = %d' % (bits[7], val & 0x7),
       # Visibilities registers:
       self.VX_STATUS: 'VX_STATUS:\tready = %s, accessed = %s, overflow = %s, block = %d' % (bits[7], bits[6], bits[5], val & 0xf),
@@ -123,11 +123,16 @@ class TartSPI:
     }
     return msgs.get(reg, 'WARNING: Not a status register.')
 
-  def debug(self, on=1, noisy=False):
+  def debug(self, on=1, shift=False, count=False, noisy=False):
     '''Read the debug register, and update the debug-mode flag, and then write back the new debug register value.'''
     if on:
-      val = self.spi.xfer([self.AQ_DEBUG] + [0x0]*self.LATENCY)
-      val = val[self.LATENCY] | 0x80
+      val = self.spi.xfer([self.AQ_DEBUG] + [0x0]*self.LATENCY)[self.LATENCY]
+      val = val | 0x80
+      # Set counter mode:
+      if shift:
+        val = val | 0x01
+      if count:
+        val = val | 0x02
       self.pause()
       ret = self.spi.xfer([self.WRITE_CMD | self.AQ_DEBUG, val])
       if noisy:
@@ -316,6 +321,8 @@ if __name__ == '__main__':
   parser.add_argument('--correlate', action='store_true', help='perform a single correlation')
   parser.add_argument('--verbose', action='store_true', help='extra debug output')
   parser.add_argument('--permute', action='store_true', help='permute the visibilities')
+  parser.add_argument('--counter', action='store_true', help='fake data using a counter')
+  parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)
@@ -342,7 +349,7 @@ if __name__ == '__main__':
 #     print pp
 
     print "Enabling DEBUG mode"
-    tart.debug(on=True, noisy=True)
+    tart.debug(on=True, shift=args.shifter, count=args.counter, noisy=True)
     tart.read_status(True)
 
     print "Setting up correlators (block-size = 2^%d):" % args.blocksize

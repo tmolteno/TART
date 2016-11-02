@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 module fake_hilbert_tb;
 
    parameter MSB = 0;
@@ -34,6 +34,8 @@ module fake_hilbert_tb;
         .en(en),
         .d(d),
         .valid(valid),
+        .strobe(strobe),
+        .frame(valid),
         .re(re),
         .im(im)
         );

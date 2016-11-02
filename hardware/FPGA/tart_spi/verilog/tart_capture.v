@@ -39,6 +39,7 @@ module tart_capture
     parameter MSB   = AXNUM-1,
     parameter ABITS = 20,
     parameter ASB   = ABITS-2,
+    parameter MULTI = 1,
     parameter RNG   = 1,
     parameter CONST = 0,
     parameter CDATA = 24'h0,
@@ -61,8 +62,14 @@ module tart_capture
     input          vx_ce_i,
     input          aq_ce_i,
     input [2:0]    aq_delay_i,
+
+    //  Control-signals for fake acquistion data:
     input          aq_debug_i,
-//     output         aq_valid_o,
+    input          aq_shift_i,
+    input          aq_count_i,
+
+    //  Fake/real acquistion data:
+    output         aq_valid_o,
     input [MSB:0]  ax_data_i,
     output [MSB:0] ax_data_o,
     input          rd_req_i,
@@ -72,7 +79,6 @@ module tart_capture
     );
 
 
-// `ifdef __USE_OLD_CAPTURE   
    wire [2:0]      aq_delay;
 
    (* IOB = "TRUE" *)
@@ -84,13 +90,17 @@ module tart_capture
    //-------------------------------------------------------------------------
    //     DATA CAPTURE
    //-------------------------------------------------------------------------
-   assign ax_data_o = ax_data;
+   assign ax_data_o  = ax_data;
 
 `ifdef __RELEASE_BUILD
-   assign ax_data_w = ax_real;
+   assign aq_valid_o = aq_ce_i; // TODO:
+   assign ax_data_w  = ax_real;
 `else
    reg             en_fake = 1'b0;
    wire [MSB:0]    ax_fake;
+   wire            go_fake;
+
+   assign aq_valid_o = go_fake; // TODO:
 
    // Antenna source MUX, for choosing real data or fake data
    assign ax_data_w = aq_debug_i ? ax_fake : ax_real;
@@ -120,11 +130,20 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for debugging.
    fake_telescope
-     #( .WIDTH(AXNUM), .RNG(RNG), .CONST(CONST), .CDATA(CDATA)
-        ) FAKE_TART0
-       ( .clk(clk_e),
-         .fake_enable(en_fake),
-         .fake_data(ax_fake)
+     #(  .WIDTH(AXNUM),
+         .MULTI(MULTI),
+         .RNG  (RNG),
+         .CONST(CONST),
+         .CDATA(CDATA),
+         .DELAY(DELAY)
+         ) FAKE_TART0
+       ( .clock_i (clk_e),
+         .reset_i (rst_i),
+         .enable_i(en_fake),
+         .shift_i (aq_shift_i),
+         .count_i (aq_count_i),
+         .valid_o (go_fake),
+         .data_o  (ax_fake)
          );
 `endif
 

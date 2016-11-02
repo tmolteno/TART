@@ -1,4 +1,23 @@
 `timescale 1ns/100ps
+/*
+ * Module      : verilog/tart_capture.v
+ * Copyright   : (C) Tim Molteno     2013
+ *             : (C) Max Scheel      2013
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * Buffers raw acquisition data, to then be written to DRAM.
+ * 
+ * NOTE:
+ *  + sometimes XST synthesises the buffer using distributed SRAM's, but this
+ *    is prevented by defining `__USE_EXPLICIT_BRAM` in the configuration
+ *    file (added by Pat, 2016);
+ * 
+ */
 
 `include "tartcfg.v"
 
@@ -23,7 +42,7 @@ module block_buffer
 
    assign read_data = block_data;
 
-   //initialize all RAM cells to 0FF1CE at startup
+   //  Initialize all RAM cells to 0FF1CE at startup:
    integer j;
    initial
      for (j=0; j <DEPTH; j = j+1) block_buffer[j] = 24'h0FF1CE;
@@ -42,6 +61,9 @@ module block_buffer
    assign read_data = a_data[MSB:0];
 
 
+   //-------------------------------------------------------------------------
+   //  Spartan 6-specific block SRAM.
+   //-------------------------------------------------------------------------
    RAMB16BWER
      #(  // DATA_WIDTH_A/DATA_WIDTH_B: 0, 1, 2, 4, 9, 18, or 36
          .DATA_WIDTH_A(36),

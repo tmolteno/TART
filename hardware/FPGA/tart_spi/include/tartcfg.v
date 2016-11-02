@@ -85,6 +85,12 @@
 `define READ_BANKS  16          // Number of banks of visibilities
 `define BANK_BITS    4          // Bit-width of bank-counter
 
+
+//----------------------------------------------------------------------------
+//  Allow multiple sources of fake (antenna) data?
+`define MULTI_SOURCE 1
+// `define MULTI_SOURCE 0
+
 //----------------------------------------------------------------------------
 //  Random data can be (internally) generated, for debugging purposes, and
 //  using a MFSR (Multiple-Feedback Shift Register, which is similar to a
@@ -117,8 +123,8 @@
 //----------------------------------------------------------------------------
 //  There are two versions of the Papilio Pro LX9, V1.3 -- one has 8 MB of
 //  SDRAM, and the other has 64 MB (512 Mb).
-`define __512Mb_SDRAM
-// `undef  __512Mb_SDRAM
+// `define __512Mb_SDRAM
+`undef  __512Mb_SDRAM
 
 
 

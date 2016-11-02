@@ -1,6 +1,21 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
 /*
- * Testing module, for adding jitter and offsets to the input signal.
+ * Module      : bench/signal_stagger.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Simulation-only module for adding fake jitter, and offsets to the input
+ * signal.
+ * 
+ * NOTE:
+ * 
+ * TODO:
  * 
  */
 

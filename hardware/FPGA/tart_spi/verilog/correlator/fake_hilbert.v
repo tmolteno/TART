@@ -41,37 +41,43 @@ module fake_hilbert
     output reg [MSB:0] im = {WIDTH{1'b0}}
     );
 
-   reg                 go = 0;
-   reg [TSB:0]         ticks = 0;
+   reg                 go = 1'b0;
+   reg [TSB:0]         ticks = {TBITS{1'b0}};
    wire                ticks_wrap = ticks == TICKS-1;
    wire [TSB:0]        ticks_next = ticks_wrap ? {TBITS{1'b0}} : ticks+1;
 
    always @(posedge clk)
-     if (rst)                  ticks <= #DELAY {TBITS{1'b0}};
-     else if (en || ticks > 0) ticks <= #DELAY ticks_next;
+     if (rst)
+       ticks <= #DELAY {TBITS{1'b0}};
+     else if (en || ticks > 0)
+       ticks <= #DELAY ticks_next;
 
    always @(posedge clk)
-     if (rst) go <= #DELAY 1'b0;
-     else     go <= #DELAY ticks_wrap ? en : 1'b0;
+     if (rst) begin
+        go    <= #DELAY 1'b0;
+        valid <= #DELAY 1'b0;
+     end
+     else begin
+        go <= #DELAY ticks_wrap ? en : 1'b0;
+        valid <= #DELAY ticks == {TBITS{1'b0}} ? go : valid;
+     end
+
+   //  Marks the first & last sample of a frame.
+   always @(posedge clk)
+     if (rst) begin
+        strobe <= #DELAY 1'b0;
+        frame  <= #DELAY 1'b0;
+     end
+     else begin
+        strobe <= #DELAY go;
+        frame  <= #DELAY ticks_wrap;
+     end
 
    always @(posedge clk)
-     if (rst) valid <= #DELAY 1'b0;
-     else     valid <= #DELAY ticks == {TBITS{1'b0}} ? go : valid;
-
-   //  Marks the first sample of a frame.
-   always @(posedge clk)
-     if (rst) strobe <= #DELAY 1'b0;
-     else     strobe <= #DELAY go;
-
-   //  Marks the last sample of a frame.
-   always @(posedge clk)
-     if (rst) frame <= #DELAY 1'b0;
-//      else     frame <= #DELAY ticks == TICKS-2;
-     else     frame <= #DELAY ticks_wrap;
-
-   always @(posedge clk)
-     if (en && ticks == 0) {im, re} <= #DELAY {re, d};
-     else                  {im, re} <= #DELAY {im, re};
+     if (en && ticks == {TBITS{1'b0}})
+       {im, re} <= #DELAY {re, d};
+     else
+       {im, re} <= #DELAY {im, re};
 
 
 endmodule // fake_hilbert
