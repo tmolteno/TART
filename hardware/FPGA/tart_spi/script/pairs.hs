@@ -40,10 +40,11 @@ module Main where
 import Prelude hiding (FilePath)
 import Control.Arrow
 import Data.Foldable
-import Data.Bits
+import Data.Bool
 import Data.List
 import Data.Maybe
 import Data.Tuple
+import Data.Bits
 import Data.Text (pack, unpack)
 import Text.Printf
 import Turtle hiding (printf)
@@ -84,10 +85,18 @@ permute a b m =
       go (Pair p q:ps) = p:q:go ps
       go (Mean p q:ps) = p:q:go ps
       go           []  = []
-  in  go pm
+  in  revperm $ go pm
+
+revperm :: [Z] -> [Z]
+revperm ps =
+  let go i =
+        let Just j = findIndex (== i) ps
+        in  bool (j:go (i+1)) [] (i == length ps)
+  in  go 0
 
 -- | The visibilities are stored first, and then followed by the one-counts
 --   for each antenna (which is used to compute the means).
+--   NOTE: Currently O(n^2).
 pairIndex :: Z -> Pairs Z -> Pairs Z
 pairIndex stride =
   let f (Pair i j) = let k = ((2*stride - i - 3) * i) + 2*j - 2
