@@ -103,13 +103,13 @@
 //  Random data can be (internally) generated, for debugging purposes, and
 //  using a MFSR (Multiple-Feedback Shift Register, which is similar to a
 //  Linear-Feedback Shift Register).
-// `define RANDOM_DATA  1          // Use a RNG for fake data?
-`define RANDOM_DATA  0          // Use a RNG for fake data?
+`define RANDOM_DATA  1          // Use a RNG for fake data?
+// `define RANDOM_DATA  0          // Use a RNG for fake data?
 
 //----------------------------------------------------------------------------
 //  Constant data can be used to test correlators.
-// `define CONST_DATA 0
-`define CONST_DATA 1
+`define CONST_DATA 0
+// `define CONST_DATA 1
 `define CONST_WORD 24'h000000
 
 

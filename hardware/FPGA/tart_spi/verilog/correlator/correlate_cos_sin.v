@@ -53,7 +53,8 @@ module correlate_cos_sin
    always @(posedge clk)
      if (en) begin
         r_cos <= #DELAY w_cos[MSB:0];
-        r_sin <= #DELAY w_sin[MSB:0];
+//         r_sin <= #DELAY w_sin[MSB:0];
+        r_sin <= #DELAY {ACCUM{1'b1}};
      end
 
 `else // !`ifdef __icarus

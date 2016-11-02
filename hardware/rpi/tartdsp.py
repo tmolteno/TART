@@ -323,6 +323,7 @@ if __name__ == '__main__':
   parser.add_argument('--permute', action='store_true', help='permute the visibilities')
   parser.add_argument('--counter', action='store_true', help='fake data using a counter')
   parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
+  parser.add_argument('--acquire', action='store_true', help='use real antenna data')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)
@@ -349,7 +350,7 @@ if __name__ == '__main__':
 #     print pp
 
     print "Enabling DEBUG mode"
-    tart.debug(on=True, shift=args.shifter, count=args.counter, noisy=True)
+    tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter, noisy=True)
     tart.read_status(True)
 
     print "Setting up correlators (block-size = 2^%d):" % args.blocksize
