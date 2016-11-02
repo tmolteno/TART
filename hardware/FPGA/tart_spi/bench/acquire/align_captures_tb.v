@@ -20,23 +20,50 @@
 
 module align_captures_tb;
 
-   parameter RATE = 12;
-   parameter HALF = RATE >> 1;
-   parameter BITS = 4;
-   parameter SIGS = 8;
-   parameter MSB  = SIGS-1;
 
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION SETTINGS.
+   //
+   //-------------------------------------------------------------------------
+   parameter RATIO = 12;
+   parameter RBITS = 4;
+   parameter RMAX  = RATIO-1;
+   parameter HALF  = RATIO>>1;
+
+   parameter SIGS  = 8;
+   parameter MSB   = SIGS-1;
+
+   parameter DELAY = 3;
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION SIGNALS.
+   //
+   //-------------------------------------------------------------------------
    wire [MSB:0] daq, sig, cap, strobes, lockeds, invalids;
    wire         ready, locked, invalid;
    reg          clk12x = 1'b1, clk = 1'b1, rst = 1'b0, ce = 1'b0, ack = 1'b0;
-   reg [MSB:0]  raw, acks = 0;
+   reg [MSB:0]  raw, acks = {SIGS{1'b0}};
 
+
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION CLOCKS.
+   //
+   //-------------------------------------------------------------------------
    always #2.50 clk12x <= ~clk12x;
-   always #30.0 clk <= ~clk;
+   always #30.0 clk    <= ~clk;
 
 
-   initial begin : SIGNAL_TB
-      $dumpfile ("align_tb.vcd");
+   //-------------------------------------------------------------------------
+   //
+   //  SIMULATION STIMULI.
+   //
+   //-------------------------------------------------------------------------
+   initial begin : ALIGN_TB
+      $dumpfile ("../vcd/align_tb.vcd");
       $dumpvars;
       
       #43 rst = 1'b1; #90 rst = 1'b0;
@@ -47,7 +74,10 @@ module align_captures_tb;
 
 
    //-------------------------------------------------------------------------
-   // Generate random data to be acquired.
+   //
+   //  GENERATE RANDOM DATA TO BE ACQUIRED.
+   //
+   //-------------------------------------------------------------------------
    always @(posedge clk)
      raw <= #DELAY $random;
 
@@ -64,44 +94,62 @@ module align_captures_tb;
 
 
    //-------------------------------------------------------------------------
+   //
+   //  DEVICES UNDER TEST.
+   //
+   //-------------------------------------------------------------------------
+
+   //-------------------------------------------------------------------------
    //  Align the staggered data.
+   //-------------------------------------------------------------------------
    align_captures
-     #( .NUM_SIGNALS(SIGS),
-        .CLOCK_RATE (RATE),
-        .CLEAR_GAP  (HALF + 1),
-        .STROBE_GAP (HALF - 1),
-        .BITS_COUNT (BITS)
+     #( .WIDTH(SIGS),
+        .RATIO(RATIO),
+        .RBITS(RBITS),
+        .CLEAR(HALF+1),
+        .VALID(HALF-1),
+        .DELAY(DELAY)
         ) ALIGNS0
        (
-        .clk(clk12x),
-        .rst(rst),
-        .ce(ce),
+        .clock_i (clk12x),
+        .reset_i (rst),
+        .enable_i(ce),
         
-        .data_in(cap),
-        .strobes(strobes),
-        .lockeds(lockeds),
+        .data_in (cap),
+        .strobes (strobes),
+        .lockeds (lockeds),
         .invalids(invalids),
 
         .data_out(daq),
-        .ready(ready),
-        .locked(locked),
-        .invalid(invalid),
-        .ack(ack)
+        .ready   (ready),
+        .locked  (locked),
+        .invalid (invalid),
+        .ack     (ack)
         );
 
-   signal_capture SIGCAP0 [MSB:0]
-     ( .clk_i    (clk12x),
-       .rst_i    (rst),
-       .ce_i     (ce),
-       .dat_i    (sig),
-       .dat_o    (cap),
-       .ready_o  (strobes),
-       .locked_o (lockeds),
-       .invalid_o(invalids),
-       .ack_i    (acks)
-       );
 
-   // Offset and jitter the given signals.
+   //-------------------------------------------------------------------------
+   //  Instantiate multiple signal-capture blocks.
+   //-------------------------------------------------------------------------
+   signal_capture
+     #( .RATIO(RATIO),
+        .DELAY(DELAY)
+        ) SIGCAP0 [MSB:0]
+     (  .clk_i    (clk12x),
+        .rst_i    (rst),
+        .ce_i     (ce),
+        .dat_i    (sig),
+        .dat_o    (cap),
+        .rdy_o    (strobes),
+        .locked_o (lockeds),
+        .invalid_o(invalids),
+        .ack_i    (acks)
+        );
+
+
+   //-------------------------------------------------------------------------
+   // Generate fake offsets and jitter, for the given signals.
+   //-------------------------------------------------------------------------
    signal_stagger
      #( .PHASE_JITTER(1),
         .PHASE_OFFSET(2),

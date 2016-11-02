@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : bench/signal_stagger.v
+ * Module      : bench/acquire/signal_stagger.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016

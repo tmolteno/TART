@@ -1,5 +1,15 @@
 `timescale 1ns/100ps
 /*
+ * Module      : verilog/acquire/align_captures.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan 6)
+ * 
  * Aligns a set of super-sampled signals, each with varying delay.
  * 
  * Data from multiple, independent sources can vary in phase, but if the data
@@ -7,11 +17,8 @@
  * period, then it is possible to determine the common alignments of all the
  * signals.
  * 
- * Copyright (C) 2016 Tim Molteno
- * Copyright (C) 2016 Max Scheel
- * Copyright (C) 2016 Patrick Suggate
- * 
  * NOTE:
+ *  + has only been tested with 'RATIO == 12';
  *  + assumes that each `data_in[i]` remains constant until its next strobe;
  *  + the supersampling clock is assumed to be synchronous with the data
  *    clock;
@@ -23,121 +30,54 @@
  */
 
 module align_captures
-  #( parameter NUM_SIGNALS = 24,
-     parameter CLOCK_RATE  = 12,
-     parameter CLEAR_GAP   = 7,
-     parameter STROBE_GAP  = 5,
-     parameter BITS_COUNT  = 4 )
+  #( parameter WIDTH = 24,
+     parameter MSB   = WIDTH-1,
+     parameter RATIO = 12,
+     parameter RBITS = 4,
+     parameter RSB   = RBITS-1,
+     parameter HALF  = RATIO>>1,
+     parameter CLEAR = HALF+1,
+     parameter VALID = HALF-1,
+     parameter DELAY = 3)
    (
-    input                        clk,
-    input                        rst,
-    input                        ce,
+    input              clock_i,
+    input              reset_i,
+    input              enable_i,
 
-    input [NUM_SIGNALS-1:0]      data_in,
-    input [NUM_SIGNALS-1:0]      strobes,
-    input [NUM_SIGNALS-1:0]      lockeds,
-    input [NUM_SIGNALS-1:0]      invalids,
+    input [MSB:0]      data_in,
+    input [MSB:0]      strobes,
+    input [MSB:0]      lockeds,
+    input [MSB:0]      invalids,
 
-    output reg [NUM_SIGNALS-1:0] data_out,
-    output reg                   ready = 0,
-    output reg                   locked = 0,
-    output reg                   invalid = 0,
-    input                        ack
+    output reg [MSB:0] data_out,
+    output reg         ready = 1'b0,
+    output reg         locked = 1'b0,
+    output reg         invalid = 1'b0,
+    input              ack
     );
 
-   reg [BITS_COUNT-1:0]          count = 0, clear = 0;
-   reg                           strobe = 0, window = 0;
-   wire                          locked_w = &lockeds;
-   wire                          strobe_w = |strobes;
+   reg [RSB:0]         count = {RBITS{1'b0}}, clear = {RBITS{1'b0}};
+   reg                 strobe = 1'b0, window = 1'b0;
+   reg [MSB:0]         strobes_reg = {RBITS{1'b0}};
+   reg                 strobes_all = 1'b0;
+   wire [MSB:0]        acc_w;
+   wire                end_w, lkd_w, stb_w, vld_w, rdy_w;
+
+   //  Error signals.
+   wire has_overlaps, invalid_input, too_much_spread, capture_error;
+
 
    //-------------------------------------------------------------------------
-   //  Track the arrivals of all strobes.
+   //  Internal, combinational conditionals.
    //-------------------------------------------------------------------------
-   reg [NUM_SIGNALS-1:0]         strobes_reg = 0;
-   reg                           strobes_all = 0;
-   wire [NUM_SIGNALS-1:0]        strobes_upd = strobes_reg | strobes;
-   wire                          strobes_end = &strobes_upd;
+   assign vld_w = strobe && clear >= CLEAR;
+   assign rdy_w = strobes_all && locked && !ready;
+   assign stb_w = |strobes;
+   assign lkd_w = &lockeds;
 
-   // Pipeline the strobe 24-bit OR gate.
-   always @(posedge clk)
-     if (rst) strobe <= 0;
-     else     strobe <= ce ? strobe_w : strobe ;
-
-   // A window ends once all strobes have arrived.
-   always @(posedge clk)
-     if (rst) begin
-        strobes_reg <= 0;
-        strobes_all <= 0;
-     end
-     else if (ce) begin
-        if (strobes_all && !strobe) begin
-           strobes_reg <= 0;
-           strobes_all <= 0;
-        end
-        else begin
-           strobes_reg <= strobes_upd;
-           strobes_all <= strobes_end;
-        end
-     end
-
-   //-------------------------------------------------------------------------
-   //  An acquisition window begins with any strobe, and ends once all have
-   //  been received.
-   //-------------------------------------------------------------------------
-   always @(posedge clk)
-     if (rst)
-       window <= 0;
-     else if (ce) begin
-        if (strobe_w)
-          window <= 1;
-        else if (strobes_end)
-          window <= 0;
-        else
-          window <= window;
-     end
-
-   //-------------------------------------------------------------------------
-   //  Count the number of clock-ticks for a capture-period, and for the case
-   //  without any data arriving.
-   //-------------------------------------------------------------------------
-   always @(posedge clk)
-     if (rst)
-       count <= 0;
-     else if (ce) begin
-//         if (clear >= CLEAR_GAP-1 && strobe)
-        if (!window && strobe)
-          count <= 0;
-        else
-          count <= count + 1;
-     end
-
-   always @(posedge clk)
-     if (rst)     clear <= 0;
-     else if (ce) clear <= strobe || window ? 0 : clear + 1 ;
-     else         clear <= clear;
-
-   //-------------------------------------------------------------------------
-   //  Acquisition is locked if aligned.
-   //-------------------------------------------------------------------------
-   wire clear_valid = strobe && clear >= CLEAR_GAP;
-
-   always @(posedge clk)
-     if (rst)     locked <= 0;
-     else if (ce) locked <= clear_valid ? locked_w : locked ;
-     else         locked <= locked;
-
-   //-------------------------------------------------------------------------
-   //  Present captured & aligned data.
-   //-------------------------------------------------------------------------
-   always @(posedge clk)
-     if (rst)
-       ready <= 0;
-     else if (ce && strobes_all && locked && !ready) begin
-        ready    <= 1;
-        data_out <= data_in;
-     end
-     else
-       ready <= 0;
+   //  Accumulates the ready-strobes, until all signals are ready.
+   assign acc_w = strobes_reg | strobes;
+   assign end_w = &acc_w;
 
    //-------------------------------------------------------------------------
    //  Assert `invalid` whenever behaviour falls outside of:
@@ -145,19 +85,113 @@ module align_captures
    //   2) this is followed by at least 7 cycles of no strobes; and
    //   3) all signals remain locked.
    //-------------------------------------------------------------------------
-   wire has_overlaps    = |(strobes_reg & strobes); // strobed twice?
-   wire invalid_input   = |invalids;
-   wire too_much_spread = locked && locked_w && strobe && clear > 0 && clear < CLEAR_GAP;
-   wire capture_error   = has_overlaps || invalid_input || too_much_spread;
+   assign has_overlaps    = |(strobes_reg & strobes); // strobed twice?
+   assign invalid_input   = |invalids;
+   assign too_much_spread = locked && lkd_w && strobe && clear > 0 && clear < CLEAR;
+   assign capture_error   = has_overlaps || invalid_input || too_much_spread;
+
+
+   //-------------------------------------------------------------------------
+   //  Track the arrivals of all strobes.
+   //-------------------------------------------------------------------------
+   // Pipeline the strobe 24-bit OR gate.
+   always @(posedge clock_i)
+     if (reset_i)
+       strobe <= #DELAY 1'b0;
+     else if (enable_i)
+       strobe <= #DELAY stb_w;
+     else
+       strobe <= #DELAY strobe;
+
+   // A window ends once all strobes have arrived.
+   always @(posedge clock_i)
+     if (reset_i) begin
+        strobes_reg <= #DELAY {RBITS{1'b0}};
+        strobes_all <= #DELAY 1'b0;
+     end
+     else if (enable_i) begin
+        if (strobes_all && !strobe) begin
+           strobes_reg <= #DELAY {RBITS{1'b0}};
+           strobes_all <= #DELAY 1'b0;
+        end
+        else begin
+           strobes_reg <= #DELAY acc_w;
+           strobes_all <= #DELAY end_w;
+        end
+     end
+
+   //-------------------------------------------------------------------------
+   //  An acquisition window begins with any strobe, and ends once all have
+   //  been received.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i)
+       window <= #DELAY 1'b0;
+     else if (enable_i) begin
+        if (stb_w)
+          window <= #DELAY 1'b1;
+        else if (end_w)
+          window <= #DELAY 1'b0;
+        else
+          window <= #DELAY window;
+     end
+
+   //-------------------------------------------------------------------------
+   //  Count the number of clock-ticks for a capture-period, and for the case
+   //  without any data arriving.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i)
+       count <= #DELAY {RBITS{1'b0}};
+     else if (enable_i) begin
+        if (!window && strobe)
+          count <= #DELAY {RBITS{1'b0}};
+        else
+          count <= #DELAY count + 1;
+     end
+
+   always @(posedge clock_i)
+     if (reset_i)
+       clear <= #DELAY {RBITS{1'b0}};
+     else if (enable_i)
+       clear <= #DELAY strobe || window ? {RBITS{1'b0}} : clear + 1 ;
+     else
+       clear <= #DELAY clear;
+
+
+   //-------------------------------------------------------------------------
+   //  Acquisition is locked if aligned.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i)
+       locked <= #DELAY 1'b0;
+     else if (enable_i)
+       locked <= #DELAY vld_w ? lkd_w : locked ;
+     else
+       locked <= #DELAY locked;
+
+
+   //-------------------------------------------------------------------------
+   //  Present the captured & aligned data.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i)
+       ready     <= #DELAY 1'b0;
+     else if (enable_i && rdy_w) begin
+        ready    <= #DELAY 1'b1;
+        data_out <= #DELAY data_in;
+     end
+     else
+       ready <= #DELAY 1'b0;
 
    // TODO:
-   always @(posedge clk)
-     if (rst)
-       invalid <= 0;
-     else if (ce)
-       invalid <= !ack && invalid || locked && capture_error;
+   always @(posedge clock_i)
+     if (reset_i)
+       invalid <= #DELAY 1'b0;
+     else if (enable_i)
+       invalid <= #DELAY !ack && invalid || locked && capture_error;
      else
-       invalid <= invalid;
+       invalid <= #DELAY invalid;
 
 
 endmodule // align_captures

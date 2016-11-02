@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/tart_capture.v
+ * Module      : verilog/acquire/block_buffer.v
  * Copyright   : (C) Tim Molteno     2013
  *             : (C) Max Scheel      2013
  *             : (C) Patrick Suggate 2016

@@ -37,6 +37,13 @@
 // `define __RELEASE_BUILD
 `undef  __RELEASE_BUILD
 
+`ifndef __RELEASE_BUILD
+ `define USE_DEBUG 1
+`else
+ `define USE_DEBUG 0
+`endif
+
+
 
 //----------------------------------------------------------------------------
 //
@@ -68,6 +75,7 @@
 `define NUM_ANTENNA 24
 `define ACCUM_BITS  24          // Bit-width of the accumulators
 `define VISB_LOG2   20          // = 2^20 samples/block;
+`define USE_ALIGN    0          // extra signal-alignment needed?
 
 //----------------------------------------------------------------------------
 //  Correlators use time-multiplexing, and this results in each correlator
@@ -123,8 +131,8 @@
 //----------------------------------------------------------------------------
 //  There are two versions of the Papilio Pro LX9, V1.3 -- one has 8 MB of
 //  SDRAM, and the other has 64 MB (512 Mb).
-// `define __512Mb_SDRAM
-`undef  __512Mb_SDRAM
+`define __512Mb_SDRAM
+// `undef  __512Mb_SDRAM
 
 
 

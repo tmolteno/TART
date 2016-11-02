@@ -22,7 +22,6 @@ XIL =xilinx
 SIM =$(XIL)/DSP48A1.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
 
 DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(ACQ)/dram_prefetch.v
-OLD =$(SPI)/spi_target.v $(RTL)/tart_spi.v
 
 ##  Correlator files:
 COR =$(RTL)/tart_visibilities.v $(RTL)/correlator/bank_switch.v $(RTL)/correlator/correlator_SDP.v $(RTL)/correlator/correlator_DSP.v $(RTL)/correlator/rmw_address_unit.v $(RTL)/correlator/correlate_cos_sin.v $(RTL)/correlator/correlate_cos_sin_DSP.v $(RTL)/correlator/fake_hilbert.v $(RTL)/correlator/control.v $(RTL)/correlator/correlator_block.v $(RTL)/correlator/block_DSP.v $(RTL)/correlator/block_SDP.v $(RTL)/correlator/tart_correlator.v
@@ -33,7 +32,7 @@ DSP =$(COR) $(RTL)/tart_dsp.v
 FAK =$(COR) $(RTL)/tart_fake_dsp.v
 
 # TODO:
-TOP =$(DEP) $(COR) $(RTL)/tart_capture.v $(RTL)/tart.v
+TOP =$(DEP) $(COR) $(ACQ)/align_captures.v $(ACQ)/signals_capture.v $(ACQ)/capture.v $(ACQ)/tart_capture.v $(RTL)/tart.v
 
 all: soc
 

@@ -1,6 +1,6 @@
-`timescale 1ns / 100ps
+`timescale 1ns/100ps
 /*
- * Module      : verilog/tart_capture.v
+ * Module      : verilog/acquire/delay_data_sampling_clk.v
  * Copyright   : (C) Tim Molteno     2013
  *             : (C) Max Scheel      2013
  * License     : LGPL3

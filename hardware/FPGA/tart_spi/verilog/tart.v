@@ -16,7 +16,7 @@
  * 
  * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
  * Stability   : Experimental
- * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * Portability : only tested with a Papilio board (Xilinx Spartan 6)
  * 
  * TART hardware description for data-acquisition, and real-time computation
  * of visibilities.
@@ -57,6 +57,10 @@ module tart
     //  Antenna/signal parameters:
     parameter ANTENNAE = `NUM_ANTENNA,
     parameter NSB      = ANTENNAE-1,
+    parameter ALIGN    = `USE_ALIGN,
+
+    //  Fake antenna-data options:
+    parameter DEBUG    = `USE_DEBUG,
     parameter MULTI    = `MULTI_SOURCE,
     parameter RNG      = `RANDOM_DATA,
     parameter CONST    = `CONST_DATA,
@@ -307,10 +311,17 @@ module tart
    tart_capture
      #(.AXNUM(ANTENNAE),
        .ABITS(SDRAM_ADDRESS_WIDTH),
+       // fake-data options:
        .MULTI(MULTI),
        .RNG  (RNG),
        .CONST(CONST),
-       .CDATA(CDATA)
+       .CDATA(CDATA),
+       // use additional data-capture and alignment circuitry?
+       .ALIGN(ALIGN),
+       .RATIO(TRATE),
+       .RBITS(TBITS),
+       // simulation-only settings:
+       .DELAY(DELAY)
        ) CAP0
      ( .clk_i     (fpga_clk),
        .clk_x     (clk_x),

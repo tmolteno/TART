@@ -21,8 +21,8 @@
 module signal_capture_tb;
 
 
-   reg clk12x = 1, clk = 1, rst = 0;
-   reg ce = 0, r = 0, x = 0;
+   reg clk12x = 1'b1, clk = 1'b1, rst = 1'b0;
+   reg ce = 1'b0, r = 1'b0, x = 1'b0, ack = 1'b0;
    wire d, q, ready, locked, invalid;
 
    wire p = r ^ d;
@@ -32,7 +32,7 @@ module signal_capture_tb;
 
 
    initial begin : SIGNAL_TB
-      $dumpfile ("signal_tb.vcd");
+      $dumpfile ("../vcd/signal_tb.vcd");
       $dumpvars;
       
       #45 rst = 1; #90 rst = 0;
@@ -55,14 +55,15 @@ module signal_capture_tb;
 
 
    signal_capture SIGCAP0
-     ( .clk(clk12x),
-       .rst(rst),
-       .ce(ce),
-       .d(d),
-       .q(q),
-       .ready(ready),
-       .locked(locked),
-       .invalid(invalid)
+     ( .clk_i(clk12x),
+       .rst_i(rst),
+       .ce_i(ce),
+       .rdy_o(ready),
+       .locked_o(locked),
+       .invalid_o(invalid),
+       .ack_i(ack),
+       .dat_i(d),
+       .dat_o(q)
        );
 
    signal_stagger
