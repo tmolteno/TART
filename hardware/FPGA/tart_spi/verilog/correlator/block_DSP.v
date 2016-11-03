@@ -101,7 +101,7 @@ module block_DSP
    wire [QSB:0]    vis;
 
    //  SRAM address and data signals.
-   wire [2:0]      sram_sel;
+   reg [2:0]       sram_sel;
    wire [ASB:0]    sram_ad_w;
    wire [QSB:0]    sram_do_w;
    wire [MSB:0]    sram_do;
@@ -116,7 +116,6 @@ module block_DSP
 
    //  Assign the internal addresses, and device-selects.
    assign sram_ad_w = sram_ad_i[JSB:3];
-   assign sram_sel  = sram_ad_i[2:0];
 
    //  Data-signal assignments.
    assign {sram_d7, sram_d6, sram_d5, sram_d4,
@@ -128,8 +127,10 @@ module block_DSP
 
    //-------------------------------------------------------------------------
    //  Capture MUX'd data.
-   always @(posedge sram_ck_i)
-     sram_dat <= #DELAY sram_do;
+   always @(posedge sram_ck_i) begin
+      sram_sel <= #DELAY sram_ad_i[2:0];
+      sram_dat <= #DELAY sram_do;
+   end
 
 
    //-------------------------------------------------------------------------

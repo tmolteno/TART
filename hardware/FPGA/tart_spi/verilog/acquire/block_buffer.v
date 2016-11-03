@@ -21,6 +21,10 @@
 
 `include "tartcfg.v"
 
+`ifdef __icarus
+ `undef __USE_EXPLICT_BRAM
+`endif
+
 module block_buffer
   #(parameter WIDTH = 24,
     parameter MSB   = WIDTH-1,

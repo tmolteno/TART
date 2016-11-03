@@ -308,6 +308,10 @@ module tart
    //  TART ANTENNA DATA CAPTURE BLOCK
    //  
    //-------------------------------------------------------------------------
+   wire         aq_align = 1'b0;
+   wire         aq_clear = 1'b0;
+   wire         aq_retry = 1'b0;
+
    tart_capture
      #(.AXNUM(ANTENNAE),
        .ABITS(SDRAM_ADDRESS_WIDTH),
@@ -329,23 +333,37 @@ module tart
        .clk_d     (rx_clk),
        .rst_i     (reset),
 
+       //  External antenna data:
+       .ax_dat_e_i(antenna),
+
+       //  Memory controller signals (bus-domain):
        .mcb_ce_o  (cmd_enable),
        .mcb_wr_o  (cmd_wr),
        .mcb_rdy_i (cmd_ready),
        .mcb_adr_o (cmd_address),
        .mcb_dat_o (cmd_data_in),
 
+       //  Bus-domain acquisition control & status signals:
        .vx_ce_i   (vx_enabled),
        .aq_ce_i   (aq_enabled),
-       .aq_delay_i(aq_delay),
-       .aq_debug_i(aq_debug),
+       .aq_delay_i(aq_delay),   // capture delay (in bus-clocks)
+       .aq_align_i(aq_align),   // enable signal alignment
+       .aq_valid_o(aq_valid),   // valid, aligned signal?
+       .aq_error_o(aq_error),   // signal tracking lost?
+       .aq_clear_i(aq_clear),   // clear error-flag and continue?
+       .aq_retry_i(aq_retry),   // reacquire a lost signal?
+       
+       .aq_debug_i(aq_debug),   // fake-data setting inputs
        .aq_shift_i(aq_shift),
        .aq_count_i(aq_count),
-       .aq_valid_o(aq_valid),
-       .ax_data_i (antenna),
-       .ax_data_o (ax_dat),
-       .rd_req_i  (request_from_spi),
 
+       //  Correlator-domain acquisition data & status signals:
+       .ax_vld_x_o(ax_vld),     // acquired (and oversampled) data
+       .ax_new_x_o(ax_new),     // outputs
+       .ax_dat_x_o(ax_dat),
+
+       //  Data & miscellaneous signals:
+       .rd_req_i  (request_from_spi),
        .tart_state(tart_state)
        );
 

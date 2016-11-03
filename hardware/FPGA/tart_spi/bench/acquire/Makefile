@@ -7,20 +7,25 @@ OUT=../../build
 # Source directories:
 RTL =../../verilog
 ACQ =$(RTL)/acquire
+LIB =$(RTL)/fifo/afifo_gray.v $(RTL)/mfsr/mfsr32.v
 
 # Simulation-only files:
 XIL =xilinx
 SIM =signal_stagger.v
 DEP =${ACQ}/signal_capture.v ${ACQ}/align_captures.v
+TOP =${LIB} ${ACQ}/tart_capture.v ${ACQ}/capture.v ${ACQ}/fake_telescope.v ${ACQ}/delay_data_sampling_clk.v ${ACQ}/block_buffer.v ${ACQ}/fifo_control.v
 
 
-all: cap
+all: acq
 
-sig: ${DEP} signal_capture_tb.v
+sig: ${DEP} ${SIM} signal_capture_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(SIM) signal_capture_tb.v
 
-cap: ${DEP} align_captures_tb.v
+cap: ${DEP} ${SIM} align_captures_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(SIM) align_captures_tb.v
+
+acq: ${TOP} ${DEP} ${SIM} tart_capture_tb.v
+	$(IVC) $(OPT) -o $(OUT)/tart.out $(TOP) $(DEP) $(SIM) tart_capture_tb.v
 
 
 .PHONY: run

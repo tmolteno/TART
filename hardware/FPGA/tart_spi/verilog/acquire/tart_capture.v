@@ -53,6 +53,7 @@ module tart_capture
 
     //  Data-alignment options:
     parameter ALIGN = 0,        // (re-)align captured data?
+    parameter FSIZE = 2,        // 2^FSIZE asynchronous FIFO entries
     parameter RATIO = 12,       // oversampling ratio?
     parameter RMAX  = RATIO-1,  // maximum clock-counter value
     parameter RBITS = 4,        // bit-width of clock-counter
@@ -68,7 +69,7 @@ module tart_capture
     input          rst_i,
 
     //  Raw signal data input:
-    input [MSB:0]  ax_data_i,
+    input [MSB:0]  ax_dat_e_i,  // signal/external (xtal) clock domain
 
     //  Memory Controller Block (MCB) signals:
     output         mcb_ce_o,
@@ -80,14 +81,14 @@ module tart_capture
     //  Antenna inputs, control-signals, and captured-data outputs:
     input          vx_ce_i,
     input          aq_ce_i,
-    output         aq_valid_o,
 
     //  Data capture and alignment control-signals:
     input [2:0]    aq_delay_i,
     input          aq_align_i,
-    output         aq_error_o,
-    input          aq_clear_i,
-    input          aq_retry_o,
+    output         aq_valid_o,
+    output         aq_error_o,  // signal list
+    input          aq_clear_i,  // clear flag, and reacquire
+    input          aq_retry_i,
 
     //  Control-signals for fake acquistion data:
     input          aq_debug_i,
@@ -108,31 +109,38 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Antenna-data routing signals:
    (* IOB = "TRUE" *)
-   reg [MSB:0]     ax_real;
-   reg [MSB:0]     ax_data;
+   reg [MSB:0]     ax_real_e;
+   reg [MSB:0]     ax_data_e;
    wire [MSB:0]    source_w;
-   reg             ax_en = 1'b0;
+   reg             ax_en_e = 1'b0;
    wire            ax_ce_w, ax_en_w;
+   reg             rst_t, rst_x;
+   wire            ax_empty_x, ax_full_e;
+   reg             aq_empty_n;
 
    //-------------------------------------------------------------------------
    //  Acquistion-block signals:
+   //  TODO: Which domains do these belong to?
    wire [MSB:0]    aq_read_data;
    wire [8:0]      aq_bb_rd_address;
    wire [8:0]      aq_bb_wr_address;
 
    //-------------------------------------------------------------------------
    //  Fake/debug antenna-data signals:
-   reg             rst_s, rst_e;
-   reg             en_fake = 1'b0, go_fake = 1'b0;
-   wire [MSB:0]    ax_fake;
+   wire            debug_w;     // bus domain
+   reg             rst_s, rst_e; // bus -> signal domain synchronisers
+   reg             en_fake_s = 1'b0, go_fake_s = 1'b0;
+   reg             aq_debug_e, aq_shift_e, aq_count_e;
+   wire [MSB:0]    ax_fake_e;
    reg             en_fake_e = 1'b0;
-   wire            go_fake_e;
-   wire            debug_w;
+   wire            go_fake_e, fifo_ce_e, debug_e;
 
    //-------------------------------------------------------------------------
    //  Sample-/correlator- domain signals.
    //   (Generated or used by the data-capture and alignment unit)
    //-------------------------------------------------------------------------
+   wire [MSB:0]    aq_clean_x;
+
    //  Synchroniser bus-domain signals:
    reg             aq_align_s = 1'b0, aq_clear_s = 1'b0, aq_retry_s = 1'b0;
    reg             aq_valid_s = 1'b0, aq_error_s = 1'b0;
@@ -146,39 +154,41 @@ module tart_capture
    //  CDC signals for the unaligned data:
    reg [MSB:0]     dat_x;
    reg [RSB:0]     cnt_x = {RBITS{1'b0}};
-   reg             new_x = 1'b0;
+   reg             new_x = 1'b0, vld_x = 1'b0;
    wire            max_x;
-   wire [MSB:0]    dat_w, fifo_x;
+   wire [MSB:0]    dat_w;
    wire [RBITS:0]  nxt_x;
+   reg             aq_valid_t;
 
 
    //-------------------------------------------------------------------------
    //  Data-capture assignments.
    //-------------------------------------------------------------------------
-   assign aq_valid_o = ax_en;
-   assign aq_error_o = aq_error_s;
+   assign aq_valid_o = ALIGN ? aq_valid_s : aq_valid_t;
+   assign aq_error_o = ALIGN ? aq_error_s : 1'b0;
 
    //-------------------------------------------------------------------------
    // Antenna sources MUX, for choosing real data or fake data.
-   assign source_w   = debug_w ? ax_fake : ax_real;
-   assign ax_en_w    = debug_w ? go_fake : ax_ce_w;
+   assign source_w   = debug_e ? ax_fake_e : ax_real_e;
+   assign ax_en_w    = debug_w ? go_fake_s : ax_ce_w;
+   assign fifo_ce_e  = debug_w ? go_fake_e : ax_en_e;
 
    assign ax_ce_w    = aq_ce_i || vx_ce_i;
    assign debug_w    = DEBUG && aq_debug_i;
+   assign debug_e    = DEBUG && aq_debug_e;
 
 
    //-------------------------------------------------------------------------
    //  Correlator-domain signal assignments.
    //-------------------------------------------------------------------------
-   assign ax_vld_x_o = ALIGN ? aq_valid_o : 1'b0;
-   assign ax_new_x_o = ALIGN ? aq_ready_o : 1'b0;
-   assign ax_dat_x_o = ALIGN ? fifo_x : data_x;
+   assign ax_vld_x_o = ALIGN ? aq_valid_x : vld_x;
+   assign ax_new_x_o = ALIGN ? aq_ready_x : new_x;
+   assign ax_dat_x_o = ALIGN ? aq_clean_x : dat_x;
 
    //-------------------------------------------------------------------------
    //  CDC signal-assignments for unaligned data.
    assign nxt_x  = cnt_x + 1;
    assign max_x  = cnt_x == RMAX;
-   assign fifo_x = dat_x;
 
 
    //-------------------------------------------------------------------------
@@ -190,6 +200,14 @@ module tart_capture
    always @(posedge clk_e)
      {rst_e, rst_s} <= #DELAY {rst_s, rst_i};
 
+   //  Synchronise the bus-domain reset into the correlator-domain.
+   always @(posedge clk_x)
+     {rst_x, rst_t} <= #DELAY {rst_t, rst_i};
+
+   //  Compute the bus-domain, valid-data output.
+   always @(posedge clk_i)
+     aq_valid_t <= #DELAY vld_x;
+
 
    //-------------------------------------------------------------------------
    //  Basic, data-capture register implementation.
@@ -197,42 +215,56 @@ module tart_capture
    //  TODO: Use a more robust data-capture circuit.
    always @(posedge clk_e)
      if (rst_e)
-       ax_en   <= #DELAY 1'b0;
-     else begin 
-        ax_en   <= #DELAY ax_en_w;
-        ax_real <= #DELAY ax_data_i; // typically registered in IOB's
-        ax_data <= #DELAY source_w;  // fake or real
+       ax_en_e <= #DELAY 1'b0;
+     else begin
+        ax_en_e    <= #DELAY ax_en_w;
      end
 
    //-------------------------------------------------------------------------
    //  Enable the fake-data generator when in debug-mode.
    always @(posedge clk_i)
      if (rst_i)
-       en_fake <= #DELAY 1'b0;
+       en_fake_s <= #DELAY 1'b0;
      else
-       en_fake <= #DELAY ax_ce_w && debug_w;
+       en_fake_s <= #DELAY ax_ce_w && debug_w;
 
    //-------------------------------------------------------------------------
    //  CDC for crossing from the bus domain to the signal domain, or vice
    //  versa.
-   always @(posedge clk_e)
-     en_fake_e <= #DELAY en_fake;
+   always @(posedge clk_e) begin
+      en_fake_e  <= #DELAY en_fake_s;
+      aq_debug_e <= #DELAY aq_debug_i;
+      aq_shift_e <= #DELAY aq_shift_i;
+      aq_count_e <= #DELAY aq_count_i;
+      ax_real_e  <= #DELAY ax_dat_e_i; // typically registered in IOB's
+      ax_data_e  <= #DELAY source_w;   // fake or real
+   end
 
+   //  Synchronise the fake-data valid signal.
    always @(posedge clk_i)
-     go_fake   <= #DELAY go_fake_e;
+     go_fake_s <= #DELAY go_fake_e;
 
 
    //-------------------------------------------------------------------------
    //  Dequeue samples from the CDC FIFO.
    //-------------------------------------------------------------------------
    always @(posedge clk_x)
-     if (rst_i || max_x)
+     if (rst_x || max_x)
        cnt_x <= #DELAY {RBITS{1'b0}};
-     else if (!ax_empty)
+     else if (!ax_empty_x)
        cnt_x <= #DELAY nxt_x[RSB:0];
 
    always @(posedge clk_x)
      new_x <= #DELAY max_x;
+
+   //  Output data is valid so long as the FIFO doesn't underflow.
+   always @(posedge clk_x)
+     if (rst_x || ax_empty_x && new_x)
+       vld_x <= #DELAY 1'b0;
+     else if (!ax_empty_x && new_x)
+       vld_x <= #DELAY 1'b1;
+     else
+       vld_x <= #DELAY vld_x;
 
    always @(posedge clk_x)
      if (new_x)
@@ -282,12 +314,12 @@ module tart_capture
          .DELAY(DELAY)
          ) FAKE_TART0
        ( .clock_i (clk_e),
-         .reset_i (rst_i),
+         .reset_i (rst_e),
          .enable_i(en_fake_e),
-         .shift_i (aq_shift_i),
-         .count_i (aq_count_i),
+         .shift_i (aq_shift_e),
+         .count_i (aq_count_e),
          .valid_o (go_fake_e),
-         .data_o  (ax_fake)
+         .data_o  (ax_fake_e)
          );
 `endif
 
@@ -305,12 +337,12 @@ module tart_capture
        .rd_data_o(dat_w),
        
        .wr_clk_i (clk_e),
-       .wr_en_i  (ax_en),
-       .wr_data_i(ax_data),
+       .wr_en_i  (fifo_ce_e),
+       .wr_data_i(ax_data_e),
 
-       .rst_i    (rst_i),
-       .rempty_o (ax_empty),
-       .wfull_o  (ax_full)
+       .rst_i    (rst_e),
+       .rempty_o (ax_empty_x),
+       .wfull_o  (ax_full_e)
        );
 
 
@@ -325,15 +357,15 @@ module tart_capture
         ) ALIGN0
        (
         .clock_i(ALIGN ? clk_x : 1'b0),
-        .reset_i(ALIGN ? rst_i : 1'b0),
+        .reset_i(ALIGN ? rst_x : 1'b0),
         .align_i(aq_align_x),
         .ready_o(aq_ready_x),
         .valid_o(aq_valid_x),
         .error_o(aq_error_x),
         .clear_i(aq_clear_x),
         .acks_i ({AXNUM{aq_retry_x}}),
-        .data_i (data_e),       // raw, signal-domain data
-        .data_o (data_x)        // aligned, sample-domain data
+        .data_i (ax_data_e),    // raw, signal-domain data
+        .data_o (aq_clean_x)    // aligned, sample-domain data
         );
 
 
@@ -361,7 +393,7 @@ module tart_capture
    block_buffer AQ_BB
      ( .clk          (clk_i),
        .read_data    (aq_read_data),
-       .write_data   (ax_data),
+       .write_data   (ax_data_e),
        .write_address(aq_bb_wr_address),
        .read_address (aq_bb_rd_address)
        );
