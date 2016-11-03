@@ -76,7 +76,8 @@ class Correlator:
 def corr_b(x, y):
   num_not_same = (x ^ y).sum()
   n = len(x)
-  ret = 0.5 - num_not_same/float(n)
+  ret = 1 - 2*num_not_same/float(n)
+  #ret = 0.5 - num_not_same/float(n)
   return ret
 
 def fast_roll_1(d):

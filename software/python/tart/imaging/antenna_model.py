@@ -5,32 +5,7 @@ import healpy as hp
 
 from tart.imaging import location
 from tart.util import angle
-
-import sqlite3
-import psycopg2
-
-
-def db_connect(dbfile=None, conn_parameter="host='<hostname>' dbname=tart2 user=<USER> password='<PASSWORD>'", table="gps_signals"):
-  if (dbfile != None):
-    conn = sqlite3.connect(dbfile, timeout=60)
-    paramstyle = sqlite3.paramstyle
-  else:
-    conn = psycopg2.connect(conn_parameter)
-    paramstyle = psycopg2.paramstyle
-  # Create table
-  c = conn.cursor()
-  c.execute("CREATE TABLE IF NOT EXISTS "+table+" (date timestamp, sv INTEGER, antenna INTEGER, el REAL, az REAL, correlation REAL)")
-  conn.commit()
-  def sql_(cmd, paramstyle):
-    if paramstyle == 'qmark':
-        ph = "?"
-    elif paramstyle == 'pyformat':
-        ph = "%s"
-    else:
-        raise Exception("Unexpected paramstyle: %s" % paramstyle)
-    return cmd % { "ph" : ph }
-  sql = lambda cmd: sql_(cmd, paramstyle)
-  return conn, sql
+from tart.util.db import db_connect
 
 class AntennaModel:
   '''Base class for all Antenna models.'''
@@ -82,31 +57,30 @@ def hp_interpolator(map_, el, az, n_pix=4):
         return map_[filled_pixel[angular_distance.argmin()]]
       return np.average(map_[filled_pixel], weights=np.power(1./angular_distance, 2))
 
-def hp_spheric_harmonics(hp_alm, el, az, mmax=-1):
-    from scipy.special import sph_harm
-    if mmax==-1:
-      lmax = hp.Alm.getlmax(len(hp_alm))
-      mmax = lmax
-    else:
-      lmax = hp.Alm.getlmax(len(hp_alm),mmax=mmax)
+#def hp_spheric_harmonics(hp_alm, el, az, mmax=-1):
+    #from scipy.special import sph_harm
+    #if mmax==-1:
+      #lmax = hp.Alm.getlmax(len(hp_alm))
+      #mmax = lmax
+    #else:
+      #lmax = hp.Alm.getlmax(len(hp_alm),mmax=mmax)
 
-    print lmax, mmax
-    out = 0.
-    azimutal_angle = az.to_rad()
-    polar_angle = el.to_rad()-np.pi/2.
-    for l in range(lmax+1):
-      out += np.real(hp_alm[hp.Alm.getidx(lmax,l,0)] * sph_harm(0, l, azimutal_angle, polar_angle))
-      for m in range(1, 1+min(l , mmax)):
-        Ylm = sph_harm(m, l, azimutal_angle, polar_angle)
-        out += np.real(hp_alm[hp.Alm.getidx(lmax,l,m)] * Ylm)
-        out += np.real(hp_alm[hp.Alm.getidx(lmax,l,m)] * Ylm.conj()/np.power(-1.,m))
-    return out
+    #print lmax, mmax
+    #out = 0.
+    #azimutal_angle = az.to_rad()
+    #polar_angle = el.to_rad()-np.pi/2.
+    #for l in range(lmax+1):
+      #out += np.real(hp_alm[hp.Alm.getidx(lmax,l,0)] * sph_harm(0, l, azimutal_angle, polar_angle))
+      #for m in range(1, 1+min(l , mmax)):
+        #Ylm = sph_harm(m, l, azimutal_angle, polar_angle)
+        #out += np.real(hp_alm[hp.Alm.getidx(lmax,l,m)] * Ylm)
+        #out += np.real(hp_alm[hp.Alm.getidx(lmax,l,m)] * Ylm.conj()/np.power(-1.,m))
+    #return out
 
 def gen_interpolation_map(points, values, antenna_num, nside_exp):
   nside = np.power(2, nside_exp)
   npix = hp.nside2npix(nside)
   hp_map_avg = np.ones(npix) * hp.UNSEEN
-
   theta = np.array([90.-i[0] for i in points]) * np.pi/180.
   phi =   np.array([i[1] for i in points]) * np.pi/180.
 
@@ -128,7 +102,7 @@ def gen_interpolation_map(points, values, antenna_num, nside_exp):
   map_mean = np.array([pixel_dict[key] for key in pixel_dict]).mean()
 
   for p in dic:
-    pixel_dict[p] = (pixel_dict[p]-map_mean)*(1.*len(hp_map_avg))/(4.*np.pi)
+    #pixel_dict[p] = (pixel_dict[p]-map_mean)*(1.*len(hp_map_avg))/(4.*np.pi)
     hp_map_avg[p] = pixel_dict[p]
 
   return (hp_map_avg, pixel_dict)
@@ -161,6 +135,10 @@ class EmpiricalAntenna(AntennaModel):
       self.i_map, self.pixel_dict = gen_interpolation_map(self.points, self.values, self.antenna_num, nside_exp_grid)
       if interpolate=='increasing_neighborhood':
         self.interp_gain = lambda el, az: hp_interpolator(self.i_map, el, az, n_pix)
+
+        interp_gain()
+        np.power(2, nside_exp_syn)
+        self.norm_map = self.i_map
       else:
         alms = hp.sphtfunc.map2alm(hp.ma(self.i_map), lmax=lmax, mmax=mmax, iter=10, pol=False)
         print hp.Alm.getlmax(len(alms), mmax=mmax)
