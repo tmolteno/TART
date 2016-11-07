@@ -11,33 +11,28 @@ from threading import Thread
 
 class QtPlotter:
     def __init__(self):
-        exp = 8
-        data = np.random.normal(size=(10,2**exp,2**exp))
-        self.ports = []
-        self.timer = pg.QtCore.QTimer()
+        exp = 7
+        self.q = Queue.Queue()
         self.app = QtGui.QApplication([])
         self.win = pg.ImageView()
         self.win.setWindowTitle('TART2 - Live View')
-        self.win.setImage(data[0])
         self.win.show()
+        self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.update)
         self.timer.start()
 
     def getPort(self):
-        q = Queue.Queue()
-        self.ports.append(q)
-        return q
+        return self.q
 
     def update(self):
-        for q in self.ports:
-            try:
-                if q.qsize()> 10:
-                    [q.get() for _ in range(10)] 
-                print q.qsize()
-                data = q.get()
-                self.win.setImage(data)
-            except Queue.Empty:
-                pass
+        try:
+            #print self.q.qsize()
+            #if self.q.qsize()> 10:
+            #    [self.q.get() for _ in range(10)] 
+            data = self.q.get()
+            self.win.setImage(data)
+        except Queue.Empty:
+            pass
 
 def qtLoop():
     import sys
@@ -50,10 +45,9 @@ if __name__ == '__main__':
     q_handle = plotter.getPort()
     def producer():
         while True:
-            q_handle.put(np.random.random(size=(2**8, 2**8)))
-            time.sleep(0.001)
+            q_handle.put(np.asarray(np.random.random(size=(2**8, 2**8)),dtype=np.float16))
+            time.sleep(0.1)
     p = Thread(target=producer)
     p.daemon = True
     p.start()
-    print 'here'
     qtLoop()
