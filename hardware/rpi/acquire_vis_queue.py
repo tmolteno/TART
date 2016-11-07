@@ -65,7 +65,7 @@ def capture_loop(process_queue, tart_instance, ):
             logger.error(traceback.format_exc())
 
         finally:
-            print data[0], 'ok'
+            print  'Acquired', data[0]
             #tart_instance.close()
 
 
@@ -104,7 +104,14 @@ if __name__=="__main__":
     PARSER.add_argument('--blocksize', default=23, type=int, help='exponent of correlator block-size')
     PARSER.add_argument('--chuncksize', default=10, type=int, help='number of vis objects per file')
 
+    PARSER.add_argument('--synthesis', required=False, action='store_true', help="generate telescope synthesis image")
+    PARSER.add_argument('--absang', required=False, action='store_true', help="generate abs and angle for vis")
+    PARSER.add_argument('--calib', required=False, action='store_true', help="generate abs and angle for vis")
+
     ARGS = PARSER.parse_args()
+
+    if ARGS.synthesis:
+      from monitor_vis import process_loop, gen_calib_image
 
     config = settings.Settings(ARGS.config)
     blocksize = ARGS.blocksize
