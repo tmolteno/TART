@@ -65,7 +65,8 @@ def capture_loop(process_queue, tart_instance, ):
             logger.error(traceback.format_exc())
 
         finally:
-            tart_instance.close()
+            print data[0], 'ok'
+            #tart_instance.close()
 
 
 
@@ -83,9 +84,8 @@ def process_loop(process_queue, config, n_samples, chunck_size):
                 vislist.append(vis)
                 if len(vislist)>chunck_size:
                   print vis
-                  #visibility.Visibility_Save(vislist, "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second))
+                  visibility.Visibility_Save(vislist, "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second))
                   vislist = []
-                detect_meteor.analyse(stack_filename)
             except Exception, e:
                 logger.error( "Measurement Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
@@ -102,19 +102,20 @@ if __name__=="__main__":
     PARSER.add_argument('--save_vis', required=False, action='store_true', help="generate abs and angle for vis")
     PARSER.add_argument('--vis_prefix', required=False, type=str, default='vis', help="generate abs and angle for vis")
     PARSER.add_argument('--blocksize', default=23, type=int, help='exponent of correlator block-size')
+    PARSER.add_argument('--chuncksize', default=10, type=int, help='number of vis objects per file')
 
     ARGS = PARSER.parse_args()
 
     config = settings.Settings(ARGS.config)
     blocksize = ARGS.blocksize
     n_samples = 2**blocksize
-    chunck_size = 100
+    chunck_size = ARGS.chuncksize
 
     path = 'logging.yaml'
     if os.path.exists(path):
         with open(path, 'rt') as f:
-            config = yaml.load(f.read())
-        logging.config.dictConfig(config)
+            log_config = yaml.load(f.read())
+        logging.config.dictConfig(log_config)
 
     proc_queue = multiprocessing.Queue()
 
@@ -129,6 +130,6 @@ if __name__=="__main__":
     tart_instance.read_status(True)
     tart_instance.start(blocksize, True)
 
-    capture_loop(proc_queue, tart_instance, args.debug)
+    capture_loop(proc_queue, tart_instance,)
 
 
