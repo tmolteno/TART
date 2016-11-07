@@ -14,8 +14,10 @@
  * 
  * NOTE:
  *  + supports classic, pipelined, and burst transfers;
+ *  + OBSOLETE;
  * 
  * TODO:
+ *  + bring up to use latest versions of SPI modules;
  * 
  */
 

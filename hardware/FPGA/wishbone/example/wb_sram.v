@@ -9,6 +9,7 @@
  *  + supports burst transfers -- these are indicated by `bst_i` being
  *    asserted at the beginning of a transaction, and deasserted one cycle
  *    before the final (pipelined) `ack_o`;
+ *  + OBSOLETE (better to use 'wb_sram_port', Pat @ 08/11/2016);
  * 
  * TODO:
  * 

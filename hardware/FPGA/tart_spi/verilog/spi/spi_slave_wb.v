@@ -15,11 +15,11 @@
  * 
  * NOTE:
  *  + XST synthesis achieves about 250 MHz on a Spartan 6;
- *  + currently, the SCK frequency can be only slightly-higher than that of
- *    the bus bus clock, or else data isn't available early enough, resulting
- *    in FIFO underruns -- but this could be solved by using an additional
- *    prefetch, though this doesn't have a corresponding parameter, nor has it
- *    been implemented;
+ *  + currently, the SCK frequency can be no more than slightly higher than
+ *    that of the (Wishbone, SPEC B4) bus clock, or else data isn't available
+ *    early enough, resulting in FIFO underruns -- but this could be solved
+ *    using an additional prefetch (OR, an additional padding byte), though
+ *    this hasn't been implemented;
  * 
  * Changelog:
  *  + 26/10/2016  --  initial file (built from the old SPI module);
@@ -38,6 +38,8 @@ module spi_slave_wb
      parameter WIDTH = 8,       // TODO: currently must be `8`!
      parameter MSB   = WIDTH-1,
      parameter ASB   = WIDTH-2,
+//      parameter BYTES = WIDTH>>3, // TODO: byte selects
+//      parameter SSB   = BYTES-1,
 
      // Wishbone modes/parameters:
      parameter ASYNC = 1,
@@ -57,9 +59,10 @@ module spi_slave_wb
      input          rty_i,
      input          err_i,
      output [ASB:0] adr_o,
+//      input [SSB:0]  sel_i, // TODO: support larger word-sizes?
      input [MSB:0]  dat_i,
      output [MSB:0] dat_o,
-     
+   
      // Debug/diagnostic output, for when the recieve FIFO overflows.
      output         active_o,
      input [MSB:0]  status_i,

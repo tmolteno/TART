@@ -268,7 +268,7 @@ module wb_sram_prefetch
    //-------------------------------------------------------------------------
    //  Wishbone to SRAM interface for storing the prefetched data.
    //-------------------------------------------------------------------------
-   wb_sram_interface
+   wb_sram_port
      #(  .WIDTH(WIDTH),
          .ABITS(ABITS),
          .TICKS(1),             // ignored, as write-only

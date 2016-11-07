@@ -15,10 +15,11 @@
  * 
  * NOTE:
  *  + XST synthesis achieves about 250 MHz on a Spartan VI;
- *  + currently, the SCK frequency can be slightly higher than that of the bus
- *    bus clock, or else data isn't available early enough, resulting in FIFO
- *    underruns -- but this could be solved by using an additional prefetch,
- *    though this hasn't been implemented;
+ *  + currently, the SCK frequency can be no more than slightly higher than
+ *    that of the (Wishbone, SPEC B4) bus clock, or else data isn't available
+ *    early enough, resulting in FIFO underruns -- but this could be solved
+ *    using an additional prefetch (OR, an additional padding byte), though
+ *    this hasn't been implemented;
  * 
  * Changelog:
  *  + 18/06/2016  --  initial file;

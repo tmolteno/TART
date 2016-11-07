@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bus/wb_sram_interface.v
+ * Module      : verilog/bus/wb_sram_port.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -31,7 +31,7 @@
 /*
  Instantiation template:
  
-    wb_sram_interface
+    wb_sram_port
      #(  .WIDTH(DATA), // Data and address bit-widths
          .ABITS(ADDR),
          .TICKS(1),    // Read latency of the attached SRAM
@@ -68,7 +68,7 @@
          );
 */
 
-module wb_sram_interface
+module wb_sram_port
   #(parameter WIDTH = 32,       // Data bit-width
     parameter MSB   = WIDTH-1,  // MSB of data
     parameter ABITS = 10,       // Address bit-width
@@ -156,4 +156,4 @@ module wb_sram_interface
        ack_out <= #DELAY ack_nxt[TSB:0];
 
 
-endmodule // wb_sram_interface
+endmodule // wb_sram_port

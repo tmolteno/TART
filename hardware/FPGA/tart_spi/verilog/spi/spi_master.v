@@ -1,10 +1,30 @@
 `timescale 1ns/100ps
 /*
- *
+ * Module      : verilog/spi/spi_slave.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * This is just a simple, SPI master module and with a (pipelined, Wishbone-
+ * like) bus interface.
+ * 
+ * NOTE:
+ *  + XST synthesis achieves about 250 MHz on a Spartan VI;
+ *  + currently, the SCK frequency can be slightly higher than that of the bus
+ *    bus clock, or else data isn't available early enough, resulting in FIFO
+ *    underruns -- but this could be solved by using an additional prefetch,
+ *    though this hasn't been implemented;
+ * 
  * TODO:
- *  + use a more Wishbone-like interface;
- *  + automatically break up into separate SPI transactions when the incoming
- *    addresses aren't sequential?
+ *  + the design is still preliminary (as of 24/06/2016);
+ *  + reduce the fanout of `rst_i`;
+ *  + 27/10/2016  --  now OBSOLETE, as it needs to be rewritten to support
+ *                    Wishbone SPEC B4, and be compatible with 'spi_slave_wb';
  * 
  * FIXME:
  *  + the master sends/receives one more byte than intended;

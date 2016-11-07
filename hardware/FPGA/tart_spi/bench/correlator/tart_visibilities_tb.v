@@ -1,4 +1,25 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/correlator/tart_correlator_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Testbench for the TART visibilities read-back functional unit.
+ * 
+ * NOTE:
+ *  + OBSOLETE;
+ * 
+ * TODO:
+ *  + bring up to using the latest version of the logic cores;
+ * 
+ */
+
 module tart_visibilities_tb;
 
    parameter BLOCK = 32;        // Number of bits of a block

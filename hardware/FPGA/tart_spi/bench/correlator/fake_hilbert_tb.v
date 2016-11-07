@@ -1,4 +1,24 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/correlator/fake_hilbert_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Testbench for a fake Hilbert transform, computed for a supersampled signal
+ * approximated using a bit-shift.
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 module fake_hilbert_tb;
 
    parameter MSB = 0;

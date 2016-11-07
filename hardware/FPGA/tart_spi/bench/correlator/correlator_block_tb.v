@@ -1,4 +1,23 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/correlator/correlator_block_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Testbench for a block of hardware correlators.
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 module correlator_block_tb;
 
    parameter ACCUM = 32;

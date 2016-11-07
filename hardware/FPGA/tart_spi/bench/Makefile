@@ -12,7 +12,7 @@ SPI =$(RTL)/spi
 ACQ =$(RTL)/acquire
 
 # Some Wishbone-like cores:
-WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram_interface.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_sram_stream.v $(BUS)/wb_sram_prefetch.v
+WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram_port.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_sram_stream.v $(BUS)/wb_sram_prefetch.v
 
 # Common library cores:
 LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(ACQ)/tart_acquire.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v $(RTL)/xilinx/RAMB16X16X4_TDP.v
@@ -36,14 +36,8 @@ TOP =$(DEP) $(COR) $(ACQ)/align_captures.v $(ACQ)/signals_capture.v $(ACQ)/captu
 
 all: soc
 
-soc: ${DEP} tart_soc_tb.v
-	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(SIM) tart_soc_tb.v
-
-spi: ${DEP} tart_spi_tb.v
-	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(SIM) tart_spi_tb.v
-
-cor: ${DEP} ${COR} tart_correlator_tb.v
-	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(COR) $(SIM) tart_correlator_tb.v
+cor: ${DEP} ${COR} correlator/tart_correlator_tb.v
+	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(COR) $(SIM) correlator/tart_correlator_tb.v
 
 dsp: ${DEP} ${DSP} tart_dsp_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(DSP) $(SIM) tart_dsp_tb.v
@@ -62,7 +56,7 @@ ctl: ${COR} correlator/control_tb.v
 #
 #  Simulate Wishbone (B4 spec) pipelined BURST READS & WRITES.
 #
-FCH =$(BUS)/wb_fetch.v $(BUS)/wb_store.v $(BUS)/wb_sram_interface.v $(RTL)/xilinx/RAMB16X32X8_TDP.v
+FCH =$(BUS)/wb_fetch.v $(BUS)/wb_store.v $(BUS)/wb_sram_port.v $(RTL)/xilinx/RAMB16X32X8_TDP.v
 
 fch: ${FCH} bus/wb_fetch_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(FCH) bus/wb_fetch_tb.v

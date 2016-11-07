@@ -59,19 +59,25 @@ module block_buffer
    always @(posedge read_clock_i)
      block_data <= #DELAY block_buffer[read_address_i];
 
-   always @(posedge wr_clk_i)
+   always @(posedge write_clk_i)
      if (write_enable_i)
        block_buffer[write_address_i] <= #DELAY write_data_i;
 
 
 `else // !`ifndef __USE_EXPLICT_BRAM
-   wire [13:0]      ADDRA = {read_address_i , {14-ABITS{1'b0}}};
-   wire [13:0]      ADDRB = {write_address_i, {14-ABITS{1'b0}}};
-   wire [31:0]      a_data;
-   wire [31:0]      b_data = {{(32-WIDTH){1'b0}}, write_data_i};
+   wire [13:0]      ADDRA, ADDRB;
+   wire [31:0]      a_data, b_data;
    wire [3:0]       web = {4{write_enable_i}};
 
+   //  Extend addresses to the required 14-bits:
+   assign ADDRA = {read_address_i , {14-ABITS{1'b0}}};
+   assign ADDRB = {write_address_i, {14-ABITS{1'b0}}};
+
+   //  Generate the individual byte-enables:
+   assign web = {4{write_enable_i}};
+
    assign read_data_o = a_data[MSB:0];
+   assign b_data = {{(32-WIDTH){1'b0}}, write_data_i};
 
 
    //-------------------------------------------------------------------------

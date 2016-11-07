@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bus/wb_get_block.v
+ * Module      : rtl/wb_get_block.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -14,9 +14,7 @@
  * data, using Wishbone-like burst transfers.
  * 
  * NOTE:
- * 
- * Changelog:
- *  + 20/08/2016  --  initial file;
+ *  + OBSOLETE (replaced by 'wb_fetch', Pat @ 21/10/2016);
  * 
  * TODO:
  * 

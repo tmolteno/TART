@@ -29,7 +29,7 @@
 //  The most general (and recommended) Xilinx LUT6 primitive.
 //----------------------------------------------------------------------------
 module LUT6
-  #(parameter	INIT	= 64'h0000_0000_0000_0000,
+  #(parameter INIT  = 64'h0000_0000_0000_0000,
     parameter DELAY = 0.5)
    (
     output reg O,

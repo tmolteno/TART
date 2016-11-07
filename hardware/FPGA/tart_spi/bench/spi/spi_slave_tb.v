@@ -1,4 +1,24 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/spi/spi_slave_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * Simple testbench for the 'spi_master' and 'spi_slave' modules.
+ * 
+ * NOTE:
+ *  + supports classic, pipelined, and burst transfers;
+ * 
+ * TODO:
+ * 
+ */
+
 module spi_slave_tb;
 
    parameter WIDTH = 8;

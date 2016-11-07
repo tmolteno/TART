@@ -320,7 +320,7 @@ module tart_fake_dsp
 
    //-------------------------------------------------------------------------
    //  Fetch the 48-bit `{sin, cos}` visibilities from the buffer.
-   wb_sram_interface #( .WIDTH(WIDTH), .ABITS(8) ) WBSRAM0
+   wb_sram_port #( .WIDTH(WIDTH), .ABITS(8) ) WBSRAM0
      ( .clk_i(aq_clk_i),
        .rst_i(rst_i),
        .cyc_i(s_cyc),

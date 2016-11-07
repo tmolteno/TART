@@ -1,4 +1,21 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/correlator/control_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * NOTE:
+ *  + OBSOLETE (Pat @ 08/11/2016);
+ * 
+ * TODO:
+ * 
+ */
 
 module control_tb;
 

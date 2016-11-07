@@ -192,7 +192,7 @@ module wb_fetch_tb;
    //-------------------------------------------------------------------------
    //  Wishbone interface between the fetch unit and the SRAM.
    //-------------------------------------------------------------------------
-   wb_sram_interface
+   wb_sram_port
      #( .ABITS(ABITS),
         .USEBE(1),
         .WIDTH(WIDTH),
@@ -226,7 +226,7 @@ module wb_fetch_tb;
    //-------------------------------------------------------------------------
    //  Wishbone interface between the store unit and the SRAM.
    //-------------------------------------------------------------------------
-   wb_sram_interface
+   wb_sram_port
      #( .ABITS(ABITS+2),
         .USEBE(0),
         .WIDTH(8),

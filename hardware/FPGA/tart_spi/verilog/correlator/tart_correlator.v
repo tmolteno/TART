@@ -478,7 +478,7 @@ module tart_correlator
    //-------------------------------------------------------------------------
    //  Drive a SRAM, and using a Wishbone (SPEC B4) interface.
    //-------------------------------------------------------------------------
-   wb_sram_interface
+   wb_sram_port
      #( .WIDTH(ACCUM),          // SRAM features & bit-widths
         .ABITS(JBITS),
         .TICKS(3),              // SRAM read, then two levels of MUX's
