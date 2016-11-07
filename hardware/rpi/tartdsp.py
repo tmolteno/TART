@@ -52,6 +52,7 @@ class TartSPI:
     self.spi.mode = 0b00
     self.spi.bits_per_word = 8
     self.spi.max_speed_hz = int(speed)
+    self.perm = None
 
   def close(self, noisy=False):
     self.spi.close()
@@ -299,9 +300,10 @@ class TartSPI:
 
   def load_permute(self, filepath='../FPGA/tart_spi/data/permute.txt', noisy=False):
     '''Load a permutation vector from the file at the given filepath.'''
-    pp = numpy.loadtxt(filepath, dtype='int')
-    self.perm = pp
-    return pp
+    if self.perm is None:
+      pp = numpy.loadtxt(filepath, dtype='int')
+      self.perm = pp
+    return self.perm
 
 #endclass TartSPI
 
