@@ -68,28 +68,40 @@ def capture_loop(process_queue, tart_instance, ):
             print  'Acquired', data[0]
             #tart_instance.close()
 
-
-
 ''' This is a separate procees that just
     waits for data to appear on the queue, and processes
     the files.
 '''
-def process_loop(process_queue, config, n_samples, chunck_size):
-    vislist = []
+def process_loop(process_queue, result_queue, config, n_samples):
     while (True):
         if (False == process_queue.empty()):
             try:
                 data = process_queue.get()
                 vis = get_vis_object(data, n_samples, config)
-                vislist.append(vis)
-                if len(vislist)>chunck_size:
-                  print vis
-                  visibility.Visibility_Save(vislist, "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second))
-                  vislist = []
+                result_queue.put(vis)
             except Exception, e:
                 logger.error( "Measurement Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
-        time.sleep(0.01)
+        else:
+            time.sleep(0.01)
+
+def result_loop(result_queue, chunk_size):
+    vislist = []
+    while(True):
+        if (False == result_queue.empty()):
+            try:
+                vis = result_queue.get()
+                vislist.append(vis)
+                if len(vislist)>chunk_size:
+                    fname =  "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second)
+                    print 'saved ', vis, ' to', fname
+                    visibility.Visibility_Save(vislist, fname)
+                    vislist = []
+            except Exception, e:
+                logger.error( "Measurement Processing Error %s" % str(e))
+                logger.error(traceback.format_exc())
+        else:
+            time.sleep(0.01)
 
 import logging.config
 import yaml
@@ -102,7 +114,7 @@ if __name__=="__main__":
     PARSER.add_argument('--save_vis', required=False, action='store_true', help="generate abs and angle for vis")
     PARSER.add_argument('--vis_prefix', required=False, type=str, default='vis', help="generate abs and angle for vis")
     PARSER.add_argument('--blocksize', default=23, type=int, help='exponent of correlator block-size')
-    PARSER.add_argument('--chuncksize', default=10, type=int, help='number of vis objects per file')
+    PARSER.add_argument('--chunksize', default=10, type=int, help='number of vis objects per file')
 
     PARSER.add_argument('--synthesis', required=False, action='store_true', help="generate telescope synthesis image")
     PARSER.add_argument('--absang', required=False, action='store_true', help="generate abs and angle for vis")
@@ -110,13 +122,13 @@ if __name__=="__main__":
 
     ARGS = PARSER.parse_args()
 
-    if ARGS.synthesis:
-      from monitor_vis import process_loop, gen_calib_image
+    if (ARGS.synthesis + ARGS.absang + ARGS.calib):
+        from monitor_vis import result_loop, gen_calib_image
 
     config = settings.Settings(ARGS.config)
     blocksize = ARGS.blocksize
     n_samples = 2**blocksize
-    chunck_size = ARGS.chuncksize
+    chunk_size = ARGS.chunksize
 
     path = 'logging.yaml'
     if os.path.exists(path):
@@ -125,9 +137,17 @@ if __name__=="__main__":
         logging.config.dictConfig(log_config)
 
     proc_queue = multiprocessing.Queue()
-
-    detect_process = multiprocessing.Process(target=process_loop, args=(proc_queue, config, n_samples, chunck_size))
-    detect_process.start()
+    result_queue = multiprocessing.Queue()
+    
+    if (ARGS.synthesis + ARGS.absang + ARGS.calib):
+        print 'here', ARGS.synthesis, ARGS.absang, ARGS.calib
+	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.synthesis, ARGS.absang, ARGS.calib))
+    else:
+	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size,))
+    post_process.start()
+    
+    vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, config, n_samples,))
+    vis_calc_process.start()
 
     tart_instance = TartSPI()
     tart_instance.reset()
