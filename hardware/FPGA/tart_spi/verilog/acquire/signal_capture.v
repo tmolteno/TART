@@ -40,17 +40,18 @@ module signal_capture
     //  Simulation-only parameters:
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
-    input      clk_i, // (sampling) clock input
-    input      rst_i, // (sample domain) reset
-    input      ce_i,  // (sample domain) core enable
+    input      clock_i, // (sampling) clock input
+    input      reset_i, // (sample domain) reset
+    input      align_i,  // (sample domain) core enable
 
-    output reg rdy_o = 1'b0,
+    output reg ready_o = 1'b0,
+    output     phase_o,
     input      ack_i, // acknowledge any invalid data
     output     locked_o,
     output     invalid_o,
 
-    input      dat_i, // raw data
-    output reg dat_o  // captured data
+    input      signal_i, // raw data
+    output reg signal_o  // captured data
     );
 
 
@@ -82,7 +83,7 @@ module signal_capture
    assign samples = {d_reg, d_iob};
 
    //  Internal, combinational conditionals.
-   assign rdy_w = ce_i && locked && count == HALF;
+   assign rdy_w = align_i && locked && count == HALF;
    assign vld_w = count >= RATIO-3 && count < RATIO+2;
    assign bad_w = locked && edge_found && !vld_w;
 
@@ -101,17 +102,17 @@ module signal_capture
    //  Capture within an IOB's register, and use two samples for edge
    //  detection.
    //-------------------------------------------------------------------------
-   always @(posedge clk_i)
-     if (ce_i)
-       {d_reg, d_iob} <= #DELAY {samples[HSB:0], dat_i};
+   always @(posedge clock_i)
+     if (align_i)
+       {d_reg, d_iob} <= #DELAY {samples[HSB:0], signal_i};
 
    //-------------------------------------------------------------------------
    //  Count the number of cycles between edges.
    //-------------------------------------------------------------------------
-   always @(posedge clk_i)
-     if (rst_i)
+   always @(posedge clock_i)
+     if (reset_i)
        count <= #DELAY {RBITS{1'b0}};
-     else if (ce_i)
+     else if (align_i)
        count <= #DELAY count_next;
      else
        count <= #DELAY count;
@@ -119,16 +120,16 @@ module signal_capture
    //-------------------------------------------------------------------------
    //  The signal is considered locked after four clean transitions.
    //-------------------------------------------------------------------------
-   always @(posedge clk_i)
-     if (rst_i) begin
+   always @(posedge clock_i)
+     if (reset_i) begin
         locked       <= #DELAY 1'b0;
         locked_count <= #DELAY 2'h0;
      end
-     else if (ce_i && edge_found && vld_w) begin
+     else if (align_i && edge_found && vld_w) begin
         locked       <= #DELAY locked_count == 3;
         locked_count <= #DELAY locked_count  < 3 ? locked_count + 1 : locked_count ;
      end
-     else if (ce_i && edge_found) begin // Edge too far from acceptable.
+     else if (align_i && edge_found) begin // Edge too far from acceptable.
         locked       <= #DELAY 1'b0;
         locked_count <= #DELAY 2'h0;
      end
@@ -136,10 +137,10 @@ module signal_capture
    // If the signal is `locked`, and `edge_found`, but occuring to far to be
    // considered a valid count, then assert `invalid`.
    // Clear `invalid` whenever any earlier `invalid` data is acknowledged.
-   always @(posedge clk_i)
-     if (rst_i)
+   always @(posedge clock_i)
+     if (reset_i)
        invalid <= #DELAY 1'b0;
-     else if (ce_i && bad_w)
+     else if (align_i && bad_w)
        invalid <= #DELAY 1'b1;
      else if (ack_i)
        invalid <= #DELAY 1'b0;
@@ -149,13 +150,13 @@ module signal_capture
    //-------------------------------------------------------------------------
    //  Output the captured data-samples.
    //-------------------------------------------------------------------------
-   always @(posedge clk_i)
-     if (rst_i && RESET)
-       rdy_o <= #DELAY 1'b0;
+   always @(posedge clock_i)
+     if (reset_i && RESET)
+       ready_o <= #DELAY 1'b0;
      else
        begin
-          rdy_o <= #DELAY rdy_w;
-          dat_o <= #DELAY rdy_w ? samples[HALF] : dat_o ;
+          ready_o  <= #DELAY rdy_w;
+          signal_o <= #DELAY rdy_w ? samples[HALF] : signal_o;
        end
 
 
@@ -167,10 +168,10 @@ module signal_capture
    reg  [MSB:0] predictor = {RBITS{1'b0}};
    wire         expected  = predictor == RATIO-1;
 
-   always @(posedge clk_i)
-     if (rst_i)
+   always @(posedge clock_i)
+     if (reset_i)
        predictor <= #DELAY {RBITS{1'b0}};
-     else if (ce_i) begin
+     else if (align_i) begin
         if (expected && count_next < HALF)
           predictor <= #DELAY count_next;
         else if (edge_found && predictor < HALF)

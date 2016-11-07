@@ -39,7 +39,7 @@ module fake_telescope
     //  Simulation-only setttings:
     parameter DELAY = 3)
    (
-    input          clock_i,
+    input          clock_i,     // generator clock
     input          reset_i,
     input          enable_i,
 

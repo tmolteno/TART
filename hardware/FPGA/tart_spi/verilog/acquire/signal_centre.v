@@ -1,0 +1,109 @@
+`timescale 1ns/100ps
+/*
+ * Module      : verilog/acquire/signal_centre.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan 6)
+ * 
+ * Performs clock-recovery on the selected signal, and outputing the measured
+ * phase-shift, which could then be used for aligning multiple signals.
+ * 
+ * NOTE:
+ *  + `RATIO` is the oversampling frequency ratio;
+ * 
+ * TODO:
+ *  + parameterised number of MUX stages;
+ * 
+ */
+
+module signal_centre
+  #(//  Data bit-width parameters:
+    parameter WIDTH = 24,       // number of signals
+    parameter MSB   = WIDTH-1,  // MSB of data signal
+    parameter SBITS = 5,        // number of select bits
+    parameter SSB   = SBITS-1,  // MSB of selector
+    parameter TOTAL = 1<<SBITS, // total MUX width
+    parameter TSB   = TOTAL-1,  // MSB of MUX width
+    parameter QBITS = SBITS-2,  // select bits for the second-stage MUX
+    parameter QSB   = QBITS-1,  // MSB of second-stage selector
+    parameter MUX2  = 1<<QBITS, // second-stage MUX width
+    parameter JSB   = MUX2-1,   // MSB of second-stage MUX input
+
+    //  Data-alignment settings:
+    parameter RATIO = 12,       // oversampling ratio?
+    parameter RBITS = 4,        // bit-width of clock-counter
+    parameter RSB   = RBITS-1,
+
+    //  Data-alignment options:
+    parameter DELAY = 3)
+   (
+    input          clock_i, // oversampling (by 'RATIO') clock
+    input          reset_i, // clears all stored timing info
+    input          align_i, // align the inputs while asserted
+
+    input [MSB:0]  signal_i, // raw signal
+    input [SSB:0]  select_i, // selects one of the `WIDTH` signals
+
+    output         strobe_o, // strobes for each new output-value
+    output         locked_o, // valid data is being emitted
+    output [RSB:0] phase_o, // phase-shift required to centre signal
+    output         invalid_o, // lost tracking of the signal
+    input          restart_i  // clear the error flag
+    );
+
+
+   wire [KSB:0]    signal_w;
+   reg             signal;
+   reg [JSB:0]     stage2;
+   reg [QSB:0]     select;
+   reg [1:0]       enable;
+
+
+   assign signal_w = {{TOTAL-WIDTH{1'bx}}, signal_i};
+
+
+   //-------------------------------------------------------------------------
+   //  Select the signal source.
+   //-------------------------------------------------------------------------
+   //  Uses a two-stage MUX.
+   always @(posedge clock_i)
+     begin
+        //  align-enable signal delays:
+        enable <= #DELAY {enable[0], align_i};
+
+        //  first-stage signal MUX:
+        stage2 <= #DELAY signal_w >> {select_i[SSB:QBITS], {QBITS{1'b0}}};
+        select <= #DELAY select_i[QSB:0];
+
+        //  second-stage signal MUX:
+        signal <= #DELAY stage2[select];
+     end
+
+
+   //-------------------------------------------------------------------------
+   //  Instantiate multiple signal-capture blocks.
+   //-------------------------------------------------------------------------
+   signal_capture
+     #( .RATIO(RATIO),
+        .RBITS(RBITS),
+        .DELAY(DELAY)
+        ) SHIFT0
+     (  .clock_i  (clock_i),
+        .reset_i  (reset_i),
+        .align_i  (enable[1]),
+        .signal_i (signal),
+        .signal_o (),
+        .ready_o  (strobe_o),
+        .phase_o  (phase_o),
+        .locked_o (locked_o),
+        .invalid_o(invalid_o),
+        .ack_i    (restart_i)
+        );
+
+
+endmodule // capture

@@ -26,43 +26,52 @@
 `endif
 
 module block_buffer
-  #(parameter WIDTH = 24,
-    parameter MSB   = WIDTH-1,
-    parameter ABITS = 9,
-    parameter ASB   = ABITS-1,
-    parameter DEPTH = 1 << ABITS,
-    parameter DELAY = 3)
-  (
-   output [MSB:0] read_data,
-   input [MSB:0]  write_data,
-   input          clk,
-   input [ASB:0]  read_address,
-   input [ASB:0]  write_address
-   );
+  #( parameter WIDTH = 24,
+     parameter MSB   = WIDTH-1,
+     parameter ABITS = 9,
+     parameter ASB   = ABITS-1,
+     parameter DEPTH = 1 << ABITS,
+     parameter DELAY = 3)
+   ( // read port:
+     input          read_clock_i,
+     input [ASB:0]  read_address_i,
+     output [MSB:0] read_data_o,
+     // write port:
+     input          write_clock_i,
+     input          write_enable_i,
+     input [ASB:0]  write_address_i
+     input [MSB:0]  write_data_i
+     );
 
 `ifndef __USE_EXPLICT_BRAM
    reg [MSB:0] block_buffer [0:DEPTH-1];
    reg [MSB:0] block_data = {WIDTH{1'b0}};
 
-   assign read_data = block_data;
+   assign read_data_o = block_data;
 
+ `ifdef __icarus
    //  Initialize all RAM cells to 0FF1CE at startup:
    integer j;
    initial
      for (j=0; j <DEPTH; j = j+1) block_buffer[j] = 24'h0FF1CE;
+ `endif
 
-   always @(posedge clk) begin
-      block_buffer[write_address] <= #DELAY write_data;
-      block_data <= #DELAY block_buffer[read_address];
-   end
+   always @(posedge read_clock_i)
+     block_data <= #DELAY block_buffer[read_address_i];
+
+   always @(posedge wr_clk_i)
+     if (write_enable_i)
+       block_buffer[write_address_i] <= #DELAY write_data_i;
+
 
 `else // !`ifndef __USE_EXPLICT_BRAM
-   wire [13:0]      ADDRA = {read_address , {14-ABITS{1'b0}}};
-   wire [13:0]      ADDRB = {write_address, {14-ABITS{1'b0}}};
+   wire [13:0]      ADDRA = {read_address_i , {14-ABITS{1'b0}}};
+   wire [13:0]      ADDRB = {write_address_i, {14-ABITS{1'b0}}};
    wire [31:0]      a_data;
-   wire [31:0]      b_data = {{(32-WIDTH){1'b0}}, write_data};
+   wire [31:0]      b_data = {{(32-WIDTH){1'b0}}, write_data_i};
+   wire [3:0]       web = {4{write_enable_i}};
 
-   assign read_data = a_data[MSB:0];
+   assign read_data_o = a_data[MSB:0];
 
 
    //-------------------------------------------------------------------------
@@ -93,7 +102,7 @@ module block_buffer
          .WRITE_MODE_B("WRITE_FIRST")
        ) BLOCK_BUFFER0
        ( .ADDRA(ADDRA),
-         .CLKA(clk),
+         .CLKA(read_clock_i),
          .ENA(1'b1),
          .REGCEA(1'b0),         // A port register clock enable input
          .RSTA(1'b0),           // A port register set/reset input
@@ -106,11 +115,11 @@ module block_buffer
          
          // Port B Address/Control Signals: 14-bit (each) input: Port B address and control signals
          .ADDRB(ADDRB),         // B port address input
-         .CLKB(clk),            // B port clock input
+         .CLKB(write_clock_i),  // B port clock input
          .ENB(1'b1),            // B port enable input
          .REGCEB(1'b0),         // B port register clock enable input
          .RSTB(1'b0),           // B port register set/reset input
-         .WEB(4'b1111),         // Port B byte-wide write enable input
+         .WEB(web),             // Port B byte-wide write enable input
          // Port B Data:
          .DIB(b_data),          // 32-bit input: B port data input
          .DIPB(4'h0),           // 4-bit input: B port parity input

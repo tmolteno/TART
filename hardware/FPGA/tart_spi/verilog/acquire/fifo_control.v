@@ -1,40 +1,57 @@
-`timescale 1ns/1ps
+`timescale 1ns/100ps
+/*
+ * Module      : verilog/acquire/fifo_control.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
+ * 
+ * Forwards data from the raw-data FIFO to the DRAM, and then controls the
+ * DRAM read-back, once it has filled up.
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 module fifo_sdram_fifo_scheduler
   #(parameter SDRAM_ADDRESS_WIDTH = 25,
+    parameter ASB = SDRAM_ADDRESS_WIDTH-2,
+    parameter CSB = SDRAM_ADDRESS_WIDTH-1,
     parameter BLOCKSIZE = 8'd32)
    (
-    input                                clk,
-    input                                clk6x,
-    input                                rst,
+    input              clk,
+    input              rst,
 
-    output reg [8:0]                     aq_bb_rd_address = 9'b0,
-    output reg [8:0]                     aq_bb_wr_address = 9'b0,
-    input [23:0]                         aq_read_data,
+    output reg [8:0]   aq_bb_rd_address = 9'b0,
+    output reg [8:0]   aq_bb_wr_address = 9'b0,
+    input [23:0]       aq_read_data,
 
-    input                                spi_start_aq,
-    input                                spi_buffer_read_complete,
+    input              spi_start_aq,
+    input              spi_buffer_read_complete,
 
-    input                                cmd_ready,
-    output reg                           cmd_enable = 0,
-    output reg                           cmd_wr = 0,
-    output reg [SDRAM_ADDRESS_WIDTH-2:0] cmd_address = 0,
-    output reg [31:0]                    cmd_data_in = 32'b0,
+    input              cmd_ready,
+    output reg         cmd_enable = 1'b0,
+    output reg         cmd_write = 1'b0,
+    output reg [ASB:0] cmd_address = {CSB{1'b0}},
+    output reg [31:0]  cmd_data_in = 32'b0,
 
-    output reg [2:0]                     tart_state = AQ_WAITING
+    output reg [2:0]   tart_state = AQ_WAITING
     );
 
    // 1 bit bigger than needed.
-   //    parameter FILL_THRESHOLD = {1'b0, (SDRAM_ADDRESS_WIDTH-1){1'b1}};
-   //    parameter FILL_THRESHOLD = (25'hFFFFFF);
+   reg [CSB:0]         sdram_wr_ptr = {SDRAM_ADDRESS_WIDTH{1'b0}};
+   reg [CSB:0]         sdram_rd_ptr = {SDRAM_ADDRESS_WIDTH{1'b0}};
 
-   // 1 bit bigger than needed.
-   reg [SDRAM_ADDRESS_WIDTH-1:0]         sdram_wr_ptr = 0;
-   reg [SDRAM_ADDRESS_WIDTH-1:0]         sdram_rd_ptr = 0;
-
-   reg [1:0]                             Sync_start = 2'b0;
+   reg [1:0]           Sync_start = 2'b0;
 
    // new signal synchronized to (=ready to be used in) clkB domain
-   wire                                  spi_start_aq_int = Sync_start[1];
+   wire                spi_start_aq_int = Sync_start[1];
 
    always @(posedge clk or posedge rst)
      begin
@@ -57,7 +74,7 @@ module fifo_sdram_fifo_scheduler
    parameter TX_IDLE            = 3'd3;
    parameter FINISHED           = 3'd4;
 
-   always @(posedge clk6x or posedge rst)
+   always @(posedge clk or posedge rst)
      begin
         if (rst)
           begin
@@ -65,7 +82,7 @@ module fifo_sdram_fifo_scheduler
              sdram_rd_ptr <= 0; // 1 bit bigger than needed.
              tart_state   <= AQ_WAITING;
              cmd_enable   <= 1'b0;
-             cmd_wr       <= 1'b0;
+             cmd_write    <= 1'b0;
              aq_bb_rd_address <= 9'b0;
           end
         else
@@ -73,17 +90,15 @@ module fifo_sdram_fifo_scheduler
             AQ_WAITING:
               begin
                  if (sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-1]) tart_state <= TX_WRITING;
-                 //                      if (sdram_wr_ptr > FILL_THRESHOLD) tart_state <= TX_WRITING;
                  else if (aq_bb_rd_address != aq_bb_wr_address) tart_state <= AQ_BUFFER_TO_SDRAM;
               end
             AQ_BUFFER_TO_SDRAM:
               begin
-                 if (cmd_enable) cmd_enable <= 0;
+                 if (cmd_enable) cmd_enable <= 1'b0;
                  else if (cmd_ready)
                    begin
-                      cmd_wr       <= 1'b1;
+                      cmd_write    <= 1'b1;
                       cmd_enable   <= 1'b1;
-                      //                            cmd_address  <= sdram_wr_ptr[23:0];
                       cmd_address  <= sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-2:0];
                       sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
                       cmd_data_in <= aq_read_data[23:0];
@@ -96,7 +111,7 @@ module fifo_sdram_fifo_scheduler
                  if (cmd_enable) cmd_enable <= 1'b0;
                  else if (cmd_ready)
                    begin
-                      cmd_wr       <= 1'b0;
+                      cmd_write    <= 1'b0;
                       cmd_enable   <= 1'b1;
                       //                           cmd_address  <= sdram_rd_ptr[23:0];
                       cmd_address  <= sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];

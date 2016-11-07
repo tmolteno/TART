@@ -116,6 +116,10 @@ module tart_capture_tb;
    always @(posedge clk_e)
      raw_e <= #DELAY $random;
 
+   always @(posedge clk_e)
+     if (ALIGN && aq_enabled)
+       aq_align <= #DELAY 1'b1;
+
    //  Display aligned data.
    always @(posedge clk_x)
      if (stb_x) $display("%8t: DATA = %08b (%02x)", $time, daq_x, daq_x);

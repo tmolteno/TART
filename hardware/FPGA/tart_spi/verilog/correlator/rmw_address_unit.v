@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/rmw_address_unit.v
+ * Module      : verilog/correlator/rmw_address_unit.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -8,7 +8,7 @@
  * 
  * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
  * Stability   : Experimental
- * Portability : only tested with Icarus Verilog
+ * Portability : only tested with a Papilio board (Xilinx Spartan 6)
  * 
  * Generate the addresses for a sequential, Read-Modify-Write (RMW)
  * operations.
@@ -20,7 +20,6 @@
  *  + 01/08/2016  --  initial file;
  * 
  */
-
 
 module rmw_address_unit
   #( parameter ABITS = 4,
@@ -193,26 +192,4 @@ module rmw_address_unit
 
 
 endmodule // rmw_address_unit
-
-module shift_reg
-  #(parameter STEPS = 2,
-    parameter INIT  = {STEPS{1'b0}},
-    parameter MSB   = STEPS-1,
-    parameter DELAY = 3)
-   (
-    input  clk,
-    input  ce,
-    input  d,
-    output q
-    );
-
-   reg [MSB:0] sr = INIT;
-   reg         x;
-
-   assign q = sr[MSB];
-
-   always @(posedge clk)
-     if (ce) {x, sr} <= #DELAY {sr, d};
-
-endmodule // shift_reg
 */

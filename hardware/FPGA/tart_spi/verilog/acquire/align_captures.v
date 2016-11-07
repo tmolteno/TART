@@ -42,7 +42,7 @@ module align_captures
    (
     input              clock_i,
     input              reset_i,
-    input              enable_i,
+    input              align_i,
 
     input [MSB:0]      data_in,
     input [MSB:0]      strobes,
@@ -98,7 +98,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        strobe <= #DELAY 1'b0;
-     else if (enable_i)
+     else if (align_i)
        strobe <= #DELAY stb_w;
      else
        strobe <= #DELAY strobe;
@@ -109,7 +109,7 @@ module align_captures
         strobes_reg <= #DELAY {RBITS{1'b0}};
         strobes_all <= #DELAY 1'b0;
      end
-     else if (enable_i) begin
+     else if (align_i) begin
         if (strobes_all && !strobe) begin
            strobes_reg <= #DELAY {RBITS{1'b0}};
            strobes_all <= #DELAY 1'b0;
@@ -127,7 +127,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        window <= #DELAY 1'b0;
-     else if (enable_i) begin
+     else if (align_i) begin
         if (stb_w)
           window <= #DELAY 1'b1;
         else if (end_w)
@@ -143,7 +143,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        count <= #DELAY {RBITS{1'b0}};
-     else if (enable_i) begin
+     else if (align_i) begin
         if (!window && strobe)
           count <= #DELAY {RBITS{1'b0}};
         else
@@ -153,7 +153,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        clear <= #DELAY {RBITS{1'b0}};
-     else if (enable_i)
+     else if (align_i)
        clear <= #DELAY strobe || window ? {RBITS{1'b0}} : clear + 1 ;
      else
        clear <= #DELAY clear;
@@ -165,7 +165,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        locked <= #DELAY 1'b0;
-     else if (enable_i)
+     else if (align_i)
        locked <= #DELAY vld_w ? lkd_w : locked ;
      else
        locked <= #DELAY locked;
@@ -177,7 +177,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        ready     <= #DELAY 1'b0;
-     else if (enable_i && rdy_w) begin
+     else if (align_i && rdy_w) begin
         ready    <= #DELAY 1'b1;
         data_out <= #DELAY data_in;
      end
@@ -188,7 +188,7 @@ module align_captures
    always @(posedge clock_i)
      if (reset_i)
        invalid <= #DELAY 1'b0;
-     else if (enable_i)
+     else if (align_i)
        invalid <= #DELAY !ack && invalid || locked && capture_error;
      else
        invalid <= #DELAY invalid;

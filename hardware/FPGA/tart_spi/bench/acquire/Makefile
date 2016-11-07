@@ -13,7 +13,7 @@ LIB =$(RTL)/fifo/afifo_gray.v $(RTL)/mfsr/mfsr32.v
 XIL =xilinx
 SIM =signal_stagger.v
 DEP =${ACQ}/signal_capture.v ${ACQ}/align_captures.v
-TOP =${LIB} ${ACQ}/tart_capture.v ${ACQ}/capture.v ${ACQ}/fake_telescope.v ${ACQ}/delay_data_sampling_clk.v ${ACQ}/block_buffer.v ${ACQ}/fifo_control.v
+TOP =${LIB} ${ACQ}/tart_capture.v ${ACQ}/capture_control.v ${ACQ}/capture.v ${ACQ}/fake_telescope.v ${ACQ}/delay_data_sampling_clk.v ${ACQ}/block_buffer.v ${ACQ}/fifo_control.v
 
 
 all: acq

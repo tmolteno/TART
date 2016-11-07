@@ -31,14 +31,14 @@ module signal_stagger
     input              rst,
     input              ce,
     input [MSB:0]      d,
-    output reg [MSB:0] q = 0
+    output reg [MSB:0] q = {WIDTH_SIGNAL{1'b0}}
     );
 
    reg signed [3:0]    phase_jitter; // TODO
    reg signed [3:0]    phase_offset;
    reg signed [3:0]    cycle_jitter; // TODO
 
-   reg signed [4:0]    count = 0;
+   reg signed [4:0]    count = 5'h0;
 
    //-------------------------------------------------------------------------
    //  Compute the jitters and offsets.

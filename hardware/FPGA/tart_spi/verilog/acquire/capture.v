@@ -67,7 +67,7 @@ module capture
        (
         .clock_i (clock_i),
         .reset_i (reset_i),
-        .enable_i(align_i),
+        .align_i (align_i),
         
         .data_in (data_w),
         .strobes (strobes),
@@ -89,12 +89,13 @@ module capture
      #( .RATIO(RATIO),
         .DELAY(DELAY)
         ) SIGCAP0 [MSB:0]
-     (  .clk_i    (clock_i),
-        .rst_i    (reset_i),
-        .ce_i     (align_i),
-        .dat_i    (data_i),
-        .dat_o    (data_w),
-        .rdy_o    (strobes),
+     (  .clock_i  (clock_i),
+        .reset_i  (reset_i),
+        .align_i  (align_i),
+        .signal_i (data_i),
+        .signal_o (data_w),
+        .ready_o  (strobes),
+        .phase_o  (),
         .locked_o (lockeds),
         .invalid_o(invalids),
         .ack_i    (acks_i)
