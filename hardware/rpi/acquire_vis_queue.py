@@ -74,16 +74,17 @@ def capture_loop(process_queue, tart_instance, ):
 '''
 def process_loop(process_queue, result_queue, config, n_samples):
     while (True):
+        #'ProcessQ: %i \n ResultQ: %i' % (process_queue.qsize, result_queue.qsize)
         if (False == process_queue.empty()):
             try:
                 data = process_queue.get()
                 vis = get_vis_object(data, n_samples, config)
                 result_queue.put(vis)
             except Exception, e:
-                logger.error( "Measurement Processing Error %s" % str(e))
+                logger.error( "Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
-            time.sleep(0.01)
+            time.sleep(0.0001)
 
 def result_loop(result_queue, chunk_size):
     vislist = []
@@ -98,10 +99,10 @@ def result_loop(result_queue, chunk_size):
                     visibility.Visibility_Save(vislist, fname)
                     vislist = []
             except Exception, e:
-                logger.error( "Measurement Processing Error %s" % str(e))
+                logger.error( "PostProcessing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
-            time.sleep(0.01)
+            time.sleep(0.001)
 
 import logging.config
 import yaml
@@ -123,6 +124,7 @@ if __name__=="__main__":
     ARGS = PARSER.parse_args()
 
     if (ARGS.synthesis + ARGS.absang + ARGS.calib):
+	# load alternative result loop
         from monitor_vis import result_loop, gen_calib_image
 
     config = settings.Settings(ARGS.config)
@@ -139,16 +141,18 @@ if __name__=="__main__":
     proc_queue = multiprocessing.Queue()
     result_queue = multiprocessing.Queue()
     
+    vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, config, n_samples,))
+
     if (ARGS.synthesis + ARGS.absang + ARGS.calib):
-        print 'here', ARGS.synthesis, ARGS.absang, ARGS.calib
+        # synthesis result loop
 	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.synthesis, ARGS.absang, ARGS.calib))
     else:
+        # visibility save loop
 	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size,))
+    
+    vis_calc_process.start()
     post_process.start()
     
-    vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, config, n_samples,))
-    vis_calc_process.start()
-
     tart_instance = TartSPI()
     tart_instance.reset()
     tart_instance.read_status(True)
@@ -158,5 +162,4 @@ if __name__=="__main__":
     tart_instance.start(blocksize, True)
 
     capture_loop(proc_queue, tart_instance,)
-
 
