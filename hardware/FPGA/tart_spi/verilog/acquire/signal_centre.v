@@ -39,6 +39,9 @@ module signal_centre
     parameter RBITS = 4,        // bit-width of clock-counter
     parameter RSB   = RBITS-1,
 
+    //  Spartan 6 specific settings:
+    parameter IOB   = 0,        // use IOB-based registers (0/1)?
+
     //  Data-alignment options:
     parameter DELAY = 3)
    (
@@ -57,7 +60,7 @@ module signal_centre
     );
 
 
-   wire [KSB:0]    signal_w;
+   wire [TSB:0]    signal_w;
    reg             signal;
    reg [JSB:0]     stage2;
    reg [QSB:0]     select;
@@ -86,13 +89,19 @@ module signal_centre
 
 
    //-------------------------------------------------------------------------
-   //  Instantiate multiple signal-capture blocks.
+   //  Use a signal-capture block to measure the phase of one channel of the
+   //  input signals.
    //-------------------------------------------------------------------------
+   //  NOTE: The aligned signal output isn't used, as it's just the phase that
+   //    is needed. It's used to measure each channel, one-by-one, and then
+   //    for calculating the "best" shift-amount, for capturing & aligning all
+   //    individual antenna sources.
    signal_capture
      #( .RATIO(RATIO),
         .RBITS(RBITS),
+        .IOB  (IOB),
         .DELAY(DELAY)
-        ) SHIFT0
+        ) PHASE
      (  .clock_i  (clock_i),
         .reset_i  (reset_i),
         .align_i  (enable[1]),
@@ -102,8 +111,21 @@ module signal_centre
         .phase_o  (phase_o),
         .locked_o (locked_o),
         .invalid_o(invalid_o),
-        .ack_i    (restart_i)
+        .retry_i  (restart_i)
         );
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  DEBUGGING STUFF.
+   //
+   //-------------------------------------------------------------------------
+   //  Should produce equivalent behaviour to `signal` (vs. `sig1`).
+   wire sig_w = signal_i[select_i];
+   reg  sig1, sig0;
+
+   always @(posedge clock_i)
+     {sig1, sig0} <= #DELAY {sig0, sig_w};
 
 
 endmodule // capture

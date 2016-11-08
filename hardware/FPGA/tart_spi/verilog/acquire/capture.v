@@ -98,7 +98,7 @@ module capture
         .phase_o  (),
         .locked_o (lockeds),
         .invalid_o(invalids),
-        .ack_i    (acks_i)
+        .retry_i  (acks_i)
         );
 
 

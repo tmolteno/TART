@@ -169,10 +169,6 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="115"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="23"/>
     </file>
-    <file xil_pn:name="../wishbone/rtl/wb_sram_interface.v" xil_pn:type="FILE_VERILOG">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="116"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="10"/>
-    </file>
     <file xil_pn:name="../wishbone/rtl/wb_sram_prefetch.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="117"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="15"/>
@@ -196,6 +192,10 @@
     <file xil_pn:name="verilog/acquire/signal_capture.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="102"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="21"/>
+    </file>
+    <file xil_pn:name="../wishbone/rtl/wb_sram_port.v" xil_pn:type="FILE_VERILOG">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="103"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="103"/>
     </file>
   </files>
 

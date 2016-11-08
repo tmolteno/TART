@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bus/wb_chunk.v
+ * Module      : rtl/wb_chunk.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -17,6 +17,7 @@
  *  + only supports "classic" Wishbone cycles;
  * 
  * TODO:
+ *  + upgrade to Wishbone SPEC B4;
  * 
  */
 

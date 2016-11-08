@@ -29,73 +29,95 @@ module signal_capture
   #(//  Clock ratio settings:
     parameter RATIO = 12,       // clock (sampling:data) ratio
     parameter RBITS = 4,        // bit-width of down-sampling counter
-    parameter MSB   = RBITS-1,  // MSB of counter
+    parameter RSB   = RBITS-1,  // MSB of counter
     parameter RMAX  = RATIO-1,  // max clock-counter value
+    parameter RZERO = {RBITS{1'b0}},
     parameter HALF  = RMAX>>1,  // the floor of half the count
     parameter HSB   = HALF-1,   // MSB of a half-cycle counter
 
     //  Additional features:
     parameter RESET = 1,        // fast-resets (0/1)?
+    parameter IOB   = 0,        // use Spartan 6 IOB's?
 
     //  Simulation-only parameters:
+    parameter NOISY = 1,        // display extra debug info (0/1)?
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
-    input      clock_i, // (sampling) clock input
-    input      reset_i, // (sample domain) reset
-    input      align_i,  // (sample domain) core enable
+    input          clock_i, // (sampling) clock input
+    input          reset_i, // (sample domain) reset
+    input          align_i, // (sample domain) core enable
 
-    output reg ready_o = 1'b0,
-    output     phase_o,
-    input      ack_i, // acknowledge any invalid data
-    output     locked_o,
-    output     invalid_o,
+    output         ready_o,
+    output [RSB:0] phase_o,
+    output         locked_o,
+    output         invalid_o,
+    input          retry_i, // acknowledge any invalid data
 
-    input      signal_i, // raw data
-    output reg signal_o  // captured data
+    input          signal_i, // raw data
+    output         signal_o  // captured data
     );
 
 
    //  Supersample at the given rate.
-   wire [HALF:0] samples;
-   reg [MSB:0]   count = {RBITS{1'b0}};
-   reg           locked = 1'b0, invalid = 1'b0;
-   reg [HSB:0]   d_reg = {HALF{1'b0}};
+   wire [HALF:0]   samples;
+   reg [RSB:0]     count = RZERO;
+   reg             ready = 1'b0, locked = 1'b0, invalid = 1'b0, signal;
+   reg [HSB:0]     d_reg = {HALF{1'b0}};
 
-   wire [MSB:0]  count_init, count_next;
-   wire          count_wrap;
+   wire [RSB:0]    count_init, count_next;
+   wire            count_wrap;
 
-   reg [1:0]     locked_count = 2'h0;
-   reg           found = 1'b0;
-   wire          vld_w, rdy_w, bad_w;
-   wire          no_edges, edge_pos, edge_neg, edge_found;
+   wire            vld_w, rdy_w, bad_w;
+   wire            no_edges, edge_pos, edge_neg, edge_found;
 
-   //  Place the first capture-register
+   //  Place the first capture-register.
    (* IOB = "TRUE" *)
-   reg           d_iob = 1'b0;
+   reg             d_iob = 1'b0;
+   reg             d_sig = 1'b0;
+   wire            d_src;
+
+   //  Phase-locking control-signals.
+   reg [1:0]       locked_count = 2'h0;
+   wire [2:0]      locked_cnext;
+   wire            locked_cwrap;
 
 
    //-------------------------------------------------------------------------
    //  Assignments to outputs.
+   //-------------------------------------------------------------------------
+   assign ready_o   = ready;
    assign locked_o  = locked;
+   assign phase_o   = phase;
    assign invalid_o = invalid;
+   assign signal_o  = signal;
 
    //  Concatenate all registered signals values, to be indexed.
-   assign samples = {d_reg, d_iob};
+   assign samples = {d_reg, d_src};
 
    //  Internal, combinational conditionals.
    assign rdy_w = align_i && locked && count == HALF;
    assign vld_w = count >= RATIO-3 && count < RATIO+2;
    assign bad_w = locked && edge_found && !vld_w;
 
+   //  Use IOB-based registers, or ordinary fabric-based registers?
+   assign d_src = IOB ? d_iob : d_sig;
+
    assign no_edges = &samples || ~|samples;
+//    assign edge_neg = samples == {{HALF{1'b1}}, 1'b0};
+//    assign edge_pos = samples == {{HALF{1'b0}}, 1'b1};
    assign edge_pos = samples == {1'b0, {HALF{1'b1}}};
    assign edge_neg = samples == {1'b1, {HALF{1'b0}}};
    assign edge_found = edge_neg || edge_pos;
 
    //  Count the spacing between edges.
-   assign count_next = edge_found || count_wrap ? count_init : count+1 ;
+   assign count_next = edge_found || count_wrap ? count_init : count + 1;
    assign count_wrap = count >= RATIO-1 && no_edges;
-   assign count_init = count == RATIO+1 ? 1 : count == RATIO-3 ? -1 : 0 ;
+   assign count_init = count == RATIO+1 ? 1 : count == RATIO-3 ? -1 : 0;
+
+   //-------------------------------------------------------------------------
+   //  Locked once four well-behaved edges have been found.
+   assign locked_cwrap = locked_count == 3;
+   assign locked_cnext = !locked_cwrap ? locked_count + 1 : locked_count;
 
 
    //-------------------------------------------------------------------------
@@ -104,14 +126,15 @@ module signal_capture
    //-------------------------------------------------------------------------
    always @(posedge clock_i)
      if (align_i)
-       {d_reg, d_iob} <= #DELAY {samples[HSB:0], signal_i};
+       {d_reg, d_sig, d_iob} <= #DELAY {samples[HSB:0], signal_i, signal_i};
+
 
    //-------------------------------------------------------------------------
    //  Count the number of cycles between edges.
    //-------------------------------------------------------------------------
    always @(posedge clock_i)
      if (reset_i)
-       count <= #DELAY {RBITS{1'b0}};
+       count <= #DELAY RZERO;
      else if (align_i)
        count <= #DELAY count_next;
      else
@@ -126,14 +149,15 @@ module signal_capture
         locked_count <= #DELAY 2'h0;
      end
      else if (align_i && edge_found && vld_w) begin
-        locked       <= #DELAY locked_count == 3;
-        locked_count <= #DELAY locked_count  < 3 ? locked_count + 1 : locked_count ;
+        locked       <= #DELAY locked_cwrap;
+        locked_count <= #DELAY locked_cnext[1:0];
      end
      else if (align_i && edge_found) begin // Edge too far from acceptable.
         locked       <= #DELAY 1'b0;
         locked_count <= #DELAY 2'h0;
      end
 
+   //-------------------------------------------------------------------------
    // If the signal is `locked`, and `edge_found`, but occuring to far to be
    // considered a valid count, then assert `invalid`.
    // Clear `invalid` whenever any earlier `invalid` data is acknowledged.
@@ -142,22 +166,43 @@ module signal_capture
        invalid <= #DELAY 1'b0;
      else if (align_i && bad_w)
        invalid <= #DELAY 1'b1;
-     else if (ack_i)
+     else if (retry_i)
        invalid <= #DELAY 1'b0;
      else
        invalid <= #DELAY invalid;
+
 
    //-------------------------------------------------------------------------
    //  Output the captured data-samples.
    //-------------------------------------------------------------------------
    always @(posedge clock_i)
      if (reset_i && RESET)
-       ready_o <= #DELAY 1'b0;
+       ready <= #DELAY 1'b0;
      else
        begin
-          ready_o  <= #DELAY rdy_w;
-          signal_o <= #DELAY rdy_w ? samples[HALF] : signal_o;
+          ready  <= #DELAY rdy_w;
+          signal <= #DELAY rdy_w ? samples[HALF] : signal;
        end
+
+
+   //-------------------------------------------------------------------------
+   //  Compute the relative phases.
+   //-------------------------------------------------------------------------
+   wire [RBITS:0] cnext = cwrap ? {1'b0, RZERO} : cycle + 1;
+   wire           cwrap = cycle == RMAX;
+   reg [RSB:0]    cycle = RZERO, phase = RZERO;
+
+   always @(posedge clock_i)
+     if (align_i)
+       cycle <= #DELAY cnext;
+     else
+       cycle <= #DELAY RZERO;
+
+   always @(posedge clock_i)
+     if (align_i && edge_found)
+       phase <= #DELAY cycle;
+     else
+       phase <= #DELAY phase;
 
 
    //-------------------------------------------------------------------------
@@ -165,22 +210,47 @@ module signal_capture
    //  SIMULATION STUFF.
    //
    //-------------------------------------------------------------------------
-   reg  [MSB:0] predictor = {RBITS{1'b0}};
-   wire         expected  = predictor == RATIO-1;
+   reg [RSB:0]    predictor = RZERO;
+   wire           expected  = predictor == RMAX;
 
    always @(posedge clock_i)
      if (reset_i)
-       predictor <= #DELAY {RBITS{1'b0}};
+       predictor <= #DELAY RZERO;
      else if (align_i) begin
         if (expected && count_next < HALF)
           predictor <= #DELAY count_next;
         else if (edge_found && predictor < HALF)
           predictor <= #DELAY count_next;
         else if (expected)
-          predictor <= #DELAY {RBITS{1'b0}};
+          predictor <= #DELAY RZERO;
         else
           predictor <= #DELAY predictor + 1;
      end
 
+   //-------------------------------------------------------------------------
+   //  Display the locked periods.
+   integer      period;
+   reg          running;
+
+   always @(posedge clock_i)
+     if (reset_i || !locked) begin
+        running <= #DELAY 1'b0;
+        period  <= #DELAY 'hx;
+     end
+     else if (running && ready) begin
+        running <= #DELAY running;
+        period  <= #DELAY 1;
+        if (NOISY)
+          $display("%12t: period \t=%4d", $time, period);
+     end
+     else if (running) begin
+        running <= #DELAY running;
+        period  <= #DELAY period + 1;
+     end
+     else if (ready && locked) begin
+        running <= #DELAY 1;
+        period  <= #DELAY 0;
+     end
+   
 
 endmodule // signal_capture

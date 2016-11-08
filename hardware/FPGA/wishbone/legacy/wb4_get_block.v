@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : rtl/wb4_get_block.v
+ * Module      : legacy/wb4_get_block.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016

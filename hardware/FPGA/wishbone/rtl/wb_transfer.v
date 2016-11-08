@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bus/wb_transfer.v
+ * Module      : rtl/wb_transfer.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -10,8 +10,8 @@
  * Stability   : Experimental
  * Portability : only tested with Icarus Verilog
  * 
- * Generates the Wishbone, master, control address signals needed to perform
- * single READ bus transactions.
+ * Generates the Wishbone, master, control signals needed to perform single
+ * READ & WRITE bus transactions.
  * 
  * NOTE:
  *  + Supports CLASSIC, Pipelined CLASSIC, and SPEC B4 SINGLE READ transfers;
@@ -39,14 +39,19 @@
 
 module wb_transfer
   #(//  Capabilities/mode parameters:
-    parameter ASYNC = 1,    // Combinational control signals (0/1/2)?
-    parameter PIPED = 1,    // Pipelined (WB SPEC B4) transfers (0/1)?
-    parameter CHECK = 1,    // Filter spurious "chatter," and check errors?
+    parameter ASYNC = 1,    // combinational control signals (0/1/2)?
+    parameter PIPED = 1,    // pipelined (WB SPEC B4) transfers (0/1)?
+    parameter CHECK = 1,    // filter spurious "chatter," and check errors?
+    parameter READ  = 1,    // enable read transfers (0/1)?
+    parameter WRITE = 1,    // enable write transfers (0/1)?
+    parameter FRAME = 0,    // use FRAME+WRITE to drive the bus (0/1)?
 
-    parameter DELAY = 3)    // Combinational simulation delay (ns)
+    //  Simulation-only settings:
+    parameter DELAY = 3)    // combinational simulation delay (ns)
    (
-    input  clk_i,
+    input  clk_i, // bus clock & reset signals
     input  rst_i,
+
     output cyc_o,
     output stb_o,
     output we_o,
@@ -55,6 +60,7 @@ module wb_transfer
     input  rty_i,
     input  err_i,
 
+    input  frame_i, // TODO: alternate method for bus transfers
     input  read_i,
     input  write_i,
     output busy_o,
@@ -64,13 +70,29 @@ module wb_transfer
 
 
    //-------------------------------------------------------------------------
-   //  Synchronous Wishbone control signals.
+   //  Internal signal definitions.
    //-------------------------------------------------------------------------
-   reg     cyc_r = 1'b0;
-   reg     stb_r = 1'b0;
-   reg     we_r  = 1'b0;
-   reg     ack_r = 1'b0;
-   reg     err_r = 1'b0;
+   //  Synchronous Wishbone control signals.
+   reg     cyc_r = 1'b0, stb_r = 1'b0, we_r  = 1'b0; // master signals
+   reg     ack_r = 1'b0, err_r = 1'b0;               // slave signals
+
+   //  Asynchronous Wishbone control signals.
+   wire    cyc_w, stb_w, we_w, ack_w, err_w;
+   wire    cyc_a, stb_a, we_a, ack_a, err_a, stb_p;
+
+   //  Module-feature signals.
+   wire    rd_en, wr_en;
+
+   //  State signals.
+   wire    cycle, write, done_w;
+
+
+   //-------------------------------------------------------------------------
+   //  Signals that depend on features that were enabled in the instance
+   //  parameters.
+   //-------------------------------------------------------------------------
+   assign rd_en  = READ  ?  read_i : 1'b0;
+   assign wr_en  = WRITE ? write_i : 1'b0;
 
 
    //-------------------------------------------------------------------------
@@ -82,11 +104,9 @@ module wb_transfer
 
    //-------------------------------------------------------------------------
    //  Prevent asynchronous signals from asserting during resets.
-   wire    cyc_a, stb_a, we_a, ack_a, err_a, stb_p;
-
    assign cyc_a  = CHECK ? !rst_i && cyc_w : cyc_w;
    assign stb_a  = CHECK ? !rst_i && stb_w : stb_w;
-   assign we_a   = CHECK ? we_w : write_i || we_r;
+   assign we_a   = CHECK ? we_w : wr_en || we_r;
    assign ack_a  = CHECK ? !rst_i && ack_w : ack_w;
    assign err_a  = CHECK ? !rst_i && err_w : err_w;
 
@@ -95,33 +115,32 @@ module wb_transfer
 
    //-------------------------------------------------------------------------
    //  Aynchronous Wishbone bus master signals.
-   wire    cyc_w, stb_w, we_w, ack_w, err_w;
-
-   assign cyc_w  = read_i || write_i || cyc_r;
-   assign stb_w  = PIPED ? read_i || write_i : cyc_w;
-   assign we_w   = write_i && !read_i && !cyc_r || we_r;
+   assign cyc_w  = rd_en || wr_en || cyc_r;
+   assign stb_w  = PIPED ? rd_en || wr_en : cyc_w;
+   assign we_w   = wr_en && !rd_en && !cyc_r || we_r;
    assign ack_w  = (CHECK ? stb_p : 1'b1) &&  ack_i;
    assign err_w  = (CHECK ? stb_p : 1'b1) && (rty_i || err_i);
+
 
    //-------------------------------------------------------------------------
    //  Transfer result signals.
    //  NOTE: Unchecked, asynchronous modes potentially allow for spurious
    //    `done_o` assertions.
-   wire    done_w;
-
+   //-------------------------------------------------------------------------
    assign busy_o = ASYNC > 1 ? cyc_o  : cyc_r; // TODO: just use `cyc_r`?
    assign done_o = ASYNC > 0 ? done_w : ack_r;
    assign fail_o = err_r;
 
+   //-------------------------------------------------------------------------
+   //  State signals.
    assign done_w = CHECK ? stb_p && ack_i : ack_i;
+   assign cycle  = (!cyc_r || !CHECK) && (rd_en || wr_en);
+   assign write  = (!cyc_r || !CHECK) && wr_en;
 
 
    //-------------------------------------------------------------------------
    //  Synchronous Wishbone bus master signals.
    //-------------------------------------------------------------------------
-   wire    cycle = (!cyc_r || !CHECK) && (read_i || write_i);
-   wire    write = (!cyc_r || !CHECK) && write_i;
-
    //  Keep CYC asserted for the duration of the transaction.
    always @(posedge clk_i)
      if (rst_i)                 // Required by the Wishbone protocol.
@@ -136,6 +155,7 @@ module wb_transfer
    //  STB is asserted for only one cycle, for Pipelined, SINGLE READ
    //  & SINGLE WRITE transactions, or until ACK for standard READ/WRITE
    //  cycles.
+   //  NOTE: Not used for 'ASYNC == 2'.
    always @(posedge clk_i)
      if (rst_i || ASYNC > 1)    // Required by the Wishbone protocol.
        stb_r <= #DELAY 1'b0;

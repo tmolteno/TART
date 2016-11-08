@@ -238,8 +238,8 @@ module tart
 
    //-------------------------------------------------------------------------
    //  Miscellaneous assignments.
-`ifdef __RELEASE_BUILD
-	 assign rx_clk_test_pin = rx_clk; // ????, Pat @02/11/2016
+`ifndef __RELEASE_BUILD
+	 assign rx_clk_test_pin = rx_clk_16_buf; // ????, Pat @02/11/2016
 `else
 	 assign rx_clk_test_pin = 1'b0;
 `endif
@@ -254,7 +254,7 @@ module tart
 //    assign led = tart_state >= 2; // asserted when data can be read back
    assign led = blink;
 
-   always @(posedge clk_x)
+   always @(posedge b_clk)
      if (vx_newblock) blink <= #DELAY ~blink;
 `endif // !`ifdef __RELEASE_BUILD
 
@@ -330,11 +330,22 @@ module tart
      ( .clk_i     (fpga_clk),
        .clk_x     (clk_x),
        .clk_e     (rx_clk_16_buf),
-       .clk_d     (rx_clk),
        .rst_i     (reset),
 
        //  External antenna data:
-       .ax_dat_e_i(antenna),
+       .signal_e_i(antenna),
+
+       //  Wishbone (SPEC B4) interconnect:
+       .cyc_i(b_cyc),
+       .stb_i(c_stb),
+       .we_i (b_we),
+       .ack_o(c_ack),
+       .wat_o(c_wat),
+       .rty_o(c_rty),
+       .err_o(c_err),
+       .adr_i(c_adr),
+       .dat_i(c_dtx),
+       .dat_o(c_drx),
 
        //  Memory controller signals (bus-domain):
        .mcb_ce_o  (cmd_enable),
@@ -363,7 +374,7 @@ module tart
        .ax_dat_x_o(ax_dat),
 
        //  Data & miscellaneous signals:
-       .rd_req_i  (request_from_spi),
+       .request_i (request_from_spi),
        .tart_state(tart_state)
        );
 

@@ -39,7 +39,7 @@ module block_buffer
      // write port:
      input          write_clock_i,
      input          write_enable_i,
-     input [ASB:0]  write_address_i
+     input [ASB:0]  write_address_i,
      input [MSB:0]  write_data_i
      );
 
@@ -59,7 +59,7 @@ module block_buffer
    always @(posedge read_clock_i)
      block_data <= #DELAY block_buffer[read_address_i];
 
-   always @(posedge write_clk_i)
+   always @(posedge write_clock_i)
      if (write_enable_i)
        block_buffer[write_address_i] <= #DELAY write_data_i;
 

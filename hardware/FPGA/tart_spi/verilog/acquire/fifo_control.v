@@ -25,8 +25,8 @@ module fifo_sdram_fifo_scheduler
     parameter CSB = SDRAM_ADDRESS_WIDTH-1,
     parameter BLOCKSIZE = 8'd32)
    (
-    input              clk,
-    input              rst,
+    input              clock,
+    input              reset,
 
     output reg [8:0]   aq_bb_rd_address = 9'b0,
     output reg [8:0]   aq_bb_wr_address = 9'b0,
@@ -50,12 +50,12 @@ module fifo_sdram_fifo_scheduler
 
    reg [1:0]           Sync_start = 2'b0;
 
-   // new signal synchronized to (=ready to be used in) clkB domain
+   // new signal synchronized to (=ready to be used in) clockB domain
    wire                spi_start_aq_int = Sync_start[1];
 
-   always @(posedge clk or posedge rst)
+   always @(posedge clock or posedge reset)
      begin
-        if (rst)
+        if (reset)
           begin
              aq_bb_wr_address <= 9'b0;
              Sync_start <= 2'b00;
@@ -74,9 +74,9 @@ module fifo_sdram_fifo_scheduler
    parameter TX_IDLE            = 3'd3;
    parameter FINISHED           = 3'd4;
 
-   always @(posedge clk or posedge rst)
+   always @(posedge clock or posedge reset)
      begin
-        if (rst)
+        if (reset)
           begin
              sdram_wr_ptr <= 0; // 1 bit bigger than needed.
              sdram_rd_ptr <= 0; // 1 bit bigger than needed.
@@ -131,6 +131,6 @@ module fifo_sdram_fifo_scheduler
                  $display("Finished.");
               end
           endcase // case (tart_state)
-     end // always @ (posedge clk6x or posedge rst)
+     end // always @ (posedge clock or posedge reset)
    
 endmodule // fifo_sdram_fifo_scheduler

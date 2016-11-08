@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bus/wb_read.v
+ * Module      : rtl/wb_read.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -15,6 +15,7 @@
  * 
  * NOTE:
  *  + See `wb_cycle` for a description of the Wishbone parameters and modes;
+ *  + a subset of the functionality of 'wb_transfer';
  * 
  * TODO:
  * 

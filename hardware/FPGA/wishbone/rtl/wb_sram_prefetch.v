@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bus/wb_sram_prefetch.v
+ * Module      : rtl/wb_sram_prefetch.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -8,7 +8,7 @@
  * 
  * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
  * Stability   : Experimental
- * Portability : only tested with Icarus Verilog
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
  * Has a master Wishbone bus, for prefetching, and a slave Wishbone bus, for
  * retrieving the prefetched data (and both buses are Wishbone SPEC B4). Data
@@ -30,7 +30,6 @@
  * TODO:
  * 
  */
-
 
 /*
  Instantiation template:
