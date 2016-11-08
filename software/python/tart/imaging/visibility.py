@@ -86,9 +86,8 @@ class Visibility:
     return ret
 
 def Visibility_From_Conf(config, timestamp, phase_el, phase_az):
-    vis = visibility.Visibility(None, phase_el, phase_az)
-    vis.config = config
-    vis.timestamp = timestamp
+    obs = observation.Observation(timestamp=timestamp, config=config) 
+    vis = Visibility(obs, phase_el, phase_az)
     return vis
 
 def Visibility_Save(vis, filename):

@@ -6,7 +6,8 @@ from tart.util import constants
 from tart.util import angle
 
 import numpy as np
-import pyfftw.interfaces.numpy_fft as fft
+#import pyfftw.interfaces.numpy_fft as fft
+import numpy.fft as fft
 
 import os
 import copy
@@ -95,36 +96,55 @@ class Synthesis_Imaging(object):
       f.close()
       os.system("difmap < difmap_cmds")
       os.system("rm out.uvfits")
+  
+  def get_uuvvwwvis_zenith(self):
+    for cal_vis in copy.deepcopy(self.cal_vis_list):
+      t_g_bl = time.time()
+      bls = cal_vis.get_baselines()
+      print '  get bl', time.time()-t_g_bl
+      c = cal_vis.get_config()
+      ant_p = np.array(c.ant_positions)
+      print bls
+      pos_pairs = ant_p[np.array(bls)]
+      uu_a, vv_a, ww_a = (pos_pairs[:,0] - pos_pairs[:,1]).T/constants.L1_WAVELENGTH
+      t_getvis = time.time()
+      for bl in bls:
+        ant_i, ant_j = bl
+        vis_l.append(cal_vis.get_visibility(ant_i,ant_j))
+      print '   get v', time.time()-t_getvis
+    return uu_a, vv_a, ww_a, np.array(vis_l)
 
-  def get_uvplane(self, num_bin = 1600, nw = 36, grid_kernel_r_pixels=0.5, use_kernel=True, flagged=None):
+  def get_uvplane(self, num_bin = 1600, nw = 36, grid_kernel_r_pixels=0.5, use_kernel=True):
     pixels_per_wavelength = num_bin/(nw*2.)
 
     uu_l = []
     vv_l = []
     ww_l = []
     vis_l = []
+    #import time
+    #t_dv = time.time()
     for cal_vis in copy.deepcopy(self.cal_vis_list):
-      # print 'above horizon?', self.phase_center.to_horizontal(v.config.get_loc(),v.timestamp)
-      ra, dec = self.phase_center.radec(cal_vis.get_timestamp())
+      ts = cal_vis.get_timestamp()
+      ra, dec = self.phase_center.radec(ts)
       c = cal_vis.get_config()
-      ant_p = c.ant_positions
+      ant_p = np.array(c.ant_positions)
       loc = c.get_loc()
-      # print '#baselines unflagged:', len(cal_vis.get_baselines())
-      for bl in cal_vis.get_baselines():
+      bls = cal_vis.get_baselines()
+      for bl in bls:
         ant_i, ant_j = bl
         a0 = antennas.Antenna(loc, ant_p[ant_i])
         a1 = antennas.Antenna(loc, ant_p[ant_j])
-        uu, vv, ww = antennas.get_UVW(a0, a1, cal_vis.get_timestamp(), ra, dec)
+        uu, vv, ww = antennas.get_UVW(a0, a1, ts, ra, dec)
         uu_l.append(uu/constants.L1_WAVELENGTH)
         vv_l.append(vv/constants.L1_WAVELENGTH)
         ww_l.append(ww/constants.L1_WAVELENGTH)
         vis_l.append(cal_vis.get_visibility(ant_i,ant_j))
-
     uu_a = np.array(uu_l)
     vv_a = np.array(vv_l)
     ww_a = np.array(ww_l)
     vis_l = np.array(vis_l)
-
+    #print 't uu,vv,ll,vis', time.time()-t_dv
+    #t_gridding = time.time()
     outest_point = max(uu_a.max(), vv_a.max(), -vv_a.min(), -uu_a.min())
     if outest_point>nw:
       print outest_point, nw
@@ -133,7 +153,6 @@ class Synthesis_Imaging(object):
 
     uu_edges = np.linspace(-nw, nw, num_bin+1)
     vv_edges = np.linspace(-nw, nw, num_bin+1)
-
     if use_kernel==False:
       arr = np.zeros((num_bin, num_bin, 2), dtype=complex)
       # place complex visibilities in the UV grid and prepare averaging by counting entries.
@@ -190,6 +209,7 @@ class Synthesis_Imaging(object):
         #mask = np.abs(n_arr).__gt__(vis_max_abs)
         n_arr[mask] = n_arr[mask]/np.abs(n_arr[mask])
 
+    #print 'gridding', time.time()-t_gridding
     return (n_arr, uu_edges, vv_edges)
 
 
