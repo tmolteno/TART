@@ -23,7 +23,7 @@ def gen_qt_image(vislist, plotQ):
     res, ex = gen_calib_image(vislist)
     #a = np.random.random(size=(2**7,2**7))*np.sin(np.arange(2**7))
     #res = np.fft.fft2(a)
-    plotQ.put(res.real)
+    plotQ.put(res.real.T)
 
 def gen_mpl_image(vislist, gfx, fig, ax , cb):
     CAL_IFT, CAL_EXTENT = gen_calib_image(vislist)
