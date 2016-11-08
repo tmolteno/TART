@@ -1,23 +1,32 @@
-import multiprocessing
-import logging
 import traceback
-from acquire_vis_queue import get_vis_object
 from tart.imaging import calibration
 from tart.imaging import synthesis
-import matplotlib.pyplot as plt
 import numpy as np
+import time
+import yaml
+import logging
+import logging.config
 
-def gen_calib_image(vislist, gfx, fig, ax, cb):
+def gen_calib_image(vislist):
     CAL_MEASURE_VIS_LIST = []
     for vis in vislist:
         cv = calibration.CalibratedVisibility(vis)
         for i in range(6,24):
             cv.flag_antenna(i)
         CAL_MEASURE_VIS_LIST.append(cv)
-    CV = CAL_MEASURE_VIS_LIST #[0:1]
-    CAL_SYN = synthesis.Synthesis_Imaging(CV)
+    CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
     #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=50, num_bin=2**8, use_kernel=False)
     CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
+    return CAL_IFT, CAL_EXTENT
+
+def gen_qt_image(vislist, plotQ):
+    res, ex = gen_calib_image(vislist)
+    #a = np.random.random(size=(2**7,2**7))*np.sin(np.arange(2**7))
+    #res = np.fft.fft2(a)
+    plotQ.put(res.real)
+
+def gen_mpl_image(vislist, gfx, fig, ax , cb):
+    CAL_IFT, CAL_EXTENT = gen_calib_image(vislist)
     abs_v = CAL_IFT.real
     if gfx is None:
         gfx = ax.imshow(abs_v, extent=CAL_EXTENT, cmap=plt.cm.rainbow)
@@ -29,17 +38,15 @@ def gen_calib_image(vislist, gfx, fig, ax, cb):
         fig.canvas.draw()
     return gfx, cb
 
-def result_loop(result_queue, chunk_size, syn, absang, calib):
-    import logging.config
-    import yaml
+def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
     logger = logging.getLogger(__name__)
-    import time
-    from tart.imaging import calibration
-    from tart.imaging import synthesis
-    plt.ion()
-    fig, ax = plt.subplots(1,1)
-    gfx = None
-    cb = None
+
+    if mode!='qt':
+        import matplotlib.pyplot as plt
+        plt.ion()
+        fig, ax = plt.subplots(1,1)
+        gfx = None
+        cb = None
     cnt = 0
     max_len = 1000
     res = []
@@ -49,11 +56,16 @@ def result_loop(result_queue, chunk_size, syn, absang, calib):
             try:
                 vis = result_queue.get() 
                 vislist.insert(0,vis)
-                if syn:
-                    if len(vislist)>chunk_size:
-                        gfx, cb = gen_calib_image(vislist, gfx, fig, ax, cb)
+                if mode=='syn':
+                    if len(vislist)>=chunk_size:
+                        gfx, cb = gen_mpl_image(vislist, gfx, fig, ax, cb)
                         vislist = []
-                if absang:
+                elif mode =='qt':
+                    if len(vislist)>=chunk_size:
+                        gen_qt_image(vislist, plotQ)
+                        vislist = []
+
+                elif mode=='absang':
                     if gfx is None:
                         gfx, = ax.plot([],[],c='blue')
                         ax2 = ax.twinx()
@@ -72,7 +84,7 @@ def result_loop(result_queue, chunk_size, syn, absang, calib):
                             gfx2.set_data(np.arange(len(vis_list_01_m)),vis_list_01_m)
                             fig.canvas.draw()
                             cnt = 0
-                if calib:
+                elif mode=='calib':
                     cnt +=1
                     print cnt
                     if cnt>10:
@@ -101,6 +113,6 @@ def result_loop(result_queue, chunk_size, syn, absang, calib):
                 logger.error( "Measurement Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
-            time.sleep(0.0001)
+            time.sleep(0.001)
 
 

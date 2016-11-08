@@ -17,41 +17,49 @@ from tart.imaging import calibration
 from tart.util import angle
 
 def get_corr(xor_sum, n_samples):
-  return 1. - 2*xor_sum/float(n_samples)
+    return 1. - 2*xor_sum/float(n_samples)
 
 def get_vis_object(data, n_samples, config):
-  num_ant = config.num_antennas
-  timestamp = datetime.datetime.utcnow()
-  vis = visibility.Visibility_From_Conf(config, timestamp, angle.from_dms(90.), angle.from_dms(0.))
-  v = []
-  baselines = []
-  xor_cos = data[0:-24:2]
-  xor_sin = data[1:-24:2]
-  corr_cos = get_corr(xor_cos, n_samples)
-  corr_sin = get_corr(xor_sin, n_samples)
-  means = (data[-24:])/float(n_samples)*2.-1
-  #print means
-  for i in range(0, num_ant):
-    for j in range(i+1, num_ant):
-      idx = len(baselines)
-      baselines.append([i,j])
-      #v_real = correlator.van_vleck_correction( -means[i]*means[j] + corr_cos[idx] )
-      #v_imag = correlator.van_vleck_correction( -means[i]*means[j] + corr_sin[idx] )
-      v_real = -means[i]*means[j] + corr_cos[idx]
-      v_imag = -means[i]*means[j] + corr_sin[idx]
-      v_com = v_real-1.j*v_imag
-      v.append(v_com)
-  vis.set_visibilities(v, baselines)
-  return vis
+    num_ant = config.num_antennas
+    timestamp = datetime.datetime.utcnow()
+    vis = visibility.Visibility_From_Conf(config, timestamp, angle.from_dms(90.), angle.from_dms(0.))
+    v = []
+    baselines = []
+    xor_cos = data[0:-24:2]
+    xor_sin = data[1:-24:2]
+    corr_cos = get_corr(xor_cos, n_samples)
+    corr_sin = get_corr(xor_sin, n_samples)
+    means = (data[-24:])/float(n_samples)*2.-1
+    #print means
+    for i in range(0, num_ant):
+      for j in range(i+1, num_ant):
+          idx = len(baselines)
+          baselines.append([i,j])
+          #v_real = correlator.van_vleck_correction( -means[i]*means[j] + corr_cos[idx] )
+          #v_imag = correlator.van_vleck_correction( -means[i]*means[j] + corr_sin[idx] )
+          v_real = -means[i]*means[j] + corr_cos[idx]
+          v_imag = -means[i]*means[j] + corr_sin[idx]
+          v_com = v_real-1.j*v_imag
+          v.append(v_com)
+    vis.set_visibilities(v, baselines)
+    return vis
 
 def get_data(tart):
-  viz = tart.vis_read(False)
-  return viz[tart.perm]
+    viz = tart.vis_read(False)
+    return viz[tart.perm]
 
 '''
     Grab data and push to queue
 '''
-def capture_loop(process_queue, tart_instance, ):
+def capture_loop(process_queue, ):
+    tart_instance = TartSPI()
+    tart_instance.reset()
+    tart_instance.read_status(True)
+    permutation = tart_instance.load_permute()
+    tart_instance.debug(on=False, shift=False, count=False, noisy=True)
+    tart_instance.read_status(True)
+    tart_instance.start(blocksize, True)
+
     while True:
         try:
             # Add the data to the process queue
@@ -108,6 +116,11 @@ import logging.config
 import yaml
 logger = logging.getLogger(__name__)
 
+#import PySide
+from pyqtgraph.Qt import QtGui, QtCore
+from qt_view import qtLoop, QtPlotter
+from threading import Thread
+
 if __name__=="__main__":
     import argparse
     PARSER = argparse.ArgumentParser()
@@ -116,16 +129,13 @@ if __name__=="__main__":
     PARSER.add_argument('--vis_prefix', required=False, type=str, default='vis', help="generate abs and angle for vis")
     PARSER.add_argument('--blocksize', default=23, type=int, help='exponent of correlator block-size')
     PARSER.add_argument('--chunksize', default=10, type=int, help='number of vis objects per file')
-
-    PARSER.add_argument('--synthesis', required=False, action='store_true', help="generate telescope synthesis image")
-    PARSER.add_argument('--absang', required=False, action='store_true', help="generate abs and angle for vis")
-    PARSER.add_argument('--calib', required=False, action='store_true', help="generate abs and angle for vis")
+    PARSER.add_argument('--mode', required=False, type=str, default='', help="syn, absang, calib")
 
     ARGS = PARSER.parse_args()
 
-    if (ARGS.synthesis + ARGS.absang + ARGS.calib):
+    if ARGS.mode!='':
 	# load alternative result loop
-        from monitor_vis import result_loop, gen_calib_image
+        from monitor_vis import result_loop
 
     config = settings.Settings(ARGS.config)
     blocksize = ARGS.blocksize
@@ -143,23 +153,30 @@ if __name__=="__main__":
     
     vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, config, n_samples,))
 
-    if (ARGS.synthesis + ARGS.absang + ARGS.calib):
+
+    if ARGS.mode!='':
+        if ARGS.mode=='qt':
+            plotter = QtPlotter()
+            plotQ = plotter.getPort()
+            # post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.mode, plotQ))
+            # post_process.start()
+            p = Thread(target=result_loop, args=(result_queue, chunk_size, ARGS.mode, plotQ))
+            p.daemon = True
+            p.start()
         # synthesis result loop
-	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.synthesis, ARGS.absang, ARGS.calib))
+        else:
+	    post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.mode))
+            post_process.start()
     else:
         # visibility save loop
 	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size,))
+        post_process.start()
     
     vis_calc_process.start()
-    post_process.start()
     
-    tart_instance = TartSPI()
-    tart_instance.reset()
-    tart_instance.read_status(True)
-    permutation = tart_instance.load_permute()
-    tart_instance.debug(on=False, shift=False, count=False, noisy=True)
-    tart_instance.read_status(True)
-    tart_instance.start(blocksize, True)
-
-    capture_loop(proc_queue, tart_instance,)
+    capture_process = multiprocessing.Process(target=capture_loop, args=(proc_queue,))
+    capture_process.start()
+    #capture_loop(proc_queue,)
+    
+    qtLoop()
 

@@ -11,7 +11,6 @@ from threading import Thread
 
 class QtPlotter:
     def __init__(self):
-        exp = 7
         self.q = Queue.Queue()
         self.app = QtGui.QApplication([])
         self.win = pg.ImageView()
@@ -19,16 +18,17 @@ class QtPlotter:
         self.win.show()
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.update)
-        self.timer.start()
+        self.timer.start(20)
 
     def getPort(self):
         return self.q
 
     def update(self):
         try:
-            #print self.q.qsize()
-            #if self.q.qsize()> 10:
-            #    [self.q.get() for _ in range(10)] 
+            print 'PlotQ size', self.q.qsize()
+            if self.q.qsize()> 5:
+                [self.q.get() for _ in range(5)]
+                print 'dropping frames'
             data = self.q.get()
             self.win.setImage(data)
         except Queue.Empty:
