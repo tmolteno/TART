@@ -59,6 +59,8 @@ module capture_control
     //  Raw-data capture-unit control-signals:
     input          centre_b_i, // enable the centring unit?
     output         centre_x_o,
+    input          drift_b_i, // incrementally change the phase?
+    output         drift_x_o,
     input [SSB:0]  select_b_i, // select antenna for phase measurement
     output [SSB:0] select_x_o,
     output         locked_b_o, // alignment-unit has lock?
@@ -105,6 +107,8 @@ module capture_control
    (* NOMERGE = "TRUE" *)
    reg             centre_t, centre_x;
    (* NOMERGE = "TRUE" *)
+   reg             drift_t, drift_x;
+   (* NOMERGE = "TRUE" *)
    reg [SSB:0]     select_t, select_x;
    (* NOMERGE = "TRUE" *)
    reg             locked_b, locked_q;
@@ -142,6 +146,7 @@ module capture_control
    //-------------------------------------------------------------------------
    //  Data-sampling & alignment assignments.
    assign centre_x_o  = centre_x;
+   assign drift_x_o   = drift_x;
    assign select_x_o  = select_x;
    assign locked_b_o  = locked_b;
    assign phase_b_o   = phase_b;
@@ -181,6 +186,7 @@ module capture_control
 
         // centring-unit synchronisers:
         { centre_x,  centre_t} <= #DELAY { centre_t,  centre_b_i};
+        {  drift_x,   drift_t} <= #DELAY {  drift_t,   drift_b_i};
         { select_x,  select_t} <= #DELAY { select_t,  select_b_i};
         {restart_x, restart_t} <= #DELAY {restart_t, restart_b_i};
 

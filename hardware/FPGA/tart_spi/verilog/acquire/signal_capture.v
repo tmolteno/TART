@@ -22,6 +22,7 @@
  *  + parameterised window size, when deciding if the edges is allowable;
  *  + hardware testing;
  *  + clean up the combinational paths;
+ *  + handle signed comparisons;
  * 
  */
 
@@ -37,6 +38,7 @@ module signal_capture
 
     //  Additional features:
     parameter RESET = 1,        // fast-resets (0/1)?
+    parameter DRIFT = 1,        // incremental changes to phase (0/1)?
     parameter IOB   = 0,        // use Spartan 6 IOB's?
 
     //  Simulation-only parameters:
@@ -45,8 +47,9 @@ module signal_capture
    (
     input          clock_i, // (sampling) clock input
     input          reset_i, // (sample domain) reset
-    input          align_i, // (sample domain) core enable
 
+    input          align_i, // (sample domain) core enable
+    input          drift_i, // not useful when calculating statistics
     output         ready_o,
     output [RSB:0] phase_o,
     output         locked_o,
@@ -140,6 +143,7 @@ module signal_capture
      else
        count <= #DELAY count;
 
+
    //-------------------------------------------------------------------------
    //  The signal is considered locked after four clean transitions.
    //-------------------------------------------------------------------------
@@ -191,18 +195,69 @@ module signal_capture
    wire [RBITS:0] cnext = cwrap ? {1'b0, RZERO} : cycle + 1;
    wire           cwrap = cycle == RMAX;
    reg [RSB:0]    cycle = RZERO, phase = RZERO;
+   reg            found = 1'b0;
+   wire [RBITS:0] upper = {1'b0, phase} + 2;
+   wire [RBITS:0] lower = {1'b0, phase} - 2;
+   reg [RSB:0]    pprev, pnext;
+   wire           drift = DRIFT && drift_i;
 
+
+   //-------------------------------------------------------------------------
+   //  Counts the cycles/periods since this module was enabled, so that
+   //  relative phases can be tracked, for the edges of the oversampled input
+   //  signal.
    always @(posedge clock_i)
      if (align_i)
        cycle <= #DELAY cnext;
      else
        cycle <= #DELAY RZERO;
 
+   //-------------------------------------------------------------------------
+   //  For the first edge that is found, load the phase register, but then
+   //  only increment/decrement the phase, for subsequent edges.
    always @(posedge clock_i)
-     if (align_i && edge_found)
-       phase <= #DELAY cycle;
+     if (!align_i)
+       found <= #DELAY 1'b0;
+     else if (drift && align_i && edge_found)
+       found <= #DELAY 1'b1;
+     else
+       found <= #DELAY found;
+
+   //-------------------------------------------------------------------------
+   //  Once an initial value has been latched, only allow the phase to move
+   //  slowly.
+   always @(posedge clock_i)
+     if (align_i && edge_found) begin
+        if (drift && found && cycle > phase)
+          phase <= #DELAY pnext;
+        else if (drift && found && cycle < phase)
+          phase <= #DELAY pprev;
+        else
+          phase <= #DELAY cycle;
+     end
      else
        phase <= #DELAY phase;
+
+   //  Pipeline the up/down counters.
+   always @(posedge clock_i)
+     if (drift) begin
+        pnext <= #DELAY phase + 1;
+        pprev <= #DELAY phase - 1;
+     end
+
+
+   //-------------------------------------------------------------------------
+   //  Signal tracking.
+   //-------------------------------------------------------------------------
+   reg plost = 1'b0;
+
+   always @(posedge clock_i)
+     if (reset_i && RESET || !align_i)
+       plost <= #DELAY 1'b0;
+     else if (locked && found && edge_found && (cycle > pnext || cycle < pprev))
+       plost <= #DELAY 1'b1;
+     else
+       plost <= #DELAY plost;
 
 
    //-------------------------------------------------------------------------

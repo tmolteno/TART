@@ -67,6 +67,7 @@ module tart_capture_tb;
    reg [4:0]    aq_select;      // select antenna to calibrate
    reg [3:0]    aq_phase;       // measured phase-shift
    reg          aq_centre, aq_locked, aq_invalid, aq_restart;
+   reg          aq_drift;
 
    //  Fake-/debug- data control-signals.
    reg          aq_debug, aq_shift, aq_count;
@@ -123,9 +124,11 @@ module tart_capture_tb;
       #DE wr = 1; adr = 2'b00; dtx = 8'h85;
       #DB while (!done) #DB;
 
-      #DE wr = 1; adr = 2'b01; dtx = 8'h84; // align antenna 0x04
+//       #DE wr = 1; adr = 2'b01; dtx = 8'h84; // align antenna 0x04
+      #DE wr = 1; adr = 2'b01; dtx = 8'hC4; // align + drift antenna 0x04
       #DB while (!done) #DB;
 
+      #720; #720;
       #720; #720;
       #720 $finish;
    end
@@ -170,12 +173,12 @@ module tart_capture_tb;
      if (b_rst) begin
         {aq_restart, aq_select, aq_delay, aq_phase} <= #DELAY 14'hx;
         {aq_invalid, aq_locked, aq_count, aq_shift} <= #DELAY 4'hx;
-        {aq_capture, aq_centre, aq_debug} <= #DELAY 3'h0;
+        {aq_capture, aq_centre, aq_debug, aq_drift} <= #DELAY 4'h0;
      end
      else if (done && read)
        case (adr)
          2'b00: {aq_capture, aq_delay} <= #DELAY {drx[7], drx[3:0]};
-         2'b01: {aq_centre, aq_select} <= #DELAY {drx[7], drx[4:0]};
+         2'b01: {aq_centre, aq_drift, aq_select} <= #DELAY {drx[7:6], drx[4:0]};
          2'b10: {aq_debug, aq_count, aq_shift} <= #DELAY {drx[7], drx[1:0]};
          2'b11: {aq_invalid, aq_locked, aq_phase} <= #DELAY {drx[7:6], drx[3:0]};
        endcase // case (adr)

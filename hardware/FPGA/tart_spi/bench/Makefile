@@ -26,7 +26,7 @@ SIM =$(XIL)/DSP48A1.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
 DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(ACQ)/dram_prefetch.v
 
 ##  Correlator files:
-COR =$(RTL)/tart_visibilities.v $(CORD)/bank_switch.v $(CORD)/correlator_SDP.v $(CORD)/correlator_DSP.v $(CORD)/rmw_address_unit.v $(CORD)/correlate_cos_sin.v $(CORD)/correlate_cos_sin_DSP.v $(CORD)/fake_hilbert.v $(CORD)/control.v $(CORD)/correlator_block.v $(CORD)/block_DSP.v $(CORD)/block_SDP.v $(CORD)/tart_correlator.v
+COR =$(CORD)/tart_visibilities.v $(CORD)/bank_switch.v $(CORD)/correlator_SDP.v $(CORD)/correlator_DSP.v $(CORD)/rmw_address_unit.v $(CORD)/correlate_cos_sin.v $(CORD)/correlate_cos_sin_DSP.v $(CORD)/fake_hilbert.v $(CORD)/control.v $(CORD)/correlator_block.v $(CORD)/block_DSP.v $(CORD)/block_SDP.v $(CORD)/tart_correlator.v
 # $(RTL)/tart_correlator.v
 
 ##  DSP files:

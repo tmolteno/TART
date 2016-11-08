@@ -23,7 +23,7 @@
  *      --------------------------------------------------------------------
  *   00 || CAPTURE |           STATE         |         DELAY              ||
  *      --------------------------------------------------------------------
- *   01 ||  CENTRE |     2'b00      | SELECT                              ||
+ *   01 ||  CENTRE | DRIFT  |  1'b0 | SELECT                              ||
  *      --------------------------------------------------------------------
  *   10 ||  DEBUG  |                  5'h00               | COUNT | SHIFT ||
  *      --------------------------------------------------------------------
@@ -77,6 +77,7 @@ module tart_capture
     parameter RMAX  = RATIO-1,  // maximum clock-counter value
     parameter RBITS = 4,        // bit-width of clock-counter
     parameter RSB   = RBITS-1,  // MSB of clock-counter
+    parameter DRIFT = 1,        // incrementally change the phase (0/1)?
 
     //  Wisbone mode/settings:
     parameter RESET = 1,        // enable fast-resets (0/1)?
@@ -172,7 +173,7 @@ module tart_capture
    wire            aq_invalid, aq_locked;
    wire [RSB:0]    aq_phase;
    reg [RSB:0]     aq_delay = {RBITS{1'b0}};
-   reg             aq_count, aq_shift, aq_restart = 1'b0;
+   reg             aq_drift, aq_count, aq_shift, aq_restart = 1'b0;
 
    //-------------------------------------------------------------------------
    //  Internal signals used for the Wishbone interface:
@@ -186,7 +187,7 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Wishbone-mapped register assignments:
    assign aq_capture = {en_capture, state_o, aq_delay[3:0]};
-   assign aq_centre  = {en_centre, 2'b00, aq_select};
+   assign aq_centre  = {en_centre, aq_drift, 1'b0, aq_select};
    assign aq_debug   = {en_debug, 5'h0, aq_count, aq_shift};
    assign aq_status  = {aq_invalid, aq_locked, 2'b0, aq_phase[3:0]};
 
@@ -252,11 +253,11 @@ module tart_capture
    //  TODO: AUTO-mode, which continually monitors (and adjusts) the phase?
    always @(posedge clock_i)
      if (reset_i && RESET)
-       {en_centre, aq_select} <= #DELAY {1'b0, {SBITS{1'b0}}};
+       {en_centre, aq_drift, aq_select} <= #DELAY {1'b0, 1'bx, {SBITS{1'b0}}};
      else if (write && adr_i == 2'b01)
-       {en_centre, aq_select} <= #DELAY {dat_i[7], dat_i[SSB:0]};
+       {en_centre, aq_drift, aq_select} <= #DELAY {dat_i[7:6], dat_i[SSB:0]};
      else
-       {en_centre, aq_select} <= #DELAY {en_centre, aq_select};
+       {en_centre, aq_drift, aq_select} <= #DELAY {en_centre, aq_drift, aq_select};
 
    //  Pulse the restart if enable of an active unit is requested.
    always @(posedge clock_i)
@@ -356,12 +357,15 @@ module tart_capture
         .SBITS(SBITS),
         .RATIO(RATIO),
         .RBITS(RBITS),
+        .RESET(RESET),
+        .DRIFT(DRIFT),
         .IOB  (0),              // IOB's already allocated for synchros
         .DELAY(DELAY)
         ) CENTRE
-     (  .clock_i  (clock_x),      // 12x oversampling clock
+     (  .clock_i  (clock_x),    // 12x oversampling clock
         .reset_i  (reset_x),
         .align_i  (centre_x),   // compute the alignment shift?
+        .drift_i  (drift_x),    // incrementally change the phase?
         .signal_i (source_x),   // from external/fake data MUX
         .select_i (select_x),   // select antenna to measure phase of
         .strobe_o (strobe_x),   // mark the arrival of a new value
@@ -420,6 +424,9 @@ module tart_capture
          //  CDC for the phase-alignment signals:
          .centre_b_i(en_centre), // enable the centering unit?
          .centre_x_o(centre_x),
+
+         .drift_b_i(aq_drift), // incrementally change the phase?
+         .drift_x_o(drift_x),
 
          .select_b_i(aq_select), // select an antenna/source to centre
          .select_x_o(select_x),

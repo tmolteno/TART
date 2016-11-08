@@ -47,7 +47,7 @@ module wb_reset
    wire            reset_w;
 
 
-   assign dat_o   = {MSB{1'b0}, reset_o};
+   assign dat_o   = {{MSB{1'b0}}, reset_o};
    assign reset_w = cyc_i && stb_i && we_i && dat_i[0];
 //    assign reset_w = cyc_i && stb_i && we_i && !ack_o && dat_i[0];
 
