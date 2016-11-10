@@ -42,7 +42,7 @@ def get_vis_object(data, n_samples, config):
           v_com = v_real-1.j*v_imag
           v.append(v_com)
     vis.set_visibilities(v, baselines)
-    return vis
+    return vis, means
 
 def get_data(tart):
     viz = tart.vis_read(False)
@@ -64,9 +64,6 @@ def capture_loop(process_queue, ):
         try:
             # Add the data to the process queue
             data = get_data(tart_instance)
-
-            #data = 'foo'
-            #READ DATA HERE...
             process_queue.put(data)
         except Exception, e:
             logger.error( "Capture Loop Error %s" % str(e))
@@ -86,8 +83,8 @@ def process_loop(process_queue, result_queue, config, n_samples):
         if (False == process_queue.empty()):
             try:
                 data = process_queue.get()
-                vis = get_vis_object(data, n_samples, config)
-                result_queue.put(vis)
+                vis, means = get_vis_object(data, n_samples, config)
+                result_queue.put((vis, means))
             except Exception, e:
                 logger.error( "Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
@@ -99,7 +96,7 @@ def result_loop(result_queue, chunk_size):
     while(True):
         if (False == result_queue.empty()):
             try:
-                vis = result_queue.get()
+                vis, means = result_queue.get()
                 vislist.append(vis)
                 if len(vislist)>chunk_size:
                     fname =  "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second)
@@ -116,10 +113,9 @@ import logging.config
 import yaml
 logger = logging.getLogger(__name__)
 
-#import PySide
 from pyqtgraph.Qt import QtGui, QtCore
-from qt_view import qtLoop, QtPlotter
-from threading import Thread
+import qt_view
+import qt_graph
 
 if __name__=="__main__":
     import argparse
@@ -132,9 +128,9 @@ if __name__=="__main__":
     PARSER.add_argument('--mode', required=False, type=str, default='', help="syn, absang, calib")
 
     ARGS = PARSER.parse_args()
+    
 
     if ARGS.mode!='':
-	# load alternative result loop
         from monitor_vis import result_loop
 
     config = settings.Settings(ARGS.config)
@@ -152,31 +148,27 @@ if __name__=="__main__":
     result_queue = multiprocessing.Queue()
     
     vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, config, n_samples,))
-
+    vis_calc_process.start()
 
     if ARGS.mode!='':
-        if ARGS.mode=='qt':
-            plotter = QtPlotter()
+        if 'qt' in ARGS.mode:
+            app = QtGui.QApplication([])
+            if ARGS.mode == 'qt':
+                 plotter = qt_view.QtPlotter(app)
+            else:
+                 plotter = qt_graph.QtPlotter(app)
             plotQ = plotter.getPort()
-            # post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.mode, plotQ))
-            # post_process.start()
-            p = Thread(target=result_loop, args=(result_queue, chunk_size, ARGS.mode, plotQ))
-            p.daemon = True
-            p.start()
-        # synthesis result loop
+            post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.mode, plotQ))
         else:
 	    post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size, ARGS.mode))
-            post_process.start()
     else:
         # visibility save loop
 	post_process = multiprocessing.Process(target=result_loop, args=(result_queue, chunk_size,))
-        post_process.start()
     
-    vis_calc_process.start()
+    post_process.start()
     
     capture_process = multiprocessing.Process(target=capture_loop, args=(proc_queue,))
     capture_process.start()
-    #capture_loop(proc_queue,)
     
-    qtLoop()
+    QtGui.QApplication.instance().exec_()
 
