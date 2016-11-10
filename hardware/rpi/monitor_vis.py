@@ -9,21 +9,47 @@ import logging.config
 
 def gen_calib_image(vislist):
     CAL_MEASURE_VIS_LIST = []
+    t_cal = time.time()
     for vis in vislist:
         cv = calibration.CalibratedVisibility(vis)
         for i in range(6,24):
             cv.flag_antenna(i)
+        cv.set_gain(0, 1)
+        cv.set_gain(1, 1/0.694)
+        cv.set_gain(2, 1/0.687)
+        cv.set_gain(3, 1/0.698)
+        cv.set_gain(4, 1/0.602)
+        cv.set_gain(5, 1/0.641)
+        cv.set_phase_offset(1, 1.766)
+        cv.set_phase_offset(2, 0.25)
+        cv.set_phase_offset(3, -1.83)
+        cv.set_phase_offset(4, -1.138)
+        cv.set_phase_offset(5, 1.13)
+        for i in range(1,6):
+          print 'a',i, np.abs(cv.get_visibility(0,i))
+          print 'p',i, np.angle(cv.get_visibility(0,i))
         CAL_MEASURE_VIS_LIST.append(cv)
+    print 't_cal', time.time()- t_cal
+    t_obj = time.time()
     CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
-    #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=50, num_bin=2**8, use_kernel=False)
-    CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
+    print 't_obj', time.time()- t_obj
+    t_ift = time.time()
+    #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
+    CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift_simp(nw=20, num_bin=2**7)
+    print 't_uv,ift', time.time()- t_ift
     return CAL_IFT, CAL_EXTENT
 
 def gen_qt_image(vislist, plotQ):
     res, ex = gen_calib_image(vislist)
     #a = np.random.random(size=(2**7,2**7))*np.sin(np.arange(2**7))
     #res = np.fft.fft2(a)
-    plotQ.put(res.real.T)
+    plotQ.put(np.abs(res).T.astype(np.float16))
+
+def gen_qt_vis_abs_ang(vislist,meanslist, plotQ):
+    #graphs = [[np.angle(v.v[i]) for v in vislist] for i in range(5)]
+    graphs = np.array(meanslist)[:,:6].T
+    #print meanslist
+    plotQ.put(np.array(graphs))
 
 def gen_mpl_image(vislist, gfx, fig, ax , cb):
     CAL_IFT, CAL_EXTENT = gen_calib_image(vislist)
@@ -41,21 +67,24 @@ def gen_mpl_image(vislist, gfx, fig, ax , cb):
 def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
     logger = logging.getLogger(__name__)
 
-    if mode!='qt':
+    if not ('qt' in mode):
+    #if ARGS.mode!= 'qt':
         import matplotlib.pyplot as plt
         plt.ion()
         fig, ax = plt.subplots(1,1)
         gfx = None
         cb = None
     cnt = 0
-    max_len = 1000
+    max_len = 200
     res = []
     vislist = []
+    meanslist = []
     while (True):
         if (False == result_queue.empty()):
             try:
-                vis = result_queue.get() 
+                vis, means = result_queue.get() 
                 vislist.insert(0,vis)
+                meanslist.insert(0,means)
                 if mode=='syn':
                     if len(vislist)>=chunk_size:
                         gfx, cb = gen_mpl_image(vislist, gfx, fig, ax, cb)
@@ -64,7 +93,14 @@ def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
                     if len(vislist)>=chunk_size:
                         gen_qt_image(vislist, plotQ)
                         vislist = []
-
+                elif mode =='qt_vis':
+                    cnt += 1
+                    if cnt >= chunk_size:
+                        cnt = 0
+                        gen_qt_vis_abs_ang(vislist,meanslist,plotQ)
+                    if len(vislist)>max_len:
+                        vislist.pop()
+                        meanslist.pop()
                 elif mode=='absang':
                     if gfx is None:
                         gfx, = ax.plot([],[],c='blue')
@@ -113,6 +149,6 @@ def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
                 logger.error( "Measurement Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
-            time.sleep(0.001)
+            time.sleep(0.0001)
 
 

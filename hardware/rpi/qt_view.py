@@ -6,33 +6,51 @@ import numpy as np
 import pyqtgraph as pg
 import sys
 import time
-import Queue
+#from Queue import Queue
+from multiprocessing import Queue
 from threading import Thread
 
-class QtPlotter:
-    def __init__(self):
-        self.q = Queue.Queue()
-        self.app = QtGui.QApplication([])
-        self.win = pg.ImageView()
-        self.win.setWindowTitle('TART2 - Live View')
-        self.win.show()
-        self.timer = pg.QtCore.QTimer()
-        self.timer.timeout.connect(self.update)
-        self.timer.start(20)
+class QtPlotter(object):
+    def __init__(self, app):
+        super(QtPlotter, self).__init__()
+        self.app = app
+        self.create_QtPlotter()
 
+    def create_QtPlotter(self):
+        self.win = QtGui.QMainWindow()
+        self.win.resize(400,400)
+        self.page = QtGui.QWidget()
+        self.graphicsView = pg.GraphicsView()
+        vb = pg.ViewBox()
+        self.graphicsView.setCentralItem(vb)
+        vb.setAspectLocked()
+        self.imv = pg.ImageItem()
+        vb.addItem(self.imv)
+        self.win.setCentralWidget(self.graphicsView)
+        self.win.show()
+        self.win.setWindowTitle('TART2 - Live View')
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(0)
+        self.q = Queue()
+    
+    #def worker(self, q)
+    
     def getPort(self):
         return self.q
 
     def update(self):
-        try:
-            print 'PlotQ size', self.q.qsize()
-            if self.q.qsize()> 5:
-                [self.q.get() for _ in range(5)]
-                print 'dropping frames'
-            data = self.q.get()
-            self.win.setImage(data)
-        except Queue.Empty:
-            pass
+        #try:
+        print 'PlotQ size', self.q.qsize()
+        #    if self.q.qsize()> 5:
+        #        [self.q.get() for _ in range(5)]
+        #        print 'dropping frames'
+        #    else:
+        data = self.q.get()
+        self.imv.setImage(data,autoRange=True,autoLevels=True)
+        self.app.processEvents()
+        #except Queue.Empty:
+        #    pass
 
 def qtLoop():
     import sys
@@ -41,12 +59,13 @@ def qtLoop():
         
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
-    plotter = QtPlotter()
+    app = QtGui.QApplication([])
+    plotter = QtPlotter(app)
     q_handle = plotter.getPort()
     def producer():
         while True:
-            q_handle.put(np.asarray(np.random.random(size=(2**8, 2**8)),dtype=np.float16))
-            time.sleep(0.1)
+            q_handle.put(np.random.normal(size=(2**8, 2**8)).astype(np.float16))
+            time.sleep(0.05)
     p = Thread(target=producer)
     p.daemon = True
     p.start()
