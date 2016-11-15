@@ -51,7 +51,7 @@ class Skymodel(object):
     src = radio_source.CosmicSource(ra, dec)
     el, az = src.to_horizontal(config.get_loc(), utc_date_obs)
     sources.append(simulation_source.SimulationSource(amplitude = 1., azimuth = az, elevation = el, \
-      sample_duration = radio.sample_duration))
+      sample_duration = radio.n_samples/radio.ref_freq))
     return sources
 
   def get_cum_src_flux(self, utc_date):
@@ -78,7 +78,7 @@ class Skymodel(object):
           ra + angle.from_dms(dx[j]), declination + angle.from_dms(dy[j]))
         sources.append(simulation_source.SimulationSource(\
           amplitude = src.jansky(utc_date)/self.get_int_src_flux(utc_date)*1./n_samp, \
-          azimuth = az, elevation = el, sample_duration = radio.sample_duration))
+          azimuth = az, elevation = el, sample_duration = radio.n_samples/radio.ref_freq))
     return sources
 
 
@@ -101,7 +101,7 @@ class Skymodel(object):
         el, az = config.get_loc().equatorial_to_horizontal(utc_date, ra\
           + angle.from_dms(dx[j]), declination + angle.from_dms(dy[j]))
         ret.append(simulation_source.SimulationSource(amplitude = 1./n, \
-            azimuth = az, elevation = el, sample_duration = radio.sample_duration))
+            azimuth = az, elevation = el, sample_duration = radio.n_samples/radio.ref_freq))
     return ret
 
   def set_el_threshold(self, threshold=0):
@@ -191,13 +191,64 @@ class Skymodel(object):
 
     th = np.pi/2. - np.array(l_el)
     l_phi = -np.array(l_az)
-    _ = [hp.projscatter(i, j, rot=(0,90,0), color='red', alpha=0.5, s=25) for i, j, n in zip(th, l_phi, l_name)]
-    _ = [hp.projtext(i, j, n, rot=(0,90,0), color='red') for i, j, n in zip(th, l_phi, l_name)]
+    #_ = [hp.projtext(i, j, n, rot=(0,90,0), color='black', weight='light', ha='left', va='center') for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projtext(i, j, n, rot=(0,90,0), color='gray', alpha=0.8, weight='bold', ha='center', va='bottom') for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projscatter(i, j, rot=(0,90,0), color='black', alpha=1.0, s=25) for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projscatter(i, j, rot=(0,90,0), color='white', alpha=1.0, s=10) for i, j, n in zip(th, l_phi, l_name)]
 
-    hp.projtext(np.pi/2, 0., 'N', rot=(0,90,0))
-    hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0))
-    hp.projtext(np.pi/2, -np.pi, 'S', rot=(0,90,0))
-    hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0))
+    hp.projtext(np.pi/2, 0., 'N', rot=(0,90,0), va='top', ha='center')
+    hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0), va='center')
+    hp.projtext(np.pi/2, -np.pi, 'S', rot=(0,90,0), ha='center')
+    hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0), ha='right', va='center')
+
+
+  def true_FFT_overlay(self, utc_date):
+    '''Plot current sky.
+    Theta is colatitude and measured from North pole. 0 .. pi
+     (straight up) |  el:  pi/2   | theta 0
+     (horizon)     |  el:  0      | theta pi/2
+    Th = pi/2 - el
+
+    flip : {'astro', 'geo''}, optional
+    Defines the convention of projection : 'astro'' (default, east towards left, west towards right) or 'geo' (east towards right, west towards left)
+    '''
+
+    l_el, l_az, l_name = self.get_src_positions(self.location, utc_date)
+    l_el, l_az = np.array(l_el), np.array(l_az)
+    print l_el, l_az
+    x = (90-l_el*180/np.pi) * np.sin(l_az)
+    y = (90-l_el*180/np.pi) * np.cos(l_az)
+    #plt.scatter(x, y, color='pink')
+    #plt.scatter(x, -y, color='black')
+    #plt.scatter(-x, -y, color='red')
+    #plt.scatter(-x, y, color='black', s=25)
+    plt.scatter(x, y, color='white', s=50)
+
+    for label, x_i, y_i in zip(l_name, x, y):
+      plt.annotate(
+      label,
+      xy = (x_i, y_i), xytext = (-10, 10),
+      size = 20,
+      textcoords = 'offset points', ha = 'right', va = 'bottom',
+      bbox = dict(boxstyle = 'round,pad=0.1', fc = 'white', alpha = 0.5),
+      #arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0')
+      )
+
+
+    #th = np.pi/2. - np.array(l_el)
+    #l_phi = -np.array(l_az)
+    ##_ = [hp.projtext(i, j, n, rot=(0,90,0), color='black', weight='light', ha='left', va='center') for i, j, n in zip(th, l_phi, l_name)]
+    #_ = [hp.projtext(i, j, n, rot=(0,90,0), color='gray', alpha=0.8, weight='bold', ha='center', va='bottom') for i, j, n in zip(th, l_phi, l_name)]
+    #_ = [hp.projscatter(i, j, rot=(0,90,0), color='black', alpha=1.0, s=25) for i, j, n in zip(th, l_phi, l_name)]
+    #_ = [hp.projscatter(i, j, rot=(0,90,0), color='white', alpha=1.0, s=10) for i, j, n in zip(th, l_phi, l_name)]
+
+    #hp.projtext(np.pi/2, 0., 'N', rot=(0,90,0), va='top', ha='center')
+    #hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0), va='center')
+    #hp.projtext(np.pi/2, -np.pi, 'S', rot=(0,90,0), ha='center')
+    #hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0), ha='right', va='center')
+
+
+
 
 def from_state_vector(state):
   '''Generate skymodel from state vector'''
