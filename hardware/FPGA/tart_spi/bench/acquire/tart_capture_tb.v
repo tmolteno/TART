@@ -117,13 +117,19 @@ module tart_capture_tb;
       $dumpfile ("../vcd/acq_tb.vcd");
       $dumpvars;
 
+      //-------------------------------------------------------------------------
+      $display("%12t:\tIssuing RESET.", $time);
       #33 b_rst = 1'b1;
       #DB spi_req_b = 0;
       #DE b_rst = 1'b0;
 
+      //-------------------------------------------------------------------------
+      $display("%12t:\tEnabling data-capture, and with fixed delay of 5 ticks.", $time);
       #DE wr = 1; adr = 2'b00; dtx = 8'h85;
       #DB while (!done) #DB;
 
+      //-------------------------------------------------------------------------
+      $display("%12t:\tCalibrating antenna 4, and setting the update-mode to DRIFT.", $time);
 //       #DE wr = 1; adr = 2'b01; dtx = 8'h84; // align antenna 0x04
       #DE wr = 1; adr = 2'b01; dtx = 8'hC4; // align + drift antenna 0x04
       #DB while (!done) #DB;
@@ -149,7 +155,7 @@ module tart_capture_tb;
 
    //  Display aligned data.
    always @(posedge clk_x)
-     if (new_x) $display("%8t: DATA = %08b (%02x)", $time, daq_x, daq_x);
+     if (new_x) $display("%12t:\tDATA = %08b (%02x)", $time, daq_x, daq_x);
 
 
    //-------------------------------------------------------------------------
@@ -242,32 +248,21 @@ module tart_capture_tb;
         .signal_e_i(sig_e),
 
         //  Wishbone (SPEC B4) bus for reading/writing settings:
-        .cyc_i(cyc),
-        .stb_i(stb),
-        .we_i (we),
-        .ack_o(ack),
-        .wat_o(wat),
-        .rty_o(rty),
-        .err_o(err),
-        .adr_i(adr),
-        .dat_i(dtx),
-        .dat_o(drx),
-
-        //  Memory controller signals (bus-domain):
-        .mcb_ce_o  (cmd_enable),
-        .mcb_wr_o  (cmd_write),
-        .mcb_rdy_i (cmd_ready),
-        .mcb_adr_o (cmd_address),
-        .mcb_dat_o (cmd_data_in),
+        .cyc_i     (cyc),
+        .stb_i     (stb),
+        .we_i      (we),
+        .ack_o     (ack),
+        .wat_o     (wat),
+        .rty_o     (rty),
+        .err_o     (err),
+        .adr_i     (adr),
+        .dat_i     (dtx),
+        .dat_o     (drx),
 
         //  Correlator-domain acquisition data & status signals:
         .enable_x_o(vld_x),      // acquired (and oversampled) data
         .strobe_x_o(new_x),      // outputs
-        .signal_x_o(daq_x),
-
-        //  Data & miscellaneous signals:
-        .request_i (spi_req_b),
-        .state_o   (tart_state) // just used for debug & status
+        .signal_x_o(daq_x)
         );
 
 

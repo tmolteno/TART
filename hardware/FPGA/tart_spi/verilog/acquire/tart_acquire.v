@@ -108,40 +108,21 @@ module tart_acquire
     input [BSB:0]  dat_i,
     output [BSB:0] dat_o,
 
-    // Streaming data interface:
-    // NOTE: Doesn't need to initiate transfers, but data is valid whenever
-    //   `data_ready` is asserted.
-    input          data_ready,
-    output         data_request,
-    input [NSB:0]  data_in,
-
     // SPI status flags:
     input          spi_busy_i,
 
-    // Visibilities status-flags, and settings:
-    output         vx_cyc_o, // Wishbone-like (master) bus interface,
-    output         vx_stb_o, // for reading back visibilities
-    output         vx_we_o,
-    input          vx_ack_i,
-    input          vx_wat_i,
-    input          vx_rty_i,
-    input          vx_err_i,
-    output [XSB:0] vx_adr_o, // Visibilities block to access
-    input [BSB:0]  vx_dat_i,
-    output [BSB:0] vx_dat_o,
+    //------------------------------------------------------------------------
+    //  Memory Controller Block (MCB) signals:
+    output         mcb_ce_o,
+    output         mcb_wr_o,
+    input          mcb_rdy_i,   // MCB ready for commands
+    input          mcb_ack_i,   // read acknowledged and ready
+    output [ASB:0] mcb_adr_o,
+    input [31:0]   mcb_dat_i,
+    output [31:0]  mcb_dat_o,
 
-    input          overflow_i,
-    input          newblock_i,
-    input          streamed_i,
-    input [MSB:0]  checksum_i, // TODO:
-    output         accessed_o,
-    output         available_o,
-
-    output [MSB:0] blocksize_o,
-    output reg     vx_enabled_o = 1'b0,
-    output reg     vx_overwrite_o = 1'b0,
-    input          vx_stuck_i,
-    input          vx_limp_i,
+    //  Debug/status outputs:
+    output [2:0]   state_o,
 
     output reg     aq_enabled_o = 1'b0,
     input          aq_valid_i,
@@ -155,7 +136,7 @@ module tart_acquire
 
    //-------------------------------------------------------------------------
    //  Wishbone-to-SPI signals.
-   wire            cyc_w, stb_w, ack_w, ack_c, x_ack;
+   wire            cyc_w, stb_w, ack_w, ack_c;
    reg             ack = 1'b0;
    reg [BSB:0]     dat = {BBITS{1'b0}};
    wire [BSB:0]    dat_w;
@@ -165,23 +146,10 @@ module tart_acquire
    wire [KSB:0]    ax_data;
 	 reg [2:0]       aq_delay = 3'h0;
 
-   //  Visibilities/correlator unit settings and signals.
-   reg             vx_set = 1'b0, vx_clr = 1'b1;
-   wire [BSB:0]    vx_stream, vx_status, vx_system;
-   reg [4:0]       log_block = 5'h0; // = log2(#viz/block);
-   reg [MSB:0]     blocksize = {ACCUM{1'b0}};
-   reg             accessed = 1'b0, available = 1'b0;
-
-   //  Bank address counter signals.
-   reg [XSB:0]     new_blk = {XBITS{1'b0}};
-   reg             upd_blk = 1'b0;
-   wire            bs_new_w;
-   reg             bs_upd = 1'b0;
-
-   //  Wishbone signals to the (visibilities) streaming read-back unit.
-   reg [XSB:0]     adr = {XBITS{1'b0}};
-   reg             viz = 1'b0;
-   wire [XBITS:0]  nxt;
+   //-------------------------------------------------------------------------
+   //  Additional MCB signals.
+   wire [NSB:0]    data_in = mcd_dat_i[NSB:0];
+   wire            request;
 
 
    //-------------------------------------------------------------------------
@@ -196,57 +164,19 @@ module tart_acquire
    //  Drive the data bus with either visibilities, or system registers.
    assign cyc_w     = CHECK ? cyc_i : 1'b1;
    assign stb_w     = cyc_w && stb_i;
-   assign ack_w     = ack || x_ack;
-   assign dat_w     = viz ? vx_dat_i : dat;
+   assign ack_w     = ack;
+   assign dat_w     = dat;
 
-
-   //-------------------------------------------------------------------------
-   //  Wishbone <--> vizibilities signals.
-   //-------------------------------------------------------------------------
-   //  After every SPI transaction the visibilities streaming module is reset,
-   //  so unless reading back raw acquisition data, shouldn't cause banks to
-   //  be lost (and the bank index can be set via the SPI bus anyway).
-   assign vx_cyc_o  = cyc_i;
-   assign vx_stb_o  = stb_i && (adr_i == `VX_STREAM || !CHECK);
-   assign vx_we_o   = VIZWR ? we_i  : 1'b0;
-   assign vx_adr_o  = adr;
-   assign vx_dat_o  = VIZWR ? dat_i : {BBITS{1'b0}};
 
    //-------------------------------------------------------------------------
    //  Group signals into registers.
    //-------------------------------------------------------------------------
    //  Data acquisition streaming, status, and control registers.
-   assign aq_debug  = {aq_debug_o, vx_stuck_i, vx_limp_i, {(BBITS-5){1'b0}}, aq_count_o, aq_shift_o};
+   assign aq_debug  = {aq_debug_o, {(BBITS-3){1'b0}}, aq_count_o, aq_shift_o};
    assign aq_status = {aq_adr_i[7:0]};
    assign aq_system = {aq_enabled_o, aq_valid_i, {(BBITS-5){1'b0}}, aq_delay};
 
    assign aq_delay_o = aq_delay;
-
-   //  Visibilities registers.
-   assign vx_status = {available, accessed, overflow_i, {(5-XBITS){1'b0}}, adr};
-   assign vx_system = {vx_enabled_o, vx_overwrite_o, {(BBITS-7){1'b0}}, log_block};
-
-   assign accessed_o  = accessed;
-   assign available_o = available;
-   assign blocksize_o = blocksize;
-
-
-
-   //-------------------------------------------------------------------------
-   //
-   //  SANITY-CHECK THE INITIALISATION PARAMETERS.
-   //
-   //-------------------------------------------------------------------------
-   initial begin
-      if (KBITS < AXNUM) begin : INIT_ERROR
-         $write("Invalid initialisation parameters:\n");
-         $write("  AXNUM = %1d\n", AXNUM);
-         $write("  KBITS = %1d\n", KBITS);
-         $write("  BBITS = %1d\n", BBITS);
-         $error;
-      end
-   end
-
 
 
    //-------------------------------------------------------------------------
@@ -259,23 +189,18 @@ module tart_acquire
    //  being asserted for two consecutive cycles.
    assign ack_c = PIPED ? 1'b0 : ack;
 
-   //  Visibilities data acknowledge?
-   assign x_ack = PIPED ? viz && vx_ack_i : stb_w && vx_ack_i;
-
-   assign nxt = adr + 1;
-
 
    //-------------------------------------------------------------------------
    //  Generate acknowledges for incoming requests.
    always @(posedge clk_i)
      if (rst_i && RESET)
        ack <= #DELAY 1'b0;
-     else if (stb_w && !ack_c && adr_i != `VX_STREAM)
+     else if (stb_w && !ack_c)
        ack <= #DELAY 1'b1;
-     else if (!ASYNC && x_ack)
+     else if (!ASYNC)
        ack <= #DELAY 1'b1;
      else
-       ack <= #DELAY cyc_w && x_ack;
+       ack <= #DELAY cyc_w;
 
    //-------------------------------------------------------------------------
    //  Aqusition & visibilities register reads.
@@ -293,42 +218,8 @@ module tart_acquire
          `AQ_DEBUG:  dat <= #DELAY aq_debug;
          `AQ_SYSTEM: dat <= #DELAY aq_system;
 
-         //  Visibilities registers:
-         `VX_STREAM: dat <= #DELAY vx_dat_i;
-         `VX_STATUS: dat <= #DELAY vx_status;
-         `VX_SYSTEM: dat <= #DELAY vx_system;
-
          default:    dat <= #DELAY 8'bx;
        endcase // case (adr_i)
-
-
-   //-------------------------------------------------------------------------
-   //  Wishbone (SPEC B4) bus for reading back visibilities.
-   //-------------------------------------------------------------------------
-   //  At the beginning of each bus cycle, see if this is a register-access,
-   //  or a visibilities read-back.
-   always @(posedge clk_i)
-     if (rst_i && RESET || !spi_busy_i)
-       viz <= #DELAY 1'b0;
-     else if (stb_w)
-       viz <= #DELAY adr_i == `VX_STREAM;
-     else
-       viz <= #DELAY viz;
-
-   //-------------------------------------------------------------------------
-   //  When using correlators in SDP-mode, there are `2^4 == 16` banks of
-   //  stored visibilities that can be read back. Every time a bank has been
-   //  streamed out of this device (via the SPI interface), the bank-counter
-   //  is incremented.
-   always @(posedge clk_i)
-     if (rst_i)
-       adr <= #DELAY {XBITS{1'b0}};
-`ifdef __USE_SETTABLE_BLOCK_COUNTER
-     else if (upd_blk)
-       adr <= #DELAY new_blk;
-`endif
-     else
-       adr <= #DELAY streamed_i ? nxt[XSB:0] : adr;
 
 
    
@@ -340,15 +231,11 @@ module tart_acquire
    //  Aqusition & visibilities register writes.
    always @(posedge clk_i)
      if (rst_i) begin
-        vx_set         <= #DELAY 1'b0;
-        vx_clr         <= #DELAY 1'b1;
         aq_enabled_o   <= #DELAY 1'b0;
         aq_delay       <= #DELAY 3'h0;
-        upd_blk        <= #DELAY 1'b0;
         aq_debug_o     <= #DELAY 1'b0;
         aq_shift_o     <= #DELAY 1'b0;
         aq_count_o     <= #DELAY 1'b0;
-        vx_overwrite_o <= #DELAY 1'b0;
      end
      else if (cyc_w && we_i && !ack_c)
        case (adr_i)
@@ -362,101 +249,7 @@ module tart_acquire
             aq_delay     <= #DELAY dat_i[2:0];
             aq_enabled_o <= #DELAY dat_i[BSB];
          end
-         //  Visibilities status register:
-         //  NOTE: Set elsewhere.
-         `VX_STATUS: begin
-            new_blk <= #DELAY dat_i[XSB:0];
-            upd_blk <= #DELAY 1'b1;
-         end
-         //  Visibilities control register:
-         `VX_SYSTEM: begin
-            vx_set         <= #DELAY dat_i[BSB];
-            vx_clr         <= #DELAY ~dat_i[BSB];
-            vx_overwrite_o <= #DELAY dat_i[BSB-1];
-            log_block      <= #DELAY dat_i[4:0];
-         end
        endcase // case (adr_i)
-     else begin
-        upd_blk <= #DELAY 1'b0;
-        vx_set  <= #DELAY 1'b0;
-        vx_clr  <= #DELAY 1'b0;
-     end
-
-
-   //-------------------------------------------------------------------------
-   //  Visibilities access and control circuit.
-   //-------------------------------------------------------------------------
-   //  Enable the visibilities unit when a write is performed to the control-
-   //  register, and disable it upon overflow, if overwrite mode is disabled.
-   always @(posedge clk_i)
-     if (rst_i && RESET || overflow_i && !vx_overwrite_o || vx_clr)
-       vx_enabled_o <= #DELAY 1'b0;
-     else if (vx_set)
-       vx_enabled_o <= #DELAY 1'b1;
-     else
-       vx_enabled_o <= #DELAY vx_enabled_o;
-
-   //-------------------------------------------------------------------------
-   //  Set the blocksize when a write is performed to the control-register.
-   assign bs_new_w = stb_w && we_i && !ack_c && adr_i == `VX_SYSTEM;
-
-   always @(posedge clk_i) begin
-      bs_upd <= #DELAY bs_new_w && !bs_upd;
-      if (bs_upd)
-`ifdef  __LOOKUP_BLOCKSIZE
-        case (log_block)
-          0:  blocksize <= #DELAY        0;
-          1:  blocksize <= #DELAY        1;
-          2:  blocksize <= #DELAY        3;
-          3:  blocksize <= #DELAY        7;
-          4:  blocksize <= #DELAY       15;
-          5:  blocksize <= #DELAY       31;
-          6:  blocksize <= #DELAY       63;
-          7:  blocksize <= #DELAY      127;
-          8:  blocksize <= #DELAY      255;
-          9:  blocksize <= #DELAY      511;
-          10: blocksize <= #DELAY     1023;
-          11: blocksize <= #DELAY     2047;
-          12: blocksize <= #DELAY     4095;
-          13: blocksize <= #DELAY     8191;
-          14: blocksize <= #DELAY    16383;
-          15: blocksize <= #DELAY    32767;
-          16: blocksize <= #DELAY    65535;
-          17: blocksize <= #DELAY   131071;
-          18: blocksize <= #DELAY   262143;
-          19: blocksize <= #DELAY   524287;
-          20: blocksize <= #DELAY  1048575;
-          21: blocksize <= #DELAY  2097151;
-          22: blocksize <= #DELAY  4194303;
-          23: blocksize <= #DELAY  8388607;
-          default:
-            blocksize   <= #DELAY 16777215;
-        endcase // case (log_block)
-`else
-      //  TODO: How slow is computing the new block-size?
-      blocksize <= #DELAY (1 << dat_i[4:0]) - 1;
-`endif
-   end
-
-
-   //-------------------------------------------------------------------------
-   //  Monitor access to each new bank.
-   //  TODO: Reading an old bank would still assert this flag, and is this
-   //    sensible behaviour?
-   always @(posedge clk_i)
-     if (rst_i && RESET || newblock_i)
-       accessed <= #DELAY 1'b0;
-     else
-       accessed <= #DELAY accessed || x_ack;
-
-   //  Monitor when a new bank becomes available.
-   always @(posedge clk_i)
-     if (rst_i)
-       available <= #DELAY 1'b0;
-     else if (newblock_i)
-       available <= #DELAY 1'b1;
-     else if (x_ack)
-       available <= #DELAY 1'b0;
 
 
 
@@ -499,12 +292,73 @@ module tart_acquire
    dram_prefetch #( .WIDTH(24) ) DRAM_PREFETCH0
      ( .clock_i(clk_i),
        .reset_i(rst_i),
-       .dram_ready(data_ready),
-       .dram_request(data_request),
+       .dram_ready(mcb_ack_i),
+       .dram_request(request),
        .dram_data(data_in),
        .data_sent(data_sent),
        .fetched_data(ax_data)
        );
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  RAW-DATA ACQUISITION BLOCK.
+   //
+   //-------------------------------------------------------------------------
+   //  Streams signal raw-data to an off-chip SDRAM, and also streaming it
+   //  back.
+   //  NOTE: This is mostly just a wrapper around the original raw-data
+   //    acquisition functionality from 2013 , but with more attention paid to
+   //    CDC issues.
+   raw_capture
+     #( .AXNUM(AXNUM),          // number of antennae?
+        .ABITS(ABITS),          // MCB address bit-width?
+        .RESET(RESET),          // reset-to-zero enable (0/1)?
+        .DELAY(DELAY)
+        ) RAWDATA
+       (
+        .clock_i   (clock_i),
+        .reset_i   (reset_i),
+        .clock_x   (clock_x),
+        .reset_x   (reset_i),
+
+        //  Module control-signals:
+        .capture_i (en_capture),
+        .request_i (request),
+
+        //  External antenna data:
+        .strobe_x_i(write_x),
+        .signal_x_i(signal_x),
+
+        //  Memory controller signals (bus-domain):
+        .mcb_ce_o  (mcb_ce_o),
+        .mcb_wr_o  (mcb_wr_o),
+        .mcb_rdy_i (mcb_rdy_i),
+        .mcb_adr_o (mcb_adr_o),
+        .mcb_dat_o (mcb_dat_o),
+
+        //  Debug signals:
+        .state_o   (state_o)
+        );
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  SANITY-CHECK THE INITIALISATION PARAMETERS.
+   //
+   //-------------------------------------------------------------------------
+   initial begin
+      if (KBITS < AXNUM) begin : INIT_ERROR
+         $write("Invalid initialisation parameters:\n");
+         $write("  AXNUM = %1d\n", AXNUM);
+         $write("  KBITS = %1d\n", KBITS);
+         $write("  BBITS = %1d\n", BBITS);
+         $error;
+      end
+   end
+
 
 
 endmodule // tart_acquire

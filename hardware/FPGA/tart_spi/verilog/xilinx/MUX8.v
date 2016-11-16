@@ -35,9 +35,10 @@
 `endif
 
 module MUX8
-  #( parameter WIDTH = 24,
-     parameter MSB   = WIDTH-1,
-     parameter DELAY = 3)
+  #(parameter WIDTH = 24,      // bit-width of the MUX'd signal
+    parameter MSB   = WIDTH-1, // MSB of the data inputs/outputs
+    parameter NOISY = 0,       // display extra debug info?
+    parameter DELAY = 3)       // simulated combinational delay (ns)
    (
     input [MSB:0]  a,
     input [MSB:0]  b,
@@ -56,10 +57,6 @@ module MUX8
 
    assign x = s[2] ? ux : lx;
 
-   initial begin
-      $display("Module : MUX8 (%m, Behavioural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
-   end
-
    always @*
      case (s[1:0])
        0: {ux, lx} = {e, a};
@@ -70,10 +67,6 @@ module MUX8
 `else // !`ifndef __DONT_USE_BEHAVIOURAL
 
    wire [MSB:0]    lx, ux;
-
-   initial begin
-      $display("Module : MUX8 (%m, Structural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
-   end
 
    // FIXME: Initialisation value is wrong?
    LUT6_L
@@ -107,6 +100,15 @@ module MUX8
        .O(x)
        );
 `endif // !`ifndef __DONT_USE_BEHAVIOURAL
+
+
+   //-------------------------------------------------------------------------
+   //  Simulation-only output.
+   //-------------------------------------------------------------------------
+   initial begin
+      if (NOISY)
+        $display("Module : MUX8 (%m, Structural simulation mode)\n\t WIDTH\t= %4d", WIDTH);
+   end
 
 
 endmodule // MUX8

@@ -11,7 +11,7 @@
  * Portability : only tested with Icarus Verilog
  * 
  * Generates the Wishbone, master, control address signals needed to perform
- * single READ bus transactions.
+ * single READ, or WRITE, bus transactions.
  * 
  * Modes:
  *  + ASYNC == 0  -- adds two cycles of latency, by registering CYC & STB, and
@@ -26,20 +26,25 @@
  *                   cycles.
  * 
  * NOTE:
- *  + Supports CLASSIC, Pipelined CLASSIC, and SPEC B4 SINGLE READ transfers;
- *  + Pipelined transfers assert `stb_o` once/transfer, whereas classic
- *    transfers assert `stb_o` until `ack_i`;
- *  + BLOCK burst transfers only assert STB once per command/request, so even
- *    though this module doesn't support burst-mode transfers, it can be
- *    configured to use the same conventions;
- *  + Asynchronous mode (ASYNC == 1) has lower latency, and typically won't
+ *  + supports CLASSIC, Pipelined CLASSIC, and SPEC B4 SINGLE READ/WRITE
+ *    (PIPELINED) transfers;
+ *  + masters that support PIPELINED transfers assert 'STB_O' once/transfer,
+ *    whereas CLASSIC transfers assert (and hold) 'STB_O' until 'ACK_I';
+ *  + BLOCK burst transfers only assert 'STB' once per command/request, so
+ *    even though this module doesn't support burst-mode transfers, it can be
+ *    (and is by default) configured to use the same conventions;
+ *  + asynchronous mode (ASYNC == 1) has lower latency, and typically won't
  *    cause critical-path problems when used with a point-to-point topology;
- *  + Otherwise, typically safer to use synchronous mode for buses;
- *  + For additional pipelining, `ASYNC == 2` can be used to further reduce
+ *  + otherwise, typically safer to use synchronous mode for buses;
+ *  + for additional pipelining, 'ASYNC == 0' can be used to further reduce
  *    combination delays (but adding an extra cycle of latency);
- *  + Failure should be rare, so no need for it to be fast, so it's always
- *    synchronous;
- *  + Lowest (cycle) latency with `ASYNC == 2 && CHECK == 0`;
+ *  + failure should be rare, so no need for it to be fast, therefore it's
+ *    always synchronous;
+ *  + lowest (cycle) latency with 'ASYNC == 2 && CHECK == 0';
+ *  + when a bus only has a single master then the 'CYC' signals are not
+ *    typically needed, and set 'CHECK == 0' to disable the 'CYC' logic (as
+ *    'CYC' primarily signals to other masters that the bus is currently in
+ *    use by another master);
  * 
  * TODO:
  *  + finish/test support for `wat_i`, `rty_i`, and `err_i`;
@@ -51,11 +56,11 @@
 
 module wb_cycle
   #(//  Capabilities/mode parameters:
-    parameter ASYNC = 1,    // Combinational control signals (0/1/2)?
-    parameter PIPED = 1,    // Pipelined (WB SPEC B4) transfers (0/1)?
-    parameter CHECK = 1,    // Filter spurious "chatter," and check errors?
+    parameter ASYNC = 1,    // combinational control signals (0/1/2)?
+    parameter PIPED = 1,    // pipelined (WB SPEC B4) transfers (0/1)?
+    parameter CHECK = 1,    // filter spurious "chatter," and check errors?
 
-    parameter DELAY = 3)    // Combinational simulation delay (ns)
+    parameter DELAY = 3)    // combinational simulation delay (ns)
    (
     input  clk_i,
     input  rst_i,

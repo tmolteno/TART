@@ -42,7 +42,7 @@ module signal_capture
     parameter IOB   = 0,        // use Spartan 6 IOB's?
 
     //  Simulation-only parameters:
-    parameter NOISY = 1,        // display extra debug info (0/1)?
+    parameter NOISY = 0,        // display extra debug info (0/1)?
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
     input          clock_i, // (sampling) clock input

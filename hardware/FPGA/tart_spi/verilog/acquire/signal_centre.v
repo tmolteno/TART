@@ -44,8 +44,9 @@ module signal_centre
     //  Spartan 6 specific settings:
     parameter IOB   = 0,        // use IOB-based registers (0/1)?
 
-    //  Data-alignment options:
-    parameter DELAY = 3)
+    //  Simulation-only options:
+    parameter NOISY = 0,        // display extra debug info (0/1)?
+    parameter DELAY = 3)        // simulated combinational delay (ns)
    (
     input          clock_i, // oversampling (by 'RATIO') clock
     input          reset_i, // clears all stored timing info
@@ -105,6 +106,7 @@ module signal_centre
         .RESET(RESET),
         .DRIFT(DRIFT),
         .IOB  (IOB),
+        .NOISY(NOISY),
         .DELAY(DELAY)
         ) PHASE
      (  .clock_i  (clock_i),

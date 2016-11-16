@@ -101,7 +101,8 @@ module wb_sram_prefetch
     parameter CHECK = 1,        // sanity-check when sharing a bus (0/1)?
 
     //  Simulation-only parameters:
-    parameter DELAY = 3)        // simulation combinational delay (ns)
+    parameter NOISY = 0,        // display extra debug info?
+    parameter DELAY = 3)        // simulated combinational delay (ns)
    (
     input          clk_i,
     input          rst_i,
@@ -308,7 +309,8 @@ module wb_sram_prefetch
    //  Debug information.
    //-------------------------------------------------------------------------
    initial begin
-      $display("\nModule : wb_sram_prefetch (%m)\n\tWIDTH\t= %4d\n\tBYTES\t= %4d\n\tABITS\t= %4d\n\tCOUNT\t= %4d\n\tCBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n", WIDTH, BYTES, ABITS, COUNT, CBITS, BSIZE, BBITS);
+      if (NOISY)
+        $display("\nModule : wb_sram_prefetch (%m)\n\tWIDTH\t= %4d\n\tBYTES\t= %4d\n\tABITS\t= %4d\n\tCOUNT\t= %4d\n\tCBITS\t= %4d\n\tBSIZE\t= %4d\n\tBBITS\t= %4d\n", WIDTH, BYTES, ABITS, COUNT, CBITS, BSIZE, BBITS);
    end
 
 

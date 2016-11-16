@@ -94,12 +94,13 @@ module wb_sram_stream
     parameter SSB   = BYTES-1,  // MSB of the byte-enables
 
     //  Wishbone bus mode parameters:
-    parameter ASYNC = 1,     // combinational control signals (0/1/2)?
-    parameter PIPED = 1,     // pipelined (SPEC B4) transfers (0/1)?
-    parameter CHECK = 0,     // TODO: extra sanity-checking (0/1)?
+    parameter ASYNC = 1,        // combinational control signals (0/1/2)?
+    parameter PIPED = 1,        // pipelined (SPEC B4) transfers (0/1)?
+    parameter CHECK = 0,        // TODO: extra sanity-checking (0/1)?
 
     //  Simulation-only parameters:
-    parameter DELAY = 3)
+    parameter NOISY = 0,       // display extra debug info?
+    parameter DELAY = 3)       // simulated combinational delay (ns)
    (input          clk_i,
     input          rst_i,
 
@@ -220,7 +221,8 @@ module wb_sram_stream
    //  Additional debug/configuration output.
    //-------------------------------------------------------------------------
    initial begin
-      $display("\nModule : wb_sram_stream (%m)\n\tWIDTH\t= %4d\n\tWORDS\t= %4d\n\tWBITS\t= %4d\n\tSTART\t= %4d\n\tSTEP\t= %4d\n\tLAST\t= %4d\n", WIDTH, WORDS, WBITS, START, STEP, LAST);
+      if (NOISY)
+        $display("\nModule : wb_sram_stream (%m)\n\tWIDTH\t= %4d\n\tWORDS\t= %4d\n\tWBITS\t= %4d\n\tSTART\t= %4d\n\tSTEP\t= %4d\n\tLAST\t= %4d\n", WIDTH, WORDS, WBITS, START, STEP, LAST);
    end
 
 

@@ -20,12 +20,16 @@
  */
 
 module signal_stagger
-  #(
+  #(//  Signal jitter/delay parameters:
     parameter WIDTH_SIGNAL = 1,
     parameter MSB = WIDTH_SIGNAL-1,
     parameter PHASE_JITTER = 1,  // #bits of edge jitter
     parameter PHASE_OFFSET = 1,  // max amount of consistent offset from edge
-    parameter CYCLE_JITTER = 1)  // #bits of cycle-length jitter
+    parameter CYCLE_JITTER = 1,  // #bits of cycle-length jitter
+
+    //  Simulation-only settings:
+    parameter NOISY = 0,         // display extra debug info?
+    parameter DELAY = 3)         // simulated combinational delay (ns)
    (
     input              clk,
     input              rst,
@@ -41,15 +45,19 @@ module signal_stagger
    reg signed [4:0]    count = 5'h0;
 
    //-------------------------------------------------------------------------
-   //  Compute the jitters and offsets.
+   //  Setup mode from the module's parameters.
    //-------------------------------------------------------------------------
    // Choose a phase-offset on start-up.
    initial begin : INITIAL_VALUES
       phase_offset = $random;
       phase_offset = phase_offset % (PHASE_OFFSET + 1);
-      $display("Phase offset:\t%d", phase_offset);
+      if (NOISY)
+        $display("Phase offset:\t%d", phase_offset);
    end
 
+   //-------------------------------------------------------------------------
+   //  Compute the jitters and offsets.
+   //-------------------------------------------------------------------------
    always @(posedge clk)
      if (rst || ce && count_wrap) begin
         phase_jitter = $random;

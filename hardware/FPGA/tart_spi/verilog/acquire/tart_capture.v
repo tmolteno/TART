@@ -21,13 +21,13 @@
  * REGISTERS:
  *  Reg#   7         6        5       4        3     2      1       0
  *      --------------------------------------------------------------------
- *   00 || CAPTURE |           STATE         |         DELAY              ||
+ *   00 || CAPTURE |          3'b000         |          DELAY             ||
  *      --------------------------------------------------------------------
- *   01 ||  CENTRE | DRIFT  |  1'b0 | SELECT                              ||
+ *   01 ||  CENTRE | DRIFT  |  1'b0 |              SELECT                 ||
  *      --------------------------------------------------------------------
  *   10 ||  DEBUG  |                  5'h00               | COUNT | SHIFT ||
  *      --------------------------------------------------------------------
- *   11 || INVALID | LOCKED |     2'b00      |         PHASE              ||
+ *   11 || INVALID | LOCKED |     2'b00      |          PHASE             ||
  *      --------------------------------------------------------------------
  * 
  * 
@@ -85,7 +85,8 @@ module tart_capture
     parameter PIPED = 1,        // WB pipelined transfers (0/1)?
 
     //  Simulation-only parameters:
-    parameter DELAY = 3)
+    parameter NOISY = 0,        // display extra debug info?
+    parameter DELAY = 3)        // simulated combinational delay (ns)
    (
     input          clock_x, // capture clock
     input          clock_e, // external clock
@@ -107,23 +108,10 @@ module tart_capture
     //  Raw signal data input:
     input [MSB:0]  signal_e_i, // NOTE: external (xtal) clock domain
 
-    //  Memory Controller Block (MCB) signals:
-    output         mcb_ce_o,
-    output         mcb_wr_o,
-    input          mcb_rdy_i,
-    output [ASB:0] mcb_adr_o,
-    output [31:0]  mcb_dat_o,
-
     //  Supersampled, aligned antenna signals, for the correlators:
     output         enable_x_o, // asserted when data is valid
     output         strobe_x_o, // strobes when new data is available
-    output [MSB:0] signal_x_o, // present the captured data
-
-    //  Request for acquired data (stored in the DRAM):
-    input          request_i,
-
-    //  Debug/status outputs:
-    output [2:0]   state_o
+    output [MSB:0] signal_x_o  // present the captured data
     );
 
 
@@ -142,9 +130,10 @@ module tart_capture
 
    //-------------------------------------------------------------------------
    //  Phase-measurement unit signals:
+   (* NOMERGE = "TRUE" *)
    reg             write_x = 1'b0;
-   wire            capture_x;
-   wire            centre_x, strobe_x, locked_x, invalid_x, restart_x;
+   wire            capture_x, centre_x, drift_x;
+   wire            strobe_x, locked_x, invalid_x, restart_x;
    wire [MSB:0]    signal_w;
    wire [SSB:0]    select_x;
 
@@ -186,12 +175,12 @@ module tart_capture
    //  Wishbone-related signal assignments.
    //-------------------------------------------------------------------------
    //  Wishbone-mapped register assignments:
-   assign aq_capture = {en_capture, state_o, aq_delay[3:0]};
+   assign aq_capture = {en_capture, 3'b000, aq_delay[3:0]};
    assign aq_centre  = {en_centre, aq_drift, 1'b0, aq_select};
    assign aq_debug   = {en_debug, 5'h0, aq_count, aq_shift};
    assign aq_status  = {aq_invalid, aq_locked, 2'b0, aq_phase[3:0]};
 
-
+   //-------------------------------------------------------------------------
    //  Internal, Wishbone, combinational signals:
    assign cyc_w = CHECK ? cyc_i : 1'b1;
    assign stb_w = cyc_w && stb_i;
@@ -209,8 +198,10 @@ module tart_capture
    //  Correlator-domain signal assignments.
    //-------------------------------------------------------------------------
    assign enable_x_o = locked_x;
-   assign strobe_x_o = strobe_x;
-   assign signal_x_o = signal_w;
+//    assign strobe_x_o = strobe_x;
+//    assign signal_x_o = signal_w;
+   assign strobe_x_o = write_x;
+   assign signal_x_o = signal_x;
 
 
 
@@ -360,6 +351,7 @@ module tart_capture
         .RESET(RESET),
         .DRIFT(DRIFT),
         .IOB  (0),              // IOB's already allocated for synchros
+        .NOISY(NOISY),
         .DELAY(DELAY)
         ) CENTRE
      (  .clock_i  (clock_x),    // 12x oversampling clock
@@ -454,46 +446,6 @@ module tart_capture
          .count_b_i(aq_count), // use an up-counter for fake data?
          .count_e_o(count_e)
          );
-
-
-
-   //-------------------------------------------------------------------------
-   //
-   //  RAW-DATA ACQUISITION BLOCK.
-   //
-   //-------------------------------------------------------------------------
-   //  Streams signal raw-data to an off-chip SDRAM, and also streaming it
-   //  back.
-   raw_capture
-     #( .AXNUM(AXNUM),          // number of antennae?
-        .ABITS(ABITS),          // MCB address bit-width?
-        .RESET(RESET),          // reset-to-zero enable (0/1)?
-        .DELAY(DELAY)
-        ) RAWDATA
-       (
-        .clock_i   (clock_i),
-        .reset_i   (reset_i),
-        .clock_x   (clock_x),
-        .reset_x   (reset_i),
-
-        //  Module control-signals:
-        .capture_i (en_capture),
-        .request_i (request_i),
-
-        //  External antenna data:
-        .strobe_x_i(write_x),
-        .signal_x_i(signal_x),
-
-        //  Memory controller signals (bus-domain):
-        .mcb_ce_o  (mcb_ce_o),
-        .mcb_wr_o  (mcb_wr_o),
-        .mcb_rdy_i (mcb_rdy_i),
-        .mcb_adr_o (mcb_adr_o),
-        .mcb_dat_o (mcb_dat_o),
-
-        //  Debug signals:
-        .state_o   (state_o)
-        );
 
 
 endmodule // tart_capture

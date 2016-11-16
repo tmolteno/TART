@@ -52,7 +52,8 @@ module tart_visibilities
     parameter RESET = 0,
 
     //  Simulation-only parameters:
-    parameter DELAY = 3)
+    parameter NOISY = 0,       // display extra debug info?
+    parameter DELAY = 3)       // simulated combinational delay (ns)
    (
     input          clk_i, // bus clock & reset
     input          rst_i,
@@ -216,7 +217,8 @@ module tart_visibilities
    //  Display debug/configuration information.
    //-------------------------------------------------------------------------
    initial begin
-      $display("\nModule : tart_visibilities (%m)\n\tWIDTH\t= %4d\n\tBYTES\t= %4d\n\tABITS\t= %4d\n\tCOUNT\t= %4d\n\tBSIZE\t= %4d\n", WIDTH, BYTES, ABITS, COUNT, BSIZE);
+      if (NOISY)
+        $display("\nModule : tart_visibilities (%m)\n\tWIDTH\t= %4d\n\tBYTES\t= %4d\n\tABITS\t= %4d\n\tCOUNT\t= %4d\n\tBSIZE\t= %4d\n", WIDTH, BYTES, ABITS, COUNT, BSIZE);
    end
 
 

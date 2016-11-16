@@ -30,8 +30,8 @@ COR =$(CORD)/tart_visibilities.v $(CORD)/bank_switch.v $(CORD)/correlator_SDP.v 
 # $(RTL)/tart_correlator.v
 
 ##  DSP files:
-DSP =$(COR) $(RTL)/tart_dsp.v
-FAK =$(COR) $(RTL)/tart_fake_dsp.v
+DSP =$(COR) $(CORD)/tart_dsp.v
+FAK =$(COR) $(CORD)/tart_fake_dsp.v
 
 # TODO:
 TOP =$(DEP) $(COR) $(ACQ)/align_captures.v $(ACQ)/signals_capture.v $(ACQ)/capture.v $(ACQ)/raw_capture.v $(ACQ)/tart_capture.v $(RTL)/tart.v
@@ -62,6 +62,12 @@ FCH =$(BUS)/wb_fetch.v $(BUS)/wb_store.v $(BUS)/wb_sram_port.v $(RTL)/xilinx/RAM
 
 fch: ${FCH} bus/wb_fetch_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(FCH) bus/wb_fetch_tb.v
+
+#  Simulate the TART Wishbone arbitration and control logic.
+ARB =${RTL}/tart_wishbone.v
+
+arb: ${ARB} tart_wishbone_tb.v
+	$(IVC) $(OPT) -o $(OUT)/tart.out $(ARB) tart_wishbone_tb.v
 
 
 .PHONY: run

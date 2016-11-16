@@ -14,6 +14,11 @@
  * sampled by `RATIO`, and they all transition (if they transition) on the
  * same clock-edge (of the sampling clock).
  * 
+ * OBSOLETE:
+ *  + replaced by 'tart_capture.v';
+ *  + this version uses too many resources, as it uses duplicated alignment
+ *    logic is for each channel;
+ *    
  * NOTE:
  * 
  * TODO:
