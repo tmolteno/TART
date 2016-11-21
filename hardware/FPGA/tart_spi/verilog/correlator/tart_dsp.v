@@ -99,124 +99,152 @@ module tart_dsp
     //  Wishbone mode parameters:
     parameter PIPED = 1,       // Wishbone SPEC B4 mode (0/1)?
     parameter CHECK = 1,       // Sanity checking when on a bus (0/1)?
+    parameter ASYNC = 1,       // synchronous cycles (0/1/2)?
+    parameter RESET = 1,        // enable fast-resets (0/1)?
     parameter VIZWR = 0,       // allow visibilities-buffer writes (0/1)?
 
      //  Simulation-only parameters:
     parameter NOISY = 0,       // display extra debug info?
     parameter DELAY = 3)       // simulated combinational delay (ns)
    (
-    input         clk_i, // bus clock
-    input         rst_i, // global reset
+    input          clk_i, // bus clock
+    input          rst_i, // global reset
 
     //  DSP-domain inputs.
-    input         clk_x, // correlator clock
-    input         vld_x, // signal data is valid
-    input         new_x, // strobes for each new sample
-    input [NSB:0] sig_x, // (oversampled) signal data
+    input          clk_x, // correlator clock
+    input          vld_x, // signal data is valid
+    input          new_x, // strobes for each new sample
+    input [NSB:0]  sig_x, // (oversampled) signal data
 
     //  Wishbone-like bus interface for reading visibilities.
-    input         cyc_i,
-    input         stb_i,
-    input         we_i, // writes only work for system registers
-    output        ack_o,
-    output        wat_o,
-    output        rty_o,
-    output        err_o,
-    input [XSB:0] adr_i,
-    input [7:0]   dat_i,
-    output [7:0]  dat_o,
+    input          cyc_i,
+    input          stb_i,
+    input          we_i, // writes only work for system registers
+    output         ack_o,
+    output         wat_o,
+    output         rty_o,
+    output         err_o,
+    input [1:0]    adr_i, // selects the DSP register to access
+    input [7:0]    dat_i,
+    output [7:0]   dat_o,
 
     //  Streaming read-back unit signals.
-    input         sce_i, // Stream CE (0/1)?
+    input          sce_i, // Stream CE (0/1)?
+
+    //  Status output signals.
+    output         enabled_o,
+    output         switched_o,
+    output         newblock_o,
+    output         streamed_o,
+    output [31:0]  checksum_o,
 
     //  Debugging signals.
-    output        stuck_o,
-    output        limp_o
+    output         overflow_o,
+    output [XSB:0] bank_o,
+    output         stuck_o,
+    output         limp_o
     );
+
+
+   //-------------------------------------------------------------------------
+   //  Wishbone (external) interface helper-signals.
+   //-------------------------------------------------------------------------
+   reg             ack = 1'b0;
+   reg [BSB:0]     dat;
+   wire            cyc_w, stb_w, ack_w, fetch, store;
 
 
    //-------------------------------------------------------------------------
    //  WB signals to access the prefetched visibilities (that have been
    //  stored within a block SRAM).
-   wire [MSB:0] v_drx, v_dtx;
-   wire [RSB:0] v_adr;          // read-back address
-   wire [CSB:0] c_adr;          // bank + read-back address
-   wire         v_cyc, v_stb, v_we; // Master WB control signals
-   wire         v_ack, v_wat, v_rty, v_err; // Slave WB response signals
+   //-------------------------------------------------------------------------
+   wire [MSB:0]    v_drx, v_dtx;
+   wire [RSB:0]    v_adr;          // read-back address
+   wire [CSB:0]    c_adr;          // bank + read-back address
+   wire            v_cyc, v_stb, v_we; // Master WB control signals
+   wire            v_ack, v_wat, v_rty, v_err; // Slave WB response signals
 
    //-------------------------------------------------------------------------
    //  Signals for the dual-port SRAM's.
-   wire         sram_a_ce, sram_a_we; // Port used to store visibilities
-   wire [RSB:0] sram_a_ad;
-   wire [3:0]   sram_a_be;
-   wire [31:0]  sram_a_di, sram_a_do;
+   wire            sram_a_ce, sram_a_we; // Port used to store visibilities
+   wire [RSB:0]    sram_a_ad;
+   wire [3:0]      sram_a_be;
+   wire [31:0]     sram_a_di, sram_a_do;
 
-   wire         sram_b_ce, sram_b_we; // Port to read back visibilities
-   wire [ASB:0] sram_b_ad;
-   wire         sram_b_be;
-   wire [7:0]   sram_b_di, sram_b_do;
+   wire            sram_b_ce, sram_b_we; // Port to read back visibilities
+   wire [ASB:0]    sram_b_ad;
+   wire            sram_b_be;
+   wire [7:0]      sram_b_di, sram_b_do;
 
-   wire         switching;
-   wire [31:0]  checksum;
+
+   //-------------------------------------------------------------------------
+   //  DSP state registers, and status signals.
+   //-------------------------------------------------------------------------
+   reg [4:0]       log_block = 5'h0;
+   reg             enabled = 1'b0, accessed = 1'b0, available = 1'b0;
+   reg             overwrite = 1'b0, overflow = 1'b0;
+   wire            switched, newblock, wrapped;
+   wire [31:0]     checksum;
+   reg [MSB:0]     blocksize = {ACCUM{1'b0}};
+
+   // DSP banks.
+   reg [XSB:0]     bank = 4'h0;
+   wire [XBITS:0]  next;
+
+   //  DSP registers.
+   wire [BSB:0]    dsp_stream, dsp_status, dsp_debug, dsp_system;
+   reg             dsp_set = 1'b0, dsp_clr = 1'b0;
+   reg             new_bnk = 1'b0, upd_bnk = 1'b0, bs_upd = 1'b0;
+   wire            bs_new_w;
+
+   //  Correlator-domain signals.
+   wire            swp_x;
 
 
    //-------------------------------------------------------------------------
    //  Assignments for the DSP's status-flags.
    //-------------------------------------------------------------------------
-   assign stuck_o  = stuck;
-   assign limp_o   = limp;
+   assign enabled_o   = enabled;
+   assign newblock_o  = newblock;
+   assign streamed_o  = wrapped;
+   assign switched_o  = switched;
+   assign checksum_o  = checksum;
 
-   assign switching_o = switching;
-   assign checksum_o  = checksum[MSB:0];
+   //  Debug signal assignments.
+   assign overflow_o  = overflow;
+   assign bank_o      = bank;
+   assign stuck_o     = stuck;
+   assign limp_o      = limp;
+
+   //  Signal-update assignments.
+   assign next        = bank + 1;
 
 
    //-------------------------------------------------------------------------
    //  Map the output signals to the system WishBone bus.
    //-------------------------------------------------------------------------
-   assign ack_o     = ASYNC ? ack_w : ack;
+   assign ack_o     = ack;
    assign wat_o     = 1'b0;     // never needs to wait
    assign rty_o     = 1'b0;     // accesses always succeed, so no retries
    assign err_o     = 1'b0;     // TODO: assert for invalid correlator access?
-   assign dat_o     = ASYNC ? dat_w : dat;
+   assign dat_o     = dat;
 
    //  Drive the data bus with either visibilities, or system registers.
    assign cyc_w     = CHECK ? cyc_i : 1'b1;
    assign stb_w     = cyc_w && stb_i;
-   assign ack_w     = ack || x_ack;
-   assign dat_w     = viz ? vx_dat_i : dat;
+   assign ack_w     = stb_w && adr_i != `DSP_STREAM || viz;
+   assign fetch     = stb_w && !we_i;
+   assign store     = stb_w &&  we_i;
 
-
-   //-------------------------------------------------------------------------
-   //  Wishbone <--> vizibilities signals.
-   //-------------------------------------------------------------------------
-   //  After every SPI transaction the visibilities streaming module is reset,
-   //  so unless reading back raw acquisition data, shouldn't cause banks to
-   //  be lost (and the bank index can be set via the SPI bus anyway).
-   assign vx_cyc_o  = cyc_i;
-   assign vx_stb_o  = stb_i && (adr_i == `VX_STREAM || !CHECK);
-   assign vx_we_o   = VIZWR ? we_i  : 1'b0;
-   assign vx_adr_o  = adr;
-   assign vx_dat_o  = VIZWR ? dat_i : {BBITS{1'b0}};
 
    //-------------------------------------------------------------------------
    //  Group signals into registers.
    //-------------------------------------------------------------------------
    //  Visibilities registers.
    assign dsp_stream = sram_b_do;
-   assign dsp_status = {available,  accessed, overflow, 1'b0, adr};
-   assign dsp_debug  = {    stuck,      limp,                6'h0};
-   assign dsp_system = {  enabled, overwrite,     1'b0, log_block};
-
-   //-------------------------------------------------------------------------
-   //  Classic, pipelined Wishbone bus cycles can require at least one wait-
-   //  state between each transfer, which is achieved here by preventing ACK
-   //  being asserted for two consecutive cycles.
-   assign ack_c = PIPED ? 1'b0 : ack;
-
-   //  Visibilities data acknowledge?
-   assign x_ack = PIPED ? viz && vx_ack_i : stb_w && vx_ack_i;
-
-   assign nxt = adr + 1;
+   assign dsp_status = {available,  accessed, overflow, 1'b0, bank};
+   assign dsp_debug  = {    stuck,      limp,                 6'h0};
+   assign dsp_system = {  enabled, overwrite,     1'b0, log_block };
 
 
 
@@ -229,12 +257,8 @@ module tart_dsp
    always @(posedge clk_i)
      if (rst_i && RESET)
        ack <= #DELAY 1'b0;
-     else if (stb_w && !ack_c && adr_i != `VX_STREAM)
-       ack <= #DELAY 1'b1;
-     else if (!ASYNC && x_ack)
-       ack <= #DELAY 1'b1;
      else
-       ack <= #DELAY cyc_w && x_ack;
+       ack <= #DELAY ack_w;
 
    //-------------------------------------------------------------------------
    //  Aqusition & visibilities register reads.
@@ -252,15 +276,15 @@ module tart_dsp
    //-------------------------------------------------------------------------
    //  Wishbone (SPEC B4) bus for reading back visibilities.
    //-------------------------------------------------------------------------
+   reg            viz = 1'b0;
+
    //  At the beginning of each bus cycle, see if this is a register-access,
    //  or a visibilities read-back.
    always @(posedge clk_i)
-     if (rst_i && RESET || !spi_busy_i)
+     if (rst_i && RESET || !sce_i)
        viz <= #DELAY 1'b0;
-     else if (stb_w)
-       viz <= #DELAY adr_i == `VX_STREAM;
      else
-       viz <= #DELAY viz;
+       viz <= #DELAY stb_w && adr_i == `DSP_STREAM;
 
    //-------------------------------------------------------------------------
    //  When using correlators in SDP-mode, there are `2^4 == 16` banks of
@@ -269,13 +293,13 @@ module tart_dsp
    //  is incremented.
    always @(posedge clk_i)
      if (rst_i)
-       adr <= #DELAY {XBITS{1'b0}};
+       bank <= #DELAY {XBITS{1'b0}};
 `ifdef __USE_SETTABLE_BLOCK_COUNTER
-     else if (upd_blk)
-       adr <= #DELAY new_blk;
+     else if (upd_bnk)
+       bank <= #DELAY new_bnk;
 `endif
      else
-       adr <= #DELAY wrapped ? nxt[XSB:0] : adr;
+       bank <= #DELAY wrapped ? next[XSB:0] : bank;
 
 
    
@@ -287,46 +311,32 @@ module tart_dsp
    //  Aqusition & visibilities register writes.
    always @(posedge clk_i)
      if (rst_i) begin
-        vx_set         <= #DELAY 1'b0;
-        vx_clr         <= #DELAY 1'b1;
-        aq_enabled_o   <= #DELAY 1'b0;
-        aq_delay       <= #DELAY 3'h0;
-        upd_blk        <= #DELAY 1'b0;
-        aq_debug_o     <= #DELAY 1'b0;
-        aq_shift_o     <= #DELAY 1'b0;
-        aq_count_o     <= #DELAY 1'b0;
-        vx_overwrite_o <= #DELAY 1'b0;
+        dsp_set   <= #DELAY 1'b0;
+        dsp_clr   <= #DELAY 1'b1;
+        enabled   <= #DELAY 1'b0;
+        upd_bnk   <= #DELAY 1'b0;
+        overwrite <= #DELAY 1'b0;
      end
-     else if (cyc_w && we_i && !ack_c)
+     else if (store)
        case (adr_i)
-         `AQ_DEBUG:  begin
-            aq_shift_o <= #DELAY dat_i[0];
-            aq_count_o <= #DELAY dat_i[1];
-            aq_debug_o <= #DELAY dat_i[BSB];
-         end
-         //  Acquisition control register:
-         `AQ_SYSTEM: begin
-            aq_delay     <= #DELAY dat_i[2:0];
-            aq_enabled_o <= #DELAY dat_i[BSB];
-         end
          //  Visibilities status register:
          //  NOTE: Set elsewhere.
-         `VX_STATUS: begin
-            new_blk <= #DELAY dat_i[XSB:0];
-            upd_blk <= #DELAY 1'b1;
+         `DSP_STATUS: begin
+            new_bnk <= #DELAY dat_i[XSB:0];
+            upd_bnk <= #DELAY 1'b1;
          end
          //  Visibilities control register:
-         `VX_SYSTEM: begin
-            vx_set         <= #DELAY dat_i[BSB];
-            vx_clr         <= #DELAY ~dat_i[BSB];
-            vx_overwrite_o <= #DELAY dat_i[BSB-1];
-            log_block      <= #DELAY dat_i[4:0];
+         `DSP_SYSTEM: begin
+            dsp_set   <= #DELAY dat_i[BSB];
+            dsp_clr   <= #DELAY ~dat_i[BSB];
+            overwrite <= #DELAY dat_i[BSB-1];
+            log_block <= #DELAY dat_i[4:0];
          end
        endcase // case (adr_i)
      else begin
-        upd_blk <= #DELAY 1'b0;
-        vx_set  <= #DELAY 1'b0;
-        vx_clr  <= #DELAY 1'b0;
+        upd_bnk <= #DELAY 1'b0;
+        dsp_set <= #DELAY 1'b0;
+        dsp_clr <= #DELAY 1'b0;
      end
 
 
@@ -336,16 +346,16 @@ module tart_dsp
    //  Enable the visibilities unit when a write is performed to the control-
    //  register, and disable it upon overflow, if overwrite mode is disabled.
    always @(posedge clk_i)
-     if (rst_i && RESET || overflow_i && !vx_overwrite_o || vx_clr)
-       vx_enabled_o <= #DELAY 1'b0;
-     else if (vx_set)
-       vx_enabled_o <= #DELAY 1'b1;
+     if (rst_i && RESET || overflow && !overwrite || dsp_clr)
+       enabled <= #DELAY 1'b0;
+     else if (dsp_set)
+       enabled <= #DELAY 1'b1;
      else
-       vx_enabled_o <= #DELAY vx_enabled_o;
+       enabled <= #DELAY enabled;
 
    //-------------------------------------------------------------------------
    //  Set the blocksize when a write is performed to the control-register.
-   assign bs_new_w = stb_w && we_i && !ack_c && adr_i == `VX_SYSTEM;
+   assign bs_new_w = store && adr_i == `DSP_SYSTEM;
 
    always @(posedge clk_i) begin
       bs_upd <= #DELAY bs_new_w && !bs_upd;
@@ -391,18 +401,18 @@ module tart_dsp
    //  TODO: Reading an old bank would still assert this flag, and is this
    //    sensible behaviour?
    always @(posedge clk_i)
-     if (rst_i && RESET || newblock_i)
+     if (rst_i && RESET || newblock)
        accessed <= #DELAY 1'b0;
      else
-       accessed <= #DELAY accessed || x_ack;
+       accessed <= #DELAY accessed || viz;
 
    //  Monitor when a new bank becomes available.
    always @(posedge clk_i)
      if (rst_i)
        available <= #DELAY 1'b0;
-     else if (newblock_i)
+     else if (newblock)
        available <= #DELAY 1'b1;
-     else if (x_ack)
+     else if (viz)
        available <= #DELAY 1'b0;
 
 
@@ -413,17 +423,23 @@ module tart_dsp
    //     
    //-------------------------------------------------------------------------
    //  Synchroniser registers for correlator control-signals.
-   reg [MSB:0]  block_x = {WIDTH{1'b0}}, block_s = {WIDTH{1'b0}};
-   reg          enable_x = 1'b0, enable_s = 1'b0;
+   (* NOMERGE = "TRUE" *)
+   reg [MSB:0]  block_x = {ACCUM{1'b0}}, block_s = {ACCUM{1'b0}};
+   (* NOMERGE = "TRUE" *)
+   reg          enable_x = 1'b0, enable_s = 1'b0, cce_x = 1'b0;
 
    always @(posedge clk_x) begin
-      block_s  <= #DELAY blocksize_i;
-      enable_s <= #DELAY dsp_enable_i;
+      block_s  <= #DELAY blocksize;
+      enable_s <= #DELAY enabled;
    end
 
    always @(posedge clk_x) begin
       block_x  <= #DELAY block_s;
       enable_x <= #DELAY enable_s;
+
+      // enable the correlators only once new data arrives:
+      if (new_x)
+        cce_x  <= #DELAY enable_x;
    end
 
 
@@ -433,16 +449,19 @@ module tart_dsp
    //     
    //-------------------------------------------------------------------------
 `ifdef  __USE_OVERFLOW_DETECTION
-   wire               switch_x;
+   //  Makes sure that a synchroniser is synthesised, not a shift-register.
    (* NOMERGE = "TRUE" *)
    wire               overflow_x;
+
    (* NOMERGE = "TRUE" *)
-   wire [XSB:0]       bank;
+   reg                overflow_s;
 
    //  Assert overflow whenever a bank-switch causes new data to be written
    //  to the bank currently being read back.
-   always @(posedge clk_i)
-     overflow_o <= #DELAY overflow_x;
+   always @(posedge clk_i) begin
+      overflow_s <= #DELAY overflow_x;
+      overflow   <= #DELAY overflow_s;
+   end
 `endif
 
 
@@ -456,12 +475,12 @@ module tart_dsp
    //  NOTE: This is required for the SPI module as it prefetches ahead, and
    //    then discards any unused data, causing some visibilities to be lost.
 `ifdef __USE_ASYNC_FETCH
-   wire               stream_reset = ~dsp_stream_i;
+   wire               stream_reset = ~sce_i;
 `else   
    reg                stream_reset = 1'b1;
 
    always @(posedge clk_i)
-     stream_reset <= #DELAY ~dsp_stream_i;
+     stream_reset <= #DELAY ~sce_i;
 `endif
 
 
@@ -471,35 +490,45 @@ module tart_dsp
    //  STREAMING, VISIBILITIES-READ-BACK LOGIC-CORE.
    //
    //-------------------------------------------------------------------------
+   //  NOTE: After every SPI transaction the visibilities streaming module is
+   //    reset, so unless reading back raw acquisition data, shouldn't cause
+   //    banks to be lost (and the bank index can be set via the SPI bus
+   //    anyway).
+   wire               s_stb;
+   wire               s_ack, s_wat, s_rty, s_err;
+   wire [BSB:0]       s_dat;
+
+   assign s_stb = CHECK ? stb_w && adr_i == `DSP_STREAM : stb_w;
+
    wb_sram_stream
      #(  .WIDTH(BBITS),         // Wishbone to SPI data bit-width
-         .WORDS(NREAD << 2),    // Number of bytes to stream
-         .WBITS(ABITS),         // Word-counter bit-width
-         .RESET(1),             // Need to reset after each SPI transfer
-         .START(0),             // Start address
-         .TICKS(1),             // Read latency of the attached SRAM's
-         .READ (1),             // Stream from the SRAM's
-         .WRITE(VIZWR),         // Typically only need read access
-         .USEBE(0),             // Single byte data
+         .WORDS(NREAD << 2),    // number of bytes to stream
+         .WBITS(ABITS),         // word-counter bit-width
+         .RESET(1),             // need to reset after each SPI transfer
+         .START(0),             // start address
+         .TICKS(1),             // read latency of the attached SRAM's
+         .READ (1),             // stream from the SRAM's
+         .WRITE(VIZWR),         // typically only need read access
+         .USEBE(0),             // single byte data
          .PIPED(PIPED),         // Pipelined (SPEC B4) transfers
-         .ASYNC(1),             // Registered outputs
-         .CHECK(CHECK),         // Bus is shared by several slaves
+         .ASYNC(1),             // registered outputs
+         .CHECK(CHECK),         // bus is shared by several slaves
          .DELAY(DELAY)
          ) STREAM
        ( .clk_i(clk_i),
          .rst_i(stream_reset),
 
          //  Wishbone (SPEC B4) interface to external I/O (SPI) device:
-         .cyc_i(cyc_i),
-         .stb_i(stb_i),
+         .cyc_i(cyc_w),
+         .stb_i(s_stb),
          .we_i (we_i),
-         .ack_o(ack_o),
-         .wat_o(wat_o),
-         .rty_o(rty_o),
-         .err_o(err_o),
+         .ack_o(s_ack),
+         .wat_o(s_wat),
+         .rty_o(s_rty),
+         .err_o(s_err),
          .sel_i(1'b0),
          .dat_i(dat_i),
-         .dat_o(dat_o),
+         .dat_o(s_dat),
 
          //  SRAM (8-bit) read interface, for the prefetched visibilities:
          .sram_ce_o(sram_b_ce),
@@ -560,13 +589,13 @@ module tart_dsp
          .sram_di_o(sram_a_di),
 
          //  Control and status signals (Wishbone domain).
-         .streamed_i(streamed_o),  // signals that a bank has been sent
-         .newblock_o(newblock_o),  // strobes when new block is available
-         .checksum_o(checksum),    // computed checksum of block
+         .streamed_i(wrapped),  // signals that a bank has been sent
+         .newblock_o(newblock), // strobes when new block is available
+         .checksum_o(checksum), // computed checksum of block
 
          //  Correlator-domain signals:
          .clk_x     (clk_x),
-         .switch_x  (switch_x),
+         .switch_x  (swp_x),
          .overflow_x(overflow_x)
          );
 
@@ -578,7 +607,7 @@ module tart_dsp
    //
    //-------------------------------------------------------------------------
    //  Combined bank-index and visibility-address.
-   assign c_adr = {adr_i, v_adr};
+   assign c_adr = {bank, v_adr};
 
    tart_correlator
      #(  .ACCUM(BLOCK),         // accumulator bits
@@ -602,7 +631,7 @@ module tart_dsp
 
          .cyc_i(v_cyc),         // the correlator connects to the read-back
          .stb_i(v_stb),         // unit for the visibilities, via this bus
-         .we_i (v_we),
+         .we_i (v_we ),
          .ack_o(v_ack),
          .wat_o(v_wat),
          .rty_o(v_rty),
@@ -611,13 +640,13 @@ module tart_dsp
          .dat_i(v_dtx),
          .dat_o(v_drx),
 
-         .switching_o(switching), // asserts on bank-switch (bus domain)
+         .switching_o(switched), // asserts on bank-switch (bus domain)
 
-         .ce_x_i  (enable_x),  // begins correlating once asserted
+         .ce_x_i  (cce_x),     // begins correlating once asserted
          .sums_x_i(block_x),   // number of samples per visibility sum
          .data_x_i(sig_x),     // antenna data
-         .swap_x_o(switch_x),  // bank-switch strobe
-         .bank_x_o(dsp_bank_x_o)// bank address
+         .swap_x_o(swp_x),     // bank-switch strobe
+         .bank_x_o()           // bank address
          );
 
 
@@ -709,7 +738,7 @@ module tart_dsp
    always @(posedge clk_i)
      if (rst_i)
        limp <= #DELAY 1'b1;
-     else if (v_cyc && v_ack && dsp_enable_i)
+     else if (v_cyc && v_ack && enabled)
        limp <= #DELAY 1'b0;
 
    always @(posedge clk_i)

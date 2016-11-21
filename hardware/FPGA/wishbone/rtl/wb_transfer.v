@@ -24,6 +24,13 @@
  *                   spurious bus signals, like extra ACK's, etc.; and
  *  + CHECK == 1  -- sanity checking plus ignores bus chatter outside of bus
  *                   cycles.
+ *  + FRAME == 1  -- the 'frame_i' signal asserts for the duration of the
+ *                   transfer, and just 'write_i' is used to determine the
+ *                   direction of the transfer;
+ *  + BURST == 1  -- requires 'FRAME == 1', and for each cycle that 'read_i'
+ *                   or 'write_i' is asserted represents a command that will
+ *                   have a corresponding 'ACK', and with 'frame_i' framing
+ *                   the transaction;
  * 
  * NOTE:
  *  + supports CLASSIC, Pipelined CLASSIC, and SPEC B4 SINGLE READ/WRITE
@@ -48,6 +55,7 @@
  * 
  * TODO:
  *  + finish/test support for `wat_i`, `rty_i`, and `err_i`;
+ *  + test & document 'FRAME' & 'BURST' mode settings;
  * 
  * Changelog:
  *  + 26/10/2016  --  initial file;
@@ -62,6 +70,7 @@ module wb_transfer
     parameter READ  = 1,    // enable read transfers (0/1)?
     parameter WRITE = 1,    // enable write transfers (0/1)?
     parameter FRAME = 0,    // use FRAME+WRITE to drive the bus (0/1)?
+    parameter BURST = 0,    // support multiple transfers per cycle (0/1)?
 
     //  Simulation-only settings:
     parameter DELAY = 3)    // combinational simulation delay (ns)
@@ -80,6 +89,7 @@ module wb_transfer
     input  frame_i, // TODO: alternate method for bus transfers
     input  read_i,
     input  write_i,
+    output wait_o,              // wait-state (only for 'BURST's)
     output busy_o,
     output done_o,
     output fail_o
@@ -98,7 +108,7 @@ module wb_transfer
    wire    cyc_a, stb_a, we_a, ack_a, err_a, stb_p;
 
    //  Module-feature signals.
-   wire    rd_en, wr_en;
+   wire    read_w, rd_w, wr_w, rd_en, wr_en;
 
    //  State signals.
    wire    cycle, write, done_w;
@@ -108,8 +118,12 @@ module wb_transfer
    //  Signals that depend on features that were enabled in the instance
    //  parameters.
    //-------------------------------------------------------------------------
-   assign rd_en  = READ  ?  read_i : 1'b0;
-   assign wr_en  = WRITE ? write_i : 1'b0;
+   assign read_w = BURST ? read_i : !write_i;
+   assign rd_w   = FRAME ? frame_i && read_w  : read_i;
+   assign wr_w   = FRAME ? frame_i && write_i : write_i;
+
+   assign rd_en  = READ  ? rd_w : 1'b0;
+   assign wr_en  = WRITE ? wr_w : 1'b0;
 
 
    //-------------------------------------------------------------------------
@@ -127,7 +141,7 @@ module wb_transfer
    assign ack_a  = CHECK ? !rst_i && ack_w : ack_w;
    assign err_a  = CHECK ? !rst_i && err_w : err_w;
 
-   //  Strobe-source for pipelined, or classic transactions.
+   //  Strobed for pipelined, or held asserted for classic transactions.
    assign stb_p  = PIPED ? cyc_r : stb_o;
 
    //-------------------------------------------------------------------------
@@ -144,13 +158,14 @@ module wb_transfer
    //  NOTE: Unchecked, asynchronous modes potentially allow for spurious
    //    `done_o` assertions.
    //-------------------------------------------------------------------------
+   assign wait_o = BURST ? wat_i : 1'b0;
    assign busy_o = ASYNC > 1 ? cyc_o  : cyc_r; // TODO: just use `cyc_r`?
    assign done_o = ASYNC > 0 ? done_w : ack_r;
    assign fail_o = err_r;
 
    //-------------------------------------------------------------------------
    //  State signals.
-   assign done_w = CHECK ? stb_p && ack_i : ack_i;
+   assign done_w = BURST && FRAME ? cyc_r && !frame_i : ack_w;
    assign cycle  = (!cyc_r || !CHECK) && (rd_en || wr_en);
    assign write  = (!cyc_r || !CHECK) && wr_en;
 
@@ -164,7 +179,7 @@ module wb_transfer
        cyc_r <= #DELAY 1'b0;
      else if (cycle)
        cyc_r <= #DELAY 1'b1;
-     else if (cyc_r && (ack_i || rty_i || err_i))
+     else if (done_w || rty_i || err_i)
        cyc_r <= #DELAY 1'b0;
      else
        cyc_r <= #DELAY cyc_r;
@@ -176,6 +191,8 @@ module wb_transfer
    always @(posedge clk_i)
      if (rst_i || ASYNC > 1)    // Required by the Wishbone protocol.
        stb_r <= #DELAY 1'b0;
+     else if (BURST && FRAME)
+       stb_r <= #DELAY frame_i && (rd_en || wr_en);
      else if (cycle)
        stb_r <= #DELAY 1'b1;
      else if (PIPED)

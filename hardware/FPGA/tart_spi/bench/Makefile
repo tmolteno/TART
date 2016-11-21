@@ -14,10 +14,10 @@ SPI =$(RTL)/spi
 ACQ =$(RTL)/acquire
 
 # Some Wishbone-like cores:
-WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram_port.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_sram_stream.v $(BUS)/wb_sram_prefetch.v
+WBL =$(BUS)/wb_reset.v $(BUS)/wb_sram_port.v $(BUS)/wb_fetch.v $(BUS)/wb_cycle.v $(BUS)/wb_transfer.v $(BUS)/wb_sram_stream.v $(BUS)/wb_sram_prefetch.v
 
 # Common library cores:
-LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(MISC)/shift_reg.v $(ACQ)/tart_acquire.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v $(RTL)/xilinx/RAMB16X16X4_TDP.v
+LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(MISC)/shift_reg.v $(RTL)/tart_control.v $(WBL) $(RTL)/xilinx/RAM32X6_SDP.v $(RTL)/xilinx/RAMB8X32_SDP.v $(RTL)/xilinx/RAMB8X36_SDP.v $(RTL)/xilinx/MUX8.v $(RTL)/mfsr/mfsr32.v $(RTL)/xilinx/RAMB16X16X4_TDP.v
 
 # Simulation-only files:
 XIL =xilinx
