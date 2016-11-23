@@ -39,6 +39,7 @@ module signal_capture
     //  Additional features:
     parameter RESET = 1,        // fast-resets (0/1)?
     parameter DRIFT = 1,        // incremental changes to phase (0/1)?
+    parameter CYCLE = 1,        // auto-strobe when disabled?
     parameter IOB   = 0,        // use Spartan 6 IOB's?
 
     //  Simulation-only parameters:
@@ -49,6 +50,7 @@ module signal_capture
     input          reset_i, // (sample domain) reset
 
     input          align_i, // (sample domain) core enable
+    input          cyclic_i,// strobe every 'TRATE' ticks?
     input          drift_i, // not useful when calculating statistics
     output         ready_o,
     output [RSB:0] phase_o,
@@ -70,7 +72,7 @@ module signal_capture
    wire [RSB:0]    count_init, count_next;
    wire            count_wrap;
 
-   wire            vld_w, rdy_w, bad_w;
+   wire            cyc_w, stb_w, vld_w, rdy_w, bad_w;
    wire            no_edges, edge_pos, edge_neg, edge_found;
 
    //  Place the first capture-register.
@@ -98,7 +100,9 @@ module signal_capture
    assign samples = {d_reg, d_src};
 
    //  Internal, combinational conditionals.
-   assign rdy_w = align_i && locked && count == HALF;
+   assign cyc_w = CYCLE && cyclic_i && !align_i;
+   assign stb_w = cyc_w || align_i && locked;
+   assign rdy_w = stb_w && count == HALF;
    assign vld_w = count >= RATIO-3 && count < RATIO+2;
    assign bad_w = locked && edge_found && !vld_w;
 

@@ -132,7 +132,6 @@ module tart
     input [NSB:0]      antenna, // Radio Data Interface
 
     // MISCELLANEOUS
-	  output wire        rx_clk_test_pin, // show delayed clock
     output wire        led              // Papilio LED
     );
 
@@ -181,15 +180,21 @@ module tart
    (* PERIOD = "5.091 ns" *) wire clk_x;
    (* KEEP   = "TRUE"     *) wire reset;
 
+   wire                rst_x, vld_x, new_x;
+   wire [NSB:0]        sig_x;
    wire                reset_n;
    wire                bus_clk, bus_rst;               // WB system signals
 
+   (* KEEP   = "TRUE"    *)
+   wire                rx_clk_16_buf;
+
+
    //-------------------------------------------------------------------------
    //  Wishbone bus signals to/from the off-chip, SPI I/O interface.
-   wire         bus_cyc, bus_stb, bus_we;
-   wire         bus_ack, bus_wat, bus_rty, bus_err;
-   wire [WSB:0] bus_adr;
-   wire [BSB:0] bus_dtx, bus_drx;
+   wire         spi_cyc, spi_stb, spi_we;
+   wire         spi_ack, spi_wat, spi_rty, spi_err;
+   wire [WSB:0] spi_adr;
+   wire [BSB:0] spi_dtx, spi_drx;
 
    //-------------------------------------------------------------------------
    //  Wishbone signals for the raw-data capture & recovery module.
@@ -220,46 +225,48 @@ module tart
    //-------------------------------------------------------------------------
    //  SDRAM memory-controller signals:
    //-------------------------------------------------------------------------
-   wire                cmd_enable, cmd_ready, cmd_write;
+   wire                cmd_enable, cmd_ready, cmd_write, data_out_ready;
    wire [SSB:0]        cmd_address;
    wire [31:0]         cmd_data_in;
    wire [31:0]         data_out;
 
-   wire [2:0]          tart_state;
-
    //-------------------------------------------------------------------------
    //  Visibilities-unit signals:
-   wire                vx_enabled, vx_available, vx_overflow, vx_overwrite;
+   wire                vx_enabled, vx_pending, vx_overflow, vx_overwrite;
    wire                vx_newblock, vx_streamed, vx_switching, vx_accessed;
-   wire [MSB:0]        vx_blocksize, vx_checksum;
+   wire [MSB:0]        vx_checksum;
    wire                vx_stuck, vx_limp;      // additional debug signals
+   wire [XSB:0]        vx_bank;
+
+   //-------------------------------------------------------------------------
+   //  Capture-unit info signals:
+   wire                cx_enabled, cx_debug;
 
    //-------------------------------------------------------------------------
    //  Acquisition (of antenna raw-data) signals:   
-   wire aq_enabled;
-   wire [2:0] aq_delay;
-   wire aq_shift, aq_count, aq_debug, aq_valid;
-   wire [NSB:0] ax_dat;
+   wire                aq_enabled;
+   wire [2:0]          aq_state;
 
    //-------------------------------------------------------------------------
    //  SPI and system-status signals.
-   wire         spi_busy, request_from_spi;
-   wire         spi_uflow, spi_oflow;
-
-   wire [7:0]   sys_status = {spi_uflow, spi_oflow, request_from_spi,
-                              aq_enabled, aq_debug, tart_state[2:0]};
-   wire [7:0]   viz_status = {aq_debug, vx_enabled, vx_available,
-                              vx_overflow, s_adr};
+   wire                spi_busy, request_from_spi;
+   wire                spi_uflow, spi_oflow;
+   wire [7:0]          sys_status, spi_status;
 
 
    //-------------------------------------------------------------------------
    //  Miscellaneous assignments.
    //-------------------------------------------------------------------------
-`ifndef __RELEASE_BUILD
-	 assign rx_clk_test_pin = rx_clk_16_buf; // ????, Pat @02/11/2016
-`else
-	 assign rx_clk_test_pin = 1'b0;
-`endif
+   assign bus_clk = fpga_clk;
+   assign bus_rst = reset;
+
+   //-------------------------------------------------------------------------
+   //  Compose the status-signal from the most important status-signals of
+   //  TART's subsystems.
+   assign sys_status = {vx_enabled, vx_pending, // visibilities status
+                        cx_enabled,   cx_debug, // capture status
+                        aq_enabled,  aq_state}; // acquisition status
+   assign spi_status = {spi_oflow, spi_uflow, 5'h0, spi_busy};
    
    //-------------------------------------------------------------------------
    //  Additional (optional) debugging outputs.
@@ -268,7 +275,7 @@ module tart
 `else
    reg          blink = 1'b0;
 
-//    assign led = tart_state >= 2; // asserted when data can be read back
+//    assign led = aq_state >= 2; // asserted when data can be read back
    assign led = blink;
 
    always @(posedge bus_clk)
@@ -319,37 +326,39 @@ module tart
    //  
    //-------------------------------------------------------------------------
    SDRAM_Controller_v
-   #(
-      .sdram_address_width(SDRAM_ADDRESS_WIDTH),
-      .sdram_column_bits(SDRAM_COLUMN_BITS),
-      .sdram_startup_cycles(SDRAM_STARTUP_CYCLES),
-      .cycles_per_refresh(CYCLES_PER_REFRESH)
-   )
-   hamster_sdram(
-      .clk(fpga_clk),
-      .reset(reset),
-      .cmd_ready(cmd_ready),
-      .cmd_enable(cmd_enable),
-      .cmd_wr(cmd_write),
-      .cmd_address(cmd_address),
-      .cmd_byte_enable(4'b1111),
-      .cmd_data_in(cmd_data_in),
-      .data_out(data_out),
-      .data_out_ready(data_out_ready),
+     #( .sdram_address_width (SDRAM_ADDRESS_WIDTH),
+        .sdram_column_bits   (SDRAM_COLUMN_BITS),
+        .sdram_startup_cycles(SDRAM_STARTUP_CYCLES),
+        .cycles_per_refresh  (CYCLES_PER_REFRESH)
+        ) HAMSTER_SDRAM
+       (
+        .clk            (bus_clk),
+        .reset          (bus_rst),
 
-      .SDRAM_CLK(SDRAM_CLK),
-      .SDRAM_CKE(SDRAM_CKE),
-      .SDRAM_CS(SDRAM_CS),
-      .SDRAM_RAS(SDRAM_RAS),
-      .SDRAM_CAS(SDRAM_CAS),
-      .SDRAM_WE(SDRAM_WE),
-      .SDRAM_DQM(SDRAM_DQM),
-      .SDRAM_ADDR(SDRAM_ADDR),
-      .SDRAM_BA(SDRAM_BA),
-      .SDRAM_DATA(SDRAM_DQ)
-   );
+        .cmd_ready      (cmd_ready),     // (O) MCB has initialised?
+        .cmd_enable     (cmd_enable),    // (I) start a MCB operation
+        .cmd_wr         (cmd_write),     // (I) signal a write transaction
+        .cmd_address    (cmd_address),   // (I) data address
+        .cmd_byte_enable(4'b1111),       // (I) individual byte write-selects
+        .cmd_data_in    (cmd_data_in),   // (I) write data
+        .data_out       (data_out),      // (O) requested data
+        .data_out_ready (data_out_ready),// (O) requested data ready?
+
+        .SDRAM_CLK      (SDRAM_CLK),
+        .SDRAM_CKE      (SDRAM_CKE),
+        .SDRAM_CS       (SDRAM_CS),
+        .SDRAM_RAS      (SDRAM_RAS),
+        .SDRAM_CAS      (SDRAM_CAS),
+        .SDRAM_WE       (SDRAM_WE),
+        .SDRAM_DQM      (SDRAM_DQM),
+        .SDRAM_ADDR     (SDRAM_ADDR),
+        .SDRAM_BA       (SDRAM_BA),
+        .SDRAM_DATA     (SDRAM_DQ)
+        );
+
+
 `else // !`ifdef __USE_ACQUISITION
-
+   //-------------------------------------------------------------------------
    //  Drive zeros onto the unused pins:
    assign cmd_ready = 1'b0;
    assign data_out_ready = 1'b0;
@@ -391,10 +400,16 @@ module tart
          .RESET(1),
          .CHECK(1),
          .PIPED(1),
+         // supported peripherals:
+         .CAPEN(1),
+         .ACQEN(1),
+         .DSPEN(1),
+         .SYSEN(1),
+         // simulation-only options:
          .DELAY(DELAY)
-         ) ARB0
-       ( .bus_clk_i(clock),
-         .bus_rst_i(reset),
+         ) ARB
+       ( .bus_clk_i(bus_clk),
+         .bus_rst_i(bus_rst),
 
          //-------------------------------------------------------------------
          //  SPI Wishbone master.
@@ -406,8 +421,8 @@ module tart
          .spi_rty_o(spi_rty),
          .spi_err_o(spi_err),
          .spi_adr_i(spi_adr),
-         .spi_dat_i(spi_dtx),
-         .spi_dat_o(spi_drx),
+         .spi_dat_i(spi_drx),
+         .spi_dat_o(spi_dtx),
 
          //-------------------------------------------------------------------
          //  Capture-unit Wishbone slave.
@@ -478,29 +493,31 @@ module tart
         .CHECK(1)
         ) SPI0
        (
-        .clk_i(bus_clk),
-        .rst_i(bus_rst),
-        .cyc_o(b_cyc),
-        .stb_o(b_stb),
-        .we_o (b_we),
-        .ack_i(b_ack),
-        .wat_i(b_wat),
-        .rty_i(b_rty),
-        .err_i(b_err),
-        .adr_o(b_adr),
-        .dat_i(b_dtx),
-        .dat_o(b_drx),
+        .clk_i     (bus_clk),
+        .rst_i     (bus_rst),
 
-        .active_o(spi_busy),
-        //        .status_i(sys_status),
-        .status_i(viz_status),
+        //  Wishbone master interface.
+        .cyc_o     (spi_cyc),
+        .stb_o     (spi_stb),
+        .we_o      (spi_we),
+        .ack_i     (spi_ack),
+        .wat_i     (spi_wat),
+        .rty_i     (spi_rty),
+        .err_i     (spi_err),
+        .adr_o     (spi_adr),
+        .dat_i     (spi_dtx),
+        .dat_o     (spi_drx),
+
+        .active_o  (spi_busy),
+        .status_i  (sys_status),
+        // .status_i  (viz_status),
         .overflow_o(spi_oflow),
         .underrun_o(spi_uflow),
         
-        .SCK_pin(SPI_SCK),
-        .MOSI(SPI_MOSI),
-        .MISO(SPI_MISO),
-        .SSEL(SPI_SSEL)
+        .SCK_pin   (SPI_SCK),
+        .MOSI      (SPI_MOSI),
+        .MISO      (SPI_MISO),
+        .SSEL      (SPI_SSEL)
         );
 
 
@@ -520,47 +537,60 @@ module tart
    //     generated;
    //  
    tart_capture
-     #(.AXNUM(ANTENNAE),
-       .ABITS(SDRAM_ADDRESS_WIDTH),
-       // fake-data options:
-       .MULTI(MULTI),
-       .RNG  (RNG),
-       .CONST(CONST),
-       .CDATA(CDATA),
-       // use additional data-capture and alignment circuitry?
-       .ALIGN(ALIGN),
-       .RATIO(TRATE),
-       .RBITS(TBITS),
-       // simulation-only settings:
-       .DELAY(DELAY)
-       ) CAPTURE
-     ( .clock_x   (clk_x),
-       .clock_e   (rx_clk_16_buf),
-       .clock_i   (bus_clk),
-       .reset_i   (bus_rst),
+     #( .AXNUM(ANTENNAE),
+        // use additional data-capture and alignment circuitry?
+        .ALIGN(ALIGN),
+        .RATIO(TRATE),
+        .RBITS(TBITS),
+        .CYCLE(1),
+        // Wishbone mode settings
+        .RESET(1),
+        .PIPED(1),
+        .CHECK(1),
+        // fake-data options:
+        .MULTI(MULTI),
+        .RNG  (RNG),
+        .CONST(CONST),
+        .CDATA(CDATA),
+        // simulation-only settings:
+        .DELAY(DELAY)
+        ) CAPTURE
+       (//--------------------------------------------------------------------
+        //  Global clocks & resets:
+        .clock_e   (rx_clk_16_buf),
+        .clock_x   (clk_x),
+        .reset_x   (rst_x),
+        .clock_i   (bus_clk),
+        .reset_i   (bus_rst),
 
-       //---------------------------------------------------------------------
-       //  Wishbone (SPEC B4) interconnect:
-       .cyc_i     (cap_cyc),
-       .stb_i     (cap_stb),
-       .we_i      (cap_we ),
-       .ack_o     (cap_ack),
-       .wat_o     (cap_wat),
-       .rty_o     (cap_rty),
-       .err_o     (cap_err),
-       .adr_i     (cap_adr),
-       .dat_i     (cap_dtx),
-       .dat_o     (cap_drx),
+        //--------------------------------------------------------------------
+        //  Wishbone (SPEC B4) interconnect:
+        .cyc_i     (cap_cyc),
+        .stb_i     (cap_stb),
+        .we_i      (cap_we ),
+        .ack_o     (cap_ack),
+        .wat_o     (cap_wat),
+        .rty_o     (cap_rty),
+        .err_o     (cap_err),
+        .adr_i     (cap_adr),
+        .dat_i     (cap_dtx),
+        .dat_o     (cap_drx),
 
-       //---------------------------------------------------------------------
-       //  External antenna data:
-       .signal_e_i(antenna),
+        //--------------------------------------------------------------------
+        //  External antenna data:
+        .signal_e_i(antenna),
 
-       //  Correlator-domain acquisition data & status signals:
-       .enable_x_o(vld_x),      // acquired (and oversampled) data
-       .strobe_x_o(new_x),      // outputs
-       .signal_x_o(daq_x)
-       );
+        //--------------------------------------------------------------------
+        //  Correlator-domain acquisition data & status signals:
+        .enable_x_o(vld_x),     // acquired (and oversampled) data
+        .strobe_x_o(new_x),     // outputs
+        .signal_x_o(sig_x),
+
+        //-------------------------------------------------------------------------
+        //  Debug info:
+        .enabled_o(cx_enabled),
+        .debug_o  (cx_debug)
+        );
 
 
 
@@ -569,76 +599,54 @@ module tart
    //  RAW-DATA ACQUISITION-CONTROL & READ-BACK.
    //
    //-------------------------------------------------------------------------
-   //  This module controls the raw-data acquisition unit, and also enables
-   //  streaming back the buffered raw-data.
+   //  This module controls the raw-data acquisition unit.
    //  
    //  NOTE:
    //   + acquisition registers are mapped to '0b01nnnnn'.
    //  
    tart_acquire
-     #(  .ACCUM(ACCUM),
-         .AXNUM(ANTENNAE),
-         .BBITS(BBITS),
-         .XBITS(XBITS),
-         .PIPED(1),             // Wishbone mode settings
-         .CHECK(1),
-         .VIZWR(VIZWR),
-         .DELAY(DELAY)
+     #(  .AXNUM    (ANTENNAE),
+         .ABITS    (SDRAM_ADDRESS_WIDTH),
+         .BBITS    (BBITS),
+         .PIPED    (1),         // Wishbone mode settings
+         .CHECK    (1),
+         .DELAY    (DELAY)
          ) ACQUIRE
-       ( .clk_i(bus_clk),
-         .rst_i(bus_rst),
+       ( .clock_i  (bus_clk),
+         .reset_i  (bus_rst),
 
-         //-------------------------------------------------------------------
-         //  Wishbone (SPEC B4) bus for raw-data and visibilities:
-         .cyc_i(acq_cyc),
-         .stb_i(acq_stb),
-         .we_i (acq_we),
-         .ack_o(acq_ack),
-         .wat_o(acq_wat),
-         .rty_o(acq_rty),
-         .err_o(acq_err),
-         .adr_i(acq_adr),
-         .dat_i(acq_dtx),
-         .dat_o(acq_drx),
+         //  Raw-data inputs.
+         .clock_x  (clk_x),
+         .reset_x  (rst_x),
+         .strobe_x (new_x),
+         .signal_x (sig_x),
 
-         //-------------------------------------------------------------------
-         //  Memory controller signals (bus-domain):
-         .mcb_ce_o  (cmd_enable),
-         .mcb_wr_o  (cmd_write),
-         .mcb_rdy_i (cmd_ready),
-         .mcb_adr_o (cmd_address),
-         .mcb_dat_o (cmd_data_in),
+         //  Wishbone (SPEC B4) bus for raw-data and visibilities.
+         .cyc_i    (acq_cyc),
+         .stb_i    (acq_stb),
+         .we_i     (acq_we),
+         .ack_o    (acq_ack),
+         .wat_o    (acq_wat),
+         .rty_o    (acq_rty),
+         .err_o    (acq_err),
+         .adr_i    (acq_adr),
+         .dat_i    (acq_dtx),
+         .dat_o    (acq_drx),
 
-         .tart_state(tart_state),
+         .io_busy_i(spi_busy),
 
-         //-------------------------------------------------------------------
-         //  Antenna data-capture & acquisition controls:
-         .aq_enabled_o(aq_enabled),
-         .aq_valid_i  (aq_valid),
-         .aq_debug_o  (aq_debug),
-         .aq_shift_o  (aq_shift),
-         .aq_count_o  (aq_count),
-         .aq_delay_o  (aq_delay),
-         //        .aq_adr_i(cmd_address),
-         .aq_adr_i({21'h0, s_adr}),
+         //  Memory controller signals (bus-domain).
+         .mcb_ce_o (cmd_enable),
+         .mcb_wr_o (cmd_write),
+         .mcb_rdy_i(cmd_ready),
+         .mcb_ack_i(data_out_ready),
+         .mcb_adr_o(cmd_address),
+         .mcb_dat_i(data_out),
+         .mcb_dat_o(cmd_data_in),
 
-         //  DRAM (streaming) read-back signals:
-         .data_ready  (data_out_ready),
-         .data_request(request_from_spi),
-         .data_in     (data_out[MSB:0]),
-
-         //  Visibilities status & control signals:
-         .vx_enabled_o  (vx_enabled),
-         .vx_overwrite_o(vx_overwrite), // overwrite when buffers full?
-         .overflow_i    (vx_overflow),  // visibilities overflow?
-         .newblock_i    (vx_newblock),  // strobes when new block ready
-         .streamed_i    (vx_streamed),  // has a bank finished streaming?
-         .accessed_o    (vx_accessed),  // have visibilities been accessed?
-         .available_o   (vx_available), // new bank available?
-         .checksum_i    (vx_checksum),  // bank checksum
-         .blocksize_o   (vx_blocksize), // size of block of correlations
-         .vx_stuck_i    (vx_stuck),     // bus signals stuck?
-         .vx_limp_i     (vx_limp)       // or, refusing to cooperate?
+         //  Debug signals.
+         .enabled_o(aq_enabled),
+         .state_o  (aq_state)
          );
 
 
@@ -653,68 +661,71 @@ module tart
    //   + system-control registers are mapped to '0b10nnnnn'.
    //  
    tart_dsp
-     #(.AXNUM(ANTENNAE),        // number of attached antennae
-       .ACCUM(ACCUM),           // accumulator bit-width
-       .TRATE(TRATE),           // time multiplexing (TMUX) rate
-       .TBITS(TBITS),           // TMUX counter bit-width
-       .NREAD(NREAD),           // visibilities read-count
-       .RBITS(RBITS),
-       .XBITS(XBITS),           // visibilities-bank address bit-width
-       .CBITS(CBITS),           // correlator address bit-width
-       .PIPED(PIPED),           // Wishbone pipelined mode?
-       .CHECK(CHECK),           // bus sanity-checking?
-       .VIZWR(VIZWR),           // bidirectional streaming access?
-       .DELAY(DELAY)            // simulation-only settings
-       ) DSP
-       //---------------------------------------------------------------------
-     ( .clk_i(bus_clk),         // Wishbone/system clock
-       .rst_i(bus_rst),         // bus/system reset
+     #( .AXNUM(ANTENNAE),        // number of attached antennae
+        .ACCUM(ACCUM),           // accumulator bit-width
+        .TRATE(TRATE),           // time multiplexing (TMUX) rate
+        .TBITS(TBITS),           // TMUX counter bit-width
+        .NREAD(NREAD),           // visibilities read-count
+        .RBITS(RBITS),
+        .XBITS(XBITS),           // visibilities-bank address bit-width
+        .CBITS(CBITS),           // correlator address bit-width
+        .PIPED(PIPED),           // Wishbone pipelined mode?
+        .CHECK(CHECK),           // bus sanity-checking?
+        .VIZWR(VIZWR),           // bidirectional streaming access?
+        .DELAY(DELAY)            // simulation-only settings
+        ) DSP
+       (//--------------------------------------------------------------------
+        .clk_i(bus_clk),         // Wishbone/system clock
+        .rst_i(bus_rst),         // bus/system reset
 
-       //---------------------------------------------------------------------
-       .clk_x(clk_x),           // correlator clock
-       .sig_x(ax_dat),          // recovered signal
+        //--------------------------------------------------------------------
+        //  Captured, oversampled antenna control & data signals:
+        .clk_x(clk_x),           // correlator clock
+        .vld_x(vld_x),
+        .new_x(new_x),
+        .sig_x(sig_x),           // recovered signal
 
-       //---------------------------------------------------------------------
-       //  Wishbone (SPEC B4) bus between DSP and acquisition unit:
-       .cyc_i(dsp_cyc),
-       .stb_i(dsp_stb),
-       .we_i (dsp_we),
-       .ack_o(dsp_ack),
-       .wat_o(dsp_wat),
-       .rty_o(dsp_rty),
-       .err_o(dsp_err),
-       .adr_i(dsp_adr),
-       .dat_i(dsp_dtx),
-       .dat_o(dsp_drx),
+        //--------------------------------------------------------------------
+        //  Wishbone (SPEC B4) bus between DSP and acquisition unit:
+        .cyc_i(dsp_cyc),
+        .stb_i(dsp_stb),
+        .we_i (dsp_we),
+        .ack_o(dsp_ack),
+        .wat_o(dsp_wat),
+        .rty_o(dsp_rty),
+        .err_o(dsp_err),
+        .adr_i(dsp_adr),
+        .dat_i(dsp_dtx),
+        .dat_o(dsp_drx),
 
-       //---------------------------------------------------------------------
-       //  Stream Core-Enable:
-       .sce_i(spi_busy),
+        //--------------------------------------------------------------------
+        //  Stream Core-Enable:
+        .sce_i(spi_busy),
 
-       //  Correlator control & status signals:
-       .overwrite_i(vx_overwrite),
-       .blocksize_i(vx_blocksize),
-       .switching_o(vx_switching),
-       .overflow_o (vx_overflow),
-       .newblock_o (vx_newblock),
-       .checksum_o (vx_checksum),
-       .streamed_o (vx_streamed),
+        //  Correlator control & status signals:
+        .enabled_o  (vx_enabled ),
+        .pending_o  (vx_pending ),
+        .newblock_o (vx_newblock),
+        .checksum_o (vx_checksum),
+        .streamed_o (vx_streamed),
 
-       //---------------------------------------------------------------------
-       //  Miscellaneous debugging/status signals:
-       .stuck_o    (vx_stuck),
-       .limp_o     (vx_limp)
-       );
+        //--------------------------------------------------------------------
+        //  Miscellaneous debugging/status signals:
+        .bank_o     (vx_bank),
+        .overflow_o (vx_overflow),
+        .stuck_o    (vx_stuck),
+        .limp_o     (vx_limp)
+        );
 
 
 `else // !`ifdef __USE_CORRELATORS
    //-------------------------------------------------------------------------
    //  DSP not used, so clamp some signals.
    //-------------------------------------------------------------------------
-   assign vx_streamed  = 1'b0;
-   assign vx_newblock  = 1'b0;
-   assign vx_available = 1'b0;
-   assign vx_checksum  = 24'h0ff1ce;
+   assign vx_streamed = 1'b0;
+   assign vx_newblock = 1'b0;
+   assign vx_pending  = 1'b0;
+   assign vx_checksum = 24'h0ff1ce;
 
 `endif //  !`ifdef __USE_CORRELATORS
 
@@ -729,27 +740,32 @@ module tart
    //   + system-control registers are mapped to '0b11nnnnn'.
    //  
    tart_control
-     #(  .WIDTH(BBITS),
-         .RTIME(4)
-         ) CONTROL
-       ( .clk_i(sys_clk),
-         .rst_i(sys_rst),
-         .cyc_i(sys_cyc),
-         .stb_i(sys_stb),
-         .we_i (sys_we),
-         .ack_o(sys_ack),
-         .wat_o(sys_wat),
-         .rty_o(sys_rty),
-         .err_o(sys_err),
-         .adr_i(sys_adr),
-         .dat_i(sys_dtx),
-         .dat_o(sys_drx),
+     #( .WIDTH(BBITS),
+        .RTIME(4),
+        .CHECK(0),
+        .PIPED(1),
+        .DELAY(DELAY)
+        ) CONTROL
+       (
+        .clk_i(bus_clk),
+        .rst_i(bus_rst),
 
-         .status_i  (sys_status),
-         .reset_ni  (reset_n),
-         .reset_o   (reset),
-         .checksum_i(vx_checksum)
-         );
+        .cyc_i(sys_cyc),
+        .stb_i(sys_stb),
+        .we_i (sys_we),
+        .ack_o(sys_ack),
+        .wat_o(sys_wat),
+        .rty_o(sys_rty),
+        .err_o(sys_err),
+        .adr_i(sys_adr),
+        .dat_i(sys_dtx),
+        .dat_o(sys_drx),
+
+        .status_i  (sys_status),
+        .extra_i   (spi_status),
+        .reset_ni  (reset_n),
+        .reset_o   (reset)
+        );
 
 
 

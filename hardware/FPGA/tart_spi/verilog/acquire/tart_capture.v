@@ -21,13 +21,13 @@
  * REGISTERS:
  *  Reg#   7         6        5       4        3     2      1       0
  *      --------------------------------------------------------------------
- *   00 || CAPTURE |          3'b000         |          DELAY             ||
+ *   00 ||  CENTRE | DRIFT  |     2'b00      |           DELAY            ||
  *      --------------------------------------------------------------------
- *   01 ||  CENTRE | DRIFT  |  1'b0 |              SELECT                 ||
+ *   01 || INVALID | LOCKED |     2'b00      |           PHASE            ||
  *      --------------------------------------------------------------------
- *   10 ||  DEBUG  |                  5'h00               | COUNT | SHIFT ||
+ *   10 ||  DEBUG  | COUNT  | SHIFT |              #ANTENNA               ||
  *      --------------------------------------------------------------------
- *   11 || INVALID | LOCKED |     2'b00      |          PHASE             ||
+ *   11 || CAPTURE |      2'b00     |               SELECT                ||
  *      --------------------------------------------------------------------
  * 
  * 
@@ -54,6 +54,16 @@
 
 `include "tartcfg.v"
 
+
+//----------------------------------------------------------------------------
+//  Register addresses.
+//----------------------------------------------------------------------------
+`define CAP_CENTRE 2'b00
+`define CAP_STATUS 2'b01
+`define CAP_DEBUG  2'b10
+`define CAP_SYSTEM 2'b11
+
+
 module tart_capture
   #(//  Bit-width parameters:
     parameter AXNUM = 24,       // number of antennae
@@ -78,6 +88,7 @@ module tart_capture
     parameter RBITS = 4,        // bit-width of clock-counter
     parameter RSB   = RBITS-1,  // MSB of clock-counter
     parameter DRIFT = 1,        // incrementally change the phase (0/1)?
+    parameter CYCLE = 1,        // auto-strobe when not centring
 
     //  Wisbone mode/settings:
     parameter RESET = 1,        // enable fast-resets (0/1)?
@@ -88,8 +99,9 @@ module tart_capture
     parameter NOISY = 0,        // display extra debug info?
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
-    input          clock_x, // capture clock
     input          clock_e, // external clock
+    input          clock_x, // capture clock
+    output         reset_x, // capture-domain reset signal
     input          clock_i, // bus clock
     input          reset_i, // bus-domain reset
 
@@ -111,22 +123,37 @@ module tart_capture
     //  Supersampled, aligned antenna signals, for the correlators:
     output         enable_x_o, // asserted when data is valid
     output         strobe_x_o, // strobes when new data is available
-    output [MSB:0] signal_x_o  // present the captured data
+    output [MSB:0] signal_x_o, // present the captured data
+
+    //  Debug/info outputs:
+    output         enabled_o, // data-capture enabled?
+    output         centred_o, // clock-recovery has succeded?
+    output         debug_o    // debug (fake-data) mode?
     );
 
 
    //-------------------------------------------------------------------------
    //  Antenna-data routing signals:
    //  TODO: Make sure that both are placed within the IOB's.
+`ifdef __FORCE_SIGNAL_IOBS
    (* IOB = "TRUE", NOMERGE = "TRUE" *)
+   reg [MSB:0]     sig_x_iob0;
+   (* IOB = "TRUE", NOMERGE = "TRUE" *)
+   reg [MSB:0]     sig_x_iob1;
+`else
+   (* NOMERGE = "TRUE" *)
    reg [MSB:0]     sig_x_iob0, sig_x_iob1;
+`endif
+
+   (* MAXDELAY = "1.0 ns" *)
+   wire            sig_x_iob_w = sig_x_iob0;
 
    (* NOMERGE = "TRUE" *)
    reg [MSB:0]     sig_x_dbg0, sig_x_dbg1;
 
    //-------------------------------------------------------------------------
    //  Cross-domain, capture control-signals:
-   wire            reset_x, reset_e;
+   wire            reset_e;
 
    //-------------------------------------------------------------------------
    //  Phase-measurement unit signals:
@@ -156,35 +183,38 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Wishbone bus-mapped read-back registers.
    //-------------------------------------------------------------------------
-   wire [7:0]      aq_capture, aq_centre, aq_debug, aq_status; // WB regs
+   wire [7:0]      tc_system, tc_centre, tc_debug, tc_status; // WB regs
+   wire [4:0]      tc_number = AXNUM;
    reg             en_capture = 1'b0, en_centre = 1'b0, en_debug = 1'b0;
-   reg [SSB:0]     aq_select = {SBITS{1'b0}}; // source/antenna to centre
-   wire            aq_invalid, aq_locked;
-   wire [RSB:0]    aq_phase;
-   reg [RSB:0]     aq_delay = {RBITS{1'b0}};
-   reg             aq_drift, aq_count, aq_shift, aq_restart = 1'b0;
+   reg [SSB:0]     tc_select = {SBITS{1'b0}}; // source/antenna to centre
+   wire            tc_invalid, tc_locked;
+   wire [RSB:0]    tc_phase;
+   reg [RSB:0]     tc_delay = {RBITS{1'b0}};
+   reg             tc_drift, tc_count, tc_shift, tc_restart = 1'b0;
 
    //-------------------------------------------------------------------------
    //  Internal signals used for the Wishbone interface:
    reg [7:0]       dat;
    reg             ack = 1'b0;
-   wire            cyc_w, stb_w, write;
+   wire            cyc_w, stb_w, fetch, store;
 
 
    //-------------------------------------------------------------------------
    //  Wishbone-related signal assignments.
    //-------------------------------------------------------------------------
    //  Wishbone-mapped register assignments:
-   assign aq_capture = {en_capture, 3'b000, aq_delay[3:0]};
-   assign aq_centre  = {en_centre, aq_drift, 1'b0, aq_select};
-   assign aq_debug   = {en_debug, 5'h0, aq_count, aq_shift};
-   assign aq_status  = {aq_invalid, aq_locked, 2'b0, aq_phase[3:0]};
+   assign tc_centre = {en_centre, tc_drift, 2'b0, tc_delay[3:0]};
+   assign tc_status = {tc_invalid, tc_locked, 2'b0, tc_phase[3:0]};
+   assign tc_debug  = {en_debug, tc_count, tc_shift, tc_number};
+   assign tc_system = {en_capture, 2'b00, tc_select};
 
    //-------------------------------------------------------------------------
    //  Internal, Wishbone, combinational signals:
    assign cyc_w = CHECK ? cyc_i : 1'b1;
    assign stb_w = cyc_w && stb_i;
-   assign write = stb_w && we_i;
+
+   assign fetch = PIPED ? stb_w && !we_i : stb_w && !we_i &&  ack;
+   assign store = PIPED ? stb_w &&  we_i : stb_w &&  we_i && !ack;
 
    //  Wishbone output assignments:
    assign ack_o = ack;
@@ -202,6 +232,14 @@ module tart_capture
 //    assign signal_x_o = signal_w;
    assign strobe_x_o = write_x;
    assign signal_x_o = signal_x;
+
+
+   //-------------------------------------------------------------------------
+   //  Debug/info signal assignments.
+   //-------------------------------------------------------------------------
+   assign enabled_o = en_capture;
+   assign centred_o = tc_locked;
+   assign debug_o   = en_debug;
 
 
 
@@ -222,52 +260,53 @@ module tart_capture
    always @(posedge clock_i)
      if (stb_w)
        case (adr_i)
-         2'b00: dat <= #DELAY aq_capture;
-         2'b01: dat <= #DELAY aq_centre;
-         2'b10: dat <= #DELAY aq_debug;
-         2'b11: dat <= #DELAY aq_status;
+         `CAP_CENTRE: dat <= #DELAY tc_centre;
+         `CAP_STATUS: dat <= #DELAY tc_status;
+         `CAP_DEBUG:  dat <= #DELAY tc_debug;
+         `CAP_SYSTEM: dat <= #DELAY tc_system;
+         default:     dat <= #DELAY 8'bx;
        endcase // case (adr_i)
 
    //-------------------------------------------------------------------------
-   //  Control the raw-data capture unit.
-   always @(posedge clock_i)
-     if (reset_i && RESET)
-       {en_capture, aq_delay} <= #DELAY {1'b0, {RBITS{1'b0}}};
-     else if (write && adr_i == 2'b00)
-       {en_capture, aq_delay} <= #DELAY {dat_i[7], dat_i[RSB:0]};
-     else
-       {en_capture, aq_delay} <= #DELAY {en_capture, aq_delay};
-
-   //-------------------------------------------------------------------------
-   //  Enable/restart the signal-capture, centring unit, and select the
-   //  requested antenna/source.
+   //  Enable/restart the signal-capture, centring unit, and set the antenna/
+   //  source phase-delay.
    //  TODO: AUTO-mode, which continually monitors (and adjusts) the phase?
    always @(posedge clock_i)
      if (reset_i && RESET)
-       {en_centre, aq_drift, aq_select} <= #DELAY {1'b0, 1'bx, {SBITS{1'b0}}};
-     else if (write && adr_i == 2'b01)
-       {en_centre, aq_drift, aq_select} <= #DELAY {dat_i[7:6], dat_i[SSB:0]};
+       {en_centre, tc_drift, tc_delay} <= #DELAY {1'b0, 1'bx, {RBITS{1'b0}}};
+     else if (store && adr_i == `CAP_CENTRE)
+       {en_centre, tc_drift, tc_delay} <= #DELAY {dat_i[7:6], dat_i[RSB:0]};
      else
-       {en_centre, aq_drift, aq_select} <= #DELAY {en_centre, aq_drift, aq_select};
+       {en_centre, tc_drift, tc_delay} <= #DELAY {en_centre, tc_drift, tc_delay};
 
    //  Pulse the restart if enable of an active unit is requested.
    always @(posedge clock_i)
      if (reset_i && RESET)
-       aq_restart <= #DELAY 1'b0;
-     else if (write && adr_i == 2'b01 && en_centre)
-       aq_restart <= #DELAY 1'b1;
+       tc_restart <= #DELAY 1'b0;
+     else if (store && adr_i == `CAP_CENTRE && en_centre)
+       tc_restart <= #DELAY 1'b1;
      else
-       aq_restart <= #DELAY 1'b0;
+       tc_restart <= #DELAY 1'b0;
 
    //-------------------------------------------------------------------------
    //  Control the debug unit, and its modes/settings.
    always @(posedge clock_i)
      if (reset_i && RESET)
-       {en_debug, aq_count, aq_shift} <= #DELAY 3'h0;
-     else if (write && adr_i == 2'b10)
-       {en_debug, aq_count, aq_shift} <= #DELAY {dat_i[7], dat_i[1:0]};
+       {en_debug, tc_count, tc_shift} <= #DELAY 3'h0;
+     else if (store && adr_i == `CAP_DEBUG)
+       {en_debug, tc_count, tc_shift} <= #DELAY {dat_i[7], dat_i[1:0]};
      else
-       {en_debug, aq_count, aq_shift} <= #DELAY {en_debug, aq_count, aq_shift};
+       {en_debug, tc_count, tc_shift} <= #DELAY {en_debug, tc_count, tc_shift};
+
+   //-------------------------------------------------------------------------
+   //  Control the raw-data capture unit.
+   always @(posedge clock_i)
+     if (reset_i && RESET)
+       {en_capture, tc_select} <= #DELAY {1'b0, {SBITS{1'b0}}};
+     else if (store && adr_i == `CAP_SYSTEM)
+       {en_capture, tc_select} <= #DELAY {dat_i[7], dat_i[SSB:0]};
+     else
+       {en_capture, tc_select} <= #DELAY {en_capture, tc_select};
 
 
 
@@ -285,7 +324,7 @@ module tart_capture
    always @(posedge clock_x)
      begin
         // synchronise the antennae signal:
-        {sig_x_iob1, sig_x_iob0} <= #DELAY {sig_x_iob0, signal_e_i};
+        {sig_x_iob1, sig_x_iob0} <= #DELAY {sig_x_iob_w, signal_e_i};
 
         // synchronise the fake/debug signal:
         {sig_x_dbg1, sig_x_dbg0} <= #DELAY {sig_x_dbg0, fake_e};
@@ -317,6 +356,7 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for testing & debugging.
    //-------------------------------------------------------------------------
+   (* AREA_GROUP = "fake" *)
    fake_telescope
      #(  .WIDTH(AXNUM),
          .MULTI(MULTI),
@@ -324,7 +364,7 @@ module tart_capture
          .CONST(CONST),
          .CDATA(CDATA),
          .DELAY(DELAY)
-         ) FAKE_TART0
+         ) FAKE
        ( .clock_i (clock_e),
          .reset_i (reset_e),
          .enable_i(debug_e),
@@ -343,6 +383,7 @@ module tart_capture
    //  NOTE: Computes the required phase-shift, to determine the relative
    //    clock-phases, so that data can be captured mid-period (of the slower
    //    clock).
+   (* AREA_GROUP = "centre" *)
    signal_centre
      #( .WIDTH(AXNUM),
         .SBITS(SBITS),
@@ -350,6 +391,7 @@ module tart_capture
         .RBITS(RBITS),
         .RESET(RESET),
         .DRIFT(DRIFT),
+        .CYCLE(CYCLE),
         .IOB  (0),              // IOB's already allocated for synchros
         .NOISY(NOISY),
         .DELAY(DELAY)
@@ -357,6 +399,7 @@ module tart_capture
      (  .clock_i  (clock_x),    // 12x oversampling clock
         .reset_i  (reset_x),
         .align_i  (centre_x),   // compute the alignment shift?
+        .cyclic_i (1'b1),       // cycle continually (if 'CYCLE')
         .drift_i  (drift_x),    // incrementally change the phase?
         .signal_i (source_x),   // from external/fake data MUX
         .select_i (select_x),   // select antenna to measure phase of
@@ -371,6 +414,7 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Programmable delay that is used to phase-shift the incoming signal.
    //-------------------------------------------------------------------------
+   (* AREA_GROUP = "shreg" *)
    shift_reg
      #(  .DEPTH(16),            // should synthesise to SRL16E primitives
          .ABITS(4),
@@ -392,11 +436,12 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Performs (nearly) all CDC within one module, to make it easier to spot
    //  violations of CDC rules.
+   (* AREA_GROUP = "ctrl" *)
    capture_control
      #( .PBITS(RBITS),          // phase-delay bit-width
         .SBITS(SBITS),          // antenna-select bit-with
         .DELAY(DELAY)           // simulation combinational delay (ns)
-        ) CTRL0
+        ) CTRL
        ( .clock_b_i(clock_i),       // bus-domain clock & reset signals
          .reset_b_i(reset_i),
 
@@ -410,29 +455,29 @@ module tart_capture
          .capture_b_i(en_capture), // enable raw-data capture?
          .capture_x_o(capture_x),
 
-         .delay_b_i(aq_delay), // set the phase-delay for the input signals:
+         .delay_b_i(tc_delay),  // phase-delay for the input signals
          .delay_x_o(delay_x),
 
          //  CDC for the phase-alignment signals:
-         .centre_b_i(en_centre), // enable the centering unit?
+         .centre_b_i(en_centre), // enable the centring unit?
          .centre_x_o(centre_x),
 
-         .drift_b_i(aq_drift), // incrementally change the phase?
+         .drift_b_i(tc_drift), // incrementally change the phase?
          .drift_x_o(drift_x),
 
-         .select_b_i(aq_select), // select an antenna/source to centre
+         .select_b_i(tc_select), // select an antenna/source to centre
          .select_x_o(select_x),
 
-         .locked_b_o(aq_locked), // asserted once signal is locked
+         .locked_b_o(tc_locked), // asserted once signal is locked
          .locked_x_i(locked_x),
 
-         .phase_b_o(aq_phase), // measured phase-delay
+         .phase_b_o(tc_phase), // measured phase-delay
          .phase_x_i(phase_x),
 
-         .invalid_b_o(aq_invalid), // signal lost?
+         .invalid_b_o(tc_invalid), // signal lost?
          .invalid_x_i(invalid_x),
 
-         .restart_b_i(aq_restart), // restart if lost tracking
+         .restart_b_i(tc_restart), // restart if lost tracking
          .restart_x_o(restart_x),
          
          //  CDC for the fake-data unit signals:
@@ -440,12 +485,13 @@ module tart_capture
          .debug_e_o(debug_e),
          .debug_x_o(debug_x),
 
-         .shift_b_i(aq_shift), // use a shift-register for fake data?
+         .shift_b_i(tc_shift), // use a shift-register for fake data?
          .shift_e_o(shift_e),
 
-         .count_b_i(aq_count), // use an up-counter for fake data?
+         .count_b_i(tc_count), // use an up-counter for fake data?
          .count_e_o(count_e)
          );
+
 
 
 endmodule // tart_capture

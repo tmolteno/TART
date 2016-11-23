@@ -91,6 +91,7 @@ module tart_acquire_tb;
    reg [XSB:0]  bank = {XBITS{1'b0}};
    wire [XSB:0] vx_bank;
    reg          busy = 1'b0;
+   wire [2:0]   cap_state;
 
 
    assign dsp_en = vx_enabled;
@@ -147,7 +148,7 @@ module tart_acquire_tb;
 
       //----------------------------------------------------------------------
       #20 $display("\n%12t: Issuing RESET.", $time);
-      #13 rst <= 1; #40 rst <= 0;
+      #13 b_rst <= 1; #40 b_rst <= 0;
 
       //----------------------------------------------------------------------
       $display("%12t: Setting block-size (2^%1d)", $time, log_bsize);
@@ -228,7 +229,7 @@ module tart_acquire_tb;
    //  The `busy` flag is so that other bus-masters can tell if the another
    //  master is using the bus.
    always @(posedge b_clk)
-     if (rst || fin)
+     if (b_rst || fin)
        busy <= #DELAY 1'b0;
      else if (get || set)
        busy <= #DELAY 1'b1;
@@ -236,7 +237,7 @@ module tart_acquire_tb;
        busy <= #DELAY busy;
 
    always @(posedge b_clk)
-     if (rst) begin
+     if (b_rst) begin
         {fin, get, set} <= #DELAY 3'h0;
         {cyc, stb, we } <= #DELAY 3'h0;
      end
@@ -306,7 +307,7 @@ module tart_acquire_tb;
    //  Assemble bytes into words, and stored them until the transfer has been
    //  completed.
    always @(posedge b_clk)
-     if (rst || fin) begin
+     if (b_rst || fin) begin
         f_cnt <= #DELAY 2'b00;
         f_adr <= #DELAY {FBITS{1'b0}};
      end
@@ -339,44 +340,6 @@ module tart_acquire_tb;
 
 
    //-------------------------------------------------------------------------
-   //  
-   //  GENERATE FAKE DRAM CONTENTS.
-   //  
-   //-------------------------------------------------------------------------
-   wire [NSB:0] data_w = data[data_index[7:0]];
-   integer     data_index = 0;
-   reg         ready = 0;
-   reg         aq_start = 0, aq_done = 1;
-   wire        spi_busy, aq_request;
-   wire [2:0]  aq_delay;
-
-   always @(posedge b_clk)
-     if (rst)
-       {aq_done, aq_start} <= #DELAY 2'b10;
-     else if (!aq_start && aq_done && aq_enabled)
-       {aq_done, aq_start} <= #DELAY 2'b01;
-     else if (!aq_done && aq_start && aq_enabled)
-       aq_start <= #DELAY 0;
-     else
-       aq_done  <= #DELAY aq_done ? aq_done : !aq_enabled;
-
-   always @(posedge b_clk)
-     if (rst)
-       ready <= #DELAY 0;
-     else if (aq_start || aq_request)
-       ready <= #DELAY 1;
-     else
-       ready <= #DELAY 0;
-
-   always @(posedge b_clk)
-     if (rst)
-       data_index <= #DELAY 0;
-     else if (aq_request)
-       data_index <= #DELAY data_index + 1;
-     else
-       data_index <= #DELAY data_index;
-
-   //-------------------------------------------------------------------------
    //  Generate fake antenna data, from the fake DRAM contents.
    wire [NSB:0] antenna;
    reg [3:0]  cnt = 0;
@@ -387,12 +350,17 @@ module tart_acquire_tb;
    assign antenna = data[rd_adr[7:0]];
 
    always @(posedge clk_x)
-     if (rst) cnt <= #DELAY 0;
-     else     cnt <= #DELAY dsp_en ? next_cnt : cnt;
+     if (b_rst)
+       cnt <= #DELAY 0;
+     else
+       cnt <= #DELAY dsp_en ? next_cnt : cnt;
 
    always @(posedge clk_x)
-     if (rst) rd_adr <= #DELAY 0;
-     else     rd_adr <= #DELAY dsp_en && wrap_cnt ? rd_adr + 1 : rd_adr;
+     if (b_rst)
+       rd_adr <= #DELAY 0;
+     else
+       rd_adr <= #DELAY dsp_en && wrap_cnt ? rd_adr + 1 : rd_adr;
+
 
 
    //-------------------------------------------------------------------------
@@ -400,120 +368,72 @@ module tart_acquire_tb;
    //     DATA-ACQUISITION CONTROL AND READ-BACK.
    //     
    //-------------------------------------------------------------------------
-   wire         overflow, newblock, streamed, accessed, available, switching;
-   wire         aq_enabled, aq_valid, aq_debug, aq_shift, aq_count;
-   wire         vx_enabled, overwrite;
-
-   wire         dsp_cyc, dsp_stb, dsp_we;
-   wire         dsp_ack, dsp_wat, dsp_rty, dsp_err;
-   wire [XSB:0] dsp_blk;
-   wire [7:0]   dsp_dat, dsp_val;
+   wire         aq_enabled;
+   wire         rst_x = b_rst;
 
 
    //-------------------------------------------------------------------------
-   //  Controls data-aquisition, and correlator registers.
-   assign aq_valid = aq_enabled;
-
+   //  Controls raw-data aquisition.
+   //-------------------------------------------------------------------------
    tart_acquire
-     #( .ACCUM(ACCUM),
-        .AXNUM(AXNUM),
+     #( .AXNUM(AXNUM),
         .BBITS(BBITS),
-        .XBITS(XBITS)
-        ) TART_ACQUIRE0
-       (.clk_i(b_clk),
-        .rst_i(rst),
+        .DELAY(DELAY)
+        ) ACQ
+       (
+        .clk_i(b_clk),
+        .rst_i(b_rst),
 
-        .cyc_i(cyc),             // system bus (Wishbone SPEC B4)
-        .stb_i(stb),
-        .we_i (we),
-        .ack_o(ack),
-        .wat_o(wat),
-        .rty_o(rty),
-        .err_o(err),
-        .adr_i(adr),
-        .dat_i(dtx),
-        .dat_o(drx),
+        .clock_x (clk_x),
+        .reset_x (rst_x),
+        .strobe_x(new_x),
+        .signal_x(sig_x),
 
-        .data_ready(ready),
-        .data_request(aq_request),
-        .data_in(data_w),
+        //  Wishbone (SPEC B4) interconnect.
+        .cyc_i    (cyc),
+        .stb_i    (stb),
+        .we_i     (we),
+        .ack_o    (ack),
+        .wat_o    (wat),
+        .rty_o    (rty),
+        .err_o    (err),
+        .adr_i    (adr),
+        .dat_i    (dtx),
+        .dat_o    (drx),
 
-        .spi_busy_i(spi_busy),
+        .io_busy_i(spi_busy),
 
-        .vx_cyc_o(dsp_cyc),      // visibilities read-back bus
-        .vx_stb_o(dsp_stb),
-        .vx_we_o (dsp_we ),
-        .vx_ack_i(dsp_ack),
-        .vx_wat_i(dsp_wat),
-        .vx_rty_i(dsp_rty),
-        .vx_err_i(dsp_err),
-        .vx_adr_o(dsp_blk),
-        .vx_dat_i(dsp_dat),
+        //  Memory controller signals (bus-domain).
+        .mcb_ce_o (cmd_enable),
+        .mcb_wr_o (cmd_write),
+        .mcb_rdy_i(cmd_ready),
+        .mcb_ack_i(data_out_ready),
+        .mcb_adr_o(cmd_address),
+        .mcb_dat_i(data_out),
+        .mcb_dat_o(cmd_data_in),
 
-        .overflow_i (overflow),
-        .newblock_i (newblock),
-        .streamed_i (streamed), // has an entire block finished streaming?
-        .accessed_o (accessed),
-        .available_o(available),
-        .checksum_i (checksum),
-        .blocksize_o(blocksize),
-
-        .vx_enabled_o(vx_enabled),
-        .vx_overwrite_o(overwrite),
-        .vx_stuck_i(stuck),
-        .vx_limp_i (limp),
-
-        .aq_enabled_o(aq_enabled),
-        .aq_valid_i  (aq_valid),
-        .aq_debug_o  (aq_debug),
-        .aq_shift_o  (aq_shift),
-        .aq_count_o  (aq_count),
-        .aq_delay_o  (aq_delay),
-        .aq_adr_i    (25'b0)
+        .enabled_o(aq_enabled),
+        .state_o  (cap_state)
         );
 
 
    //-------------------------------------------------------------------------
-   //  The visibilities are computed by 24 correlators, each with 12x time-
-   //  multiplexing, so that 576 correlations are performed for each antenna
-   //  sample.
-   tart_dsp
-     #( .AXNUM(AXNUM),
-        .ACCUM(ACCUM),
-        .TRATE(TRATE),
-        .TBITS(TBITS),
-        .NREAD(NREAD),
-        .RBITS(FBITS),
-        .XBITS(XBITS),
-        .CBITS(CBITS),
-        .PIPED(1),
-        .CHECK(1),
-        .VIZWR(1),               // TODO: test
-        .DELAY(DELAY)
-        ) TART_DSP
-       (.clk_i(b_clk),
-        .rst_i(rst),
-
-        .clk_x(clk_x),          // correlator-domain signals
-        .vld_x(vld_x),
-        .new_x(new_x),
-        .sig_x(sig_x),
-
-        .cyc_i(cyc),        // Wishbone interface
-        .stb_i(stb),
-        .we_i (we ),
-        .ack_o(ack),
-        .wat_o(wat),
-        .rty_o(rty),
-        .err_o(err),
-        .adr_i(blk),
-        .dat_i(val),
-        .dat_o(dat),
-
-        .sce_i(read_en),        // enable streaming read-back?
-
-        .stuck_o(stuck),        // debug signals
-        .limp_o (limp)
+   //  Fake memory-controller.
+   //-------------------------------------------------------------------------
+   mcb_dummy
+     #( .WIDTH(32), .ABITS(10)
+        ) MCB
+       (
+        .clock_i  (b_clk),
+        .reset_i  (b_rst),
+        .active_o (cmd_ready),
+        .request_i(cmd_enable),
+        .write_i  (cmd_write),
+        .ready_o  (data_out_ready),
+        .address_i(cmd_address[9:0]),
+        .bytes_i  (4'b1111),
+        .data_i   (cmd_data_in),
+        .data_o   (data_out)
         );
 
 

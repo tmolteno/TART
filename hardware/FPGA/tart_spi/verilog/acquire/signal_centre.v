@@ -40,6 +40,7 @@ module signal_centre
     parameter RSB   = RBITS-1,  // MSB of the clock-counter
     parameter RESET = 1,        // enable fast-resets (0/1)?
     parameter DRIFT = 1,        // incremental changes to the phase (0/1)?
+    parameter CYCLE = 1,        // auto-strobing when not centring (0/1)?
 
     //  Spartan 6 specific settings:
     parameter IOB   = 0,        // use IOB-based registers (0/1)?
@@ -51,6 +52,7 @@ module signal_centre
     input          clock_i, // oversampling (by 'RATIO') clock
     input          reset_i, // clears all stored timing info
     input          align_i, // align the inputs while asserted
+    input          cyclic_i,// auto-strobe when 'CYCLE'
     input          drift_i, // incrementally change the phase?
 
     input [MSB:0]  signal_i, // raw signal
@@ -105,6 +107,7 @@ module signal_centre
         .RBITS(RBITS),
         .RESET(RESET),
         .DRIFT(DRIFT),
+        .CYCLE(CYCLE),
         .IOB  (IOB),
         .NOISY(NOISY),
         .DELAY(DELAY)
@@ -112,6 +115,7 @@ module signal_centre
      (  .clock_i  (clock_i),
         .reset_i  (reset_i),
         .align_i  (enable[1]),
+        .cyclic_i (cyclic_i),
         .drift_i  (drift_i),
         .signal_i (signal),
         .signal_o (),

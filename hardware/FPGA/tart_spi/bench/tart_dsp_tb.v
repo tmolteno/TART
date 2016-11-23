@@ -60,6 +60,7 @@ module tart_dsp_tb;
 
 //    parameter COUNT = 3; // count down from:  (1 << COUNT) - 1;
    parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 10; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
 
@@ -67,11 +68,13 @@ module tart_dsp_tb;
 //    parameter NREAD = 48;
    parameter NREAD = 72;
 //    parameter NREAD = 144;
+//    parameter NREAD = 288;
 //    parameter NREAD = 576;
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
    parameter DELAY = `DELAY;       // Simulated combinational delay
+   parameter NOISY = 1;            // display extra debug info
 
 
    //-------------------------------------------------------------------------
@@ -98,21 +101,21 @@ module tart_dsp_tb;
 
    //  DSP settings & signals.
    reg          aq_enabled = 1'b0;
+   reg          read_en = 1'b0;
    wire [MSB:0] blocksize;
    wire [31:0]  checksum;
-   wire         dsp_en, read_en, enabled, newblock, streamed;
+   wire         dsp_en, enabled, newblock, streamed;
    wire         overflow, accessed, available, switched;
-   wire         stuck, limp;
-   wire [XSB:0] bank;
+   wire         dsp_stuck, dsp_limp;
+   wire [XSB:0] dsp_bank;
 
    //  Data memories & signals.
    reg [NSB:0]  data [0:255];
    reg [31:0]   viz = 32'h0;
    reg [4:0]    log_bsize = COUNT[4:0];
-   reg [XSB:0]  vx_bank = {XBITS{1'b0}};
+   reg [XSB:0]  viz_bank = {XBITS{1'b0}};
 
    assign dsp_en  = enabled;
-   assign read_en = vx_bank == READS && !streamed;
 
 
    //-------------------------------------------------------------------------
@@ -146,7 +149,7 @@ module tart_dsp_tb;
    integer      num = 0;
    integer      ptr = 0;
    initial begin : SIM_BLOCK
-      if (COUNT < 7) begin
+      if (COUNT < 8) begin
          $dumpfile ("vcd/dsp_tb.vcd");
          $dumpvars;
       end
@@ -184,7 +187,7 @@ module tart_dsp_tb;
       //----------------------------------------------------------------------
       //  Start the DSP unit.
       $display("%12t: Setting block-size (2^%1d)", $time, log_bsize);
-      $display("%12t: Beginning correlation (bank %1d)", $time, vx_bank);
+      $display("%12t: Beginning correlation (bank %1d)", $time, viz_bank);
       #40 set <= 1; num <= 1; dtx <= {1'b1, 2'b00, log_bsize}; adr <= 2'b11;
       while (!fin) #10;
 
@@ -192,7 +195,7 @@ module tart_dsp_tb;
       //----------------------------------------------------------------------
       //  Fill 'READS' banks with visibilities, then stop.
       $display("%12t: Waiting for %1d banks of visibilities", $time, READS);
-      while (vx_bank < READS) #10;
+      while (viz_bank < READS) #10;
 
       while (bsy) #10;
       $display("%12t: Stopping data-correlation.", $time);
@@ -203,7 +206,7 @@ module tart_dsp_tb;
       //----------------------------------------------------------------------
       //  Read back the visibilities.
       $display("%12t: Waiting for all visibilities to be fetched.", $time);
-      #10 while (bank < READS) #80;
+      #10 while (dsp_bank < READS) #80;
 
 
       //----------------------------------------------------------------------
@@ -220,11 +223,21 @@ module tart_dsp_tb;
       while (1'b1) begin
          while (!newblock) #10;
          while (bsy) #10;
-         #10 $display("%12t: Reading back visibilities (bank %1d)", $time, bank);
+         #10 $display("%12t: Reading back visibilities (bank %1d)", $time, dsp_bank);
          #10 get <= 1; num <= BREAD; adr <= 2'b00;
          while (!fin) #10;
       end
    end // block: SIM_READ
+
+   //  Enable the streaming read-back module whenever there is data, or on
+   //  access.
+   always @(posedge b_clk)
+     if (b_rst || streamed)
+       read_en <= #DELAY 1'b0;
+     else if (newblock || get && adr == 2'b00)
+       read_en <= #DELAY 1'b1;
+     else
+       read_en <= #DELAY read_en;
 
 
    //-------------------------------------------------------------------------
@@ -232,8 +245,8 @@ module tart_dsp_tb;
    //-------------------------------------------------------------------------
    always @(posedge b_clk)
      if (switched) begin
-        $display("%12t: Bank switched (to bank %1d)", $time, vx_bank);
-        vx_bank <= #DELAY vx_bank + 1;
+        $display("%12t: Bank switched (to bank %1d)", $time, viz_bank);
+        viz_bank <= #DELAY viz_bank + 1;
      end
 
 
@@ -246,7 +259,7 @@ module tart_dsp_tb;
 
    always @(posedge b_clk)
      if (streamed)
-       $display("%12t: Block streamed (bank = %2d).", $time, bank);
+       $display("%12t: Block streamed (bank = %2d).", $time, dsp_bank);
 
 
 
@@ -255,8 +268,9 @@ module tart_dsp_tb;
    //  SIMULATED WISHBONE BUS MASTER.
    //  
    //-------------------------------------------------------------------------
-   reg [11:0]  rxd = 0, req = 0;
+   reg [15:0]  rxd = 0, req = 0;
    reg         bx = 0, rd = 0, wr = 0;
+
 
    //-------------------------------------------------------------------------
    //  Initiate bus cycles/transfers.
@@ -286,7 +300,8 @@ module tart_dsp_tb;
    always @(posedge b_clk)
      if (rst || fin)
        req <= #DELAY 1;
-     else if (rd)
+     else if (bx && rd && req != num)
+//      else if (rd)
        req <= #DELAY req + 1;
 
    always @(posedge b_clk)
@@ -413,45 +428,6 @@ module tart_dsp_tb;
        adr_x <= #DELAY dsp_en && wrap_cnt ? nxt_x[31:0] : adr_x;
 
 
-   /*
-   //-------------------------------------------------------------------------
-   //  Generate fake antenna data, from the fake DRAM contents.
-   //-------------------------------------------------------------------------
-   wire [NSB:0] data_w = data[data_index[7:0]];
-   integer      data_index = 0;
-   reg          ready = 0;
-   reg          aq_start = 0, aq_done = 1;
-   wire         spi_busy, aq_request;
-   wire [2:0]   aq_delay;
-
-   always @(posedge b_clk)
-     if (rst)
-       {aq_done, aq_start} <= #DELAY 2'b10;
-     else if (!aq_start && aq_done && aq_enabled)
-       {aq_done, aq_start} <= #DELAY 2'b01;
-     else if (!aq_done && aq_start && aq_enabled)
-       aq_start <= #DELAY 0;
-     else
-       aq_done  <= #DELAY aq_done ? aq_done : !aq_enabled;
-
-   always @(posedge b_clk)
-     if (rst)
-       ready <= #DELAY 0;
-     else if (aq_start || aq_request)
-       ready <= #DELAY 1;
-     else
-       ready <= #DELAY 0;
-
-   always @(posedge b_clk)
-     if (rst)
-       data_index <= #DELAY 0;
-     else if (aq_request)
-       data_index <= #DELAY data_index + 1;
-     else
-       data_index <= #DELAY data_index;
-    */
-
-
 
    //-------------------------------------------------------------------------
    //     
@@ -540,10 +516,51 @@ module tart_dsp_tb;
         .switched_o(switched),
         .checksum_o(checksum),
 
-        .bank_o (bank),
-        .stuck_o(stuck),        // debug signals
-        .limp_o (limp)
+        .bank_o (dsp_bank),
+        .stuck_o(dsp_stuck),        // debug signals
+        .limp_o (dsp_limp)
         );
+
+
+
+   //-------------------------------------------------------------------------
+   //     
+   //     MOAR DEBUGGING STUFF.
+   //     
+   //-------------------------------------------------------------------------
+   parameter RDMAX = BREAD + 4;
+
+   reg                wb_stuck = 1'b0;
+   reg [15:0]         wb_count = 16'h0;
+   wire [16:0]        wb_cnext = wb_count + 1;
+
+
+   //-------------------------------------------------------------------------
+   //  Assert 'wb_stuck' if transfers are taking too long.
+   //-------------------------------------------------------------------------
+   always @(posedge b_clk)
+     if (b_rst || fin) begin
+        wb_stuck <= #DELAY 0;
+        wb_count <= #DELAY 0;
+     end
+     else if (wb_stuck) begin
+        $display("%12t: DSP -> Wishbone bus is stuck", $time);
+        $display("\t\tRXD = %5d\n\t\tREQ = %5d", rxd, req);
+        $display("\t\tCYC = %5x\n\t\tSTB = %5d", cyc, stb);
+        $display("\t\tWE  = %5x\n\t\tACK = %5d", we , ack);
+        $display("\t\tADR = %5x\n\t\tDAT = %5d", adr, dat);
+        $finish;
+     end
+     else if (bsy) begin
+        wb_stuck <= #DELAY RDMAX == wb_count;
+        wb_count <= #DELAY wb_cnext[15:0];
+     end
+
+   always @(posedge b_clk)
+     if ((get || set) && (rd || wr)) begin
+        $display("%12t: Attempting to issue commands while already busy", $time);
+        $finish;
+     end
 
 
 endmodule // tart_dsp_tb

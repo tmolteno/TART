@@ -231,9 +231,15 @@
 `define __NO_DSP_DUPS
 // `define __NO_SDP_DUPS
 
+//----------------------------------------------------------------------------
 //  Reduce latency, but increase combinational delays?
 // `define __USE_DSP_SLOW
 // `define __USE_SDP_SLOW
+
+//----------------------------------------------------------------------------
+//  Force the antenna signal registers into Spartan 6 IOB's?
+// `define __FORCE_SIGNAL_IOBS
+`undef  __FORCE_SIGNAL_IOBS
 
 
 

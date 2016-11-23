@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Mon Nov 21 04:59:31 2016
+[*] Wed Nov 23 00:31:38 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/dsp_tb.vcd"
-[dumpfile_mtime] "Mon Nov 21 04:55:56 2016"
-[dumpfile_size] 96556280
+[dumpfile_mtime] "Wed Nov 23 00:30:11 2016"
+[dumpfile_size] 80067650
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
-[timestart] 0
+[timestart] 12470000
 [size] 2560 1416
 [pos] -1 -1
-*-21.065651 10843000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.649206 14733000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
 [treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.
@@ -44,15 +44,10 @@ tart_dsp_tb.sig_w[23:0]
 @28
 tart_dsp_tb.aq_enabled
 tart_dsp_tb.enabled
-@22
-tart_dsp_tb.bank[3:0]
-@28
 tart_dsp_tb.read_en
 tart_dsp_tb.switched
 tart_dsp_tb.newblock
 tart_dsp_tb.streamed
-@22
-tart_dsp_tb.vx_bank[3:0]
 @1000200
 -System
 @800200
@@ -63,23 +58,20 @@ tart_dsp_tb.cyc
 tart_dsp_tb.stb
 tart_dsp_tb.we
 tart_dsp_tb.ack
+tart_dsp_tb.adr[1:0]
+@29
 tart_dsp_tb.wat
 @22
 tart_dsp_tb.val[7:0]
 tart_dsp_tb.dat[7:0]
 @1000200
 -Bus
-@c00201
--Fetch
 @800200
+-Fetch
 -Xfer
 @28
 tart_dsp_tb.rd
 tart_dsp_tb.wr
-@22
-tart_dsp_tb.req[11:0]
-tart_dsp_tb.rxd[11:0]
-@28
 tart_dsp_tb.bx
 tart_dsp_tb.bsy
 tart_dsp_tb.fin
@@ -100,9 +92,8 @@ tart_dsp_tb.f_cnt[1:0]
 @22
 tart_dsp_tb.f_adr[9:0]
 tart_dsp_tb.f_dat[23:0]
-@1401201
--Fetch
 @1000200
+-Fetch
 -== TOP ==
 @800200
 -DSP Bus

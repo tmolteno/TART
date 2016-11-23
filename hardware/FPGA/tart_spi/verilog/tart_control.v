@@ -59,15 +59,18 @@ module tart_control
     output [MSB:0] dat_o,
 
     input [MSB:0]  status_i,
+    input [MSB:0]  extra_i,
     input          reset_ni,
-    output         reset_o,
-    input [CSB:0]  checksum_i
+    output         reset_o
     );
 
    reg [MSB:0]     dat;
    reg             ack = 1'b0;
-   wire            ack_w, r_stb;
+   wire            stb_w, ack_w, r_stb;
 
+
+   //-------------------------------------------------------------------------
+   //  Wishbone output assignments.
    assign ack_o = ack;
    assign wat_o = 1'b0;         // does not stall
    assign rty_o = 1'b0;         // always completes
@@ -77,26 +80,29 @@ module tart_control
    //  Pipelined transfers generate an ACK for each cycle that STB is
    //  asserted; whereas classic transfers expect STB to be asserted until
    //  an ACK response.
-   assign ack_w = PIPED ? cyc_i && stb_i : cyc_i && stb_i && !ack;
+   assign stb_w = CHECK ? cyc_i && stb_i : stb_i;
+   assign ack_w = PIPED ? stb_w : stb_w && !ack;
 
    //  Reset module address-decoder.
-   assign r_stb = stb_i && adr_i == 2'b11;
+   assign r_stb = stb_w && adr_i == 2'b11;
 
 
    //-------------------------------------------------------------------------
    //  Drive the Wishbone slave's response signals.
+   //-------------------------------------------------------------------------
    always @(posedge clk_i)
-     if (rst_i) ack <= #DELAY 1'b0;
-     else       ack <= #DELAY ack_w;
+     if (rst_i)
+       ack <= #DELAY 1'b0;
+     else
+       ack <= #DELAY ack_w;
 
    //  TODO: Put status and reset onto the same register?
    always @(posedge clk_i)
      if (cyc_i && stb_i && !we_i)
        case (adr_i)
-         0: dat <= #DELAY status_i;
-         1: dat <= #DELAY checksum_i[7:0];
-         2: dat <= #DELAY checksum_i[15:8];
-         3: dat <= #DELAY checksum_i[23:16];
+         2'b00:   dat <= #DELAY status_i;
+         2'h01:   dat <= #DELAY extra_i;
+         default: dat <= #DELAY 8'bx;
        endcase // case (adr_i)
 
 

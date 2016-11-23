@@ -36,10 +36,6 @@
  *    vary if you change 'AXNUM' to any other value;
  *  + the correlators are set to use 12:1 time-multiplexing, so `clk_x` must
  *    be 12x the frequency of the sampling clock;
- *  + the upper 3-bits of the address determine either:
- *     a) one of the six correlator blocks;
- *     b) the ones-counter unit; or
- *     c) the bank of system registers.
  *  + the number of bits in a block's counter corresponds to the maximum size
  *    of the accumulator, because the visibilities are monotone increasing;
  * 
@@ -112,7 +108,7 @@ module tart_dsp
 
     //  DSP-domain inputs.
     input          clk_x, // correlator clock
-    input          vld_x, // signal data is valid
+    input          vld_x, // signal data is valid (TODO: unused)
     input          new_x, // strobes for each new sample
     input [NSB:0]  sig_x, // (oversampled) signal data
 
@@ -133,6 +129,7 @@ module tart_dsp
 
     //  Status output signals.
     output         enabled_o,
+    output         pending_o,
     output         switched_o,
     output         newblock_o,
     output         streamed_o,
@@ -149,7 +146,7 @@ module tart_dsp
    //-------------------------------------------------------------------------
    //  Wishbone (external) interface helper-signals.
    //-------------------------------------------------------------------------
-   reg             ack = 1'b0;
+   reg             ack = 1'b0, viz = 1'b0;
    reg [BSB:0]     dat;
    wire            cyc_w, stb_w, ack_w, fetch, store;
 
@@ -204,37 +201,38 @@ module tart_dsp
    //-------------------------------------------------------------------------
    //  Assignments for the DSP's status-flags.
    //-------------------------------------------------------------------------
-   assign enabled_o   = enabled;
-   assign newblock_o  = newblock;
-   assign streamed_o  = wrapped;
-   assign switched_o  = switched;
-   assign checksum_o  = checksum;
+   assign enabled_o  = enabled;
+   assign pending_o  = available;
+   assign newblock_o = newblock;
+   assign streamed_o = wrapped;
+   assign switched_o = switched;
+   assign checksum_o = checksum;
 
    //  Debug signal assignments.
-   assign overflow_o  = overflow;
-   assign bank_o      = bank;
-   assign stuck_o     = stuck;
-   assign limp_o      = limp;
+   assign overflow_o = overflow;
+   assign bank_o     = bank;
+   assign stuck_o    = stuck;
+   assign limp_o     = limp;
 
    //  Signal-update assignments.
-   assign next        = bank + 1;
+   assign next       = bank + 1;
 
 
    //-------------------------------------------------------------------------
    //  Map the output signals to the system WishBone bus.
    //-------------------------------------------------------------------------
-   assign ack_o     = ack;
-   assign wat_o     = 1'b0;     // never needs to wait
-   assign rty_o     = 1'b0;     // accesses always succeed, so no retries
-   assign err_o     = 1'b0;     // TODO: assert for invalid correlator access?
-   assign dat_o     = dat;
+   assign ack_o      = ack;
+   assign wat_o      = 1'b0;     // never needs to wait
+   assign rty_o      = 1'b0;     // accesses always succeed, so no retries
+   assign err_o      = 1'b0;     // TODO: assert for invalid correlator access?
+   assign dat_o      = dat;
 
    //  Drive the data bus with either visibilities, or system registers.
-   assign cyc_w     = CHECK ? cyc_i : 1'b1;
-   assign stb_w     = cyc_w && stb_i;
-   assign ack_w     = stb_w && adr_i != `DSP_STREAM || viz;
-   assign fetch     = stb_w && !we_i;
-   assign store     = stb_w &&  we_i;
+   assign cyc_w      = CHECK ? cyc_i : 1'b1;
+   assign stb_w      = cyc_w && stb_i;
+   assign ack_w      = stb_w && adr_i != `DSP_STREAM || viz;
+   assign fetch      = stb_w && !we_i;
+   assign store      = stb_w &&  we_i;
 
 
    //-------------------------------------------------------------------------
@@ -244,7 +242,7 @@ module tart_dsp
    assign dsp_stream = sram_b_do;
    assign dsp_status = {available,  accessed, overflow, 1'b0, bank};
    assign dsp_debug  = {    stuck,      limp,                 6'h0};
-   assign dsp_system = {  enabled, overwrite,     1'b0, log_block };
+   assign dsp_system = {  enabled, overwrite,     1'b0,  log_block};
 
 
 
@@ -261,7 +259,7 @@ module tart_dsp
        ack <= #DELAY ack_w;
 
    //-------------------------------------------------------------------------
-   //  Aqusition & visibilities register reads.
+   //  Acquisition & visibilities register reads.
    always @(posedge clk_i)
      if (stb_w)
        case (adr_i)
@@ -276,30 +274,13 @@ module tart_dsp
    //-------------------------------------------------------------------------
    //  Wishbone (SPEC B4) bus for reading back visibilities.
    //-------------------------------------------------------------------------
-   reg            viz = 1'b0;
-
    //  At the beginning of each bus cycle, see if this is a register-access,
    //  or a visibilities read-back.
    always @(posedge clk_i)
-     if (rst_i && RESET || !sce_i)
+     if (rst_i && RESET)
        viz <= #DELAY 1'b0;
      else
        viz <= #DELAY stb_w && adr_i == `DSP_STREAM;
-
-   //-------------------------------------------------------------------------
-   //  When using correlators in SDP-mode, there are `2^4 == 16` banks of
-   //  stored visibilities that can be read back. Every time a bank has been
-   //  streamed out of this device (via the SPI interface), the bank-counter
-   //  is incremented.
-   always @(posedge clk_i)
-     if (rst_i)
-       bank <= #DELAY {XBITS{1'b0}};
-`ifdef __USE_SETTABLE_BLOCK_COUNTER
-     else if (upd_bnk)
-       bank <= #DELAY new_bnk;
-`endif
-     else
-       bank <= #DELAY wrapped ? next[XSB:0] : bank;
 
 
    
@@ -308,12 +289,11 @@ module tart_dsp
    //  MANAGE SYSTEM FLAGS.
    //
    //-------------------------------------------------------------------------
-   //  Aqusition & visibilities register writes.
+   //  Acquisition & visibilities register writes.
    always @(posedge clk_i)
      if (rst_i) begin
         dsp_set   <= #DELAY 1'b0;
         dsp_clr   <= #DELAY 1'b1;
-        enabled   <= #DELAY 1'b0;
         upd_bnk   <= #DELAY 1'b0;
         overwrite <= #DELAY 1'b0;
      end
@@ -395,6 +375,20 @@ module tart_dsp
 `endif
    end
 
+   //-------------------------------------------------------------------------
+   //  When using correlators in SDP-mode, there are `2^4 == 16` banks of
+   //  stored visibilities that can be read back. Every time a bank has been
+   //  streamed out of this device (via the SPI interface), the bank-counter
+   //  is incremented.
+   always @(posedge clk_i)
+     if (rst_i)
+       bank <= #DELAY {XBITS{1'b0}};
+`ifdef __USE_SETTABLE_BLOCK_COUNTER
+     else if (upd_bnk)
+       bank <= #DELAY new_bnk;
+`endif
+     else
+       bank <= #DELAY wrapped ? next[XSB:0] : bank;
 
    //-------------------------------------------------------------------------
    //  Monitor access to each new bank.
@@ -406,9 +400,10 @@ module tart_dsp
      else
        accessed <= #DELAY accessed || viz;
 
+   //-------------------------------------------------------------------------
    //  Monitor when a new bank becomes available.
    always @(posedge clk_i)
-     if (rst_i)
+     if (rst_i && RESET)
        available <= #DELAY 1'b0;
      else if (newblock)
        available <= #DELAY 1'b1;

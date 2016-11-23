@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : bench/wb_fetch_tb.v
+ * Module      : bench/wb_transfer_tb.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -20,9 +20,12 @@
  *    outstanding requests, can be used;
  *  + finish/test support for `wat_i`, `rty_i`, and `err_i`;
  * 
+ * Changelog:
+ *  + 22/10/2016  --  initial file;
+ * 
  */
 
-module wb_fetch_tb;
+module wb_transfer_tb;
 
    parameter WIDTH = 32;        // Number of bits of a block
    parameter MSB   = WIDTH-1;
@@ -275,4 +278,4 @@ module wb_fetch_tb;
         );
 
 
-endmodule // wb_fetch_tb
+endmodule // wb_transfer_tb

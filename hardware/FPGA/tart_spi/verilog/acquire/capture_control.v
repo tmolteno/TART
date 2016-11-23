@@ -64,7 +64,7 @@ module capture_control
     input [SSB:0]  select_b_i, // select antenna for phase measurement
     output [SSB:0] select_x_o,
     output         locked_b_o, // alignment-unit has lock?
-    output         locked_x_i,
+    input          locked_x_i,
     output [PSB:0] phase_b_o, // measured phase
     input [PSB:0]  phase_x_i,
     output         invalid_b_o, // alignment-unit has lost lock?
