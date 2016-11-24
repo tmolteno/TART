@@ -53,6 +53,14 @@
  * data-flow (both register settings, and signal data) is controlled by the
  * 'tart_wishbone' core.
  * 
+ * The above top-level modules are available at:
+ *  + verilog/spi/spi_slave_wb.v
+ *  + verilog/acquire/tart_capture.v
+ *  + verilog/acquire/tart_acquire.v
+ *  + verilog/correlator/tart_dsp.v
+ *  + verilog/tart_control.v
+ *  + verilog/SDRAM_Controller_v.v
+ * 
  * 
  * Changelog:
  *  + ??/??/2013  --  initial file;
@@ -102,8 +110,9 @@ module tart
     //  Wishbone mode settings/parameters:
     parameter ASYNC    = 0,     // asynchronous WB transactions (0/1)?
     parameter PIPED    = 1,     // pipelined BURST transactions (0/1)?
-    parameter RESET    = 1,     // fast-reset enable (0/1)?
-    parameter CHECK    = 1,     // bus-signal sanity-checking (0/1)?
+    parameter RESET    = 0,     // fast-reset enable (0/1)?
+//     parameter CHECK    = 1,     // bus-signal sanity-checking (0/1)?
+    parameter CHECK    = 0,     // bus-signal sanity-checking (0/1)?
     parameter VIZWR    = 0,     // enable writes to viz-buffer (0/1)?
 
     //  Simulation-only parameters:
@@ -274,9 +283,14 @@ module tart
    assign led = 1'b0;
 `else
    reg          blink = 1'b0;
+   reg [23:0]   counter = 0;
 
 //    assign led = aq_state >= 2; // asserted when data can be read back
-   assign led = blink;
+//    assign led = blink;
+   assign led = counter[23];
+
+   always @(posedge clk_x)
+     if (new_x) counter <= #DELAY counter + 1;
 
    always @(posedge bus_clk)
      if (vx_newblock) blink <= #DELAY ~blink;
@@ -397,9 +411,9 @@ module tart
    tart_wishbone
      #(  .XBITS(2),
          .ASYNC(1),
-         .RESET(1),
-         .CHECK(1),
-         .PIPED(1),
+         .RESET(RESET),
+         .PIPED(PIPED),
+         .CHECK(CHECK),
          // supported peripherals:
          .CAPEN(1),
          .ACQEN(1),
@@ -489,8 +503,8 @@ module tart
    spi_slave_wb
      #( .WIDTH(BBITS),
         .ASYNC(1),
-        .PIPED(1),
-        .CHECK(1)
+        .PIPED(PIPED),
+        .CHECK(CHECK)
         ) SPI0
        (
         .clk_i     (bus_clk),
@@ -544,9 +558,9 @@ module tart
         .RBITS(TBITS),
         .CYCLE(1),
         // Wishbone mode settings
-        .RESET(1),
-        .PIPED(1),
-        .CHECK(1),
+        .RESET(RESET),
+        .PIPED(PIPED),
+        .CHECK(CHECK),
         // fake-data options:
         .MULTI(MULTI),
         .RNG  (RNG),
@@ -608,8 +622,9 @@ module tart
      #(  .AXNUM    (ANTENNAE),
          .ABITS    (SDRAM_ADDRESS_WIDTH),
          .BBITS    (BBITS),
-         .PIPED    (1),         // Wishbone mode settings
-         .CHECK    (1),
+         .PIPED    (PIPED),     // Wishbone mode settings
+         .RESET    (0),
+         .CHECK    (CHECK),
          .DELAY    (DELAY)
          ) ACQUIRE
        ( .clock_i  (bus_clk),
@@ -669,9 +684,11 @@ module tart
         .RBITS(RBITS),
         .XBITS(XBITS),           // visibilities-bank address bit-width
         .CBITS(CBITS),           // correlator address bit-width
+        //  Wishbone settings:
         .PIPED(PIPED),           // Wishbone pipelined mode?
         .CHECK(CHECK),           // bus sanity-checking?
         .VIZWR(VIZWR),           // bidirectional streaming access?
+        //  Simulation-only options:
         .DELAY(DELAY)            // simulation-only settings
         ) DSP
        (//--------------------------------------------------------------------

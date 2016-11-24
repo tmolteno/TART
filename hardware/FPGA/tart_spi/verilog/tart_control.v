@@ -101,7 +101,7 @@ module tart_control
      if (cyc_i && stb_i && !we_i)
        case (adr_i)
          2'b00:   dat <= #DELAY status_i;
-         2'h01:   dat <= #DELAY extra_i;
+         2'b01:   dat <= #DELAY extra_i;
          default: dat <= #DELAY 8'bx;
        endcase // case (adr_i)
 

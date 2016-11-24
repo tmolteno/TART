@@ -16,12 +16,10 @@
  * NOTE:
  * 
  * TODO:
- *  + add a "latency" parameter, so that the most efficient method, to track
- *    outstanding requests, can be used;
- *  + finish/test support for `wat_i`, `rty_i`, and `err_i`;
+ *  + STUB -- only a copy & paste of another TB;
  * 
  * Changelog:
- *  + 22/10/2016  --  initial file;
+ *  + 23/11/2016  --  initial file;
  * 
  */
 

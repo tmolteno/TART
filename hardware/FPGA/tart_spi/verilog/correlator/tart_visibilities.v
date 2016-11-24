@@ -182,6 +182,7 @@ module tart_visibilities
          .CBITS(CBITS),         // correlator address bit-width
          .BSIZE(BSIZE),         // words stored per correlator
          .BBITS(BBITS),         // word address bit-width
+         .CHECK(CHECK),         // use extra-checking of WB signals (0/1)?
          .DELAY(DELAY)
          ) BUF0
        ( .clk_i  (clk_i),

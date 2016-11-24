@@ -26,7 +26,8 @@ module tart_capture_tb;
    //  SIMULATION SETTINGS.
    //
    //-------------------------------------------------------------------------
-   parameter ALIGN = 0;
+   parameter ALIGN = 1;
+   parameter CYCLE = 1;
    parameter RATIO = 12;
    parameter RBITS = 4;
    parameter RMAX  = RATIO-1;
@@ -124,15 +125,16 @@ module tart_capture_tb;
       #DE b_rst = 1'b0;
 
       //-------------------------------------------------------------------------
-      $display("%12t:\tEnabling data-capture, and with fixed delay of 5 ticks.", $time);
-      #DE wr = 1; adr = 2'b00; dtx = 8'h85;
+      $display("%12t:\tEnabling data-capture, and selecting antenna 4.", $time);
+      #DE wr = 1; adr = 2'b11; dtx = 8'h84;
       #DB while (!done) #DB;
 
+      /*
       //-------------------------------------------------------------------------
-      $display("%12t:\tCalibrating antenna 4, and setting the update-mode to DRIFT.", $time);
-//       #DE wr = 1; adr = 2'b01; dtx = 8'h84; // align antenna 0x04
-      #DE wr = 1; adr = 2'b01; dtx = 8'hC4; // align + drift antenna 0x04
+      $display("%12t:\tSetting fixed delay of 5 ticks, and update-mode to DRIFT.", $time);
+      #DE wr = 1; adr = 2'b00; dtx = 8'hC5; // align + drift antenna 0x04
       #DB while (!done) #DB;
+       */
 
       #720; #720;
       #720; #720;
@@ -233,6 +235,7 @@ module tart_capture_tb;
         .CDATA(0),
         // use additional data-capture and alignment circuitry?
         .ALIGN(ALIGN),
+        .CYCLE(CYCLE),
         .RATIO(RATIO),
         .RBITS(RBITS),
         // simulation-only settings:

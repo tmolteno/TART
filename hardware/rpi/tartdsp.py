@@ -60,12 +60,48 @@ class TartSPI:
     time.sleep(duration)
 
 
-  ##--------------------------------------------------------------------------
+  ##------------------------------------------------------------------------##
+  ##  TART register read/write commands.
+  ##------------------------------------------------------------------------##
+  def setbyte(self, reg, val, noisy=False):
+    reg = int(reg) & 0x7f
+    self.spi.xfer([self.WRITE_CMD | reg, val])
+    if noisy:
+      self.getbyte(reg, noisy)
+    return True
+
+  def getbyte(self, reg, noisy=False):
+    reg = int(reg) & 0x7f
+    res = self.spi.xfer([reg] + [0x0]*self.LATENCY)[self.LATENCY]
+    if noisy:
+      print '%s' % self.show_status(reg, res)
+    return res
+
+  def setbit(self, reg, bit, noisy=False):
+    val = self.getbyte(reg, noisy) | (1 << bit)
+    self.setbyte(reg, val, noisy)
+    if noisy:
+      self.getbyte(reg, noisy)
+    return True
+
+  def clrbit(self, reg, bit, noisy=False):
+    val = self.getbyte(reg, noisy) & ~(1 << bit)
+    self.setbyte(reg, val, noisy)
+    if noisy:
+      self.getbyte(reg, noisy)
+    return True
+
+  def getbit(self, reg, bit, noisy=False):
+    val = self.getbyte(reg, noisy) & (1 << bit)
+    return val != 0
+
+
+  ##------------------------------------------------------------------------##
   ##  TART system commands.
-  ##--------------------------------------------------------------------------
+  ##------------------------------------------------------------------------##
   def reset(self, noisy=False):
     '''Issue a global reset to the TART hardware.'''
-    ret = self.spi.xfer([self.WRITE_CMD | self.SPI_RESET, 0x01])
+    ret = self.setbyte(self.SPI_RESET, 0x01)
     if noisy:
       print tobin(ret)
       print ' reset issued.'
@@ -87,12 +123,10 @@ class TartSPI:
             self.NEWLINE,
             self.SYS_STATS, self.SPI_STATS] #, self.SPI_RESET]
     for reg in regs:
-      ret = self.spi.xfer([reg] + [0x0]*self.LATENCY)
-      val = ret[self.LATENCY]
+      val = self.getbyte(reg)
       vals.append(val)
       if noisy:
         print self.show_status(reg, val)
-#         print '0x%02x: %s' % (reg, tobin(ret))
     return vals
 
   def show_status(self, reg, val):
@@ -107,7 +141,7 @@ class TartSPI:
       # Capture registers:
       self.TC_CENTRE: 'TC_CENTRE:\tcentre = %s, drift = %s, delay = %d' % (bits[7], bits[6], val & 0x0f),
       self.TC_STATUS: 'TC_STATUS:\tinvalid = %s, locked = %s, phase = %d' % (bits[7], bits[6], val & 0x0f),
-      self.TC_DEBUG:  'TC_DEBUG: \tdebug = %s, count = %s, shift = %s, #antenna = %d' % (bits[7], bits[1], bits[0], val & 0x1f),
+      self.TC_DEBUG:  'TC_DEBUG: \tdebug = %s, count = %s, shift = %s, #antenna = %d' % (bits[7], bits[6], bits[5], val & 0x1f),
       self.TC_SYSTEM: 'TC_SYSTEM:\tenabled = %s, source = %d' % (bits[7], val & 0x01f),
 
       # Acquisition registers:
@@ -145,44 +179,49 @@ class TartSPI:
       val = source & 0x1f
       flg = 'DISABLED'
 
-    ret = self.spi.xfer([self.WRITE_CMD | self.TC_SYSTEM] + [val])
+    ret = self.setbyte(self.TC_SYSTEM, val)
     if noisy:
       print ' capture %s' % flg
+    self.pause()
     return ret
 
   def debug(self, on=True, shift=False, count=False, noisy=False):
     '''Read the debug register, and update the debug-mode flag, and then write back the new debug register value.'''
     if on:
-      val = self.spi.xfer([self.TC_DEBUG] + [0x0]*self.LATENCY)[self.LATENCY]
+      val = self.getbyte(self.TC_DEBUG)
       val = val | 0x80
       # Set counter mode:
       if shift:
         val = val | 0x20
       if count:
         val = val | 0x40
-      self.pause()
-      ret = self.spi.xfer([self.WRITE_CMD | self.TC_DEBUG, val])
+      ret = self.setbyte(self.TC_DEBUG, val | 0x01)
       if noisy:
-        print tobin(ret)
         print ' debug now ON'
     else:
-      val = self.spi.xfer([self.TC_DEBUG] + [0x0]*self.LATENCY)
-      val = val[self.LATENCY] & 0x7F
-      self.pause()
-      ret = self.spi.xfer([self.WRITE_CMD | self.TC_DEBUG, val])
+      val = self.clrbit(self.TC_DEBUG, 7, noisy)
       if noisy:
-        print tobin(ret)
         print ' debug now OFF'
     self.pause()
     return 1
 
-  def centre(self, centre=True, drift=False, delay=0, noisy=False):
+  def centre(self, on=True, drift=False, delay=0, noisy=False):
     '''Control the clock-recovery and centring unit.'''
-    return -1
+    if on:
+      val = 0x80 | (delay & 0x0f)
+      if drift:
+        val |= 0x40
+      self.setbyte(self.TC_CENTRE, val, noisy)
+    else:
+      self.clrbit(self.TC_CENTRE, 7, noisy)
+    return True
+
+  def signal_locked(self):
+    return self.getbit(self.TC_STATUS, 6)
 
   def read_sample_delay(self, noisy=False):
     '''Read back the data sampling delays.'''
-    ret = self.spi.xfer([self.TC_CENTRE] + [0x0]*self.LATENCY)
+    ret = self.getbyte(self.TC_CENTRE, noisy)
     val = ret[self.LATENCY] & 0x0f
     if noisy:
       print tobin(ret)
@@ -192,32 +231,32 @@ class TartSPI:
   def set_sample_delay(self, phase=0, noisy=False):
     '''Read the sampling-delay register, and update the delay, and then write back, the new register value.'''
     if (phase < 12 and phase >= 0):
-      val = self.spi.xfer([self.TC_CENTRE] + [0x0]*self.LATENCY)
-      val = val[self.LATENCY] & 0xF8 | int(phase)
-      self.pause()
-      ret = self.spi.xfer([self.WRITE_CMD | self.TC_CENTRE, val])
+      val = self.getbyte(self.TC_CENTRE, noisy)
+      val = (val & 0xf0) | (int(phase) & 0x0f)
+      ret = self.setbyte(self.TC_CENTRE, val, noisy)
       self.pause()
       if noisy:
-        print tobin(ret)
-      return 1
+        self.getbyte(self.TC_CENTRE, True)
+        # print tobin(ret)
+      return True
     else:
       if noisy:
         print 'WARNING: phase value (%d) not within [0,5]' % phase
-      return 0
+      return False
 
   def read_phase_delay(self, noisy=False):
     '''Read back the current signal/antenna phase-delay.'''
-    ret = self.spi.xfer([self.TC_STATUS] + [0x0]*self.LATENCY)
-    val = ret[self.LATENCY] & 0x0f
+    ret = self.getbyte(self.TC_STATUS, noisy)
+    val = ret & 0x0f
     if noisy:
-      print tobin(ret)
+      print tobin([ret])
     self.pause()
     return val
 
 
-  ##--------------------------------------------------------------------------
+  ##------------------------------------------------------------------------##
   ##  Data acquisition settings, and streaming read-back.
-  ##--------------------------------------------------------------------------
+  ##------------------------------------------------------------------------##
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
     old = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
@@ -347,11 +386,28 @@ if __name__ == '__main__':
   parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
   parser.add_argument('--acquire', action='store_true', help='use real antenna data')
   parser.add_argument('--source', default=0, type=int, help='antenna source to calibrate')
-#   parser.add_argument('--capture', action='store_true', help='enable the data-capture unit')
+  parser.add_argument('--capture', action='store_true', help='just enable the data-capture unit')
+  parser.add_argument('--centre', action='store_true', help='enable the clock-recovery unit')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)
 
+
+  ##------------------------------------------------------------------------##
+  ##  Just enable data-capture and quit, if given option '--capture'.
+  if args.capture:
+    print "\nSetting TART's data-capture mode."
+    tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter, noisy=args.verbose)
+    tart.capture(source=args.source, noisy=args.verbose)
+    tart.centre(args.centre, noisy=not args.verbose)
+    if args.verbose:
+      tart.read_status(True)
+    tart.close()
+    exit(0)
+
+
+  ##------------------------------------------------------------------------##
+  ##  Read status and then reset.
   print "\nTART hardware checker. Copyright Max Scheel, 2016 ."
   if args.status or args.verbose:
     print "\nStatus flags:"
@@ -369,6 +425,9 @@ if __name__ == '__main__':
       tart.close()
       exit(0)
 
+
+  ##------------------------------------------------------------------------##
+  ##  Monitor the visibilities, or perform just a single correlation?
   if args.monitor or args.correlate:
     print "\nLoading permutation vector"
     pp = tart.load_permute()
@@ -380,6 +439,7 @@ if __name__ == '__main__':
 
     print "Setting capture registers:"
     tart.capture(on=True, noisy=args.verbose)
+    tart.centre(args.centre, noisy=args.verbose)
 
     print "Setting up correlators (block-size = 2^%d):" % args.blocksize
     tart.start(args.blocksize, True)

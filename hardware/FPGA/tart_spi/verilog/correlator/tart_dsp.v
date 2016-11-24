@@ -258,6 +258,7 @@ module tart_dsp
      else
        ack <= #DELAY ack_w;
 
+
    //-------------------------------------------------------------------------
    //  Acquisition & visibilities register reads.
    always @(posedge clk_i)
@@ -292,9 +293,11 @@ module tart_dsp
    //  Acquisition & visibilities register writes.
    always @(posedge clk_i)
      if (rst_i) begin
-        dsp_set   <= #DELAY 1'b0;
-        dsp_clr   <= #DELAY 1'b1;
-        upd_bnk   <= #DELAY 1'b0;
+        if (RESET) begin
+           dsp_set   <= #DELAY 1'b0;
+           dsp_clr   <= #DELAY 1'b1;
+           upd_bnk   <= #DELAY 1'b0;
+        end
         overwrite <= #DELAY 1'b0;
      end
      else if (store)
@@ -326,7 +329,7 @@ module tart_dsp
    //  Enable the visibilities unit when a write is performed to the control-
    //  register, and disable it upon overflow, if overwrite mode is disabled.
    always @(posedge clk_i)
-     if (rst_i && RESET || overflow && !overwrite || dsp_clr)
+     if (rst_i || overflow && !overwrite || dsp_clr)
        enabled <= #DELAY 1'b0;
      else if (dsp_set)
        enabled <= #DELAY 1'b1;
@@ -421,7 +424,7 @@ module tart_dsp
    (* NOMERGE = "TRUE" *)
    reg [MSB:0]  block_x = {ACCUM{1'b0}}, block_s = {ACCUM{1'b0}};
    (* NOMERGE = "TRUE" *)
-   reg          enable_x = 1'b0, enable_s = 1'b0, cce_x = 1'b0;
+   reg          enable_x = 1'b0, enable_s = 1'b0, dsp_en_x = 1'b0;
 
    always @(posedge clk_x) begin
       block_s  <= #DELAY blocksize;
@@ -434,7 +437,7 @@ module tart_dsp
 
       // enable the correlators only once new data arrives:
       if (new_x)
-        cce_x  <= #DELAY enable_x;
+        dsp_en_x <= #DELAY enable_x;
    end
 
 
@@ -558,6 +561,7 @@ module tart_dsp
          .CBITS(NBITS),         // correlator-count bit-width
          .BSIZE(BSIZE),         // number of words/correlator
          .BBITS(DBITS),         // bit-width of word address
+         .CHECK(CHECK),         // use extra-checking of WB signals (0/1)?
          .DELAY(DELAY)
          ) VIZ
        ( .clk_i(clk_i),
@@ -617,7 +621,7 @@ module tart_dsp
          .DDUPS(0),             // no DSP duplicate address regs
          .SDUPS(1),             // use SDP duplicate address regs
          .PIPED(PIPED),         // use parent Wishbone mode
-         .CHECK(1),             // on bus, so do checking
+         .CHECK(CHECK),         // on bus, so do checking
          .DELAY(DELAY)
          ) COR
        ( .clk_x(clk_x),         // 12x data-rate sampling clock
@@ -637,7 +641,7 @@ module tart_dsp
 
          .switching_o(switched), // asserts on bank-switch (bus domain)
 
-         .ce_x_i  (cce_x),     // begins correlating once asserted
+         .ce_x_i  (dsp_en_x),  // begins correlating once asserted
          .sums_x_i(block_x),   // number of samples per visibility sum
          .data_x_i(sig_x),     // antenna data
          .swap_x_o(swp_x),     // bank-switch strobe

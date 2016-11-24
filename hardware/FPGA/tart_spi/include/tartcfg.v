@@ -238,8 +238,8 @@
 
 //----------------------------------------------------------------------------
 //  Force the antenna signal registers into Spartan 6 IOB's?
-// `define __FORCE_SIGNAL_IOBS
-`undef  __FORCE_SIGNAL_IOBS
+`define __FORCE_SIGNAL_IOBS
+// `undef  __FORCE_SIGNAL_IOBS
 
 
 

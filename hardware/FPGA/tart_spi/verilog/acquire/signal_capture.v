@@ -142,7 +142,7 @@ module signal_capture
    always @(posedge clock_i)
      if (reset_i)
        count <= #DELAY RZERO;
-     else if (align_i)
+     else if (align_i || cyc_w)
        count <= #DELAY count_next;
      else
        count <= #DELAY count;

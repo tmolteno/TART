@@ -156,7 +156,8 @@ module tart_correlator
    //    correlator read, so not needed for the standard TART configuration;
    //    therefore, use `SEQRD == 1`, unless doing something weird.
    always @(posedge clk_i)
-     if (stb_w) {sel1, sel0} <= #DELAY {sel0, sel_w};
+     if (stb_w)
+       {sel1, sel0} <= #DELAY {sel0, sel_w};
 
    //  Capture data from the SRAM MUX to an output register.
    always @(posedge clk_i)

@@ -253,7 +253,7 @@ module tart_acquire
    //  Increment the current antenna-data index, and prefetch more data as
    //  needed.
    always @(posedge clock_i)
-     if (reset_i)
+     if (reset_i && RESET)
        data_sent <= #DELAY 1'b0;
      else
        data_sent <= #DELAY wrap_index && send;
@@ -270,7 +270,7 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  The MCB is only active once the raw-data buffer has been filled.
    always @(posedge clock_i)
-     if (reset_i)
+     if (reset_i && RESET)
        active <= #DELAY 1'b0;
      else if (cap_state > 2)
        active <= #DELAY 1'b1;

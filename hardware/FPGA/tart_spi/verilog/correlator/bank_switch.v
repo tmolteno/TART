@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/bank_switch.v
+ * Module      : verilog/correlator/bank_switch.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -16,6 +16,7 @@
  * NOTE:
  * 
  * TODO:
+ *  + check the CDC for bank-switching;
  * 
  */
 
@@ -78,10 +79,12 @@ module bank_switch
 
    //-------------------------------------------------------------------------
    //  Synchronise the bank-switching signal to the bus domain.
+   //-------------------------------------------------------------------------
+   //  TODO: Is this OK?
    always @(posedge clk_x)
      if (rst_i || frame_i) sw_x <= #DELAY 1'b0;
-     else if (sw)           sw_x <= #DELAY 1'b1;
-     else                   sw_x <= #DELAY sw_x;
+     else if (sw)          sw_x <= #DELAY 1'b1;
+     else                  sw_x <= #DELAY sw_x;
 
    always @(posedge clk_x)
      if (rst_i) sw_d <= #DELAY 0;

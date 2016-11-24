@@ -38,10 +38,21 @@ TIMESPEC TSb_to_e=FROM "GRP_B" TO "GRP_E" 10.0ns DATAPATHONLY;
 
 
 ##
+##  Signal-capture & synchroniser registers.
+##
+NET "CAPTURE/sig_x_iob<*>" TNM_NET="SIGIOBs";
+NET "CAPTURE/sig_x_fd0<*>" TNM_NET="SIGFD0s";
+NET "CAPTURE/sig_x_fd1<*>" TNM_NET="SIGFD1s";
+TIMESPEC TSiobs=FROM "SIGIOBs" TO "SIGFD0s" 2.0ns DATAPATHONLY;
+TIMESPEC TSregs=FROM "SIGFD0s" TO "SIGFD1s" 2.0ns DATAPATHONLY;
+
+
+##
 ##  Place the data-capture unit in the upper, right-hand corner.
 ##
 # INST "CAPTURE/FAKE" AREA_GROUP="fake";
 # AREA_GROUP "fake" RANGE=SLICE_X12Y32:SLICE_X23Y61;
+
 
 
 ##############################################################################

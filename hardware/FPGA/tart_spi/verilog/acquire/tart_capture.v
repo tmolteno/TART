@@ -39,7 +39,7 @@
  *    external clock, the phase relationship is unknown (due to the quirky
  *    Spartan 6 DCM's), thus asynchronous domain-crossing techniques must be
  *    used;
- *  + the `ALIGN` parameter selects whether to oversample the antenna
+ *  + the 'ALIGN' parameter selects whether to oversample the antenna
  *    signals, and perform clock-recovery, if enabled (1) -- or instead to
  *    cross the clock-domain (to the correlator domain) using an asynchronous
  *    FIFO (0);
@@ -81,14 +81,13 @@ module tart_capture
     parameter CDATA = 24'h0,    // constant data value
 
     //  Data-alignment options:
-    parameter ALIGN = 0,        // (re-)align captured data?
-    parameter FSIZE = 2,        // 2^FSIZE asynchronous FIFO entries
+    parameter ALIGN = 1,        // (re-)align captured data?
+    parameter DRIFT = 1,        // incrementally change the phase (0/1)?
+    parameter CYCLE = 1,        // auto-strobe when not centring
     parameter RATIO = 12,       // oversampling ratio?
     parameter RMAX  = RATIO-1,  // maximum clock-counter value
     parameter RBITS = 4,        // bit-width of clock-counter
     parameter RSB   = RBITS-1,  // MSB of clock-counter
-    parameter DRIFT = 1,        // incrementally change the phase (0/1)?
-    parameter CYCLE = 1,        // auto-strobe when not centring
 
     //  Wisbone mode/settings:
     parameter RESET = 1,        // enable fast-resets (0/1)?
@@ -133,32 +132,46 @@ module tart_capture
 
 
    //-------------------------------------------------------------------------
-   //  Antenna-data routing signals:
-   //  TODO: Make sure that both are placed within the IOB's.
+   //
+   //  ANTENNA-DATA ROUTING SIGNALS.
+   //
+   //-------------------------------------------------------------------------
 `ifdef __FORCE_SIGNAL_IOBS
+   //  TODO: Make sure that the first set of registers are placed within the
+   //    IOB's.
    (* IOB = "TRUE", NOMERGE = "TRUE" *)
-   reg [MSB:0]     sig_x_iob0;
-   (* IOB = "TRUE", NOMERGE = "TRUE" *)
-   reg [MSB:0]     sig_x_iob1;
+   reg [MSB:0]     sig_x_iob;
+
 `else
+   //  Just prevent these registers from being converted to Xilinx shift-
+   //  register primitives.
    (* NOMERGE = "TRUE" *)
-   reg [MSB:0]     sig_x_iob0, sig_x_iob1;
-`endif
+   reg [MSB:0]     sig_x_iob;
+`endif // !`ifdef __FORCE_SIGNAL_IOBS
 
-   (* MAXDELAY = "1.0 ns" *)
-   wire            sig_x_iob_w = sig_x_iob0;
+   //-------------------------------------------------------------------------
+   //  An additional layer of registers, used as synchronisers.
+   (* NOMERGE = "TRUE" *)
+   reg [MSB:0]     sig_x_fd0, sig_x_fd1;
 
+   //-------------------------------------------------------------------------
+   //  Fake-data signal registers.
    (* NOMERGE = "TRUE" *)
    reg [MSB:0]     sig_x_dbg0, sig_x_dbg1;
 
+
+
    //-------------------------------------------------------------------------
-   //  Cross-domain, capture control-signals:
+   //
+   //  CROSS-DOMAIN, CAPTURE CONTROL-SIGNALS.
+   //
+   //-------------------------------------------------------------------------
    wire            reset_e;
 
    //-------------------------------------------------------------------------
    //  Phase-measurement unit signals:
    (* NOMERGE = "TRUE" *)
-   reg             write_x = 1'b0;
+   reg             valid_x = 1'b0;
    wire            capture_x, centre_x, drift_x;
    wire            strobe_x, locked_x, invalid_x, restart_x;
    wire [MSB:0]    signal_w;
@@ -180,8 +193,11 @@ module tart_capture
    wire [MSB:0]    fake_e;
 
 
+
    //-------------------------------------------------------------------------
-   //  Wishbone bus-mapped read-back registers.
+   //
+   //  WISHBONE BUS-MAPPED REGISTERS.
+   //
    //-------------------------------------------------------------------------
    wire [7:0]      tc_system, tc_centre, tc_debug, tc_status; // WB regs
    wire [4:0]      tc_number = AXNUM;
@@ -199,8 +215,11 @@ module tart_capture
    wire            cyc_w, stb_w, fetch, store;
 
 
+
    //-------------------------------------------------------------------------
-   //  Wishbone-related signal assignments.
+   //
+   //  WISHBONE-RELATED SIGNAL ASSIGNMENTS.
+   //
    //-------------------------------------------------------------------------
    //  Wishbone-mapped register assignments:
    assign tc_centre = {en_centre, tc_drift, 2'b0, tc_delay[3:0]};
@@ -227,10 +246,8 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Correlator-domain signal assignments.
    //-------------------------------------------------------------------------
-   assign enable_x_o = locked_x;
-//    assign strobe_x_o = strobe_x;
-//    assign signal_x_o = signal_w;
-   assign strobe_x_o = write_x;
+   assign enable_x_o = valid_x;
+   assign strobe_x_o = strobe_x;
    assign signal_x_o = signal_x;
 
 
@@ -267,17 +284,27 @@ module tart_capture
          default:     dat <= #DELAY 8'bx;
        endcase // case (adr_i)
 
+
    //-------------------------------------------------------------------------
    //  Enable/restart the signal-capture, centring unit, and set the antenna/
    //  source phase-delay.
+   //-------------------------------------------------------------------------
    //  TODO: AUTO-mode, which continually monitors (and adjusts) the phase?
    always @(posedge clock_i)
-     if (reset_i && RESET)
-       {en_centre, tc_drift, tc_delay} <= #DELAY {1'b0, 1'bx, {RBITS{1'b0}}};
+     if (reset_i)
+       en_centre <= #DELAY 1'b0;
      else if (store && adr_i == `CAP_CENTRE)
-       {en_centre, tc_drift, tc_delay} <= #DELAY {dat_i[7:6], dat_i[RSB:0]};
+       en_centre <= #DELAY dat_i[7];
      else
-       {en_centre, tc_drift, tc_delay} <= #DELAY {en_centre, tc_drift, tc_delay};
+       en_centre <= #DELAY en_centre;
+
+   always @(posedge clock_i)
+     if (reset_i && RESET)
+       {tc_drift, tc_delay} <= #DELAY {1'b0, {RBITS{1'b0}}};
+     else if (store && adr_i == `CAP_CENTRE)
+       {tc_drift, tc_delay} <= #DELAY {dat_i[6], dat_i[RSB:0]};
+     else
+       {tc_drift, tc_delay} <= #DELAY {tc_drift, tc_delay};
 
    //  Pulse the restart if enable of an active unit is requested.
    always @(posedge clock_i)
@@ -291,22 +318,30 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Control the debug unit, and its modes/settings.
    always @(posedge clock_i)
-     if (reset_i && RESET)
+     if (reset_i)
        {en_debug, tc_count, tc_shift} <= #DELAY 3'h0;
      else if (store && adr_i == `CAP_DEBUG)
-       {en_debug, tc_count, tc_shift} <= #DELAY {dat_i[7], dat_i[1:0]};
+       {en_debug, tc_count, tc_shift} <= #DELAY dat_i[7:5];
      else
        {en_debug, tc_count, tc_shift} <= #DELAY {en_debug, tc_count, tc_shift};
 
    //-------------------------------------------------------------------------
    //  Control the raw-data capture unit.
    always @(posedge clock_i)
-     if (reset_i && RESET)
-       {en_capture, tc_select} <= #DELAY {1'b0, {SBITS{1'b0}}};
+     if (reset_i)
+       en_capture <= #DELAY 1'b0;
      else if (store && adr_i == `CAP_SYSTEM)
-       {en_capture, tc_select} <= #DELAY {dat_i[7], dat_i[SSB:0]};
+       en_capture <= #DELAY dat_i[7];
      else
-       {en_capture, tc_select} <= #DELAY {en_capture, tc_select};
+       en_capture <= #DELAY en_capture;
+
+   always @(posedge clock_i)
+     if (reset_i && RESET)
+       tc_select <= #DELAY {SBITS{1'b0}};
+     else if (store && adr_i == `CAP_SYSTEM)
+       tc_select <= #DELAY dat_i[SSB:0];
+     else
+       tc_select <= #DELAY tc_select;
 
 
 
@@ -323,8 +358,11 @@ module tart_capture
    //  TODO: Check post PAR, to see the actual placement & routing.
    always @(posedge clock_x)
      begin
+        // capture the antennae signal:
+        sig_x_iob <= #DELAY signal_e_i;
+
         // synchronise the antennae signal:
-        {sig_x_iob1, sig_x_iob0} <= #DELAY {sig_x_iob_w, signal_e_i};
+        {sig_x_fd1, sig_x_fd0} <= #DELAY {sig_x_fd0, sig_x_iob};
 
         // synchronise the fake/debug signal:
         {sig_x_dbg1, sig_x_dbg0} <= #DELAY {sig_x_dbg0, fake_e};
@@ -343,12 +381,15 @@ module tart_capture
      begin
         // select the signal source (fake or real), to be fed into the phase-
         // shifter:
-        source_x <= #DELAY debug_x ? sig_x_dbg1 : sig_x_iob1;
+        source_x <= #DELAY debug_x ? sig_x_dbg1 : sig_x_fd1;
 
         // register the phase-shifter output, and this then feeds into the
         // block SRAM for the raw-data acquisition core:
-        signal_x <= #DELAY signal_w;
-        write_x  <= #DELAY strobe_x;
+//         signal_x <= #DELAY signal_w;
+        if (strobe_x) begin
+           signal_x <= #DELAY signal_w;
+           valid_x  <= #DELAY locked_x;
+        end
      end
 
 
