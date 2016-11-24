@@ -57,7 +57,9 @@
 //   a) condition the external, data-sampling clock;
 //   b) generate the 6x system bus clock; and,
 //   c) synthesise the 12x correlator clock.
-`define __USE_DCM_CLKGEN
+`undef __USE_DCM_CLKGEN
+// `define __USE_DCM_CLKGEN
+
 
 //----------------------------------------------------------------------------
 //  Sufficient for acquisition only.

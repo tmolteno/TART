@@ -30,6 +30,7 @@
  *   11 ||  ENABLED  | OVERWRITE |   1'b0   |         BLOCK SIZE         ||
  *      -------------------------------------------------------------------
  * 
+ * By default, the DSP/visibilities unit has address 7'b100_00xx.
  * 
  * NOTE:
  *  + currently specialised for a 24 antenna setup, so your mileage will

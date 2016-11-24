@@ -33,6 +33,7 @@
  *      -------------------------------------------------------------------
  *          (R/W)        (MCB, and RO)              (Acquisition, and RO)
  * 
+ * By default, the raw-data acquisition unit has address 7'b010_00xx.
  * 
  * NOTE:
  *  + supports both classic and pipelined transfers;
@@ -320,7 +321,7 @@ module tart_acquire
    //  NOTE: This is mostly just a wrapper around the original raw-data
    //    acquisition functionality from 2013 , but with more attention paid to
    //    CDC issues.
-   raw_capture
+   raw_acquire
      #( .AXNUM(AXNUM),          // number of antennae?
         .ABITS(ABITS),          // MCB address bit-width?
         .RESET(RESET),          // reset-to-zero enable (0/1)?

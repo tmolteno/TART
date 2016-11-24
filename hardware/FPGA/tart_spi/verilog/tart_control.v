@@ -14,16 +14,33 @@
  * interconnect.
  * 
  * Has system registers for:
- *   00  --  status register;
- *   01  --  extra status-flags;
- *   10  --  miscellaneous register;
- *   11  --  reset register;
+ *   2'b00  --  status register;
+ *   2'b01  --  extra status-flags;
+ *   2'b10  --  reserved/miscellaneous register; and
+ *   2'b11  --  reset register,
+ * 
+ * and these each have the bit-fields show below.
+ * 
+ * 
+ * REGISTERS:
+ *  Reg#   7          6          5        4       3      2    1    0
+ *      -------------------------------------------------------------------
+ *   00 ||  VIZ_EN  | PENDING  | CAP_EN | DEBUG | AQ_EN |    AQ_STATE    ||
+ *      -------------------------------------------------------------------
+ *   01 || OVERFLOW | UNDERRUN |              5'h00              | BUSY  ||
+ *      -------------------------------------------------------------------
+ *   10 ||                           RESERVED                            ||
+ *      -------------------------------------------------------------------
+ *   11 ||                          7'h00                        | RESET ||
+ *      -------------------------------------------------------------------
+ * 
+ * By default, the DSP/visibilities unit has address 7'b100_00xx.
  * 
  * NOTE:
- *  + supports both classic and pipelined transfers;
+ *  + supports both classic and pipelined transfers, depending on the value
+ *    of the 'PIPED' parameter;
  * 
  * TODO:
- *  + upgrade to Wishbone SPEC B4;
  * 
  */
 

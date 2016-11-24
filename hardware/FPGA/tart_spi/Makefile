@@ -33,9 +33,6 @@ PINOUT=${PINOUT_STEM}-$(shell echo ${TARGET} | cut -d- -f1,2).ucf
 TARGET=xc6slx9-tqg144-2
 
 #TARGET=xcr3128xl-vq100-10
-#TARGET=xcr3064xl-pc44-10
-#TARGET=xcr3064xl-vq100-10
-#TARGET=xcr3128xl-tq144-10
 #TARGET=xc2s30-tq144-5
 #TARGET=xc2s400e-ft256-7
 #TARGET=xc2v3000-ff1152-6
@@ -44,11 +41,8 @@ TARGET=xc6slx9-tqg144-2
 # TARGET=xc3s1000-ft256-4
 # TARGET=xc3s1000-fg456-4
 
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/patrick/bucket/patrick/Xilinx/ISE_DS/ISE/bin/lin64
-export XILINX=/home/patrick/bucket/patrick/Xilinx/ISE_DS_14.7/14.7/ISE_DS/ISE/bin/lin64
-# export PATH=$PATH:/${XILINX}
 # export XILINX=/usr/local/Xilinx
-# LIB_PATH=..
+export XILINX=/home/patrick/bucket/patrick/Xilinx/ISE_DS_14.7/14.7/ISE_DS/ISE/bin/lin64
 
 
 ##--------------------------------------------------------------------------##
@@ -70,8 +64,11 @@ XIL_FILES=${XIL}/MUX8.v ${XIL}/RAM32X6_SDP.v ${XIL}/RAMB8X32_SDP.v ${XIL}/RAMB16
 SPI=${RTL}/spi
 SPI_FILES=${SPI}/spi_slave_wb.v ${SPI}/spi_layer.v
 
+CAP=${RTL}/capture
+CAP_FILES=${CAP}/tart_capture.v ${CAP}/capture_control.v ${CAP}/signal_capture.v ${CAP}/signal_centre.v ${CAP}/fake_telescope.v
+
 ACQ=${RTL}/acquire
-ACQ_FILES=${ACQ}/tart_capture.v ${ACQ}/capture_control.v ${ACQ}/signal_capture.v ${ACQ}/signal_centre.v ${ACQ}/raw_capture.v ${ACQ}/dram_prefetch.v ${ACQ}/tart_acquire.v ${ACQ}/fifo_control.v ${ACQ}/block_buffer.v ${ACQ}/fake_telescope.v
+ACQ_FILES=${ACQ}/tart_acquire.v ${ACQ}/raw_acquire.v ${ACQ}/dram_prefetch.v ${ACQ}/fifo_control.v ${ACQ}/block_buffer.v
 
 DSP=${RTL}/correlator
 DSP_FILES=${DSP}/tart_dsp.v ${DSP}/tart_correlator.v ${DSP}/correlator_block.v ${DSP}/tart_visibilities.v ${DSP}/control.v ${DSP}/block_DSP.v ${DSP}/block_SDP.v ${DSP}/correlate_cos_sin.v ${DSP}/correlate_cos_sin_DSP.v ${DSP}/correlator_DSP.v ${DSP}/correlator_SDP.v ${DSP}/fake_hilbert.v ${DSP}/rmw_address_unit.v ${DSP}/bank_switch.v
@@ -86,7 +83,7 @@ SIM=${DIR}/bench
 ##--------------------------------------------------------------------------##
 ##  File & top-level groups.
 ##--------------------------------------------------------------------------##
-COMMON_FILES=${RTL}/tart.v ${RTL}/tart_dcm.v ${RTL}/tart_wishbone.v ${RTL}/tart_control.v ${RTL}/SDRAM_Controller_v.v ${LIB_FILES} ${XIL_FILES} ${WB4_FILES} ${SPI_FILES} ${ACQ_FILES} ${DSP_FILES}
+COMMON_FILES=${RTL}/tart.v ${RTL}/tart_dcm.v ${RTL}/tart_wishbone.v ${RTL}/tart_control.v ${RTL}/SDRAM_Controller_v.v ${LIB_FILES} ${XIL_FILES} ${WB4_FILES} ${SPI_FILES} ${CAP_FILES} ${ACQ_FILES} ${DSP_FILES}
 
 XFILES=${COMMON_FILES}
 IFILES=${COMMON_FILES} ${SIM}/correlator/tart_dsp_tb.v
@@ -133,7 +130,7 @@ NGDBUILD_EXTRAS=-uc ${FLOOR}
 
 # FPGA Only
 # MAP_EXTRAS= -r -timing -cm ${OPT_MODE}
-MAP_EXTRAS= -r 4 -timing -mt 2 -logic_opt on -global_opt ${OPT_MODE}
+MAP_EXTRAS= -w -r 4 -timing -mt 2 -logic_opt on -global_opt ${OPT_MODE}
 PAR_EXTRAS=
 BITGEN_EXTRAS=
 
@@ -248,10 +245,10 @@ prom:
 	${XILINX}/promgen -w -u 0 ${X_PREFIX}.bit -p mcs
 
 
-.PHONY: clean
+# .PHONY: clean
 clean:
 	@rm -rf demo.s
-	@rm -rf ${X_PREFIX}_dir ${X_PREFIX}.* _* *.srp *.lso tmperr.err icarus.out
+	@rm -rf ${X_LABEL}_dir ${X_LABEL}.* ${X_PREFIX}.* ${BUILD}/_* *.srp *.lso tmperr.err icarus.out
 	@md5sum Makefile > make.md5
 
 clean_test:
@@ -272,7 +269,7 @@ icarus: clean_test ${XFILES}
 #########################################################
 # Used both for CPLD and FPGA
 
-${X_PREFIX}.prj : 
+${X_LABEL}.prj : 
 	@echo '`define __${PART}_${PACKAGE} 1'  > ${X_LABEL}_target.v
 	@echo '`define __xilinx 1'  >>  ${X_LABEL}_target.v
 	@rm -f ${X_LABEL}.prj
@@ -283,23 +280,17 @@ ${X_PREFIX}.prj :
 
 xst: clean_test ${FFILES} ${X_LABEL}.ngc
 
-${X_PREFIX}.ngc : ${X_LABEL}.prj ${FFILES} ${PINOUT}
+${X_LABEL}.ngc : ${X_LABEL}.prj ${FFILES} ${PINOUT}
 	@echo 'set -tmpdir ${X_LABEL}_dir/xst -xsthdpdir ${X_LABEL}_dir/xst'> ${X_LABEL}.scr
 	@echo 'run -ifn ${X_LABEL}.prj -ifmt mixed -top $(TOP_MODULE) -ofn ${X_LABEL}.ngc -p ${PART}-${PACKAGE}-${SPEED_GRADE}' >> ${X_LABEL}.scr
 	@echo '-opt_mode ${OPT_MODE} -opt_level ${XST_OPT_LEVEL}' ${XST_EXTRAS} >> ${X_LABEL}.scr
 	. ${X_SETTINGS} ; xst -ifn ${X_LABEL}.scr
 
-${X_PREFIX}_%.srp: ${X_LABEL}.prj ${FFILES} ${PINOUT}
+${X_LABEL}_%.srp: ${X_LABEL}.prj ${FFILES} ${PINOUT}
 	@echo 'set -tmpdir ${X_LABEL}_dir/xst -xsthdpdir ${X_LABEL}_dir/xst'> ${X_LABEL}_$(*F).scr
 	@echo 'run -ifn ${X_LABEL}.prj -ifmt mixed -top $(*F) -ofn ${X_LABEL}_$(*F).ngc -p ${PART}-${PACKAGE}-${SPEED_GRADE}' >> ${X_LABEL}_$(*F).scr
 	@echo '-opt_mode ${OPT_MODE} -opt_level ${XST_OPT_LEVEL}' ${XST_EXTRAS} >> ${X_LABEL}_$(*F).scr
 	. ${X_SETTINGS} ; xst -ifn ${X_LABEL}_$(*F).scr
-
-# ${X_PREFIX}_%.srp: ${X_LABEL}.prj ${FFILES} ${PINOUT}
-# 	@echo 'set -tmpdir ${X_LABEL}_dir/xst -xsthdpdir ${X_LABEL}_dir/xst'> ${X_LABEL}_$(*F).scr
-# 	@echo 'run -ifn ${X_LABEL}.prj -ifmt mixed -top $(*F) -ofn ${X_LABEL}_$(*F).ngc -p ${PART}-${PACKAGE}-${SPEED_GRADE}' >> ${X_LABEL}_$(*F).scr
-# 	@echo '-opt_mode area -opt_level ${XST_OPT_LEVEL}' ${XST_EXTRAS} >> ${X_LABEL}_$(*F).scr
-# 	. ${X_SETTINGS} ; xst -ifn ${X_LABEL}_$(*F).scr
 
 resources: $(patsubst %,${X_LABEL}_%.srp,${RSRC_REPORT})
 	@for x in ${RSRC_REPORT}; do echo MODULE: $$x ; head -$$[15+`grep -n "Device utilization summary" $(patsubst %,${X_LABEL}_%.srp,$$x) | grep -v ")" | cut -d: -f1`] $(patsubst %,${X_LABEL}_%.srp,$$x) | tail -15 | grep "Number of" | grep -v IOBs | grep -v GCLKs ; echo "" ; done

@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/fake_telescope.v
+ * Module      : verilog/capture/fake_telescope.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -10,12 +10,11 @@
  * Stability   : Experimental
  * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
- * Generates either incremental or pseudorandom values, for filling the TART
- * SDRAM with debug data.
- * 
- * Changelog:
- *  + ??/??/2013  --  initial file;
- *  + 22/08/2016  --  added MFSR data-generation;
+ * Generates either incrementing, pseudorandom, constant, or toggling values,
+ * for purposes including:
+ *  + filling the TART SDRAM with debug data;
+ *  + training the clock-recovery unit; and
+ *  + testing the correlators.
  * 
  * NOTE:
  *  + MFSR stands for Multiple-Feedback Shift Register;
@@ -51,13 +50,25 @@ module fake_telescope
     );
 
 
+   //-------------------------------------------------------------------------
+   //  Feedback shift-registers can be good sources of pseudorandom data.
    wire [31:0]     mfsr_new;
    reg [31:0]      mfsr_reg = 32'h1;
 
-   reg [MSB:0]     data_inc = RNG, data_mux = START;
-   wire [MSB:0]    tick_data, fake_data;
+   //-------------------------------------------------------------------------
+   //  Toggle every cycle (which is good for training the clock-recovery
+   //  unit).
+   reg [MSB:0]     flip_reg = CDATA;
+
+   //-------------------------------------------------------------------------
+   //  Standard up-counters should give predictable correlator outputs.
+   reg [MSB:0]     data_inc = RNG;
    wire [WIDTH:0]  next_data;
 
+   //-------------------------------------------------------------------------
+   //  Signals used to generate outputs.
+   wire [MSB:0]    tick_data, fake_data;
+   reg [MSB:0]     data_mux = START;
    reg             valid_r = 1'b0, valid_s = 1'b0;
 
 
@@ -83,17 +94,21 @@ module fake_telescope
         valid_s  <= #DELAY valid_r;
      end
 
+   //-------------------------------------------------------------------------
    //  Compute the incremented values.
    always @(posedge clock_i)
      if (reset_i) begin
         data_inc <= #DELAY START;
         mfsr_reg <= #DELAY 32'h1;
+        flip_reg <= #DELAY CDATA;
      end
      else if (enable_i) begin
         data_inc <= #DELAY next_data[MSB:0];
         mfsr_reg <= #DELAY mfsr_new;
+        flip_reg <= #DELAY ~flip_reg;
      end
 
+   //-------------------------------------------------------------------------
    //  Select the data-source.
    always @(posedge clock_i)
      if (valid_r)
@@ -101,7 +116,7 @@ module fake_telescope
          2'b00: data_mux <= #DELAY CDATA;
          2'b01: data_mux <= #DELAY mfsr_reg;
          2'b10: data_mux <= #DELAY data_inc;
-         2'b11: data_mux <= #DELAY data_mux;
+         2'b11: data_mux <= #DELAY flip_reg;
        endcase // case ({count_i, shift_i})
 
 

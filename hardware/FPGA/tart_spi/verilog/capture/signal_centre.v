@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/acquire/signal_centre.v
+ * Module      : verilog/capture/signal_centre.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -14,7 +14,7 @@
  * phase-shift, which could then be used for aligning multiple signals.
  * 
  * NOTE:
- *  + `RATIO` is the oversampling frequency ratio;
+ *  + 'RATIO' is the oversampling-frequency ratio;
  * 
  * TODO:
  *  + parameterised number of MUX stages;
@@ -140,4 +140,4 @@ module signal_centre
      {sig1, sig0} <= #DELAY {sig0, sig_w};
 
 
-endmodule // capture
+endmodule // signal_centre

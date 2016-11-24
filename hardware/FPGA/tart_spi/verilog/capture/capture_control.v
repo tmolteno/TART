@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/acquire/capture_control.v
+ * Module      : verilog/capture/capture_control.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -28,6 +28,7 @@
  * 
  * TODO:
  *  + setup a bunch of FROM/TO constraints for CDC;
+ *  + place each synchroniser within the same BEL?
  * 
  */
 

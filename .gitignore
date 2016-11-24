@@ -8,12 +8,6 @@ __pycache__/
 # Backup source files
 *~
 
-# Icarus Verilog and related binaries & data
-*.out
-*.vcd
-*.gtkw
-*.md5
-
 # Distribution / packaging
 .Python
 env/
@@ -61,3 +55,42 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+
+# Icarus Verilog and related binaries & data
+*.out
+*.vcd
+*.gtkw
+*.md5
+
+# Xilinx synthesis-generated stuff
+hardware/FPGA/tart_spi/_x*
+tart*.bgn
+tart*.bld
+tart*.lso
+tart*.drc
+tart*.ngc
+tart*.ncd
+tart*.ngd
+tart*.ngr
+tart*.ngm
+tart*.bit
+tart*.map
+tart*.mrp
+tart*.xrpt
+tart*.twr
+tart*.twx
+tart*.pad
+tart*.par
+tart*.psr
+tart*.xst
+tart*.xpi
+tart*.pcf
+tart*.prj
+tart*.syr
+tart*.stx
+hardware/FPGA/tart_spi/*.html
+hardware/FPGA/tart_spi/*.xml
+hardware/FPGA/tart_spi/ipcore_dir/
+hardware/FPGA/tart_spi/iseconfig/
+hardware/FPGA/tart_spi/xlnx_auto_0_xdb/
+hardware/FPGA/tart_spi/xst/

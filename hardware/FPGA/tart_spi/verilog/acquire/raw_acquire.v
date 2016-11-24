@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : verilog/acquire/raw_capture.v
+ * Module      : verilog/acquire/raw_acquire.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -28,7 +28,7 @@
 
 `include "tartcfg.v"
 
-module raw_capture
+module raw_acquire
   #(//  Bit-width parameters:
     parameter AXNUM = 24,       // number of antennae
     parameter MSB   = AXNUM-1,  // MSB of antenna signal
@@ -147,4 +147,4 @@ module raw_capture
 `endif // !`ifdef __USE_ACQUISITION
 
 
-endmodule // raw_capture
+endmodule // raw_acquire

@@ -61,6 +61,12 @@
  *  + verilog/tart_control.v
  *  + verilog/SDRAM_Controller_v.v
  * 
+ * The default address ranges for the SPI slaves are:
+ *  + 7'b000_00xx -- signal-capture unit;
+ *  + 7'b010_00xx -- raw-data acquisition unit;
+ *  + 7'b100_00xx -- DSP/visibilities unit; and
+ *  + 7'b110_00xx -- (system) control unit.
+ * 
  * 
  * Changelog:
  *  + ??/??/2013  --  initial file;
@@ -185,7 +191,6 @@ module tart
    //
    //-------------------------------------------------------------------------
    (* PERIOD = "10.18 ns" *) wire fpga_clk;
-   (* PERIOD = "10.18 ns" *) wire rx_clk;
    (* PERIOD = "5.091 ns" *) wire clk_x;
    (* KEEP   = "TRUE"     *) wire reset;
 
@@ -316,11 +321,11 @@ module tart
    tart_dcm TART_DCM0
      ( .clk_pin(rx_clk_16),     // 16.368 MHZ
        .clk_rst(1'b0),
-       .clk(rx_clk_16_buf),     // 16.368 MHz buffered
+       .clk_ext(rx_clk_16_buf), // 16.368 MHz buffered
+       .clk6x  (fpga_clk),      // 16.368x6  =  98.208 MHz
+       .clk12x (clk_x),         // 16.368x12 = 196.416 MHz
        .reset_n(reset_n),
-       .status_n(status_n),
-       .clk6x(fpga_clk),        // 16.368x6  =  98.208 MHz
-       .clk12x(clk_x)           // 16.368x12 = 196.416 MHz
+       .status_n()
        );
 `endif // !__USE_OLD_CLOCKS
 
