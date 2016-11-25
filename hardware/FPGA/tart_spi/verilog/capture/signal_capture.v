@@ -50,7 +50,7 @@ module signal_capture
     input          reset_i, // (sample domain) reset
 
     input          align_i, // (sample domain) core enable
-    input          cyclic_i,// strobe every 'TRATE' ticks?
+    input          cycle_i, // strobe every 'TRATE' ticks?
     input          drift_i, // not useful when calculating statistics
     output         ready_o,
     output [RSB:0] phase_o,
@@ -100,7 +100,7 @@ module signal_capture
    assign samples = {d_reg, d_src};
 
    //  Internal, combinational conditionals.
-   assign cyc_w = CYCLE && cyclic_i && !align_i;
+   assign cyc_w = CYCLE && cycle_i;
    assign stb_w = cyc_w || align_i && locked;
    assign rdy_w = stb_w && count == HALF;
    assign vld_w = count >= RATIO-3 && count < RATIO+2;
@@ -131,6 +131,18 @@ module signal_capture
    //  Capture within an IOB's register, and use two samples for edge
    //  detection.
    //-------------------------------------------------------------------------
+   reg             enable = 1'b0;
+
+   always @(posedge clock_i)
+     if (reset_i)
+       enable <= #DELAY 1'b0;
+     else if (align_i && count_wrap)
+       enable <= #DELAY 1'b1;
+     else if (!align_i && count_wrap)
+       enable <= #DELAY 1'b0;
+     else
+       enable <= #DELAY enable;
+
    always @(posedge clock_i)
      if (align_i)
        {d_reg, d_sig, d_iob} <= #DELAY {samples[HSB:0], signal_i, signal_i};

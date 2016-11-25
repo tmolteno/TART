@@ -99,7 +99,8 @@ module tart_capture
     parameter NOISY = 0,        // display extra debug info?
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
-    input          clock_e, // external clock
+    input          clock_e, // post-DCM external clock
+
     input          clock_x, // capture clock
     output         reset_x, // capture-domain reset signal
     input          clock_i, // bus clock
@@ -133,6 +134,13 @@ module tart_capture
 
 
    //-------------------------------------------------------------------------
+   //  External-clock-domain, reference-signal synchronisers.
+   //-------------------------------------------------------------------------
+   (* NOMERGE = "TRUE" *)
+   reg [MSB:0]     ref_e_fd1, ref_e_fd0;
+
+
+   //-------------------------------------------------------------------------
    //
    //  ANTENNA-DATA ROUTING SIGNALS.
    //
@@ -161,7 +169,6 @@ module tart_capture
    reg [MSB:0]     sig_x_dbg0, sig_x_dbg1;
 
 
-
    //-------------------------------------------------------------------------
    //
    //  CROSS-DOMAIN, CAPTURE CONTROL-SIGNALS.
@@ -177,6 +184,7 @@ module tart_capture
    wire            strobe_x, locked_x, invalid_x, restart_x;
    wire [MSB:0]    signal_w;
    wire [SSB:0]    select_x;
+   wire [AXNUM:0]  source_w;
 
    //  NOTE: 'NOMERGE' constraint prevents these signals from being pulled
    //    into SRL primitives.
@@ -250,6 +258,8 @@ module tart_capture
    assign enable_x_o = valid_x;
    assign strobe_x_o = strobe_x;
    assign signal_x_o = signal_x;
+
+   assign source_w   = {ref_e_fd1, source_x};
 
 
    //-------------------------------------------------------------------------
@@ -393,6 +403,26 @@ module tart_capture
      end
 
 
+   //-------------------------------------------------------------------------
+   //  Capture & oversample a reference signal, and from the external clock
+   //  domain.
+   //-------------------------------------------------------------------------
+   reg ref_e = 1'b0, new_e_x = 1'b0;
+
+   //  Toggle a register at the external-clock rate, to simulate a signal to
+   //  use as a reference for clock-recovery.
+   always @(posedge clock_e)
+     ref_e <= #DELAY ~ref_e;
+
+   //  Synchronise a simulated signal, as a reference.
+   always @(posedge clock_x)
+     {ref_e_fd1, ref_e_fd0} <= #DELAY {ref_e_fd0, ref_e};
+
+   //  Strobe at each new sample.
+   always @(posedge clock_x)
+     new_e_x <= #DELAY ref_e_fd1 ^ ref_e_fd0;
+
+
 `ifndef __RELEASE_BUILD   
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for testing & debugging.
@@ -426,7 +456,7 @@ module tart_capture
    //    clock).
    (* AREA_GROUP = "centre" *)
    signal_centre
-     #( .WIDTH(AXNUM),
+     #( .WIDTH(AXNUM+1),
         .SBITS(SBITS),
         .RATIO(RATIO),
         .RBITS(RBITS),
@@ -440,9 +470,9 @@ module tart_capture
      (  .clock_i  (clock_x),    // 12x oversampling clock
         .reset_i  (reset_x),
         .align_i  (centre_x),   // compute the alignment shift?
-        .cyclic_i (1'b1),       // cycle continually (if 'CYCLE')
+        .start_i  (new_e_x),    // once started, auto-strobe (if 'CYCLE')
         .drift_i  (drift_x),    // incrementally change the phase?
-        .signal_i (source_x),   // from external/fake data MUX
+        .signal_i (source_w),   // from external/fake data MUX
         .select_i (select_x),   // select antenna to measure phase of
         .strobe_o (strobe_x),   // mark the arrival of a new value
         .locked_o (locked_x),   // signal is stable & locked

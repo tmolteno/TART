@@ -52,7 +52,7 @@ module signal_centre
     input          clock_i, // oversampling (by 'RATIO') clock
     input          reset_i, // clears all stored timing info
     input          align_i, // align the inputs while asserted
-    input          cyclic_i,// auto-strobe when 'CYCLE'
+    input          start_i, // auto-strobe once started (and 'CYCLE')
     input          drift_i, // incrementally change the phase?
 
     input [MSB:0]  signal_i, // raw signal
@@ -60,14 +60,14 @@ module signal_centre
 
     output         strobe_o, // strobes for each new output-value
     output         locked_o, // valid data is being emitted
-    output [RSB:0] phase_o, // phase-shift required to centre signal
+    output [RSB:0] phase_o,  // phase-shift required to centre signal
     output         invalid_o, // lost tracking of the signal
     input          restart_i  // clear the error flag
     );
 
 
    wire [TSB:0]    signal_w;
-   reg             signal;
+   reg             signal, cycle = 1'b0;
    reg [JSB:0]     stage2;
    reg [QSB:0]     select;
    reg [1:0]       enable;
@@ -95,6 +95,18 @@ module signal_centre
 
 
    //-------------------------------------------------------------------------
+   //  Activate the auto-strobe.
+   //-------------------------------------------------------------------------
+   //  NOTE: The 'start_i' determines the reference signal phase, that all
+   //    subsequent phases are measured against.
+   always @(posedge clock_i)
+     if (reset_i)
+       cycle <= #DELAY 1'b0;
+     else if (start_i && CYCLE)
+       cycle <= #DELAY 1'b1;
+
+
+   //-------------------------------------------------------------------------
    //  Use a signal-capture block to measure the phase of one channel of the
    //  input signals.
    //-------------------------------------------------------------------------
@@ -115,7 +127,7 @@ module signal_centre
      (  .clock_i  (clock_i),
         .reset_i  (reset_i),
         .align_i  (enable[1]),
-        .cyclic_i (cyclic_i),
+        .cycle_i  (cycle),
         .drift_i  (drift_i),
         .signal_i (signal),
         .signal_o (),

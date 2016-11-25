@@ -311,7 +311,7 @@ module tart
 `ifdef __USE_OLD_CLOCKS
    tart_clk_generator clknetwork
      (
-      .CLKIN(rx_clk_16),        // 16.368 MHz
+      .CLKIN  (rx_clk_16),      // 16.368 MHz
       .CLKOUT0(rx_clk_16_buf),  // 16.368 MHz buffered
       .CLKOUT1(fpga_clk),       // 16.368x6 = 98.208 MHz
       .reset_n(reset_n)

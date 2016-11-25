@@ -1,3 +1,8 @@
+#
+# TODO:
+#  + most of this has been moved to the capture folder, so this Makefile needs
+#    rebuilding;
+#
 IVC=iverilog
 INC=../../include/
 OPT=-D__icarus -Wall -I$(INC)

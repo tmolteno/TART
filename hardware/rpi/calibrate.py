@@ -6,7 +6,6 @@ import tartdsp
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=32, type=float, help='Specify the SPI CLK speed (in MHz)')
-  parser.add_argument('--bramexp', default=11, type=int, help='exponent of bram depth')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data')
   parser.add_argument('--blocksize', default=24, type=int, help='exponent of correlator block-size')
   parser.add_argument('--status', action='store_true', help='just query the device')
@@ -37,7 +36,30 @@ if __name__ == '__main__':
     print 'Using an MFSR for fake signal data.'
     args.shifter = True
 
-  tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter,
+             noisy=args.verbose)
+
+
+  ##------------------------------------------------------------------------##
+  ##  See how long it takes to lose lock.
+  ##------------------------------------------------------------------------##
+  if args.monitor:
+    tart.capture(on=True, source=args.source, noisy=args.verbose)
+    tart.centre (on=True, drift=True, noisy=False)
+
+    ticks = 0
+    while tart.signal_locked():
+      if ticks % 1000 == 0 and args.verbose:
+        tart.read_status(True)
+      ticks = ticks + 1
+      if ticks % 100 == 0 and args.verbose:
+        print ' ticks =\t%5d\r' % ticks
+      tart.pause()
+
+    print 'Lock-ticks = %d (%g seconds)' % (ticks, ticks*0.005)
+    exit(0)
+
+
   if args.verbose:
     tart.read_status(True)
 
