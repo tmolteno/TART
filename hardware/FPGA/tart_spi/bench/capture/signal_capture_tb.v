@@ -34,6 +34,7 @@ module signal_capture_tb;
    //  Clock & reset signals.
    //-------------------------------------------------------------------------
    reg clk_x = 1'b1, clk_e = 1'b1, b_clk = 1'b1, reset = 1'b0;
+   wire n_clk = ~b_clk;
 
    always #CLKE clk_e <= ~clk_e; // external signal clock
    always #CLKB b_clk <= ~b_clk; // bus clock
@@ -49,6 +50,9 @@ module signal_capture_tb;
    //  Clock recovery signals;
    reg align = 1'b0, cycle = 1'b0, drift = 1'b0, retry = 1'b0;
    wire d, q, ready, locked, invalid;
+   wire error, valid, start;
+   wire [3:0] phase;
+   wire [3:0] delta;
 
 
    //-------------------------------------------------------------------------
@@ -97,7 +101,7 @@ module signal_capture_tb;
    //  Generate fake jitter and offsets, for the input signal.
    //-------------------------------------------------------------------------
    signal_stagger
-     #( .PHASE_JITTER(2),
+     #( .PHASE_JITTER(1),
         .PHASE_OFFSET(2),
         .CYCLE_JITTER(0)
         ) STAG
@@ -138,6 +142,96 @@ module signal_capture_tb;
         .signal_i(d),
         .signal_o(q)
         );
+
+
+
+`ifdef __DO_NOT_USE_YODUT
+   //-------------------------------------------------------------------------
+   //
+   //  OTHER DEVICE UNDER TEST (ODUT).
+   //
+   //-------------------------------------------------------------------------
+   wire start, valid, error;
+   wire [3:0] phase;
+   wire [4:0] delta;
+
+   signal_phase
+     #( .RATIO  (12),
+        .RBITS  (4),
+        .RESET  (1),
+        .DRIFT  (1),
+        .CYCLE  (1),
+        .NOISY  (1),
+        .DELAY  (DELAY)
+        ) PHASE
+       (
+        .clk_x_i(clk_x),
+        .rst_x_i(reset),
+
+        .clk_e_i(clk_e),
+        .sig_e_i(d),
+
+        .align_i(align),
+        .cycle_i(cycle),
+        .drift_i(drift),
+        .start_o(start),
+        .phase_o(phase),
+        .delta_o(delta),
+        .valid_o(valid),
+        .error_o(error),
+        .retry_i(retry)
+        );
+
+
+
+`else // !`ifdef __DO_NOT_USE_YODUT
+   //-------------------------------------------------------------------------
+   //
+   //  YET OTHER DEVICE UNDER TEST (YODUT).
+   //
+   //-------------------------------------------------------------------------
+   reg        dat_p, dat_n;
+   reg        sig_p, sig_n;
+
+   always @(posedge b_clk)
+     dat_p <= #DELAY d;
+
+   always @(posedge n_clk)
+     dat_n <= #DELAY d;
+
+   always @(posedge b_clk)
+     {sig_n, sig_p} <= #DELAY {dat_n, d};
+
+
+   signal_phase_DDR
+     #( .RATIO  (6),
+        .RBITS  (3),
+        .TICKS  (2),
+        .RESET  (1),
+        .POLAR  (0),
+        .NOISY  (1),
+        .DELAY  (DELAY)
+        ) PHASE
+       (
+        .clk_e_i(clk_e),
+        .clk_s_i(b_clk),
+        .clk_n_i(n_clk),
+        .reset_i(reset),
+
+        .enable_i(align),
+        .invert_i(1'b0),
+        .strobe_o(start),
+        .sig_p_i (sig_p),
+        .sig_n_i (sig_n),
+
+        .phase_o (phase),
+        .delta_o (delta),
+        .locked_o(valid),
+        .error_o (error),
+        .retry_i (retry)
+        );
+`endif // !`ifdef __DO_NOT_USE_YODUT
+
 
    
 endmodule // signal_capture_tb

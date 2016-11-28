@@ -14,10 +14,10 @@ BUS=../../../wishbone/rtl
 LIB=$(RTL)/fifo/afifo_gray.v $(RTL)/mfsr/mfsr32.v $(MSC)/shift_reg.v $(BUS)/wb_transfer.v
 
 # Simulation-only files:
-XIL=xilinx
-SIM=signal_stagger.v
-DEP=${CAP}/signal_capture.v ${CAP}/signal_phase.v ${CAP}/align_captures.v
-TOP=${LIB} ${CAP}/tart_capture.v ${CAP}/capture_control.v ${CAP}/signal_centre.v ${CAP}/fake_telescope.v ${CAP}/fifo_control.v
+XIL=../xilinx
+SIM=signal_stagger.v ${XIL}/IDDR2.v
+DEP=${CAP}/signal_capture.v ${CAP}/signal_phase_DDR.v ${CAP}/signal_phase.v ${CAP}/signal_source.v ${CAP}/align_captures.v
+TOP=${LIB} ${CAP}/tart_capture.v ${CAP}/capture_control.v ${CAP}/signal_centre.v ${CAP}/fake_telescope.v
 
 
 all: sig

@@ -7,17 +7,16 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=32, type=float, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--debug', action='store_true', help='operate telescope with fake antenna data')
-  parser.add_argument('--blocksize', default=24, type=int, help='exponent of correlator block-size')
   parser.add_argument('--status', action='store_true', help='just query the device')
   parser.add_argument('--reset', action='store_true', help='just reset the device')
-  parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
-  parser.add_argument('--correlate', action='store_true', help='perform a single correlation')
   parser.add_argument('--verbose', action='store_true', help='extra debug output')
   parser.add_argument('--permute', action='store_true', help='permute the visibilities')
   parser.add_argument('--counter', action='store_true', help='fake data using a counter')
   parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
   parser.add_argument('--acquire', action='store_true', help='use real antenna data')
   parser.add_argument('--source', default=0, type=int, help='antenna source to calibrate')
+  parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
+  parser.add_argument('--duration', default=20, type=int, help='duration (s) to monitor signal')
 
   args = parser.parse_args()
   tart = tartdsp.TartSPI(speed=args.speed*1000000)
@@ -45,10 +44,11 @@ if __name__ == '__main__':
   ##------------------------------------------------------------------------##
   if args.monitor:
     tart.capture(on=True, source=args.source, noisy=args.verbose)
-    tart.centre (on=True, drift=True, noisy=False)
+    tart.centre (on=True, drift=False, noisy=False)
 
     ticks = 0
-    while tart.signal_locked():
+    args.duration = args.duration*200
+    while tart.signal_locked() and ticks < args.duration:
       if ticks % 1000 == 0 and args.verbose:
         tart.read_status(True)
       ticks = ticks + 1
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     tart.capture(on=True, source=a, noisy=args.verbose)
 
     for i in range(25):
-      tart.centre (on=True, drift=True, noisy=False)
+      tart.centre (on=True, drift=False, noisy=False)
 
       while not tart.signal_locked():
         tart.pause()
@@ -88,6 +88,10 @@ if __name__ == '__main__':
       sumphase = sumphase + newphase
 
       tart.centre (on=False, noisy=False)
+
+
+  if args.verbose:
+    tart.read_status(True)
 
 
   ##------------------------------------------------------------------------##

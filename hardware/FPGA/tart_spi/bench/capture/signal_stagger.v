@@ -71,11 +71,11 @@ module signal_stagger
    wire [4:0] phase = count + phase_offset + phase_jitter;
 
    always @(posedge clk)
-     if (rst)     count <= 0;
-     else if (ce) count <= count_wrap ? 0 : count+1 ;
-     else         count <= count;
+     if (rst)     count <= #DELAY 0;
+     else if (ce) count <= #DELAY count_wrap ? 0 : count+1 ;
+     else         count <= #DELAY count;
 
    always @(posedge clk)
-     if (ce) q <= phase == 6 ? d : q ;
+     if (ce) q <= #DELAY phase == 6 ? d : q ;
 
 endmodule // signal_stagger

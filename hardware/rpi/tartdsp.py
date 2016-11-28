@@ -139,10 +139,10 @@ class TartSPI:
 
     msgs = {
       # Capture registers:
-      self.TC_CENTRE: 'TC_CENTRE:\tcentre = %s, drift = %s, delay = %d' % (bits[7], bits[6], val & 0x0f),
-      self.TC_STATUS: 'TC_STATUS:\tinvalid = %s, locked = %s, phase = %d' % (bits[7], bits[6], val & 0x0f),
+      self.TC_CENTRE: 'TC_CENTRE:\tcentre = %s, drift = %s, locked = %s, delay = %d' % (bits[7], bits[6], bits[5], val & 0x0f),
+      self.TC_STATUS: 'TC_STATUS:\tdelta = %d, phase = %d' % (vals[4] & 0x0f, val & 0x0f),
       self.TC_DEBUG:  'TC_DEBUG: \tdebug = %s, count = %s, shift = %s, #antenna = %d' % (bits[7], bits[6], bits[5], val & 0x1f),
-      self.TC_SYSTEM: 'TC_SYSTEM:\tenabled = %s, source = %d' % (bits[7], val & 0x01f),
+      self.TC_SYSTEM: 'TC_SYSTEM:\tenabled = %s, error = %s, source = %d' % (bits[7], bits[6], val & 0x01f),
 
       # Acquisition registers:
       self.AQ_STREAM: 'AQ_STREAM:\tdata = %x' % val,
@@ -217,14 +217,13 @@ class TartSPI:
     return True
 
   def signal_locked(self):
-    return self.getbit(self.TC_STATUS, 6)
+    return self.getbit(self.TC_CENTRE, 5)
 
   def read_sample_delay(self, noisy=False):
     '''Read back the data sampling delays.'''
-    ret = self.getbyte(self.TC_CENTRE, noisy)
-    val = ret[self.LATENCY] & 0x0f
+    val = self.getbyte(self.TC_CENTRE, noisy) & 0x0f
     if noisy:
-      print tobin(ret)
+      print self.show_status(self.TC_CENTRE, val)
     self.pause()
     return val
 

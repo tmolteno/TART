@@ -14,6 +14,7 @@ module tart_dcm
      
    output clk_ext, // 16.368 MHZ buffered
    output clk6x,   // 16.368x6 = 98.208 MHz
+   output clk6n,   // 16.368x6 = 98.208 MHz
    output clk12x,  // 16.368x12 = 196.416 MHz
    output reset_n, // LOW when the clock isn't locked
    output status_n // LOW indicates that the clocks are toggling
@@ -24,6 +25,8 @@ module tart_dcm
 
    (* PERIOD = "10.18 ns" *)
    wire       clk6x_l;
+   (* PERIOD = "10.18 ns" *)
+   wire       clk6n_l;
    (* PERIOD = "5.091 ns" *)
    wire       clk12x_l;
 
@@ -97,6 +100,7 @@ module tart_dcm
 
          .CLK0  (clk_1),    // 1-bit output: 0 degree clock output
          .CLKFX (clk6x_l),// 1-bit output: Digital Frequency Synthesizer (DFS)
+         .CLKFX180(clk6n_l),// 1-bit output: Digital Frequency Synthesizer (DFS)
 
          .DSSEN(1'b0),      // 1-bit input: Unsupported, specify to GND.
          .PSCLK(1'b0),      // 1-bit input: Phase shift clock input
@@ -181,6 +185,7 @@ module tart_dcm
    // Global clock buffers for TART's system clocks.
    BUFG BUFG_SYSCLK ( .I(clk_xtal), .O(clk_ext) );
    BUFG BUFG_CLK6X  ( .I( clk6x_l), .O(  clk6x) );
+   BUFG BUFG_CLK6N  ( .I( clk6n_l), .O(  clk6n) );
    BUFG BUFG_CLK12X ( .I(clk12x_l), .O( clk12x) );
 
 

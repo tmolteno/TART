@@ -60,16 +60,22 @@ module capture_control
     //  Raw-data capture-unit control-signals:
     input          centre_b_i, // enable the centring unit?
     output         centre_x_o,
+    input          strobe_b_i, // strobes for each valid sample
+    output         strobe_x_o,
+    input          middle_b_i, // middle-strobes for each valid sample
+    output         middle_x_o,
+
     input          drift_b_i, // incrementally change the phase?
     output         drift_x_o,
     input [SSB:0]  select_b_i, // select antenna for phase measurement
     output [SSB:0] select_x_o,
+    output [SSB:0] select_e_o,
     output         locked_b_o, // alignment-unit has lock?
     input          locked_x_i,
     output [PSB:0] phase_b_o, // measured phase
     input [PSB:0]  phase_x_i,
     output         invalid_b_o, // alignment-unit has lost lock?
-    output         invalid_x_i,
+    input          invalid_x_i,
     input          restart_b_i, // restart the alignment-unit?
     output         restart_x_o,
 
@@ -108,6 +114,10 @@ module capture_control
    (* NOMERGE = "TRUE" *)
    reg             centre_t, centre_x;
    (* NOMERGE = "TRUE" *)
+   reg             strobe_t, strobe_x;
+   (* NOMERGE = "TRUE" *)
+   reg             middle_t, middle_x;
+   (* NOMERGE = "TRUE" *)
    reg             drift_t, drift_x;
    (* NOMERGE = "TRUE" *)
    reg [SSB:0]     select_t, select_x;
@@ -130,6 +140,8 @@ module capture_control
    reg             shift_s, shift_e;
    (* NOMERGE = "TRUE" *)
    reg             count_s, count_e;
+   (* NOMERGE = "TRUE" *)
+   reg [SSB:0]     select_s, select_e;
 
 
    //-------------------------------------------------------------------------
@@ -147,12 +159,16 @@ module capture_control
    //-------------------------------------------------------------------------
    //  Data-sampling & alignment assignments.
    assign centre_x_o  = centre_x;
+   assign strobe_x_o  = strobe_x;
+   assign middle_x_o  = middle_x;
    assign drift_x_o   = drift_x;
    assign select_x_o  = select_x;
    assign locked_b_o  = locked_b;
    assign phase_b_o   = phase_b;
    assign invalid_b_o = invalid_b;
    assign restart_x_o = restart_x;
+
+   assign select_e_o  = select_e;
 
    //-------------------------------------------------------------------------
    //  Fake-/debug- data control-signal assignments.
@@ -195,6 +211,25 @@ module capture_control
         {  debug_x,   debug_t} <= #DELAY {  debug_t,   debug_b_i};
      end
 
+   //-------------------------------------------------------------------------
+   //  Synchronised strobes have to be treated slightly differently, as they
+   //  are only to be asserted for one cycle (per transfer).
+   //  TODO: This has one extra cycle of latency. Not need as domains are
+   //    synchronous?
+   reg strobe_r = 1'b0, strobe_q = 1'b0;
+   reg middle_r = 1'b0, middle_q = 1'b0;
+
+   always @(posedge clock_x_i)
+     begin
+        {strobe_r, strobe_t} <= #DELAY {strobe_t, strobe_b_i};
+        {middle_r, middle_t} <= #DELAY {middle_t, middle_b_i};
+
+        // implement one-shots:
+        strobe_x <= #DELAY strobe_r && !strobe_q;
+        strobe_q <= #DELAY strobe_r;
+        middle_x <= #DELAY middle_r && !middle_q;
+        middle_q <= #DELAY middle_r;
+     end
 
    //-------------------------------------------------------------------------
    //  Bus-domain synchronisers.
@@ -219,6 +254,9 @@ module capture_control
         {debug_e, debug_s} <= #DELAY {debug_s, debug_b_i};
         {shift_e, shift_s} <= #DELAY {shift_s, shift_b_i};
         {count_e, count_s} <= #DELAY {count_s, count_b_i};
+
+        // source/signal MUX select:
+        {select_e, select_s} <= #DELAY {select_s, select_b_i};
      end
 
 

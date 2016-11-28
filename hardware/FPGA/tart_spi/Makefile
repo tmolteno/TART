@@ -65,7 +65,7 @@ SPI=${RTL}/spi
 SPI_FILES=${SPI}/spi_slave_wb.v ${SPI}/spi_layer.v
 
 CAP=${RTL}/capture
-CAP_FILES=${CAP}/tart_capture.v ${CAP}/capture_control.v ${CAP}/signal_capture.v ${CAP}/signal_centre.v ${CAP}/fake_telescope.v
+CAP_FILES=${CAP}/tart_capture.v ${CAP}/capture_control.v ${CAP}/signal_capture.v ${CAP}/signal_centre.v ${CAP}/signal_phase_DDR.v ${CAP}/signal_source.v ${CAP}/fake_telescope.v
 
 ACQ=${RTL}/acquire
 ACQ_FILES=${ACQ}/tart_acquire.v ${ACQ}/raw_acquire.v ${ACQ}/dram_prefetch.v ${ACQ}/fifo_control.v ${ACQ}/block_buffer.v

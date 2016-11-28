@@ -34,6 +34,20 @@ module signal_phase
     parameter HALF  = RMAX>>1,  // the floor of half the count
     parameter HSB   = HALF-1,   // MSB of a half-cycle counter
 
+    //  Signal-source settings:
+    parameter WIDTH = 24,       // number of input signal-sources
+    parameter MSB   = WIDTH-1,  // MSB of signal sources
+    parameter SBITS = 5,        // input signal-width
+    parameter SSB   = SBITS-1,  // MSB of signals
+
+    //  Signal MUX bit-widths:
+    parameter TOTAL = 1<<SBITS, // total MUX width
+    parameter TSB   = TOTAL-1,  // MSB of MUX width
+    parameter QBITS = SBITS-2,  // select bits for the second-stage MUX
+    parameter QSB   = QBITS-1,  // MSB of second-stage selector
+    parameter MUX2  = 1<<QBITS, // second-stage MUX width
+    parameter JSB   = MUX2-1,   // MSB of second-stage MUX input
+
     //  Signal-locking settings:
     parameter COUNT = 3,        // number of samples for a lock
     parameter CBITS = 2,        // counter bit-width
@@ -48,14 +62,15 @@ module signal_phase
     parameter NOISY = 0,        // display extra debug info (0/1)?
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
-    input            clk_x_i, // (sampling) clock input
-    input            rst_x_i, // (sample domain) reset
+    input            clk_s_i, // half-rate (sampling) clock input
+    input            clk_n_i, // inverted, half-rate (sampling) clock input
+    input            reset_i, // (sample domain) reset
 
     input            clk_e_i, // must have the same frequency as signal
-    input            sig_e_i, // raw signal requiring clock-recovery
+    input [MSB:0]    sig_e_i, // raw signal requiring clock-recovery
 
     input            align_i, // (sample domain) core enable
-//     input [RSB:0]  delay_i,
+    input [SSB:0]    select_i,
     input            cycle_i, // strobe every 'TRATE' ticks?
     input            drift_i, // not useful for statistics
     output           start_o, // strobes for each new sample
@@ -120,22 +135,56 @@ module signal_phase
 
    //-------------------------------------------------------------------------
    //  Synchronise the input signal.
-   always @(posedge clk_x_i)
+   always @(posedge clk_s_i)
      {sig_x, sig_s} <= #DELAY {sig_s, sig_e_i};
 
    //  And synchronise the reference signal.
-   always @(posedge clk_x_i) begin
+   always @(posedge clk_s_i) begin
       {pos_x, pos_s} <= #DELAY {pos_s, pos_e};
       {neg_x, neg_s} <= #DELAY {neg_s, neg_e};
    end
 
    //-------------------------------------------------------------------------
    //  Strobe at each new edge.
-   always @(posedge clk_x_i) begin
+   always @(posedge clk_s_i) begin
       stb_p <= #DELAY pos_w;
       stb_n <= #DELAY neg_w;
       xedge <= #DELAY sig_w;
    end
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  SELECT THE SOURCE SIGNAL.
+   //
+   //-------------------------------------------------------------------------
+   wire [TSB:0]    signal_w;
+   reg             signal;
+   reg [JSB:0]     stage2;
+   reg [QSB:0]     select;
+   reg [1:0]       enable;
+
+
+   assign signal_w = {{TOTAL-WIDTH{1'bx}}, sig_e_i};
+
+
+   //-------------------------------------------------------------------------
+   //  Select the signal source.
+   //-------------------------------------------------------------------------
+   //  Uses a two-stage MUX.
+   always @(posedge clk_s_i)
+     begin
+        //  align-enable signal delays:
+        enable <= #DELAY {enable[0], align_i};
+
+        //  first-stage signal MUX:
+        stage2 <= #DELAY signal_w >> {select_i[SSB:QBITS], {QBITS{1'b0}}};
+        select <= #DELAY select_i[QSB:0];
+
+        //  second-stage signal MUX:
+        signal <= #DELAY stage2[select];
+     end
 
 
    //-------------------------------------------------------------------------
@@ -154,7 +203,7 @@ module signal_phase
    //-------------------------------------------------------------------------
    //  NOTE: This is used to compute the relative phases, of the signal-clock
    //    vs the clock of the input-signal.
-   always @(posedge clk_x_i)
+   always @(posedge clk_s_i)
      if (pos_w)
        cycle <= #DELAY RZERO;
      else
@@ -162,11 +211,12 @@ module signal_phase
 
    //-------------------------------------------------------------------------
    //  At each input-signal edge-event, latch the relative phase-value.
-   always @(posedge clk_x_i)
+   always @(posedge clk_s_i)
      if (xedge) begin
         phase <= #DELAY cycle;
         delta <= #DELAY cycle - phase;
      end
+
 
 
 endmodule // signal_phase

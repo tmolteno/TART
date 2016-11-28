@@ -117,8 +117,8 @@ module tart
     parameter ASYNC    = 0,     // asynchronous WB transactions (0/1)?
     parameter PIPED    = 1,     // pipelined BURST transactions (0/1)?
     parameter RESET    = 0,     // fast-reset enable (0/1)?
-//     parameter CHECK    = 1,     // bus-signal sanity-checking (0/1)?
-    parameter CHECK    = 0,     // bus-signal sanity-checking (0/1)?
+    parameter CHECK    = 1,     // bus-signal sanity-checking (0/1)?
+//     parameter CHECK    = 0,     // bus-signal sanity-checking (0/1)?
     parameter VIZWR    = 0,     // enable writes to viz-buffer (0/1)?
 
     //  Simulation-only parameters:
@@ -196,8 +196,8 @@ module tart
 
    wire                rst_x, vld_x, new_x;
    wire [NSB:0]        sig_x;
-   wire                reset_n;
-   wire                bus_clk, bus_rst;               // WB system signals
+   wire                clock_n, reset_n;
+   wire                clock_b, reset_b; // WB system signals
 
    (* KEEP   = "TRUE"    *)
    wire                rx_clk_16_buf;
@@ -271,8 +271,8 @@ module tart
    //-------------------------------------------------------------------------
    //  Miscellaneous assignments.
    //-------------------------------------------------------------------------
-   assign bus_clk = fpga_clk;
-   assign bus_rst = reset;
+   assign clock_b = fpga_clk;
+   assign reset_b = reset;
 
    //-------------------------------------------------------------------------
    //  Compose the status-signal from the most important status-signals of
@@ -297,7 +297,7 @@ module tart
    always @(posedge clk_x)
      if (new_x) counter <= #DELAY counter + 1;
 
-   always @(posedge bus_clk)
+   always @(posedge clock_b)
      if (vx_newblock) blink <= #DELAY ~blink;
 `endif // !`ifdef __RELEASE_BUILD
 
@@ -323,6 +323,7 @@ module tart
        .clk_rst(1'b0),
        .clk_ext(rx_clk_16_buf), // 16.368 MHz buffered
        .clk6x  (fpga_clk),      // 16.368x6  =  98.208 MHz
+       .clk6n  (clock_n),      // 16.368x6  =  98.208 MHz
        .clk12x (clk_x),         // 16.368x12 = 196.416 MHz
        .reset_n(reset_n),
        .status_n()
@@ -351,8 +352,8 @@ module tart
         .cycles_per_refresh  (CYCLES_PER_REFRESH)
         ) HAMSTER_SDRAM
        (
-        .clk            (bus_clk),
-        .reset          (bus_rst),
+        .clk            (clock_b),
+        .reset          (reset_b),
 
         .cmd_ready      (cmd_ready),     // (O) MCB has initialised?
         .cmd_enable     (cmd_enable),    // (I) start a MCB operation
@@ -427,8 +428,8 @@ module tart
          // simulation-only options:
          .DELAY(DELAY)
          ) ARB
-       ( .bus_clk_i(bus_clk),
-         .bus_rst_i(bus_rst),
+       ( .bus_clk_i(clock_b),
+         .bus_rst_i(reset_b),
 
          //-------------------------------------------------------------------
          //  SPI Wishbone master.
@@ -512,8 +513,8 @@ module tart
         .CHECK(CHECK)
         ) SPI0
        (
-        .clk_i     (bus_clk),
-        .rst_i     (bus_rst),
+        .clk_i     (clock_b),
+        .rst_i     (reset_b),
 
         //  Wishbone master interface.
         .cyc_o     (spi_cyc),
@@ -579,8 +580,9 @@ module tart
         .clock_e   (rx_clk_16_buf),
         .clock_x   (clk_x),
         .reset_x   (rst_x),
-        .clock_i   (bus_clk),
-        .reset_i   (bus_rst),
+        .clock_n   (clock_n),   // negated system-clock
+        .clock_i   (clock_b),
+        .reset_i   (reset_b),
 
         //--------------------------------------------------------------------
         //  Wishbone (SPEC B4) interconnect:
@@ -632,8 +634,8 @@ module tart
          .CHECK    (CHECK),
          .DELAY    (DELAY)
          ) ACQUIRE
-       ( .clock_i  (bus_clk),
-         .reset_i  (bus_rst),
+       ( .clock_i  (clock_b),
+         .reset_i  (reset_b),
 
          //  Raw-data inputs.
          .clock_x  (clk_x),
@@ -697,8 +699,8 @@ module tart
         .DELAY(DELAY)            // simulation-only settings
         ) DSP
        (//--------------------------------------------------------------------
-        .clk_i(bus_clk),         // Wishbone/system clock
-        .rst_i(bus_rst),         // bus/system reset
+        .clk_i(clock_b),         // Wishbone/system clock
+        .rst_i(reset_b),         // bus/system reset
 
         //--------------------------------------------------------------------
         //  Captured, oversampled antenna control & data signals:
@@ -769,8 +771,8 @@ module tart
         .DELAY(DELAY)
         ) CONTROL
        (
-        .clk_i(bus_clk),
-        .rst_i(bus_rst),
+        .clk_i(clock_b),
+        .rst_i(reset_b),
 
         .cyc_i(sys_cyc),
         .stb_i(sys_stb),

@@ -19,15 +19,15 @@
  * 
  * 
  * REGISTERS:
- *  Reg#   7         6        5       4        3     2      1       0
+ *  Reg#   7         6        5        4       3     2      1       0
  *      --------------------------------------------------------------------
- *   00 ||  CENTRE | DRIFT  |     2'b00      |           DELAY            ||
+ *   00 ||  CENTRE | DRIFT  | LOCKED | 1'b0  |           DELAY            ||
  *      --------------------------------------------------------------------
- *   01 || INVALID | LOCKED |     2'b00      |           PHASE            ||
+ *   01 ||               DELTA               |           PHASE            ||
  *      --------------------------------------------------------------------
- *   10 ||  DEBUG  | COUNT  | SHIFT |              #ANTENNA               ||
+ *   10 ||  DEBUG  | COUNT  | SHIFT  |              #ANTENNA              ||
  *      --------------------------------------------------------------------
- *   11 || CAPTURE |      2'b00     |               SELECT                ||
+ *   11 || CAPTURE | ERROR  |  1'b0  |               SELECT               ||
  *      --------------------------------------------------------------------
  * 
  * By default, the capture unit has address 7'b000_00xx.
@@ -100,9 +100,9 @@ module tart_capture
     parameter DELAY = 3)        // simulated combinational delay (ns)
    (
     input          clock_e, // post-DCM external clock
-
     input          clock_x, // capture clock
     output         reset_x, // capture-domain reset signal
+    input          clock_n, // negated bus clock
     input          clock_i, // bus clock
     input          reset_i, // bus-domain reset
 
@@ -175,13 +175,14 @@ module tart_capture
    //
    //-------------------------------------------------------------------------
    wire            reset_e;
+   wire [MSB:0]    signal_p, signal_n;
 
    //-------------------------------------------------------------------------
    //  Phase-measurement unit signals:
    (* NOMERGE = "TRUE" *)
-   reg             valid_x = 1'b0;
+   reg             enable_x = 1'b0;
    wire            capture_x, centre_x, drift_x;
-   wire            strobe_x, locked_x, invalid_x, restart_x;
+   wire            strobe_x, middle_x, locked_x, invalid_x, restart_x;
    wire [MSB:0]    signal_w;
    wire [SSB:0]    select_x;
    wire [AXNUM:0]  source_w;
@@ -212,8 +213,8 @@ module tart_capture
    wire [4:0]      tc_number = AXNUM;
    reg             en_capture = 1'b0, en_centre = 1'b0, en_debug = 1'b0;
    reg [SSB:0]     tc_select = {SBITS{1'b0}}; // source/antenna to centre
-   wire            tc_invalid, tc_locked;
-   wire [RSB:0]    tc_phase;
+   wire            tc_invalid, tc_locked, tc_strobe, tc_middle;
+   wire [RSB:0]    tc_phase, tc_delta;
    reg [RSB:0]     tc_delay = {RBITS{1'b0}};
    reg             tc_drift, tc_count, tc_shift, tc_restart = 1'b0;
 
@@ -231,10 +232,10 @@ module tart_capture
    //
    //-------------------------------------------------------------------------
    //  Wishbone-mapped register assignments:
-   assign tc_centre = {en_centre, tc_drift, 2'b0, tc_delay[3:0]};
-   assign tc_status = {tc_invalid, tc_locked, 2'b0, tc_phase[3:0]};
+   assign tc_centre = {en_centre, tc_drift, tc_locked, 1'b0, tc_delay[3:0]};
+   assign tc_status = {tc_delta[3:0], tc_phase[3:0]};
    assign tc_debug  = {en_debug, tc_count, tc_shift, tc_number};
-   assign tc_system = {en_capture, 2'b00, tc_select};
+   assign tc_system = {en_capture, tc_invalid, 1'b0, tc_select};
 
    //-------------------------------------------------------------------------
    //  Internal, Wishbone, combinational signals:
@@ -255,7 +256,7 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Correlator-domain signal assignments.
    //-------------------------------------------------------------------------
-   assign enable_x_o = valid_x;
+   assign enable_x_o = enable_x;
    assign strobe_x_o = strobe_x;
    assign signal_x_o = signal_x;
 
@@ -398,29 +399,9 @@ module tart_capture
         // block SRAM for the raw-data acquisition core:
         if (strobe_x) begin
            signal_x <= #DELAY signal_w;
-           valid_x  <= #DELAY locked_x;
+           enable_x <= #DELAY locked_x;
         end
      end
-
-
-   //-------------------------------------------------------------------------
-   //  Capture & oversample a reference signal, and from the external clock
-   //  domain.
-   //-------------------------------------------------------------------------
-   reg ref_e = 1'b0, new_e_x = 1'b0;
-
-   //  Toggle a register at the external-clock rate, to simulate a signal to
-   //  use as a reference for clock-recovery.
-   always @(posedge clock_e)
-     ref_e <= #DELAY ~ref_e;
-
-   //  Synchronise a simulated signal, as a reference.
-   always @(posedge clock_x)
-     {ref_e_fd1, ref_e_fd0} <= #DELAY {ref_e_fd0, ref_e};
-
-   //  Strobe at each new sample.
-   always @(posedge clock_x)
-     new_e_x <= #DELAY ref_e_fd1 ^ ref_e_fd0;
 
 
 `ifndef __RELEASE_BUILD   
@@ -445,6 +426,27 @@ module tart_capture
          .data_o  (fake_e)
          );
 `endif
+
+
+`ifdef __USE_SIGNAL_CENTRE
+   //-------------------------------------------------------------------------
+   //  Capture & oversample a reference signal, and from the external clock
+   //  domain.
+   //-------------------------------------------------------------------------
+   reg ref_e = 1'b0, new_e_x = 1'b0;
+
+   //  Toggle a register at the external-clock rate, to simulate a signal to
+   //  use as a reference for clock-recovery.
+   always @(posedge clock_e)
+     ref_e <= #DELAY ~ref_e;
+
+   //  Synchronise a simulated signal, as a reference.
+   always @(posedge clock_x)
+     {ref_e_fd1, ref_e_fd0} <= #DELAY {ref_e_fd0, ref_e};
+
+   //  Strobe at each new sample.
+   always @(posedge clock_x)
+     new_e_x <= #DELAY ref_e_fd1 ^ ref_e_fd0;
 
 
    //-------------------------------------------------------------------------
@@ -480,6 +482,86 @@ module tart_capture
         .invalid_o(invalid_x),  // signal can't lock, or lock lost
         .restart_i(restart_x)   // acknowledge and retry
         );
+
+
+`else // !`ifdef __USE_SIGNAL_CENTRE
+   //-------------------------------------------------------------------------
+   //  Select a source to measure the phase of.
+   //-------------------------------------------------------------------------
+   wire         source_p, source_n;
+   wire         ref_p, ref_n;
+   reg          locked_p = 1'b0;
+
+   assign locked_x = locked_p;
+
+   always @(posedge clock_x)
+     if (reset_x && RESET || !capture_x)
+       locked_p <= #DELAY 1'b0;
+     else if (strobe_x)
+       locked_p <= #DELAY 1'b1;
+
+
+   (* AREA_GROUP = "source" *)
+   signal_source
+     #( .WIDTH(AXNUM+1),
+        .SBITS(SBITS),
+        .RESET(0),
+        .DELAY(DELAY)
+        ) SOURCE
+       (
+        .clock_i (clock_i),
+        .reset_i (reset_i),
+        .enable_i(en_centre),
+        .select_i(tc_select),
+        .sig_p_i ({ref_p, signal_p}),
+        .sig_n_i ({ref_n, signal_n}),
+        .valid_o (tc_locked),
+        .sig_p_o (source_p),
+        .sig_n_o (source_n)
+        );
+
+
+   //-------------------------------------------------------------------------
+   //  Measure the phase-shift required so that latching occurs at the centre
+   //  of each signal sample.
+   //-------------------------------------------------------------------------
+   //  NOTE: Computes the required phase-shift, to determine the relative
+   //    clock-phases, so that data can be captured mid-period (of the slower
+   //    clock).
+   (* AREA_GROUP = "phase" *)
+   signal_phase_DDR
+     #( .RATIO(RATIO >> 1),
+        .RBITS(RBITS - 1),
+        .RESET(1),
+        .POLAR(0),
+        .TICKS(3),
+        .NOISY(NOISY),
+        .DELAY(DELAY)
+        ) PHASE
+       (
+        .clk_e_i (clock_e),     // external (XTAL) reference & clock
+        .clk_n_i (clock_n),     // 6x (negedge) oversampling clock
+        .clk_s_i (clock_i),     // 6x (posedge) oversampling clock
+        .reset_i (reset_i),     // 6x clock-domain reset
+
+        .enable_i(tc_locked),   // compute the alignment shift?
+        .invert_i(1'b0),
+        .strobe_o(tc_strobe),   // mark the arrival of a new value
+        .middle_o(tc_middle),   // mark the arrival of a new value
+        .sig_p_i (source_p),    // posedge DDR signal input
+        .sig_n_i (source_n),    // negedge DDR signal input
+
+        .phase_o (tc_phase),    // relative phase for stable signal
+        .delta_o (tc_delta),    // phase error vs. previous sample
+        .locked_o(),            // TODO: signal is stable & locked
+        .error_o (tc_invalid),  // signal can't lock, or lock lost
+        .retry_i (tc_restart),  // acknowledge and retry
+
+        //  Debug/info outputs:
+        .ref_p_o (ref_p),
+        .ref_n_o (ref_n)
+        );
+`endif // !`ifdef __USE_SIGNAL_CENTRE
 
 
    //-------------------------------------------------------------------------
@@ -529,6 +611,7 @@ module tart_capture
          .delay_b_i(tc_delay),  // phase-delay for the input signals
          .delay_x_o(delay_x),
 
+`ifdef __USE_SIGNAL_CENTRE
          //  CDC for the phase-alignment signals:
          .centre_b_i(en_centre), // enable the centring unit?
          .centre_x_o(centre_x),
@@ -538,6 +621,7 @@ module tart_capture
 
          .select_b_i(tc_select), // select an antenna/source to centre
          .select_x_o(select_x),
+         .select_e_o(select_e),
 
          .locked_b_o(tc_locked), // asserted once signal is locked
          .locked_x_i(locked_x),
@@ -550,7 +634,24 @@ module tart_capture
 
          .restart_b_i(tc_restart), // restart if lost tracking
          .restart_x_o(restart_x),
-         
+
+`else // !`ifdef __USE_SIGNAL_CENTRE
+         .strobe_b_i (tc_strobe),
+         .strobe_x_o (strobe_x),
+
+         .middle_b_i (tc_middle),
+         .middle_x_o (middle_x),
+
+         //  Not needed, as relevant operations performed in bus domain.
+         .centre_b_i (1'b0),
+         .drift_b_i  (1'b0),
+         .select_b_i ({SBITS{1'b0}}),
+         .locked_x_i (1'b0),
+         .phase_x_i  ({RBITS{1'b0}}),
+         .invalid_x_i(1'b0),
+         .restart_b_i(1'b0),
+
+`endif // !`ifdef __USE_SIGNAL_CENTRE
          //  CDC for the fake-data unit signals:
          .debug_b_i(en_debug), // enable fake-data unit?
          .debug_e_o(debug_e),
@@ -562,6 +663,28 @@ module tart_capture
          .count_b_i(tc_count), // use an up-counter for fake data?
          .count_e_o(count_e)
          );
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  DDR IOB REGISTERS.
+   //
+   //-------------------------------------------------------------------------
+   //  NOTE: This allow half-rate sampling, but at the expense of twice the
+   //    usage of routing-resources.
+   IDDR2
+     #( .DDR_ALIGNMENT("C0"),
+        .SRTYPE("SYNC")
+        ) IOBS [MSB:0]
+     ( .C0(clock_i),
+       .C1(clock_n),
+       .R (reset_i && RESET),
+       .CE(en_capture),
+       .D (signal_e_i),
+       .Q0(signal_p),
+       .Q1(signal_n)            // lags by 180 degrees
+       );
 
 
 

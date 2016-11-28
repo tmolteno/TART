@@ -58,6 +58,7 @@ module tart_capture_tb;
 
    reg          clk_x = 1'b1, clk_e = 1'b1; // signal & sample clocks
    reg          b_clk = 1'b1, b_rst = 1'b0; // bus clock & reset
+   wire         n_clk = ~b_clk;
 
    //-------------------------------------------------------------------------
    //  Capture-unit control-signals.
@@ -115,7 +116,7 @@ module tart_capture_tb;
    //
    //-------------------------------------------------------------------------
    initial begin : ACQ_TB
-      $dumpfile ("../vcd/acq_tb.vcd");
+      $dumpfile ("../vcd/cap_tb.vcd");
       $dumpvars;
 
       //-------------------------------------------------------------------------
@@ -126,7 +127,8 @@ module tart_capture_tb;
 
       //-------------------------------------------------------------------------
       $display("%12t:\tEnabling data-capture, and selecting antenna 4.", $time);
-      #DE wr = 1; adr = 2'b11; dtx = 8'h84;
+//       #DE wr = 1; adr = 2'b11; dtx = 8'h84;
+      #DE wr = 1; adr = 2'b11; dtx = 8'h98;
       #DB while (!done) #DB;
 
       /*
@@ -245,6 +247,7 @@ module tart_capture_tb;
         .clock_x   (clk_x),
         .clock_e   (clk_e),
         .clock_i   (b_clk),
+        .clock_n   (n_clk),
         .reset_i   (b_rst),
 
         //  External antenna data:

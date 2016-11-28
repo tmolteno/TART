@@ -13,6 +13,8 @@
  * Shift-register that implements the behaviour of the Xilinx SRL primitives.
  * 
  * NOTE:
+ *  + an input shift-amount ('a') of zero corresponds to a delay of one clock-
+ *    cycle, and all ones corresponds to a delay of '2^ABITS';
  * 
  * TODO:
  *  + testing;
