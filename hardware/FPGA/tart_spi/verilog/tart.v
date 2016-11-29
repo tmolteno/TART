@@ -563,6 +563,7 @@ module tart
         .RATIO(TRATE),
         .RBITS(TBITS),
         .CYCLE(1),
+        .TICKS(2),              // to match pipeline-register delays
         // Wishbone mode settings
         .RESET(RESET),
         .PIPED(PIPED),

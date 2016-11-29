@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : bench/acquire/signal_stagger.v
+ * Module      : bench/capture/signal_stagger.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -20,9 +20,25 @@
  */
 
 module signal_stagger
-  #(//  Signal jitter/delay parameters:
-    parameter WIDTH_SIGNAL = 1,
-    parameter MSB = WIDTH_SIGNAL-1,
+  #(//  Signal width parameters:
+    parameter WIDTH = 1,
+    parameter MSB   = WIDTH-1,
+
+    //  Digitial Frequency Synthesis (DFS) settings:
+    parameter RATIO = 12,       // ratio of DFS clock to signal clock
+    parameter RBITS = 4,        // bit-width of ratio counter
+    parameter RSB   = RBITS-1,  // MSB of ratio counter
+    parameter RZERO = 0,        // (DFS) counter zero-value
+    parameter RHALF = RATIO>>1, // (DFS) counter half-value
+    parameter RMAX  = RATIO-1,  // (DFS) maximum counter value
+
+    parameter CBITS = RBITS+1,  // (signed) phase-counter bit-width
+    parameter CSB   = CBITS-1,  // MSB of phase counter
+    parameter CZERO = 0,        // counter zero-value
+    parameter CHALF = RATIO>>1, // counter half-value
+    parameter CMAX  = RATIO-1,  // maximum counter value
+
+    //  Signal jitter/delay options:
     parameter PHASE_JITTER = 1,  // #bits of edge jitter
     parameter PHASE_OFFSET = 1,  // max amount of consistent offset from edge
     parameter CYCLE_JITTER = 1,  // #bits of cycle-length jitter
@@ -35,14 +51,48 @@ module signal_stagger
     input              rst,
     input              ce,
     input [MSB:0]      d,
-    output reg [MSB:0] q = {WIDTH_SIGNAL{1'b0}}
+    output reg         vld = 1'b0,
+    output             stb,
+    output reg [MSB:0] q = {WIDTH{1'b0}}
     );
 
-   reg signed [3:0]    phase_jitter; // TODO
-   reg signed [3:0]    phase_offset;
-   reg signed [3:0]    cycle_jitter; // TODO
 
-   reg signed [4:0]    count = 5'h0;
+   //-------------------------------------------------------------------------
+   //  Signals and registers for the (signed) phase counter.
+   //-------------------------------------------------------------------------
+   reg signed [CSB:0]  count = CZERO;
+   wire [CBITS:0]      count_next;
+   wire                count_wrap;
+   wire [CSB:0]        phase;
+
+   //-------------------------------------------------------------------------
+   //  These can be +/- values.
+   reg signed [RSB:0]  phase_jitter; // TODO
+   reg signed [RSB:0]  phase_offset;
+   reg signed [RSB:0]  cycle_jitter; // TODO
+
+   //-------------------------------------------------------------------------
+   //  Signals and registers for the DFS base-cycle counter.
+   reg [RSB:0]         ratio = RZERO;
+   reg                 cycle = 1'b0;
+   wire [RBITS:0]      rnext;
+   wire                rwrap, valid;
+
+
+   //-------------------------------------------------------------------------
+   //  Internal assignments.
+   assign count_next = count + 1;
+   assign count_wrap = count == CMAX;
+   assign phase      = count + phase_offset + phase_jitter;
+
+   assign rnext      = rwrap ? RZERO : ratio + 1;
+   assign rwrap      = ratio == RMAX;
+   assign valid      = phase >= CHALF && cycle;
+
+   //-------------------------------------------------------------------------
+   //  Output assignments.
+   assign stb        = cycle;
+
 
    //-------------------------------------------------------------------------
    //  Setup mode from the module's parameters.
@@ -55,6 +105,7 @@ module signal_stagger
         $display("Phase offset:\t%d", phase_offset);
    end
 
+
    //-------------------------------------------------------------------------
    //  Compute the jitters and offsets.
    //-------------------------------------------------------------------------
@@ -66,16 +117,45 @@ module signal_stagger
 
    //-------------------------------------------------------------------------
    //  Change the phase of the incoming data.
+   always @(posedge clk)
+     if (rst)
+       count <= #DELAY CZERO;
+     else if (ce)
+       count <= #DELAY count_wrap ? CZERO : count+1 ;
+     else
+       count <= #DELAY count;
+
    //-------------------------------------------------------------------------
-   wire count_wrap = count == 11;
-   wire [4:0] phase = count + phase_offset + phase_jitter;
+   //  Generate the outputs.
+   always @(posedge clk)
+     if (rst || !ce)
+       q   <= #DELAY 'bz;
+     else if (phase == CHALF)
+       q   <= #DELAY d;
+     else
+       q   <= #DELAY q;
 
    always @(posedge clk)
-     if (rst)     count <= #DELAY 0;
-     else if (ce) count <= #DELAY count_wrap ? 0 : count+1 ;
-     else         count <= #DELAY count;
+     if (rst || !ce)
+       vld <= #DELAY 1'b0;
+     else if (valid)
+       vld <= #DELAY 1'b1;
+     else
+       vld <= #DELAY vld;
 
+
+   //-------------------------------------------------------------------------
+   //  Ratio-counter enforces the overall cycle-length/period value.
+   //-------------------------------------------------------------------------
    always @(posedge clk)
-     if (ce) q <= #DELAY phase == 6 ? d : q ;
+     if (rst || !ce) begin
+        cycle <= #DELAY 1'b0;
+        ratio <= #DELAY RZERO;
+     end
+     else begin
+        cycle <= #DELAY rnext == RMAX;
+        ratio <= #DELAY rnext;
+     end
+
 
 endmodule // signal_stagger

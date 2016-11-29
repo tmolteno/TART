@@ -73,21 +73,19 @@ if __name__ == '__main__':
 
   for a in range(24):
     tart.capture(on=True, source=a, noisy=args.verbose)
+    tart.centre (on=True, invert=False, drift=False, noisy=False)
 
-    for i in range(25):
-      tart.centre (on=True, drift=False, noisy=False)
+    while not tart.signal_locked():
+      tart.pause()
 
-      while not tart.signal_locked():
-        tart.pause()
+    phases = tart.read_phases(25)
+    if args.verbose:
+      print '%s' % phases
+    minphase  = min(minphase, min(phases))
+    maxphase  = max(maxphase, max(phases))
+    sumphase += sum(phases)
 
-      newphase = tart.read_phase_delay()
-      if args.verbose:
-        print '%d' % newphase
-      minphase = min(minphase, newphase)
-      maxphase = max(maxphase, newphase)
-      sumphase = sumphase + newphase
-
-      tart.centre (on=False, noisy=False)
+  tart.centre (on=False, noisy=False)
 
 
   if args.verbose:

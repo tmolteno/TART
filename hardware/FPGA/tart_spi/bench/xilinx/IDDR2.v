@@ -53,10 +53,10 @@ module IDDR2
    assign Q1 = ALIGN0 ? RN : QN;
 
    assign CLR = SRTYPE == "ASYNC" ? R : 1'b0;
-   assign PRE = SRTYPE == "ASYNC" ? S : 1'b1;
+   assign PRE = SRTYPE == "ASYNC" ? S : 1'b0;
 
    assign RST = SRTYPE ==  "SYNC" ? R : 1'b0;
-   assign SET = SRTYPE ==  "SYNC" ? S : 1'b1;
+   assign SET = SRTYPE ==  "SYNC" ? S : 1'b0;
 
    always @(posedge C0 or posedge CLR or posedge PRE)
      if (CLR || RST)

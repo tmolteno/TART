@@ -32,13 +32,17 @@ module tart_capture_tb;
    parameter RBITS = 4;
    parameter RMAX  = RATIO-1;
    parameter HALF  = RATIO>>1;
+   parameter TICKS = 2;
 
    parameter WIDTH = 24;
    parameter MSB   = WIDTH-1;
    parameter ABITS = 20;
    parameter ASB   = ABITS-1;
 
+   parameter SHAKE = 3;
+   parameter NOISY = 0;
    parameter DELAY = 3;
+
 
 
    //-------------------------------------------------------------------------
@@ -47,8 +51,7 @@ module tart_capture_tb;
    //
    //-------------------------------------------------------------------------
    wire [MSB:0] daq_x, sig_e;
-   reg [MSB:0]  raw_e;          // raw, random signal data
-   wire         vld_x, new_x;
+   wire         vld_e, vld_x, new_x;
    reg          ce_e = 1'b0;
 
    wire [ASB:0] cmd_address;    // memory-controller signals (unused)
@@ -62,17 +65,17 @@ module tart_capture_tb;
 
    //-------------------------------------------------------------------------
    //  Capture-unit control-signals.
-   reg [3:0]    aq_delay;       // set the system phase-delay
-   reg          aq_capture;     // enable raw-data capture
+   reg [3:0]    tc_delay;       // set the system phase-delay
+   reg          tc_enable;      // enable raw-data capture
 
    //  Alignment-unit control-signals.
-   reg [4:0]    aq_select;      // select antenna to calibrate
-   reg [3:0]    aq_phase;       // measured phase-shift
-   reg          aq_centre, aq_locked, aq_invalid, aq_restart;
-   reg          aq_drift;
+   reg [4:0]    tc_select, tc_number; // select antenna to calibrate
+   reg [3:0]    tc_phase, tc_delta;   // measured phase-shift
+   reg          tc_centre, tc_valid, tc_error, tc_retry;
+   reg          tc_drift, tc_invert;
 
    //  Fake-/debug- data control-signals.
-   reg          aq_debug, aq_shift, aq_count;
+   reg          tc_debug, tc_shift, tc_count;
 
    //-------------------------------------------------------------------------
    //  Signals related to the raw-data acquisition unit.
@@ -81,7 +84,7 @@ module tart_capture_tb;
 
    //-------------------------------------------------------------------------
    //  Signals for driving the WB bus-transfer functional unit.
-   reg          rd = 1'b0, wr = 1'b0;
+   reg          rd = 1'b0, wr = 1'b0, wt = 1'b0;
    reg          read;
    wire         busy, done, fail;
 
@@ -91,6 +94,7 @@ module tart_capture_tb;
    reg [7:0]    dtx;
    wire         ack, wat, rty, err; // slave signals
    wire [7:0]   drx;
+
 
 
    //-------------------------------------------------------------------------
@@ -110,11 +114,25 @@ module tart_capture_tb;
    parameter DB = CLKB*2;
 
 
+
    //-------------------------------------------------------------------------
    //
    //  SIMULATION STIMULI.
    //
    //-------------------------------------------------------------------------
+   //  Length of the simulation.
+   parameter TIMEOUT = DE << 7;
+
+   //  Simulation-stimulus signals.
+   reg [3:0]    delay = 7;
+   reg [2:0]    sleep = 0;
+   reg          check = 1'b0;
+   reg          poll = 1'b0;
+   reg          invert = 1;
+   reg [4:0]    source = 4;
+   integer      samples, errors;
+
+
    initial begin : ACQ_TB
       $dumpfile ("../vcd/cap_tb.vcd");
       $dumpvars;
@@ -126,10 +144,29 @@ module tart_capture_tb;
       #DE b_rst = 1'b0;
 
       //-------------------------------------------------------------------------
-      $display("%12t:\tEnabling data-capture, and selecting antenna 4.", $time);
-//       #DE wr = 1; adr = 2'b11; dtx = 8'h84;
-      #DE wr = 1; adr = 2'b11; dtx = 8'h98;
+      $display("%12t:\tEnabling data-capture, and selecting antenna %1d.", $time, source);
+      #DE wr = 1; adr = 2'b11; dtx = {3'h4, source};
       #DB while (!done) #DB;
+
+      //-------------------------------------------------------------------------
+      $display("%12t:\tEnabling signal centring, and setting initial phase-delay (%1d).",
+               $time, delay);
+      #DE wr = 1; adr = 2'b00; dtx = {2'b10, invert, 1'b0, delay};
+      #DB while (!done) #DB;
+
+      //-------------------------------------------------------------------------
+      #DE $display("%12t:\tEnabling signal checking.", $time);
+      check = 1;
+
+      //-------------------------------------------------------------------------
+      $display("%12t:\tReading back the status & mode registers.", $time);
+      #DE rd = 1; adr = 2'b00; #DB while (!done) #DB;
+      #DE rd = 1; adr = 2'b01; #DB while (!done) #DB;
+      #DE rd = 1; adr = 2'b10; #DB while (!done) #DB;
+      #DE rd = 1; adr = 2'b11; #DB while (!done) #DB;
+
+      $display("%12t:\tEnabling polling of phase-delay measurements.", $time);
+      #DE poll = 1;
 
       /*
       //-------------------------------------------------------------------------
@@ -138,28 +175,23 @@ module tart_capture_tb;
       #DB while (!done) #DB;
        */
 
-      #720; #720;
-      #720; #720;
-      #720 $finish;
+      #TIMEOUT poll = 0;
+      $display("\n");
+      $display("%12t:\tSignal source samples\t= \t%7d", $time, samples);
+      $display("%12t:\tPhase-delay errors   \t= \t%7d", $time, errors);
+      $finish;
    end
 
 
-   //-------------------------------------------------------------------------
-   //
-   //  GENERATE RANDOM DATA TO BE ACQUIRED.
-   //
    //-------------------------------------------------------------------------
    //  Start acquisition after a reset.
    always @(posedge clk_e)
      ce_e <= #DELAY !b_rst ? 1 : 0 ;
 
-   //  Generate random data.
-   always @(posedge clk_e)
-     raw_e <= #DELAY $random;
-
    //  Display aligned data.
    always @(posedge clk_x)
-     if (new_x) $display("%12t:\tDATA = %08b (%02x)", $time, daq_x, daq_x);
+     if (stb_x && NOISY)
+       $display("%12t:\tDATA = %08b (%02x)", $time, daq_x, daq_x);
 
 
    //-------------------------------------------------------------------------
@@ -178,25 +210,129 @@ module tart_capture_tb;
      else
        read <= #DELAY read;
 
-   //  Set local versions of the flags.
-   always @(posedge b_clk)
-     if (b_rst) begin
-        {aq_restart, aq_select, aq_delay, aq_phase} <= #DELAY 14'hx;
-        {aq_invalid, aq_locked, aq_count, aq_shift} <= #DELAY 4'hx;
-        {aq_capture, aq_centre, aq_debug, aq_drift} <= #DELAY 4'h0;
-     end
-     else if (done && read)
-       case (adr)
-         2'b00: {aq_capture, aq_delay} <= #DELAY {drx[7], drx[3:0]};
-         2'b01: {aq_centre, aq_drift, aq_select} <= #DELAY {drx[7:6], drx[4:0]};
-         2'b10: {aq_debug, aq_count, aq_shift} <= #DELAY {drx[7], drx[1:0]};
-         2'b11: {aq_invalid, aq_locked, aq_phase} <= #DELAY {drx[7:6], drx[3:0]};
-       endcase // case (adr)
 
 
    //-------------------------------------------------------------------------
    //
-   //  DEVICES UNDER TEST.
+   //  MAINTAIN LOCAL VERSIONS OF THE FLAGS.
+   //
+   //-------------------------------------------------------------------------
+   always @(posedge b_clk)
+     if (b_rst) begin
+        {tc_select, tc_error, tc_retry, tc_delay} <= #DELAY 'bx;
+        {tc_centre, tc_drift, tc_valid, tc_phase} <= #DELAY 'bx;
+        {tc_enable, tc_debug, tc_count, tc_shift} <= #DELAY 'bx;
+        {tc_invert, tc_delta, tc_number         } <= #DELAY 'bx;
+     end
+     else if (done && read)
+       case (adr)
+         2'b00: {tc_centre, tc_drift, tc_invert, tc_delay} <= #DELAY {drx[7:5], drx[3:0]};
+         2'b01: {                     tc_delta,  tc_phase} <= #DELAY drx;
+         2'b10: {tc_debug , tc_count, tc_shift, tc_number} <= #DELAY drx;
+         2'b11: {tc_enable, tc_error, tc_valid, tc_select} <= #DELAY drx;
+       endcase // case (adr)
+
+
+   //-------------------------------------------------------------------------
+   //  Once polling is enabled, continuously read back the phase & delta,
+   //  sleep for a bit, and then repeat.
+   //-------------------------------------------------------------------------
+   always @(posedge b_clk)
+     if (poll && sleep == 0 && !(busy || rd || wr)) begin
+        rd  <= #DELAY 1'b1;
+        adr <= #DELAY 2'b01;
+     end
+
+   always @(posedge b_clk)
+     if (poll && rd)
+       sleep <= #DELAY 3'h7;
+     else if (sleep > 0)
+       sleep <= #DELAY sleep - 1;
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  STORE INCOMING SIGNAL VALUES, FOR LATER COMPARISON.
+   //
+   //-------------------------------------------------------------------------
+   reg [MSB:0] vals[0:1023];
+   reg [MSB:0] caps[0:1023];
+   reg [9:0]   cnt_e;
+   reg [9:0]   cnt_x;
+   reg         stb_e = 1'b0, stb_x = 1'b0;
+   wire        new_e, disp;
+
+   assign disp = cnt_x == 16;
+
+   always @(posedge clk_x)
+     stb_e <= #DELAY new_e;
+
+   always @(posedge clk_x)
+     if (b_rst)
+       cnt_e <= #DELAY 0;
+     else if (stb_e) begin
+        vals[cnt_e] <= #DELAY sig_e;
+        cnt_e       <= #DELAY cnt_e + 1;
+     end
+
+   always @(posedge clk_x)
+     stb_x <= #DELAY new_x;
+
+   always @(posedge clk_x)
+     if (b_rst)
+       cnt_x <= #DELAY 0;
+     else if (stb_x) begin
+        caps[cnt_x] <= #DELAY daq_x;
+        cnt_x       <= #DELAY cnt_x + 1;
+     end
+
+
+   //-------------------------------------------------------------------------
+   //  Check the captured signal values, vs. the generated data.
+   //-------------------------------------------------------------------------
+   wire [MSB:0] raw_val = vals[cnt_x];
+
+   always @(posedge clk_x)
+     if (b_rst)
+       errors <= #DELAY 0;
+     else if (stb_x && raw_val != daq_x) begin
+        $display("%12t:\tGenerated and capture values disagree ('0x%6x' vs '0x%6x')",
+                 $time, vals[cnt_x], daq_x);
+        errors <= #DELAY check ? errors + 1 : errors;
+     end
+
+   always @(posedge clk_x)
+     if (!check)
+       samples <= #DELAY 0;
+     else if (stb_x)
+       samples <= #DELAY samples + 1;
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  GENERATE RANDOM ACQUISITION DATA (GRAD).
+   //
+   //-------------------------------------------------------------------------
+   fake_signal
+     #( .WIDTH(WIDTH),          // signal bit-width
+        .RATIO(RATIO),
+        .SHAKE(SHAKE),          // jitter & offset parameter
+        .DELAY(DELAY)           // combinational simulation-delay
+        ) FAKE
+     (  .clock (clk_x),
+        .reset (b_rst),
+        .enable(ce_e ),
+        .locked(vld_e),
+        .strobe(new_e),
+        .signal(sig_e)
+        );
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  A CORE UNDER TEST & EVALUATION (ACUTE).
    //
    //-------------------------------------------------------------------------
    //  Drive the bus signals, for setting the capture-unit's parameters.
@@ -224,9 +360,13 @@ module tart_capture_tb;
         );
 
 
+
+   //-------------------------------------------------------------------------
+   //
+   //  SOPHISTICATED MODULE UNDER TEST (SMUT).
+   //
    //-------------------------------------------------------------------------
    //  Align and capture the staggered data.
-   //-------------------------------------------------------------------------
    tart_capture
      #( .AXNUM(24),
         .ABITS(ABITS+1),
@@ -240,6 +380,7 @@ module tart_capture_tb;
         .CYCLE(CYCLE),
         .RATIO(RATIO),
         .RBITS(RBITS),
+        .TICKS(TICKS),          // extra delay to add, due to pipelining
         // simulation-only settings:
         .DELAY(DELAY)
         ) CAP0
@@ -271,21 +412,6 @@ module tart_capture_tb;
         .signal_x_o(daq_x)
         );
 
-
-   //-------------------------------------------------------------------------
-   // Generate fake/pseudorandom offsets and jitter, for the given signals.
-   //-------------------------------------------------------------------------
-   signal_stagger
-     #( .PHASE_JITTER(1),
-        .PHASE_OFFSET(2),
-        .CYCLE_JITTER(0)
-        ) STAGGER0 [MSB:0]
-     (  .clk(clk_x),
-        .rst(b_rst),
-        .ce (ce_e),
-        .d  (raw_e),
-        .q  (sig_e)
-        );
 
 
 endmodule // tart_capture_tb

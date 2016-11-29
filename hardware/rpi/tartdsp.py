@@ -77,6 +77,14 @@ class TartSPI:
       print '%s' % self.show_status(reg, res)
     return res
 
+  def getbytes(self, reg, num, noisy=False):
+    reg = int(reg) & 0x7f
+    res = self.spi.xfer([reg] + [0x0]*(num + self.LATENCY - 1))[self.LATENCY:-1]
+    if noisy:
+      for val in res:
+        print '%s' % self.show_status(reg, val)
+    return res
+
   def setbit(self, reg, bit, noisy=False):
     val = self.getbyte(reg, noisy) | (1 << bit)
     self.setbyte(reg, val, noisy)
@@ -139,10 +147,10 @@ class TartSPI:
 
     msgs = {
       # Capture registers:
-      self.TC_CENTRE: 'TC_CENTRE:\tcentre = %s, drift = %s, locked = %s, delay = %d' % (bits[7], bits[6], bits[5], val & 0x0f),
+      self.TC_CENTRE: 'TC_CENTRE:\tcentre = %s, drift = %s, invert = %s, delay = %d' % (bits[7], bits[6], bits[5], val & 0x0f),
       self.TC_STATUS: 'TC_STATUS:\tdelta = %d, phase = %d' % (vals[4] & 0x0f, val & 0x0f),
       self.TC_DEBUG:  'TC_DEBUG: \tdebug = %s, count = %s, shift = %s, #antenna = %d' % (bits[7], bits[6], bits[5], val & 0x1f),
-      self.TC_SYSTEM: 'TC_SYSTEM:\tenabled = %s, error = %s, source = %d' % (bits[7], bits[6], val & 0x01f),
+      self.TC_SYSTEM: 'TC_SYSTEM:\tenabled = %s, error = %s, locked = %s, source = %d' % (bits[7], bits[6], bits[5], val & 0x01f),
 
       # Acquisition registers:
       self.AQ_STREAM: 'AQ_STREAM:\tdata = %x' % val,
@@ -205,19 +213,21 @@ class TartSPI:
     self.pause()
     return 1
 
-  def centre(self, on=True, drift=False, delay=0, noisy=False):
+  def centre(self, on=True, drift=False, invert=False, delay=0, noisy=False):
     '''Control the clock-recovery and centring unit.'''
     if on:
       val = 0x80 | (delay & 0x0f)
       if drift:
         val |= 0x40
+      if invert:
+        val |= 0x20
       self.setbyte(self.TC_CENTRE, val, noisy)
     else:
       self.clrbit(self.TC_CENTRE, 7, noisy)
     return True
 
   def signal_locked(self):
-    return self.getbit(self.TC_CENTRE, 5)
+    return self.getbit(self.TC_SYSTEM, 5)
 
   def read_sample_delay(self, noisy=False):
     '''Read back the data sampling delays.'''
@@ -251,6 +261,17 @@ class TartSPI:
       print tobin([ret])
     self.pause()
     return val
+
+  def read_phases(self, num, noisy=False):
+    '''Read back the multiple signal/antenna phase-delays.'''
+    ret = self.getbytes(self.TC_STATUS, num, noisy)
+    res = []
+    for val in ret:
+      res.append(val & 0x0f)
+    if noisy:
+      print tobin(res)
+    self.pause()
+    return res
 
 
   ##------------------------------------------------------------------------##
