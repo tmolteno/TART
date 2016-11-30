@@ -7,53 +7,77 @@ import numpy as np
 import time
 import argparse
 
+
+def convert(val):
+  res = 0
+  for x in val:
+    res = res << 8 | x
+  return res
+
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
-  parser.add_argument('--speed', default=8, type=int, help='Specify the SPI CLK speed (in MHz)')
+  parser.add_argument('--speed', default=32, type=int, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=10, type=float, help='exponent of bram depth')
-  parser.add_argument('--internal', action='store_true', help='internal generator')
   parser.add_argument('--reset', action='store_true', help='reset after transmission?')
-  
+  parser.add_argument('--internal', action='store_true', help='fake data generator')
+  parser.add_argument('--counter', action='store_true', help='fake data using a counter')
+  parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
+  parser.add_argument('--verbose', action='store_true', help='extra debug output')
+  parser.add_argument('--noresults', action='store_true', help='no results output')
+  parser.add_argument('--dump', action='store_true', help='dump acquistion data')
+
   args = parser.parse_args()
-  
-  num_words = np.power(2,args.bramexp)
+  num_words = np.power(2, args.bramexp)
+
   tart = TartSPI(speed=args.speed*1000000)
-  tart.reset(True)
   tart.reset()
-  tart.debug(on=1, noisy=True)
-  tart.debug(on=1)
-  tart.debug(on=0)
-  tart.debug(on=0)
-  tart.debug(on=1)
-  tart.debug(on=1)
-  tart.debug(on=0)
-  tart.debug(on=0)
-  tart.reset()
-  tart.reset()
-  tart.reset()
+  tart.debug(on= True, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  tart.debug(on=False, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  tart.reset(noisy=args.verbose)
 
-  tart.debug(on=int(args.internal), noisy=True)
-  tart.start_acquisition(sleeptime=1.1, noisy=True)
+  tart.debug(on=args.internal, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  tart.capture(on=True, noisy=args.verbose)
+  tart.start_acquisition(sleeptime=0.1, noisy=args.verbose)
+  while not tart.data_ready():
+    tart.pause()
 
+  tart.capture(on=False, noisy=args.verbose)
+
+
+  # Measure the data-transfer time.
   t0   = time.time()
-#   t0   = time.clock()
+#   data = tart.read_data(num_words=num_words, blocksize=800)
   data = tart.read_data(num_words=num_words, blocksize=1024)
+  base = convert(data[0])
   t1   = time.time()
-#   t1   = time.clock()
-  print 'elapsed time:\t%2.3f' % (t1-t0)
+  if args.verbose:
+    print 'elapsed time:\t%2.3f' % (t1-t0)
+    print 'base = %d (%x)\n\n' % (base, base)
 
-  print 'generate 24bit integer'
-  resp_dec = (np.array(data[:,0],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,2],dtype='uint32'))
-  print np.info(resp_dec)
-  print 'done'
-  print 'first 10: ', resp_dec[:10]
-  print 'last 10: ', resp_dec[-10:]
+  if args.dump:
+    for x in data:
+      val = convert(x)
+      off = val - base
+      print 'off = %d (0x%06x)' % (off, val)
 
-  diffs = (resp_dec[1:]-resp_dec[:-1])
-  diffssum = diffs.__ne__(1).sum()
-  print diffs
-  print 'yo,', resp_dec[diffs.__ne__(1)]
-  print 'sum_of_errors: ', diffssum
-  index = np.arange(len(diffs))
-  print diffs[diffs.__ne__(1)]
-  print index[diffs.__ne__(1)] 
+  if args.noresults:
+    print "\nStatus flags:"
+    tart.read_status(True)
+  else:
+    # Check the returned data.
+    print 'generate 24bit integer'
+    resp_dec = (np.array(data[:,0],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,2],dtype='uint32'))
+    print np.info(resp_dec)
+    print 'done'
+    print 'first 10: ', resp_dec[:10]
+    print 'last 10: ', resp_dec[-10:]
+
+    diffs = (resp_dec[1:]-resp_dec[:-1])
+    diffssum = diffs.__ne__(1).sum()
+    print diffs
+    print 'yo,', resp_dec[diffs.__ne__(1)]
+    print 'sum_of_errors: ', diffssum
+    index = np.arange(len(diffs))
+    print diffs[diffs.__ne__(1)]
+    print index[diffs.__ne__(1)] 

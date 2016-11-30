@@ -14,9 +14,10 @@ if __name__ == '__main__':
   parser.add_argument('--counter', action='store_true', help='fake data using a counter')
   parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
   parser.add_argument('--acquire', action='store_true', help='use real antenna data')
-  parser.add_argument('--source', default=0, type=int, help='antenna source to calibrate')
+  parser.add_argument('--source', default=-1, type=int, help='antenna source to calibrate')
   parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
   parser.add_argument('--duration', default=20, type=int, help='duration (s) to monitor signal')
+  parser.add_argument('--samples', default=25, type=int, help='number of samples to measure.')
 
   args = parser.parse_args()
   tart = tartdsp.TartSPI(speed=args.speed*1000000)
@@ -71,14 +72,21 @@ if __name__ == '__main__':
   maxphase = 0
   sumphase = 0
 
-  for a in range(24):
+  SAMPLES  = args.samples
+
+  if args.source == -1:
+    channels = range(24)
+  else:
+    channels = [args.source]
+
+  for a in channels:
     tart.capture(on=True, source=a, noisy=args.verbose)
     tart.centre (on=True, invert=False, drift=False, noisy=False)
 
     while not tart.signal_locked():
       tart.pause()
 
-    phases = tart.read_phases(25)
+    phases = tart.read_phases(SAMPLES)
     if args.verbose:
       print '%s' % phases
     minphase  = min(minphase, min(phases))
@@ -95,8 +103,7 @@ if __name__ == '__main__':
   ##------------------------------------------------------------------------##
   ##  Show the computed phase values.
   ##------------------------------------------------------------------------##
-#   avgphase = float(sumphase) / 120.0
-  avgphase = float(sumphase) / 600.0
+  avgphase = float(sumphase) / (float(SAMPLES) * len(channels))
   print 'Average phase = %d (%g)' % (round(avgphase), avgphase)
   print 'Minimum phase = %d'      %  minphase
   print 'Maximum phase = %d'      %  maxphase

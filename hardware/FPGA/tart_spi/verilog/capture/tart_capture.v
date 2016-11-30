@@ -136,55 +136,9 @@ module tart_capture
     );
 
 
-   //-------------------------------------------------------------------------
-   //  External-clock-domain, reference-signal synchronisers.
-   //-------------------------------------------------------------------------
-   (* NOMERGE = "TRUE" *)
-   reg [MSB:0]     ref_e_fd1, ref_e_fd0;
-
 
    //-------------------------------------------------------------------------
-   //
-   //  ANTENNA-DATA ROUTING SIGNALS.
-   //
-   //-------------------------------------------------------------------------
-`ifdef __FORCE_SIGNAL_IOBS
-   //  TODO: Make sure that the first set of registers are placed within the
-   //    IOB's.
-   (* IOB = "TRUE", NOMERGE = "TRUE" *)
-   reg [MSB:0]     sig_x_iob;
-
-`else
-//    //  Just prevent these registers from being converted to Xilinx shift-
-//    //  register primitives.
-//    (* NOMERGE = "TRUE" *)
-//    reg [MSB:0]     sig_x_iob;
-`endif // !`ifdef __FORCE_SIGNAL_IOBS
-
-   //-------------------------------------------------------------------------
-   //  An additional layer of registers, used as synchronisers.
-//    (* NOMERGE = "TRUE" *)
-//    reg [MSB:0]     sig_x_fd0, sig_x_fd1;
-
-   //-------------------------------------------------------------------------
-   //  Fake-data signal registers.
-   (* NOMERGE = "TRUE" *)
-   reg [MSB:0]     sig_x_dbg0, sig_x_dbg1;
-
-
-   //-------------------------------------------------------------------------
-   //  Data-alignment signals.
-   //-------------------------------------------------------------------------
-   wire            source_p, source_n;
-   wire            ref_p, ref_n;
-   reg             locked_p = 1'b0;
-
-
-
-   //-------------------------------------------------------------------------
-   //
-   //  CROSS-DOMAIN, CAPTURE CONTROL-SIGNALS.
-   //
+   //  Cross-domain, capture control-signals.
    //-------------------------------------------------------------------------
    wire            reset_e;
    wire [MSB:0]    signal_p, signal_n;
@@ -198,21 +152,31 @@ module tart_capture
    wire [MSB:0]    signal_w;
    wire [SSB:0]    select_x;
 
+   //-------------------------------------------------------------------------
    //  NOTE: 'NOMERGE' constraint prevents these signals from being pulled
    //    into SRL primitives.
    //  TODO: Check.
    (* NOMERGE = "TRUE" *)
    reg [MSB:0]     source_x, signal_x;
    wire [RSB:0]    phase_x, delay_x;
-   wire [MSB:0] sig_x_ddr;
+   wire [MSB:0]    sig_x_ddr;
+
+   //-------------------------------------------------------------------------
+   //  Data-alignment signals.
+   wire            source_p, source_n;
+   wire            ref_p, ref_n;
+   wire            fake_p, fake_n;
 
 
    //-------------------------------------------------------------------------
    //  Fake/debug antenna-data signals.
    //-------------------------------------------------------------------------
-   wire            debug_e, shift_e, count_e, valid_e;
+   wire            debug_e, shift_e, count_e;
    wire            debug_x;
    wire [MSB:0]    fake_e;
+   wire [MSB:0]    sig_x_dbg;
+   (* NOMERGE = "TRUE" *)
+   reg [MSB:0]     fake_b_p, fake_b_n, fake_n_n;
 
 
 
@@ -281,6 +245,11 @@ module tart_capture
    assign centred_o = tc_locked;
    assign debug_o   = en_debug;
 
+   //-------------------------------------------------------------------------
+   //  Use a single bit of the fake signal to feed into the phase-measurement
+   //  unit.
+   assign fake_p    = fake_b_p[0];
+   assign fake_n    = fake_b_n[0];
 
 
    //-------------------------------------------------------------------------
@@ -373,54 +342,59 @@ module tart_capture
    //  DATA CAPTURE.
    //
    //-------------------------------------------------------------------------
-   //  Synchronisers to capture (and supersample) the input (and debug/
-   //  generated) signals.
-   //  NOTE: Both IOB registers are used to reduce the synchroniser path-
-   //    length, therefore the probability of metastability.
-   //  TODO: Setup the FROM/TO constraints.
-   //  TODO: Check post PAR, to see the actual placement & routing.
-   always @(posedge clock_x)
-     begin
-//         // capture the antennae signal:
-//         sig_x_iob <= #DELAY signal_e_i;
+   //  DDR signal-capture for the fake signal.
+   //-------------------------------------------------------------------------
+   //  Bring both components into the same clock-domain (in a way that mimicks
+   //  the 'IDDR2' primitive with 'DDR_ALIGNMENT = "C0"').
+   always @(posedge clock_i) begin
+     fake_b_p <= #DELAY fake_e;
+     fake_b_n <= #DELAY fake_n_n;
+   end
 
-//         // synchronise the antennae signal:
-//         {sig_x_fd1, sig_x_fd0} <= #DELAY {sig_x_fd0, sig_x_iob};
-
-        // synchronise the fake/debug signal:
-        {sig_x_dbg1, sig_x_dbg0} <= #DELAY {sig_x_dbg0, fake_e};
-     end
+   //  Capture the "negedge" component using the DCM's 180 degree phase-
+   //  shifted clock output.
+   always @(posedge clock_n)
+     fake_n_n <= #DELAY fake_e;
 
 
 
    //-------------------------------------------------------------------------
    //
-   //  OVERSAMPLING-DOMAIN DATA-FLOW.
+   //  (12X) OVERSAMPLING-DOMAIN DATA-CAPTURE.
    //
    //-------------------------------------------------------------------------
-   //  Let the LSB choose the positive- or negative- edge signal.
+   //  Construct a new signal, using the DDR signal, for use in the 12x clock-
+   //  domain (i.e., twice the frequency), by using the LSB of the delay to
+   //  select the positive- or negative- edge signal.
    assign sig_x_ddr = delay_x[0] ? signal_n : signal_p;
+   assign sig_x_dbg = delay_x[0] ? fake_b_n : fake_b_p;
 
+
+   //-------------------------------------------------------------------------
+   //  Source-select MUX (fake or external), to be fed into the phase-
+   //  shifter.
+   //  NOTE: The two domains are synchronous, so synchronisers don't need to
+   //    be used. (Though they are used elsewhere...)
+   //  TODO: Check the timing report.
+   always @(posedge clock_x)
+     source_x <= #DELAY debug_x ? sig_x_dbg : sig_x_ddr;
+
+   //-------------------------------------------------------------------------
+   //  Register the phase-shifter output, and this then feeds into the block
+   //  SRAM for the raw-data acquisition core.
    //  NOTE: The phase-shifter ('shift_reg') outputs are registered because
    //    the 'SRL16E' primitive has about 1ns of combinational delay, and this
    //    signal then feeds into a block SRAM, which has another ~1ns delay.
    //    Therefore, to more easily satisfy the timing-constraints (~200 MHz),
    //    additional pipelining is used.
    always @(posedge clock_x)
-     begin
-        // select the signal source (fake or real), to be fed into the phase-
-        // shifter:
-//         source_x <= #DELAY debug_x ? sig_x_dbg1 : sig_x_fd1;
-        source_x <= #DELAY debug_x ? sig_x_dbg1 : sig_x_ddr;
+     signal_x <= #DELAY strobe_x ? signal_w : signal_x;
 
-        // register the phase-shifter output, and this then feeds into the
-        // block SRAM for the raw-data acquisition core:
-        signal_x <= #DELAY strobe_x ? signal_w : signal_x;
-     end
 
    //-------------------------------------------------------------------------
    //  Generate the enable/valid signal, and make sure that it has the correct
    //  phase relationship with the 'strobe_x' signal.
+   //-------------------------------------------------------------------------
    always @(posedge clock_x)
      if (reset_x && RESET || !capture_x)
        enable_x <= #DELAY 1'b0;
@@ -441,7 +415,10 @@ module tart_capture
 
 
 
-`ifndef __RELEASE_BUILD   
+`ifdef __RELEASE_BUILD
+   assign fake_e = {AXNUM{1'b0}};
+
+`else
    //-------------------------------------------------------------------------
    //  Fake data generation circuit, for testing & debugging.
    //-------------------------------------------------------------------------
@@ -459,7 +436,7 @@ module tart_capture
          .enable_i(debug_e),
          .shift_i (shift_e),
          .count_i (count_e),
-         .valid_o (valid_e),
+         .valid_o (),
          .data_o  (fake_e)
          );
 `endif
@@ -470,7 +447,7 @@ module tart_capture
    //-------------------------------------------------------------------------
    (* AREA_GROUP = "source" *)
    signal_source
-     #( .WIDTH(AXNUM+1),
+     #( .WIDTH(AXNUM+2),
         .SBITS(SBITS),
         .RESET(0),
         .DELAY(DELAY)
@@ -480,8 +457,8 @@ module tart_capture
         .reset_i (reset_i),
         .enable_i(en_centre),
         .select_i(tc_select),
-        .sig_p_i ({ref_p, signal_p}),
-        .sig_n_i ({ref_n, signal_n}),
+        .sig_p_i ({fake_p, ref_p, signal_p}),
+        .sig_n_i ({fake_n, ref_n, signal_n}),
         .valid_o (tc_locked),   // TODO: not a useful signal to monitor?
         .sig_p_o (source_p),
         .sig_n_o (source_n)
@@ -555,6 +532,8 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Performs (nearly) all CDC within one module, to make it easier to spot
    //  violations of CDC rules.
+   //  TODO: This is overkill, since the 'tart_dcm' module is configured to
+   //    operate in a synchronous mode?
    (* AREA_GROUP = "ctrl" *)
    capture_control
      #( .PBITS(RBITS),          // phase-delay bit-width

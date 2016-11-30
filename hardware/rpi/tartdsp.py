@@ -79,7 +79,7 @@ class TartSPI:
 
   def getbytes(self, reg, num, noisy=False):
     reg = int(reg) & 0x7f
-    res = self.spi.xfer([reg] + [0x0]*(num + self.LATENCY - 1))[self.LATENCY:-1]
+    res = self.spi.xfer([reg] + [0x0]*(num + self.LATENCY - 1))[self.LATENCY:]
     if noisy:
       for val in res:
         print '%s' % self.show_status(reg, val)
@@ -111,7 +111,7 @@ class TartSPI:
     '''Issue a global reset to the TART hardware.'''
     ret = self.setbyte(self.SPI_RESET, 0x01)
     if noisy:
-      print tobin(ret)
+      print tobin([ret])
       print ' reset issued.'
     self.pause()
     return 1
@@ -154,7 +154,7 @@ class TartSPI:
 
       # Acquisition registers:
       self.AQ_STREAM: 'AQ_STREAM:\tdata = %x' % val,
-      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, error = %s, ready = %s, 512Mb = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], val & 0x07),
+      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, error = %s, (SDRAM) ready = %s, 512Mb = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], val & 0x07),
 
       # Visibilities registers:
       self.VX_STREAM: 'VX_STREAM:\tdata = %x' % val,
@@ -201,9 +201,13 @@ class TartSPI:
       # Set counter mode:
       if shift:
         val = val | 0x20
+      else:
+        val = val & 0xdf
       if count:
         val = val | 0x40
-      ret = self.setbyte(self.TC_DEBUG, val | 0x01)
+      else:
+        val = val & 0xbf
+      ret = self.setbyte(self.TC_DEBUG, val)
       if noisy:
         print ' debug now ON'
     else:
@@ -279,36 +283,41 @@ class TartSPI:
   ##------------------------------------------------------------------------##
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
-    old = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
-    self.pause()
-    ret = self.spi.xfer([self.AQ_SYSTEM | self.WRITE_CMD, 0x0, 0x80 | old[self.LATENCY]])
-    self.pause()
-
-    res = self.spi.xfer([self.AQ_SYSTEM] + [0x0]*self.LATENCY)
-    val = (res[self.LATENCY] >> 7) == 0x01
+    old = self.getbyte(self.AQ_SYSTEM)
+    ret = self.setbyte(self.AQ_SYSTEM, old | 0x80)
+    val = self.getbit (self.AQ_SYSTEM, 7)
     if noisy:
       print ' attempting to set acquisition-mode to ON'
-      print tobin(old)
-      print tobin(ret)
+      print tobin([old])
+      print tobin([ret])
     if val:
       self.pause(sleeptime)       # optionally wait for acquisition to end
-      res = self.spi.xfer([self.SPI_STATS] + [0x0]*self.LATENCY)
-      self.pause()
+      res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
-        print tobin(res)
-      fin = res[self.LATENCY] & 0x03 == 0x03
+        print self.show_status(self.AQ_SYSTEM, res)
+      fin = res & 0x03 == 0x03
+    self.pause()
     return val and fin
 
-  def read_data(self, num_words=2**21, blocksize=1000):
+  def read_data(self, num_words=2**21, blocksize=1024):
     '''Read back the requested number of 24-bit words.'''
-    blk = [self.AQ_STREAM] + [0xff]*self.LATENCY + [0,0,0]*blocksize
+    # Determine the number of blocks to transfer, and the remainder for the
+    # final transfer.
+    blk = int(num_words / blocksize)
+    lst = int(num_words % blocksize)
+    # Stream back the raw acquisition data.
     dat = []
-    for i in range(0, int(num_words/blocksize)):
-      dat += self.spi.xfer(blk)[self.LATENCY:]
-    lst = num_words % blocksize
-    dat += self.spi.xfer([self.AQ_STREAM] + [0xff]*self.LATENCY + [0,0,0]*lst)[self.LATENCY:]
-    dat = numpy.array(dat).reshape(-1,3)
+    for i in range(0, blk):
+      dat += self.getbytes(self.AQ_STREAM, blocksize*3)
+    dat += self.getbytes(self.AQ_STREAM, lst*3)
+    # Convert to a 
+    dat = numpy.array(dat, dtype=numpy.uint32).reshape(-1,3)
     return dat
+
+  def data_ready(self):
+    '''Check the system register, of the acquistion unit, to see if the data is ready.'''
+    val = self.getbyte(self.AQ_SYSTEM) & 0x07
+    return val > 2
 
 
   ##--------------------------------------------------------------------------
@@ -337,27 +346,24 @@ class TartSPI:
 
   def get_blocksize(self, noisy=False):
     '''Get the (exponent of the) correlator block-size.'''
-    ret = self.spi.xfer([self.VX_SYSTEM] + [0x0]*self.LATENCY)
-    self.pause()
+    ret = self.getbyte(self.VX_SYSTEM)
     if noisy:
-      print tobin(ret)
-    return ret[self.LATENCY] & 0x1f
+      print self.show_status(ret)
+    return ret & 0x1f
 
   def read_visibilities(self, noisy=True):
     '''Read back visibilities data.'''
-    res = self.spi.xfer([self.VX_STREAM] + [0x0]*self.LATENCY + [0x0, 0x0, 0x0, 0x0]*576)
-    val = self.vis_convert(res[self.LATENCY:])
+    res = self.getbytes(self.VX_STREAM, 4*576)
+    val = self.vis_convert(res)
     if noisy:
-      tim = time.clock()
-      print self.show_status(self.SYS_STATS, res[1])
+      tim = time.time()
       print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val, sum(val))
     return val
 
   def vis_ready(self, noisy=False):
-    res = self.spi.xfer([self.VX_STATUS] + [0x0]*self.LATENCY)
-    rdy = res[self.LATENCY] & 0x80 != 0
+    rdy = self.getbit(self.VX_STATUS, 7)
     if noisy:
-      print '%s   \t(ready = %s)' % (tobin(res), rdy)
+      print '\tready = %s' % rdy
     return rdy
 
   def vis_read(self, noisy=False):

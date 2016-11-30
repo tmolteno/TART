@@ -79,12 +79,17 @@ module raw_acquire
    //-------------------------------------------------------------------------
    //  Increment address after each write.
    //-------------------------------------------------------------------------
+   reg             write_x = 1'b0;
+
    assign waddr_x_next = waddr_x + 1;
+
+   always @(posedge clock_x)
+     write_x <= #DELAY strobe_x_i;
 
    always @(posedge clock_x)
      if (reset_x && RESET)      // not really needed, as continually wraps by
        waddr_x <= #DELAY 9'h0;  // default ...
-     else if (strobe_x_i)
+     else if (write_x)
        waddr_x <= #DELAY waddr_x_next[8:0];
      else
        waddr_x <= #DELAY waddr_x;
@@ -102,7 +107,7 @@ module raw_acquire
        .read_data_o    (rdata),
        // write port:
        .write_clock_i  (clock_x),
-       .write_enable_i (strobe_x_i),
+       .write_enable_i (write_x),
        .write_address_i(waddr_x),
        .write_data_i   (signal_x_i)
        );
