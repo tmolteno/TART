@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : bench/mcb_dummy.v
+ * Module      : bench/acquire/mcb_dummy.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
