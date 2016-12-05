@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 /*
- * Module      : bench/xilinx/IDDR2.v
+ * Module      : bench/xilinx/ODDR2.v
  * Copyright   : (C) Tim Molteno     2016
  *             : (C) Max Scheel      2016
  *             : (C) Patrick Suggate 2016
@@ -16,26 +16,25 @@
  * NOTE:
  * 
  * TODO:
- *  + currently only a subset of the 'IDDR2' functionality is supported;
+ *  + currently only a subset of the 'ODDR2' functionality is supported;
+ *  + alignment stuff;
  * 
  */
 
-module IDDR2
-  #(
-    parameter DDR_ALIGNMENT = "NONE",
+module ODDR2
+  #(parameter DDR_ALIGNMENT = "NONE",
+    parameter INIT = 0,
     parameter SRTYPE = "SYNC",
-    parameter Q0_INIT = 0,
-    parameter Q1_INIT = 0,
-    parameter DELAY = 3)        // Icarus only
+    parameter DELAY = 3)
    (
-    input  C0,
-    input  C1,
-    input  R,
-    input  S,
-    input  CE,
-    input  D,
-    output Q0,
-    output Q1
+    input      C0,
+    input      C1,
+    input      R,
+    input      S,
+    input      CE,
+    input      D0,
+    input      D1,
+    output reg Q = INIT
     );
 
    parameter ALIGN0 = DDR_ALIGNMENT == "C0";
@@ -45,9 +44,6 @@ module IDDR2
    reg     RP, RN;
    wire    CLR, PRE;
    wire    RST, SET;
-
-   pulldown (S);
-   pulldown (R);
 
 
    //-------------------------------------------------------------------------
@@ -59,31 +55,25 @@ module IDDR2
    assign RST = SRTYPE ==  "SYNC" ? R : 1'b0;
    assign SET = SRTYPE ==  "SYNC" ? S : 1'b0;
 
-   assign Q0 = ALIGN1 ? RP : QP;
-   assign Q1 = ALIGN0 ? RN : QN;
-
 
    //-------------------------------------------------------------------------
    //  Implement the DDR output registers.
    //-------------------------------------------------------------------------
    always @(posedge C0 or posedge CLR or posedge PRE)
      if (CLR || RST)
-       {RN, QP} <= #DELAY 2'b00;
+       Q <= #DELAY 1'b0;
      else if (PRE || SET)
-       {RN, QP} <= #DELAY 2'b11;
+       Q <= #DELAY 1'b1;
      else if (CE)
-       {RN, QP} <= #DELAY {QN, D};
-     else
-       {RN, QP} <= #DELAY {RN, QP};
+       Q <= #DELAY D0;
 
    always @(posedge C1 or posedge CLR or posedge PRE)
      if (CLR || RST)
-       {RP, QN} <= #DELAY 2'b00;
+       Q <= #DELAY 1'b0;
      else if (PRE || SET)
-       {RP, QN} <= #DELAY 2'b11;
+       Q <= #DELAY 1'b1;
      else if (CE)
-       {RP, QN} <= #DELAY {QP, D};
-     else
-       {RP, QN} <= #DELAY {RP, QN};
+       Q <= #DELAY D1;
 
-endmodule // IDDR2
+
+endmodule // ODDR2

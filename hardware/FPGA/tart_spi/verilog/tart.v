@@ -197,7 +197,7 @@ module tart
    wire                rst_x, vld_x, new_x;
    wire [NSB:0]        sig_x;
    wire                clock_n, reset_n;
-   wire                clock_b, reset_b; // WB system signals
+   wire                clock_b, reset_b, strobe_b; // WB system signals
 
    (* KEEP   = "TRUE"    *)
    wire                rx_clk_16_buf;
@@ -610,6 +610,7 @@ module tart
 
         //-------------------------------------------------------------------------
         //  Debug info:
+        .strobe_o (strobe_b),
         .enabled_o(cx_enabled),
         .debug_o  (cx_debug)
         );
@@ -657,6 +658,7 @@ module tart
          .dat_o    (acq_drx),
 
          .io_busy_i(spi_busy),
+         .strobe_i (strobe_b),
 
          //  Memory controller signals (bus-domain).
          .mcb_ce_o (cmd_enable),

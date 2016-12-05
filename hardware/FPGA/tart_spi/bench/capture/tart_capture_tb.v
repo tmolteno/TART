@@ -77,6 +77,9 @@ module tart_capture_tb;
    //  Fake-/debug- data control-signals.
    reg          tc_debug, tc_shift, tc_count;
 
+   //  Debug & info signals.
+   wire         tc_cen, tc_stb, tc_mid, tc_dbg;
+
    //-------------------------------------------------------------------------
    //  Signals related to the raw-data acquisition unit.
    reg          spi_req_b;
@@ -137,28 +140,28 @@ module tart_capture_tb;
       $dumpfile ("../vcd/cap_tb.vcd");
       $dumpvars;
 
-      //-------------------------------------------------------------------------
+      //----------------------------------------------------------------------
       $display("%12t:\tIssuing RESET.", $time);
       #33 b_rst = 1'b1;
       #DB spi_req_b = 0;
       #DE b_rst = 1'b0;
 
-      //-------------------------------------------------------------------------
+      //----------------------------------------------------------------------
       $display("%12t:\tEnabling data-capture, and selecting antenna %1d.", $time, source);
       #DE wr = 1; adr = 2'b11; dtx = {3'h4, source};
       #DB while (!done) #DB;
 
-      //-------------------------------------------------------------------------
+      //----------------------------------------------------------------------
       $display("%12t:\tEnabling signal centring, and setting initial phase-delay (%1d).",
                $time, delay);
       #DE wr = 1; adr = 2'b00; dtx = {2'b10, invert, 1'b0, delay};
       #DB while (!done) #DB;
 
-      //-------------------------------------------------------------------------
+      //----------------------------------------------------------------------
       #DE $display("%12t:\tEnabling signal checking.", $time);
       check = 1;
 
-      //-------------------------------------------------------------------------
+      //----------------------------------------------------------------------
       $display("%12t:\tReading back the status & mode registers.", $time);
       #DE rd = 1; adr = 2'b00; #DB while (!done) #DB;
       #DE rd = 1; adr = 2'b01; #DB while (!done) #DB;
@@ -169,7 +172,7 @@ module tart_capture_tb;
       #DE poll = 1;
 
       /*
-      //-------------------------------------------------------------------------
+      //----------------------------------------------------------------------
       $display("%12t:\tSetting fixed delay of 5 ticks, and update-mode to DRIFT.", $time);
       #DE wr = 1; adr = 2'b00; dtx = 8'hC5; // align + drift antenna 0x04
       #DB while (!done) #DB;
@@ -234,7 +237,7 @@ module tart_capture_tb;
 
 
    //-------------------------------------------------------------------------
-   //  Once polling is enabled, continuously read back the phase & delta,
+   //  Once polling is enabled, continuously read-back the phase & delta,
    //  sleep for a bit, and then repeat.
    //-------------------------------------------------------------------------
    always @(posedge b_clk)
@@ -307,6 +310,7 @@ module tart_capture_tb;
        samples <= #DELAY 0;
      else if (stb_x)
        samples <= #DELAY samples + 1;
+
 
 
    //-------------------------------------------------------------------------
@@ -409,7 +413,13 @@ module tart_capture_tb;
         //  Correlator-domain acquisition data & status signals:
         .enable_x_o(vld_x),      // acquired (and oversampled) data
         .strobe_x_o(new_x),      // outputs
-        .signal_x_o(daq_x)
+        .signal_x_o(daq_x),
+
+        //  Debug & info outputs:
+        .enabled_o (tc_cen),
+        .strobe_o  (tc_stb),
+        .centred_o (tc_mid),
+        .debug_o   (tc_dbg)
         );
 
 

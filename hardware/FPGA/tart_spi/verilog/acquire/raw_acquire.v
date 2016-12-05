@@ -33,7 +33,8 @@ module raw_acquire
     parameter AXNUM = 24,       // number of antennae
     parameter MSB   = AXNUM-1,  // MSB of antenna signal
     parameter ABITS = 20,       // DRAM controller address bit-width
-    parameter ASB   = ABITS-2,  // MSB of DRAM address
+//     parameter ASB   = ABITS-2,  // TODO: MSB of DRAM address??
+    parameter ASB   = ABITS-1,  // MSB of DRAM address
 
     //  Additional settings:
     parameter RESET = 0,        // enable reset-to-zero (0/1)?
@@ -49,6 +50,7 @@ module raw_acquire
     //  Module control-signals:
     input          capture_i, // enable raw-data capture (0/1)
     input          request_i, // retrieve sample from SDRAM
+    input          strobe_i,  // bus-domain signal-strobe
    
     //  Raw signal data input:
     //  NOTE: Sample/correlator clock-domain.
@@ -114,24 +116,25 @@ module raw_acquire
 
 
    //-------------------------------------------------------------------------
-   //      Storage block controller.
+   //  Storage block controller.
    //-------------------------------------------------------------------------
    //  NOTE: Bus-clock domain.
    fifo_sdram_fifo_scheduler
-     #(.SDRAM_ADDRESS_WIDTH(ABITS))
+     #(.SDRAM_ADDRESS_WIDTH(ABITS+1))
    SCHEDULER0
-     ( .clock  (clock_i),           // bus-clock
-       .reset  (reset_i),           // global reset (bus-domain)
+     ( .clock_i (clock_i),           // bus-clock
+       .reset_i (reset_i),           // global reset (bus-domain)
+       .enable_i(capture_i),
+       .strobe_i(strobe_i),
 
-       .aq_bb_rd_address(raddr),
-       .aq_read_data    (rdata),
+       .aq_bb_rd_adr(raddr),
+       .aq_read_data(rdata),
 
-       .spi_start_aq(capture_i),
        .spi_buffer_read_complete(request_i),
 
-       .cmd_enable (mcb_ce_o),
+       .cmd_request(mcb_ce_o),
        .cmd_write  (mcb_wr_o),
-       .cmd_ready  (mcb_rdy_i),
+       .cmd_waiting(mcb_rdy_i),
        .cmd_address(mcb_adr_o),
        .cmd_data_in(mcb_dat_o),
 

@@ -3,6 +3,15 @@ import argparse
 import tartdsp
 
 
+##--------------------------------------------------------------------------##
+##
+##  The calibration algorithm measures the phase-delay for each antenna, and
+##  (if possible) computes the delay-value such that all data is captured
+##  cleanly.
+##
+##--------------------------------------------------------------------------##
+
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=32, type=float, help='Specify the SPI CLK speed (in MHz)')
@@ -18,6 +27,9 @@ if __name__ == '__main__':
   parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
   parser.add_argument('--duration', default=20, type=int, help='duration (s) to monitor signal')
   parser.add_argument('--samples', default=25, type=int, help='number of samples to measure.')
+
+  # TODO:
+  parser.add_argument('--phases', default='', type=str, help='file of antenna phase-delays')
 
   args = parser.parse_args()
   tart = tartdsp.TartSPI(speed=args.speed*1000000)

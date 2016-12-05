@@ -30,18 +30,21 @@ if __name__ == '__main__':
   args = parser.parse_args()
   num_words = np.power(2, args.bramexp)
 
+  # Initialise the TART hardware, and place it into a known state.
   tart = TartSPI(speed=args.speed*1000000)
   tart.reset()
   tart.debug(on= True, shift=args.shifter, count=args.counter, noisy=args.verbose)
   tart.debug(on=False, shift=args.shifter, count=args.counter, noisy=args.verbose)
   tart.reset(noisy=args.verbose)
 
+  # Enable data-capture, and then raw-data acquistion.
   tart.debug(on=args.internal, shift=args.shifter, count=args.counter, noisy=args.verbose)
   tart.capture(on=True, noisy=args.verbose)
   tart.start_acquisition(sleeptime=0.1, noisy=args.verbose)
   while not tart.data_ready():
     tart.pause()
 
+  print '\nAcquisition complete, beginning read-back.'
   tart.capture(on=False, noisy=args.verbose)
 
 
@@ -61,9 +64,11 @@ if __name__ == '__main__':
       off = val - base
       print 'off = %d (0x%06x)' % (off, val)
 
+  # Display just the status flags, if results aren't wanted.
   if args.noresults:
     print "\nStatus flags:"
     tart.read_status(True)
+  # Or else display the acquistion-unit's test-results.
   else:
     # Check the returned data.
     print 'generate 24bit integer'

@@ -111,6 +111,7 @@ module tart_acquire
 
     // Flag for when the I/O (SPI by default) interace is active:
     input          io_busy_i,
+    input          strobe_i,    // bus-domain signal strobe
 
     //  Memory Controller Block (MCB) signals:
     output         mcb_ce_o,
@@ -144,7 +145,7 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Additional MCB signals.
    wire [MSB:0]    data_in;
-   wire            request;
+   wire            request, mcb_512mb;
    reg             mcb_err = 1'b0, mcb_wat = 1'b0, active = 1'b0;
    wire [2:0]      cap_state;
 
@@ -298,16 +299,19 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  DRAM prefetch logic core.
    //-------------------------------------------------------------------------
-   dram_prefetch #( .WIDTH(AXNUM) ) DRAM_PREFETCH0
-     ( .clock_i     (clock_i),
-       .reset_i     (reset_i),
+   dram_prefetch
+     #( .WIDTH(AXNUM)
+       ) PREFETCH
+       (
+        .clock_i     (clock_i),
+        .reset_i     (reset_i),
 
-       .dram_ready  (mcb_ack_i),
-       .dram_request(request),
-       .dram_data   (mcb_dat_i),
-       .data_sent   (data_sent),
-       .fetched_data(data_in)
-       );
+        .dram_ready  (mcb_ack_i),
+        .dram_request(request),
+        .dram_data   (mcb_dat_i[MSB:0]),
+        .data_sent   (data_sent),
+        .fetched_data(data_in)
+        );
 
 
 
@@ -340,6 +344,7 @@ module tart_acquire
         //  Module control-signals:
         .capture_i (en_acquire),
         .request_i (request),
+        .strobe_i  (strobe_i),
 
         //  Memory controller signals (bus-domain):
         .mcb_ce_o  (mcb_ce_o),

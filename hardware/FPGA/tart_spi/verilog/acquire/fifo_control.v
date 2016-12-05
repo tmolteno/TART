@@ -17,120 +17,142 @@
  * 
  * TODO:
  * 
+ * Changelog:
+ *  + asynchronous resets changed to synchronous resets;
+ * 
  */
+
+
+//----------------------------------------------------------------------------
+//  States for raw-data acquisition, and read-back.
+//----------------------------------------------------------------------------
+`define AQ_WAITING   3'd0
+`define AQ_BUFFERING 3'd1
+`define AQ_READBACK  3'd2
+`define AQ_IDLE      3'd3
+`define AQ_FINISHED  3'd4
+
 
 module fifo_sdram_fifo_scheduler
   #(parameter SDRAM_ADDRESS_WIDTH = 25,
-    parameter ASB = SDRAM_ADDRESS_WIDTH-2,
-    parameter CSB = SDRAM_ADDRESS_WIDTH-1,
-    parameter BLOCKSIZE = 8'd32)
+    parameter ASB   = SDRAM_ADDRESS_WIDTH-2,
+    parameter CSB   = SDRAM_ADDRESS_WIDTH-1,
+    parameter DELAY = 3)
    (
-    input              clock,
-    input              reset,
+    input              clock_i,
+    input              reset_i,
+    input              enable_i,
+    input              strobe_i,
 
-    output reg [8:0]   aq_bb_rd_address = 9'b0,
-    output reg [8:0]   aq_bb_wr_address = 9'b0,
+    output reg [8:0]   aq_bb_rd_adr = 9'b0,
+    output reg [8:0]   aq_bb_wr_adr = 9'b0,
     input [23:0]       aq_read_data,
 
-    input              spi_start_aq,
     input              spi_buffer_read_complete,
 
-    input              cmd_ready,
-    output reg         cmd_enable = 1'b0,
-    output reg         cmd_write = 1'b0,
+    input              cmd_waiting,
+    output reg         cmd_request = 1'b0,
+    output reg         cmd_write   = 1'b0,
     output reg [ASB:0] cmd_address = {CSB{1'b0}},
     output reg [31:0]  cmd_data_in = 32'b0,
 
-    output reg [2:0]   tart_state = AQ_WAITING
+    output reg [2:0]   tart_state  = `AQ_WAITING
     );
 
-   // 1 bit bigger than needed.
+
+   //-------------------------------------------------------------------------
+   //  Address pointers.
+   //-------------------------------------------------------------------------
+   //  NOTE: 1-bit bigger than needed.
    reg [CSB:0]         sdram_wr_ptr = {SDRAM_ADDRESS_WIDTH{1'b0}};
    reg [CSB:0]         sdram_rd_ptr = {SDRAM_ADDRESS_WIDTH{1'b0}};
-
    reg [1:0]           Sync_start = 2'b0;
 
-   // new signal synchronized to (=ready to be used in) clockB domain
-   wire                spi_start_aq_int = Sync_start[1];
+   // new signal synchronized to (=ready to be used in) clock_iB domain
+   wire                enable = Sync_start[1];
 
-   always @(posedge clock or posedge reset)
-     begin
-        if (reset)
-          begin
-             aq_bb_wr_address <= 9'b0;
-             Sync_start <= 2'b00;
-          end
-        else
-          begin
-             Sync_start <= {Sync_start[0], spi_start_aq};
-             if (spi_start_aq_int)
-               aq_bb_wr_address <= aq_bb_wr_address + 1'b1;
-          end
+
+   //-------------------------------------------------------------------------
+   //  Write addresses.
+   //-------------------------------------------------------------------------
+   //  TODO: Counts 6x too fast?
+   //  TODO: Write addresses aren't used.
+   always @(posedge clock_i)
+     if (reset_i)
+       aq_bb_wr_adr <= #DELAY 9'b0;
+     else if (enable_i && strobe_i)
+       aq_bb_wr_adr <= #DELAY aq_bb_wr_adr + 1'b1;
+
+
+   //-------------------------------------------------------------------------
+   //  Raw-data acquisition, and read-back, state-machine.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i) begin
+        sdram_wr_ptr <= #DELAY 0; // 1 bit bigger than needed.
+        sdram_rd_ptr <= #DELAY 0; // 1 bit bigger than needed.
+        tart_state   <= #DELAY `AQ_WAITING;
+        cmd_write    <= #DELAY 1'b0;
+        aq_bb_rd_adr <= #DELAY 9'b0;
      end
+     else
+       case (tart_state)
+         `AQ_WAITING: begin
+            if (sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-1])
+              tart_state <= #DELAY `AQ_READBACK;
+            else if (aq_bb_rd_adr != aq_bb_wr_adr)
+              tart_state <= #DELAY `AQ_BUFFERING;
+         end // case: `AQ_WAITING
 
-   parameter AQ_WAITING         = 3'd0;
-   parameter AQ_BUFFER_TO_SDRAM = 3'd1;
-   parameter TX_WRITING         = 3'd2;
-   parameter TX_IDLE            = 3'd3;
-   parameter FINISHED           = 3'd4;
+         `AQ_BUFFERING: begin
+            if (cmd_waiting && !cmd_request) begin
+               cmd_write    <= #DELAY 1'b1;
+               cmd_address  <= #DELAY sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+               sdram_wr_ptr <= #DELAY sdram_wr_ptr + 1'b1;
+               cmd_data_in  <= #DELAY aq_read_data[23:0];
+               aq_bb_rd_adr <= #DELAY aq_bb_rd_adr + 1'b1;
+               tart_state   <= #DELAY `AQ_WAITING;
+            end
+         end // case: `AQ_BUFFERING
 
-   always @(posedge clock or posedge reset)
-     begin
-        if (reset)
-          begin
-             sdram_wr_ptr <= 0; // 1 bit bigger than needed.
-             sdram_rd_ptr <= 0; // 1 bit bigger than needed.
-             tart_state   <= AQ_WAITING;
-             cmd_enable   <= 1'b0;
-             cmd_write    <= 1'b0;
-             aq_bb_rd_address <= 9'b0;
-          end
-        else
-          case (tart_state)
-            AQ_WAITING:
-              begin
-                 if (sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-1]) tart_state <= TX_WRITING;
-                 else if (aq_bb_rd_address != aq_bb_wr_address) tart_state <= AQ_BUFFER_TO_SDRAM;
-              end
-            AQ_BUFFER_TO_SDRAM:
-              begin
-                 if (cmd_enable) cmd_enable <= 1'b0;
-                 else if (cmd_ready)
-                   begin
-                      cmd_write    <= 1'b1;
-                      cmd_enable   <= 1'b1;
-                      cmd_address  <= sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-2:0];
-                      sdram_wr_ptr <= sdram_wr_ptr + 1'b1;
-                      cmd_data_in <= aq_read_data[23:0];
-                      aq_bb_rd_address <= aq_bb_rd_address + 1'b1;
-                      tart_state <= AQ_WAITING;
-                   end
-              end
-            TX_WRITING:
-              begin
-                 if (cmd_enable) cmd_enable <= 1'b0;
-                 else if (cmd_ready)
-                   begin
-                      cmd_write    <= 1'b0;
-                      cmd_enable   <= 1'b1;
-                      //                           cmd_address  <= sdram_rd_ptr[23:0];
-                      cmd_address  <= sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
-                      sdram_rd_ptr <= sdram_rd_ptr + 1'b1;
-                      tart_state <= TX_IDLE;
-                   end
-              end
-            TX_IDLE:
-              begin
-                 cmd_enable <= 1'b0;
-                 if (sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-1]) tart_state <= FINISHED;
-                 //                     if (sdram_rd_ptr > FILL_THRESHOLD) tart_state <= FINISHED;
-                 else if (spi_buffer_read_complete) tart_state <= TX_WRITING;
-              end
-            FINISHED:
-              begin
-                 $display("Finished.");
-              end
-          endcase // case (tart_state)
-     end // always @ (posedge clock or posedge reset)
-   
+         `AQ_READBACK: begin
+            if (cmd_waiting && !cmd_request) begin
+               cmd_write    <= #DELAY 1'b0;
+               cmd_address  <= #DELAY sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+               sdram_rd_ptr <= #DELAY sdram_rd_ptr + 1'b1;
+               tart_state   <= #DELAY `AQ_IDLE;
+            end
+         end // case: `AQ_READBACK
+
+         `AQ_IDLE: begin
+            if (sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-1])
+              tart_state <= #DELAY `AQ_FINISHED;
+            else if (spi_buffer_read_complete)
+              tart_state <= #DELAY `AQ_READBACK;
+         end // case: `AQ_IDLE
+
+         `AQ_FINISHED: begin
+            $display("Finished.");
+         end // case: `AQ_FINISHED
+
+       endcase // case (tart_state)
+
+
+   //-------------------------------------------------------------------------
+   //  Issue READ/WRITE requests to the memory controller.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i || cmd_request)
+       cmd_request <= #DELAY 1'b0;
+     else
+       case (tart_state)
+         `AQ_BUFFERING, `AQ_READBACK:
+           cmd_request  <= #DELAY cmd_waiting;
+
+         default:
+           cmd_request  <= #DELAY 1'b0;
+
+       endcase // case (tart_state)
+
+
 endmodule // fifo_sdram_fifo_scheduler

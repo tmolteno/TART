@@ -295,7 +295,7 @@ class TartSPI:
       res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
         print self.show_status(self.AQ_SYSTEM, res)
-      fin = res & 0x03 == 0x03
+      fin = res & 0x07 > 2
     self.pause()
     return val and fin
 
@@ -414,6 +414,9 @@ if __name__ == '__main__':
   parser.add_argument('--source', default=0, type=int, help='antenna source to calibrate')
   parser.add_argument('--capture', action='store_true', help='just enable the data-capture unit')
   parser.add_argument('--centre', action='store_true', help='enable the clock-recovery unit')
+
+  # TODO:
+  parser.add_argument('--phases', default='', type=str, help='file of antenna phase-delays')
 
   args = parser.parse_args()
   tart = TartSPI(speed=args.speed*1000000)

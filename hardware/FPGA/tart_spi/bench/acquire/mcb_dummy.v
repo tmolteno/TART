@@ -23,62 +23,80 @@ module mcb_dummy
   #(// Bit-width settings:
     parameter WIDTH = 32,
     parameter MSB   = WIDTH-1,
-    parameter ABITS = 10,
-    parameter ASB   = ABITS-1,
     parameter BSELS = WIDTH >> 2,
     parameter BSB   = BSELS-1,
 
     //  Memory-size parameters:
+    parameter ABITS = 10,
+    parameter ASB   = ABITS-1,
     parameter SIZE  = 1<<ABITS,
 
     //  Simulation-only options:
+    parameter TICKS = 4,        // latency (clock-cycles)
+    parameter TSB   = TICKS-1,  // MSB of the shift-register
     parameter START = 1000,     // start-up delay (ns)
     parameter DELAY = 3)        // combinational delay (ns)
    (
-    input              clock_i,
-    input              reset_i,
+    input          clock_i,
+    input          reset_i,
 
-    output reg         active_o = 1'b0,
-    input              request_i,
-    input              write_i,
-    output reg         ready_o = 1'b0,
-    input [ASB:0]      address_i,
-    input [BSB:0]      bytes_i,
-    input [MSB:0]      data_i,
-    output reg [MSB:0] data_o
+    output         active_o,
+    input          request_i,
+    input          write_i,
+    output         ready_o,
+    input [ASB:0]  address_i,
+    input [BSB:0]  bytes_i,
+    input [MSB:0]  data_i,
+    output [MSB:0] data_o
     );
 
 
-   reg [MSB:0]         mem[0:SIZE-1];
+   reg [MSB:0]     mem[0:SIZE-1];
+   reg [MSB:0]     dat[0:TSB];
+   reg [TSB:0]     rdy = {TICKS{1'b0}};
+   reg [TSB:0]     run = {TICKS{1'b1}};
+   reg             active = 1'b0;
+   wire            fetch, store, free;
+   integer         idx = 0, ptr = TSB;
+
+
+   assign fetch    = active && request_i && !write_i;
+   assign store    = active && request_i &&  write_i;
+   assign free     = &run;
+
+   assign data_o   = dat[ptr];
+   assign ready_o  = rdy[TSB];
+   assign active_o = active && free;
 
 
    //-------------------------------------------------------------------------
    //  Pretend to initialise.
    //-------------------------------------------------------------------------
    initial begin
-      #DELAY active_o = 1'b0;
-      #START active_o = 1'b1;
+      #DELAY active = 1'b0;
+      #START active = 1'b1;
    end
 
    always @(posedge clock_i)
      if (reset_i) begin
-        #DELAY active_o = 1'b0;
-        #START active_o = 1'b1;
+        #DELAY active = 1'b0;
+        #START active = 1'b1;
      end
 
+   always @(posedge clock_i)
+     run <= #DELAY {~request_i, run[TSB:1]};
 
+
+   //-------------------------------------------------------------------------
+   //  Delay outgoing data, to simulate SDRAM + controller latency.
    //-------------------------------------------------------------------------
    //  Satisfy read requests, if initialised.
-   //-------------------------------------------------------------------------
-   always @(posedge clock_i)
-     if (active_o && request_i && !write_i) begin
-        data_o  <= #DELAY mem[address_i];
-        ready_o <= #DELAY 1'b1;
-     end
-     else begin
-        data_o  <= #DELAY {WIDTH{1'bz}};
-        ready_o <= #DELAY 1'b0;
-     end
+   always @(posedge clock_i) begin
+      dat[idx] <= #DELAY fetch ? mem[address_i] : 'bz;
+      rdy <= #DELAY {fetch, rdy[TSB:1]};
+      idx <= #DELAY idx == TSB ? 0 : idx + 1;
+      ptr <= #DELAY ptr == TSB ? 0 : ptr + 1;
+   end
 
 
    //-------------------------------------------------------------------------
@@ -86,8 +104,8 @@ module mcb_dummy
    //-------------------------------------------------------------------------
    //  TODO: Byte enables.
    always @(posedge clock_i)
-     if (active_o && request_i && write_i)
-        mem[address_i] <= data_i;
+     if (store)
+       mem[address_i] <= #DELAY data_i;
 
 
 endmodule // mcb_dummy

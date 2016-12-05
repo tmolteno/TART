@@ -131,6 +131,7 @@ module tart_capture
 
     //  Debug/info outputs:
     output         enabled_o, // data-capture enabled?
+    output         strobe_o,    // bus-domain strobe
     output         centred_o, // clock-recovery has succeded?
     output         debug_o    // debug (fake-data) mode?
     );
@@ -242,6 +243,7 @@ module tart_capture
    //  Debug/info signal assignments.
    //-------------------------------------------------------------------------
    assign enabled_o = en_capture;
+   assign strobe_o  = tc_strobe;
    assign centred_o = tc_locked;
    assign debug_o   = en_debug;
 
