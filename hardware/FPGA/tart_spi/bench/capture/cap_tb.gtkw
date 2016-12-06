@@ -1,18 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Tue Dec  6 00:55:41 2016
+[*] Tue Dec  6 03:03:32 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/cap_tb.vcd"
-[dumpfile_mtime] "Tue Dec  6 00:50:36 2016"
-[dumpfile_size] 1533172
+[dumpfile_mtime] "Tue Dec  6 03:02:46 2016"
+[dumpfile_size] 1623156
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/capture/cap_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
 [pos] -1 -1
-*-18.703190 503000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.559813 708000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_capture_tb.
+[treeopen] tart_capture_tb.CAP0.
 [sst_width] 223
-[signals_width] 142
+[signals_width] 134
 [sst_expanded] 1
 [sst_vpaned_height] 447
 @800200
@@ -136,13 +137,14 @@ tart_capture_tb.drx[7:0]
 -TB
 @800200
 -Capture
+@c00200
 -Regs
 @22
 tart_capture_tb.CAP0.tc_centre[7:0]
 tart_capture_tb.CAP0.tc_status[7:0]
 tart_capture_tb.CAP0.tc_debug[7:0]
 tart_capture_tb.CAP0.tc_system[7:0]
-@1000200
+@1401200
 -Regs
 @c00200
 -Oversamp
@@ -196,24 +198,38 @@ tart_capture_tb.CAP0.PHASE.pos_w
 -SHREG[4]
 @28
 tart_capture_tb.CAP0.SHREG[4].ce
-tart_capture_tb.CAP0.SHREG[4].a[2:0]
 tart_capture_tb.CAP0.SHREG[4].d
 tart_capture_tb.CAP0.SHREG[4].q
 @1401200
 -SHREG[4]
-@800200
+@c00200
 -Info
-@29
+@28
 tart_capture_tb.tc_en
 tart_capture_tb.tc_stb
 tart_capture_tb.tc_mid
 tart_capture_tb.tc_cen
 tart_capture_tb.tc_dbg
-@23
+@22
 tart_capture_tb.tc_pos[23:0]
 tart_capture_tb.tc_neg[23:0]
-@1000200
+@1401200
 -Info
+@c00200
+-Pipes
+@28
+tart_capture_tb.CAP0.clock_x
+@22
+tart_capture_tb.CAP0.signal_e_i[23:0]
+tart_capture_tb.CAP0.signal_p[23:0]
+tart_capture_tb.CAP0.signal_n[23:0]
+tart_capture_tb.CAP0.sig_x_ddr[23:0]
+tart_capture_tb.CAP0.source_x[23:0]
+tart_capture_tb.CAP0.signal_w[23:0]
+tart_capture_tb.CAP0.signal_x_o[23:0]
+@1401200
+-Pipes
+@1000200
 -Capture
 [pattern_trace] 1
 [pattern_trace] 0

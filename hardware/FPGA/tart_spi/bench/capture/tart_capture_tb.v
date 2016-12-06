@@ -30,9 +30,9 @@ module tart_capture_tb;
    //
    //-------------------------------------------------------------------------
    //  Testbench-specific settings:
-   parameter PHASE = 8; // simulation phase-delay
-   parameter LIMIT = 6; // simulate for '2^LIMIT' samples
-   parameter SHAKE = 3;
+   parameter PHASE = 3; // simulation phase-delay
+   parameter SHAKE = 2; // how much random phase-jitter + offset?
+   parameter LIMIT = 4; // simulate for '2^LIMIT' samples
    parameter NOISY = 0;
    parameter DELAY = 3;
 
@@ -124,6 +124,7 @@ module tart_capture_tb;
 
    parameter DE = CLKE*2;
    parameter DB = CLKB*2;
+   parameter DX = CLKX*2;
 
 
 
@@ -136,12 +137,13 @@ module tart_capture_tb;
    parameter TIMEOUT = DE << LIMIT;
 
    //  Simulation-stimulus signals.
-   reg [3:0]    delay = PHASE;
+   reg [3:0]    delay = PHASE-1;
    reg [2:0]    sleep = 0;
    reg          check = 1'b0;
    reg          poll = 1'b0;
    reg          invert = 1;
-   reg [4:0]    source = 4;
+//    reg [4:0]    source = 4;
+   reg [4:0]    source = 20;
    integer      samples, errors;
 
 
@@ -150,11 +152,14 @@ module tart_capture_tb;
       $dumpvars;
 
       //----------------------------------------------------------------------
+      //----------------------------------------------------------------------
       $display("%12t:\tIssuing RESET.", $time);
       #33 b_rst = 1'b1;
       #DB spi_req_b = 0;
       #DE b_rst = 1'b0;
 
+
+      //----------------------------------------------------------------------
       //----------------------------------------------------------------------
       $display("%12t:\tEnabling data-capture, and selecting antenna %1d.", $time, source);
       #DE wr = 1; adr = 2'b11; dtx = {3'h4, source};
@@ -167,31 +172,55 @@ module tart_capture_tb;
       #DB while (!done) #DB;
 
       //----------------------------------------------------------------------
-      #DE $display("%12t:\tEnabling signal checking.", $time);
-      check = 1;
-
-      //----------------------------------------------------------------------
       $display("%12t:\tReading back the status & mode registers.", $time);
       #DE rd = 1; adr = 2'b00; #DB while (!done) #DB;
       #DE rd = 1; adr = 2'b01; #DB while (!done) #DB;
       #DE rd = 1; adr = 2'b10; #DB while (!done) #DB;
       #DE rd = 1; adr = 2'b11; #DB while (!done) #DB;
 
-      $display("%12t:\tEnabling polling of phase-delay measurements.", $time);
-      #DE poll = 1;
-
-      /*
       //----------------------------------------------------------------------
-      $display("%12t:\tSetting fixed delay of 5 ticks, and update-mode to DRIFT.", $time);
-      #DE wr = 1; adr = 2'b00; dtx = 8'hC5; // align + drift antenna 0x04
-      #DB while (!done) #DB;
-       */
+      #DE $display("%12t:\tEnabling signal checking.", $time);
+      while (!new_x) #DX; #DX check = 1;
 
-      #TIMEOUT poll = 0;
-      $display("\n");
+      $display("%12t:\tEnabling polling of phase-delay measurements.", $time);
+      poll = 1;
+
+      //----------------------------------------------------------------------
+      #TIMEOUT while (!new_x) #DX; poll = 0; check = 0;
       $display("%12t:\tSignal source samples\t= \t%7d", $time, samples);
       $display("%12t:\tPhase-delay errors   \t= \t%7d", $time, errors);
-      $finish;
+
+
+      //----------------------------------------------------------------------
+      //----------------------------------------------------------------------
+      #DE delay = delay + 1; errors = 0;
+      $display("\n");
+      $display("%12t:\tSetting new phase-delay (%1d).", $time, delay);
+      #DE wr = 1; adr = 2'b00; dtx = {2'b10, invert, 1'b0, delay};
+      #DB while (!done) #DB;
+      $display("%12t:\tBeginning capture & check.", $time);
+      #DE while (!new_x) #DX; poll = 1; check = 1;
+
+      #TIMEOUT while (!new_x) #DX; poll = 0; check = 0;
+      $display("%12t:\tSignal source samples\t= \t%7d", $time, samples);
+      $display("%12t:\tPhase-delay errors   \t= \t%7d", $time, errors);
+
+
+      //----------------------------------------------------------------------
+      //----------------------------------------------------------------------
+      #DE delay = delay + 1; errors = 0;
+      $display("\n");
+      $display("%12t:\tSetting new phase-delay (%1d).", $time, delay);
+      #DE wr = 1; adr = 2'b00; dtx = {2'b10, invert, 1'b0, delay};
+      #DB while (!done) #DB;
+      $display("%12t:\tBeginning capture & check.", $time);
+      #DE while (!new_x) #DX; poll = 1; check = 1;
+
+      #TIMEOUT while (!new_x) #DX; poll = 0; check = 0;
+      $display("%12t:\tSignal source samples\t= \t%7d", $time, samples);
+      $display("%12t:\tPhase-delay errors   \t= \t%7d", $time, errors);
+
+      #DE $finish;
    end
 
 
@@ -347,6 +376,7 @@ module tart_capture_tb;
    always @(posedge clk_x)
      if (vld_x && fmt_cnt == 11)
        src_reg <= #DELAY raw_val;
+
 
 
    //-------------------------------------------------------------------------

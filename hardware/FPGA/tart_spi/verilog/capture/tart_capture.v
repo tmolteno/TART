@@ -47,6 +47,8 @@
  *    oversampled at 12x the sources' clock-rate;
  * 
  * TODO:
+ *  + all this signal-capture stuff can be done in the XTAL and bus clock-
+ *    domains, so the correlator-domain isn't needed here?
  *  + even though the sample-clock's frequency is an integer multiple of the
  *    external clock, the phase relationship is unknown (due to the quirky
  *    Spartan 6 DCM's), thus asynchronous domain-crossing techniques must be
@@ -55,6 +57,7 @@
  *  + the handling of asynchronous signals is still a mess;
  *  + floorplan into the upper-right corner?
  *  + AUTO-mode, which continually monitors (and adjusts) the phase?
+ *  + 'DRIFT' is currently ignored;
  * 
  */
 
@@ -541,6 +544,20 @@ module tart_capture
    //-------------------------------------------------------------------------
    (* AREA_GROUP = "shreg" *)
    shift_reg
+     #(  .DEPTH(16),        // should synthesise to SRL16E primitives?
+         .ABITS(4),
+         .DELAY(DELAY)
+         ) SHREG [MSB:0]
+       ( .clk(clock_x),
+         .ce (capture_x),       // TODO: use `locked_x`?
+         .a  ({tc_delay[3:1], 1'b0}),
+         .d  (source_x),
+         .q  (signal_w)
+         );
+
+   /*
+   (* AREA_GROUP = "shreg" *)
+   shift_reg
      #(  .DEPTH(8),          // should synthesise to SRL16E primitives?
          .ABITS(3),
          .DELAY(DELAY)
@@ -551,6 +568,7 @@ module tart_capture
          .d  (source_x),
          .q  (signal_w)
          );
+    */
 
 
 

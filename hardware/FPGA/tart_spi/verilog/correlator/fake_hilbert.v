@@ -18,6 +18,9 @@
  *    sample, and is very cheap to compute;
  * 
  * TODO:
+ *  + this is much too complicated, and by giving it an appropriate "strobe"
+ *    input-signal, it could be simplified to just a couple of pipeline-
+ *    registers?
  * 
  */
 
