@@ -42,6 +42,9 @@
  *    signals, and perform clock-recovery, if enabled (1) -- or instead to
  *    cross the clock-domain (to the correlator domain) using an asynchronous
  *    FIFO (0);
+ *  + DDR registers (via the 'IDDR2' primitives) are used to capture the
+ *    signal inputs, and by using the 6x clock, the sources are effectively
+ *    oversampled at 12x the sources' clock-rate;
  * 
  * TODO:
  *  + even though the sample-clock's frequency is an integer multiple of the
@@ -131,9 +134,12 @@ module tart_capture
 
     //  Debug/info outputs:
     output         enabled_o, // data-capture enabled?
-    output         strobe_o,    // bus-domain strobe
+    output         strobe_o,  // bus-domain strobe
+    output         middle_o,  // bus-domain mid-sample strobe
     output         centred_o, // clock-recovery has succeded?
-    output         debug_o    // debug (fake-data) mode?
+    output         debug_o,   // debug (fake-data) mode?
+    output [MSB:0] signal_po, // posedge of the raw DDR-sampled signal,
+    output [MSB:0] signal_no  // and negedge too
     );
 
 
@@ -244,14 +250,19 @@ module tart_capture
    //-------------------------------------------------------------------------
    assign enabled_o = en_capture;
    assign strobe_o  = tc_strobe;
+//    assign strobe_o  = strobe_b; // TODO:
+   assign middle_o  = tc_middle;
    assign centred_o = tc_locked;
    assign debug_o   = en_debug;
+   assign signal_po = signal_p;
+   assign signal_no = signal_n;
 
    //-------------------------------------------------------------------------
    //  Use a single bit of the fake signal to feed into the phase-measurement
    //  unit.
    assign fake_p    = fake_b_p[0];
    assign fake_n    = fake_b_n[0];
+
 
 
    //-------------------------------------------------------------------------
@@ -336,6 +347,22 @@ module tart_capture
        tc_select <= #DELAY dat_i[SSB:0];
      else
        tc_select <= #DELAY tc_select;
+
+
+   /*
+   //  TODO: Make sure that the first sample is valid.
+   //-------------------------------------------------------------------------
+   //  Bus-domain strobe signal needs to be delayed by one strobe, to ensure
+   //  that the first sample is actual data.
+   //-------------------------------------------------------------------------
+   reg             b_strobe = 1'b0;
+
+   always @(posedge clock_i)
+     if (reset_i)
+       b_strobe <= #DELAY 1'b0;
+     else if (en_capture)
+       b_strobe <= #DELAY tc_strobe;
+    */
 
 
 
@@ -433,11 +460,11 @@ module tart_capture
          .CDATA(CDATA),
          .DELAY(DELAY)
          ) FAKE
-       ( .clock_i (clock_e),
+       ( .clock_i (clock_e),    // XTAL-domain clock
          .reset_i (reset_e),
-         .enable_i(debug_e),
-         .shift_i (shift_e),
-         .count_i (count_e),
+         .enable_i(debug_e),    // enable by using DEBUG-mode
+         .shift_i (shift_e),    // gen. data using shift-register
+         .count_i (count_e),    // gen. data using up-counter?
          .valid_o (),
          .data_o  (fake_e)
          );
@@ -559,6 +586,7 @@ module tart_capture
          .delay_x_o(delay_x),
 
 `ifdef __USE_SIGNAL_CENTRE
+         // TODO: OBSOLETE
          //  CDC for the phase-alignment signals:
          .centre_b_i(en_centre), // enable the centring unit?
          .centre_x_o(centre_x),

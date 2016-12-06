@@ -17,7 +17,9 @@
  *    the frequency of the data-clock;
  * 
  * TODO:
- *  + hardware testing;
+ *  + additional hardware testing, and also testing different parameter
+ *    values;
+ *  + parameterise the number of pipeline stages?
  * 
  */
 

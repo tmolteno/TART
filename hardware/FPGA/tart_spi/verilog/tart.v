@@ -61,11 +61,34 @@
  *  + verilog/tart_control.v
  *  + verilog/SDRAM_Controller_v.v
  * 
+ * 
  * The default address ranges for the SPI slaves are:
  *  + 7'b000_00xx -- signal-capture unit;
  *  + 7'b010_00xx -- raw-data acquisition unit;
  *  + 7'b100_00xx -- DSP/visibilities unit; and
  *  + 7'b110_00xx -- (system) control unit.
+ * 
+ * 
+ * Raw-acquisition start-up sequence:
+ *  1/ enable the capture unit ('capture/tart_capture.v');
+ *  2/ enable the acquisition unit ('acquire/tart_acquire.v');
+ *  3/ wait until 'state[2:0] > 2'; and
+ *  4/ stream back the raw data (via SPI),
+ * and as an example, this mode can be launched via a Python script:
+ * 
+ *  > sudo python tart_testbench.py --bramexp=21 --internal --counter
+ * 
+ * 
+ * Real-time visibilities calculation mode:
+ *  1/ enable the capture unit ('capture/tart_capture.v');
+ *  2/ set the 'blocksize' (correlator-sums / bank) register;
+ *  2/ enable the DSP unit ('dsp/tart_dsp.v');
+ *  3/ poll for a new bank of visibilities to become 'available';
+ *  4/ stream back the visibilities data (via SPI); and
+ *  5/ go to step 3/,
+ * and as an example, this mode can be launched via a Python script:
+ * 
+ *  > sudo python tartdsp.py --blocksize=22 --monitor --capture
  * 
  * 
  * Changelog:
@@ -77,7 +100,9 @@
  *  + 25/06/2016  --  finished refactoring the top-level modules, for the new
  *                    SPI and correlators;
  *  + 05/09/2016  --  floorplanning complete, and now meets timing;
- *  + 15/10/2016  --  numerous improvements to get it to a releasable state;
+ *  + 15/10/2016  --  fixed many clock-domain crossing issues, and upgraded to
+ *                    Wishbone SPEC B4 Pipelined transactions;
+ *  + 17/11/2016  --  new data-capture circuits;
  * 
  * NOTE:
  * 

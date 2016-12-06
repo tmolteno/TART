@@ -133,8 +133,8 @@
 //----------------------------------------------------------------------------
 //  There are two versions of the Papilio Pro LX9, V1.3 -- one has 8 MB of
 //  SDRAM, and the other has 64 MB (512 Mb).
-`define __512Mb_SDRAM
-// `undef  __512Mb_SDRAM
+// `define __512Mb_SDRAM
+`undef  __512Mb_SDRAM
 
 
 

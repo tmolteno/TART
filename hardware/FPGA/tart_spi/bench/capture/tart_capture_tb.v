@@ -13,6 +13,8 @@
  * Testbench for TART's signal-capturing circuitry.
  * 
  * NOTE:
+ *  + has a corresponding 'cap_tb.gtkw' file for showing the source, and
+ *    captured, signal waveforms;
  * 
  * TODO:
  * 
@@ -21,11 +23,20 @@
 module tart_capture_tb;
 
 
+
    //-------------------------------------------------------------------------
    //
-   //  SIMULATION SETTINGS.
+   //  SIMULATION PARAMETERS/SETTINGS.
    //
    //-------------------------------------------------------------------------
+   //  Testbench-specific settings:
+   parameter PHASE = 8; // simulation phase-delay
+   parameter LIMIT = 6; // simulate for '2^LIMIT' samples
+   parameter SHAKE = 3;
+   parameter NOISY = 0;
+   parameter DELAY = 3;
+
+   //  Capture-module parameters:
    parameter ALIGN = 1;
    parameter CYCLE = 1;
    parameter RATIO = 12;
@@ -34,14 +45,11 @@ module tart_capture_tb;
    parameter HALF  = RATIO>>1;
    parameter TICKS = 2;
 
+   //  Antenna/source and address bit-widths:
    parameter WIDTH = 24;
    parameter MSB   = WIDTH-1;
    parameter ABITS = 20;
    parameter ASB   = ABITS-1;
-
-   parameter SHAKE = 3;
-   parameter NOISY = 0;
-   parameter DELAY = 3;
 
 
 
@@ -78,7 +86,8 @@ module tart_capture_tb;
    reg          tc_debug, tc_shift, tc_count;
 
    //  Debug & info signals.
-   wire         tc_cen, tc_stb, tc_mid, tc_dbg;
+   wire         tc_en, tc_stb, tc_mid, tc_cen, tc_dbg;
+   wire [MSB:0] tc_pos, tc_neg;
 
    //-------------------------------------------------------------------------
    //  Signals related to the raw-data acquisition unit.
@@ -124,10 +133,10 @@ module tart_capture_tb;
    //
    //-------------------------------------------------------------------------
    //  Length of the simulation.
-   parameter TIMEOUT = DE << 7;
+   parameter TIMEOUT = DE << LIMIT;
 
    //  Simulation-stimulus signals.
-   reg [3:0]    delay = 7;
+   reg [3:0]    delay = PHASE;
    reg [2:0]    sleep = 0;
    reg          check = 1'b0;
    reg          poll = 1'b0;
@@ -312,6 +321,33 @@ module tart_capture_tb;
        samples <= #DELAY samples + 1;
 
 
+   //-------------------------------------------------------------------------
+   //  Just some formatting (for GtkWave).
+   //-------------------------------------------------------------------------
+   //  This shows the formatted versions of the source, and captured, antenna
+   //  signals (for quick comparisons in GtkWave).
+   wire [MSB:0] src_val, cap_val;
+   wire         nofmt, match;
+   reg [MSB:0]  src_reg = 'bz;
+   reg [3:0]    fmt_cnt = 4'h0;
+   wire [4:0]   nxt_cnt;
+
+   assign nxt_cnt = fmt_cnt + 1;
+   assign nofmt   = fmt_cnt > 10 || !check;
+   assign match   = nofmt ? 'b0 : src_val == cap_val ? 1'b1 : 'bx;
+   assign src_val = nofmt ? 'bz : src_reg;
+   assign cap_val = nofmt ? 'bz : daq_x;
+
+   always @(posedge clk_x)
+     if (b_rst || stb_x)
+       fmt_cnt <= #DELAY 4'h0;
+     else if (vld_x)
+       fmt_cnt <= #DELAY nxt_cnt[3:0];
+
+   always @(posedge clk_x)
+     if (vld_x && fmt_cnt == 11)
+       src_reg <= #DELAY raw_val;
+
 
    //-------------------------------------------------------------------------
    //
@@ -416,10 +452,13 @@ module tart_capture_tb;
         .signal_x_o(daq_x),
 
         //  Debug & info outputs:
-        .enabled_o (tc_cen),
+        .enabled_o (tc_en ),
         .strobe_o  (tc_stb),
-        .centred_o (tc_mid),
-        .debug_o   (tc_dbg)
+        .middle_o  (tc_mid),
+        .centred_o (tc_cen),
+        .debug_o   (tc_dbg),
+        .signal_po (tc_pos),
+        .signal_no (tc_neg)
         );
 
 

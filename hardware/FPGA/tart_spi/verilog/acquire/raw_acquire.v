@@ -22,7 +22,7 @@
  *    used;
  * 
  * TODO:
- *  + the handling of asynchronous signals is still a mess;
+ *  + replace the kinda-FIFO stuff with an actual asynchronous FIFO;
  * 
  */
 
