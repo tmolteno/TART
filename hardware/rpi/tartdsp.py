@@ -154,7 +154,7 @@ class TartSPI:
 
       # Acquisition registers:
       self.AQ_STREAM: 'AQ_STREAM:\tdata = %x' % val,
-      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, error = %s, (SDRAM) ready = %s, 512Mb = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], val & 0x07),
+      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, error = %s, (SDRAM) ready = %s, 512Mb = %s, overflow = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
 
       # Visibilities registers:
       self.VX_STREAM: 'VX_STREAM:\tdata = %x' % val,

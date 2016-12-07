@@ -1,0 +1,146 @@
+[*]
+[*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
+[*] Wed Dec  7 04:35:16 2016
+[*]
+[dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/acq_tb.vcd"
+[dumpfile_mtime] "Wed Dec  7 04:34:43 2016"
+[dumpfile_size] 1237980
+[savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/acquire/acq_tb.gtkw"
+[timestart] 0
+[size] 2560 1416
+[pos] -1 -1
+*-18.463284 1020000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tart_acquire_tb.
+[treeopen] tart_acquire_tb.ACQ.
+[treeopen] tart_acquire_tb.ACQ.RAWDATA.
+[treeopen] tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.
+[sst_width] 223
+[signals_width] 174
+[sst_expanded] 1
+[sst_vpaned_height] 447
+@28
+tart_acquire_tb.clk_x
+tart_acquire_tb.clk_e
+tart_acquire_tb.b_clk
+tart_acquire_tb.b_rst
+@800200
+-Pipes
+@28
+tart_acquire_tb.strobe
+tart_acquire_tb.middle
+@22
+tart_acquire_tb.signal[23:0]
+tart_acquire_tb.sig_w[23:0]
+tart_acquire_tb.sig_b[23:0]
+tart_acquire_tb.sig_n[23:0]
+tart_acquire_tb.sig_p[23:0]
+tart_acquire_tb.sig_e[23:0]
+tart_acquire_tb.FAKE.raw[23:0]
+@1000200
+-Pipes
+@800200
+-Sig
+@28
+tart_acquire_tb.ce_e
+tart_acquire_tb.new_e
+tart_acquire_tb.vld_e
+@22
+tart_acquire_tb.sig_e[23:0]
+@1000200
+-Sig
+@c00200
+-Ctrl
+@28
+tart_acquire_tb.rd
+tart_acquire_tb.wr
+tart_acquire_tb.wt
+tart_acquire_tb.busy
+tart_acquire_tb.done
+tart_acquire_tb.aq_enabled
+tart_acquire_tb.cap_state[2:0]
+@1401200
+-Ctrl
+@800200
+-WB
+@28
+tart_acquire_tb.cyc
+tart_acquire_tb.stb
+tart_acquire_tb.we
+tart_acquire_tb.ack
+tart_acquire_tb.adr[1:0]
+@1000200
+-WB
+@c00200
+-MCB
+@28
+tart_acquire_tb.cmd_avail
+tart_acquire_tb.cmd_request
+tart_acquire_tb.cmd_write
+tart_acquire_tb.cmd_ready
+@22
+tart_acquire_tb.cmd_address[9:0]
+tart_acquire_tb.cmd_data_in[31:0]
+tart_acquire_tb.cmd_data_out[31:0]
+@1401200
+-MCB
+@800200
+-Hamster
+@28
+tart_acquire_tb.ham_avail
+tart_acquire_tb.ham_request
+tart_acquire_tb.ham_write
+tart_acquire_tb.ham_ready
+@22
+tart_acquire_tb.ham_address[20:0]
+tart_acquire_tb.ham_data_in[31:0]
+tart_acquire_tb.ham_data_out[31:0]
+@800200
+-SDRAM
+@28
+tart_acquire_tb.SDRAM_CS
+tart_acquire_tb.SDRAM_CLK
+tart_acquire_tb.SDRAM_CKE
+tart_acquire_tb.SDRAM_RAS
+tart_acquire_tb.SDRAM_CAS
+tart_acquire_tb.SDRAM_WE
+tart_acquire_tb.SDRAM_BA[1:0]
+@22
+tart_acquire_tb.SDRAM_ADDR[12:0]
+@28
+tart_acquire_tb.SDRAM_DQM[1:0]
+@22
+tart_acquire_tb.SDRAM_DQ[15:0]
+@1000200
+-SDRAM
+@c00200
+-Internal
+@28
+tart_acquire_tb.HAMSDRAM.save_bank[1:0]
+tart_acquire_tb.HAMSDRAM.addr_bank[1:0]
+@22
+tart_acquire_tb.HAMSDRAM.save_row[12:0]
+tart_acquire_tb.HAMSDRAM.addr_row[12:0]
+@28
+tart_acquire_tb.HAMSDRAM.can_back_to_back
+@1401200
+-Internal
+@1000200
+-Hamster
+@800200
+-Ctrl
+@28
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.enable_i
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.strobe_i
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.readback_o
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.overflow_o
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.bb_empty_n
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.bb_full
+@24
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.bb_rd_adr[9:0]
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.bb_wr_adr[9:0]
+@29
+tart_acquire_tb.ACQ.RAWDATA.SCHEDULER0.aq_state[2:0]
+@1000200
+-Ctrl
+[pattern_trace] 1
+[pattern_trace] 0

@@ -1,18 +1,18 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Wed Dec  7 00:42:36 2016
+[*] Wed Dec  7 04:35:05 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/dsp_tb.vcd"
-[dumpfile_mtime] "Wed Dec  7 00:41:41 2016"
-[dumpfile_size] 39144149
+[dumpfile_mtime] "Wed Dec  7 04:31:47 2016"
+[dumpfile_size] 39794122
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
 [pos] -1 -1
-*-21.070536 153000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.066874 298000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
-[treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.
+[treeopen] tart_dsp_tb.TART_DSP.COR.
 [treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.BDSP.
 [treeopen] tart_dsp_tb.TART_DSP.COR.CXB4.BSDP.
 [treeopen] tart_dsp_tb.TART_DSP.VIZ.
@@ -41,17 +41,19 @@ tart_dsp_tb.end_x
 tart_dsp_tb.sig_o[23:0]
 @1401200
 -Gen
+@800200
+-DDR
 @28
 tart_dsp_tb.locked
 tart_dsp_tb.strobe
 @22
 tart_dsp_tb.signal[23:0]
 @1000200
+-DDR
 -Signal
 @800200
 -System
 @28
-tart_dsp_tb.aq_enabled
 tart_dsp_tb.enabled
 tart_dsp_tb.read_en
 tart_dsp_tb.switched
@@ -59,7 +61,7 @@ tart_dsp_tb.newblock
 tart_dsp_tb.streamed
 @1000200
 -System
-@800200
+@c00200
 -Bus
 @28
 tart_dsp_tb.b_clk
@@ -72,10 +74,11 @@ tart_dsp_tb.wat
 @22
 tart_dsp_tb.val[7:0]
 tart_dsp_tb.dat[7:0]
-@1000200
+@1401200
 -Bus
 @800200
 -Fetch
+@c00200
 -Xfer
 @28
 tart_dsp_tb.rd
@@ -87,8 +90,10 @@ tart_dsp_tb.XFER.cycle
 tart_dsp_tb.XFER.cyc_r
 tart_dsp_tb.XFER.write
 tart_dsp_tb.XFER.done_w
-@1000200
+@1401200
 -Xfer
+@c00200
+-Info
 @28
 tart_dsp_tb.get
 tart_dsp_tb.set
@@ -100,6 +105,8 @@ tart_dsp_tb.f_cnt[1:0]
 @22
 tart_dsp_tb.f_adr[9:0]
 tart_dsp_tb.f_dat[23:0]
+@1401200
+-Info
 @1000200
 -Fetch
 -== TOP ==
@@ -121,7 +128,7 @@ tart_dsp_tb.TART_DSP.STREAM.inc_w
 tart_dsp_tb.TART_DSP.STREAM.wrap_adr
 @1401200
 -Stream
-@800200
+@c00200
 -Port A
 @28
 tart_dsp_tb.TART_DSP.sram_a_ce
@@ -131,7 +138,7 @@ tart_dsp_tb.TART_DSP.sram_a_ad[9:0]
 tart_dsp_tb.TART_DSP.sram_a_be[3:0]
 tart_dsp_tb.TART_DSP.sram_a_lo[15:0]
 tart_dsp_tb.TART_DSP.sram_a_hi[15:0]
-@1000200
+@1401200
 -Port A
 @c00200
 -Port B
@@ -207,7 +214,22 @@ tart_dsp_tb.TART_DSP.VIZ.BUF0.lower[4:0]
 --- Viz --
 @800200
 --- Cor --
-@c00200
+-Hilb
+-In
+@1000200
+-In
+@800200
+-Out
+@28
+tart_dsp_tb.TART_DSP.COR.go_x
+tart_dsp_tb.TART_DSP.COR.strobe_x
+@22
+tart_dsp_tb.TART_DSP.COR.re_x[23:0]
+tart_dsp_tb.TART_DSP.COR.im_x[23:0]
+@1000200
+-Out
+-Hilb
+@c00201
 -Internal
 @22
 tart_dsp_tb.TART_DSP.COR.sram_d0[23:0]
@@ -217,7 +239,7 @@ tart_dsp_tb.TART_DSP.COR.sel[2:0]
 @22
 tart_dsp_tb.TART_DSP.COR.sram_do[23:0]
 tart_dsp_tb.TART_DSP.COR.sram_out[23:0]
-@1401200
+@1401201
 -Internal
 @28
 tart_dsp_tb.TART_DSP.COR.CXB0.BDSP.sram_ce_i

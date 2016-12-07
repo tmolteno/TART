@@ -32,14 +32,12 @@ PINOUT=${PINOUT_STEM}-$(shell echo ${TARGET} | cut -d- -f1,2).ucf
 #  Papilio
 TARGET=xc6slx9-tqg144-2
 
-#TARGET=xcr3128xl-vq100-10
-#TARGET=xc2s30-tq144-5
-#TARGET=xc2s400e-ft256-7
-#TARGET=xc2v3000-ff1152-6
+# TARGET=xcr3128xl-vq100-10
+# TARGET=xc2s30-tq144-5
+# TARGET=xc3s1000-ft256-4
 # TARGET=xc3s200-pq208-4
 # TARGET=xc5vlx30-ff324-3
-# TARGET=xc3s1000-ft256-4
-# TARGET=xc3s1000-fg456-4
+# TARGET=xc2v3000-ff1152-6
 
 # export XILINX=/usr/local/Xilinx
 export XILINX=/home/patrick/bucket/patrick/Xilinx/ISE_DS_14.7/14.7/ISE_DS/ISE/bin/lin64
@@ -65,7 +63,7 @@ SPI=${RTL}/spi
 SPI_FILES=${SPI}/spi_slave_wb.v ${SPI}/spi_layer.v
 
 CAP=${RTL}/capture
-CAP_FILES=${CAP}/tart_capture.v ${CAP}/capture_control.v ${CAP}/signal_capture.v ${CAP}/signal_centre.v ${CAP}/signal_phase_DDR.v ${CAP}/signal_source.v ${CAP}/fake_telescope.v
+CAP_FILES=${CAP}/tart_capture.v ${CAP}/signal_phase_DDR.v ${CAP}/signal_source.v ${CAP}/fake_telescope.v
 
 ACQ=${RTL}/acquire
 ACQ_FILES=${ACQ}/tart_acquire.v ${ACQ}/raw_acquire.v ${ACQ}/dram_prefetch.v ${ACQ}/fifo_control.v ${ACQ}/block_buffer.v

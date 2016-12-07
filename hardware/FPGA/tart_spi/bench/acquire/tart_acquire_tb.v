@@ -205,6 +205,10 @@ module tart_acquire_tb;
    reg             strobe = 1'b0, strobe_1 = 1'b0, strobe_0 = 1'b0;
    reg             locked = 1'b0;
    reg [MSB:0]     signal;
+   reg [3:0]       mcount = 0;
+   wire            middle;
+
+   assign middle = mcount == 2;
 
    always @(posedge b_clk or posedge new_e)
      if (new_e)
@@ -214,6 +218,12 @@ module tart_acquire_tb;
 
    always @(posedge b_clk)
      {strobe, strobe_1} <= #DELAY {strobe_1, strobe_0};
+
+   always @(posedge b_clk)
+     if (strobe || b_rst)
+       mcount <= #DELAY 0;
+     else
+       mcount <= #DELAY mcount + locked;
 
    always @(posedge b_clk)
      if (strobe) begin
@@ -248,6 +258,7 @@ module tart_acquire_tb;
 
         .locked_i (locked),
         .strobe_i (strobe),
+        .middle_i (middle),
         .signal_i (signal),
 
         .cyc_i    (cyc),        // Wishbone (SPEC B4) interconnect

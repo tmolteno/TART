@@ -1,9 +1,9 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Wed Dec  7 00:16:13 2016
+[*] Wed Dec  7 04:35:58 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/cap_tb.vcd"
-[dumpfile_mtime] "Wed Dec  7 00:16:08 2016"
+[dumpfile_mtime] "Wed Dec  7 04:02:09 2016"
 [dumpfile_size] 1725567
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/capture/cap_tb.gtkw"
 [timestart] 0
@@ -146,12 +146,6 @@ tart_capture_tb.CAP0.tc_debug[7:0]
 tart_capture_tb.CAP0.tc_system[7:0]
 @1401200
 -Regs
-@c00200
--Oversamp
-@22
-tart_capture_tb.CAP0.signal_w[23:0]
-@1401200
--Oversamp
 @800200
 -Phase
 @22
@@ -200,15 +194,15 @@ tart_capture_tb.CAP0.SHREG[4].d
 tart_capture_tb.CAP0.SHREG[4].q
 @1401200
 -SHREG[4]
-@c00200
+@800200
 -Info
-@28
+@29
 tart_capture_tb.tc_en
 tart_capture_tb.tc_stb
 tart_capture_tb.tc_mid
 tart_capture_tb.tc_cen
 tart_capture_tb.tc_dbg
-@1401200
+@1000200
 -Info
 @c00200
 -Pipes
@@ -257,7 +251,7 @@ tart_capture_tb.CAP0.reset_e
 tart_capture_tb.CAP0.debug_e
 tart_capture_tb.CAP0.shift_e
 tart_capture_tb.CAP0.count_e
-@23
+@22
 tart_capture_tb.CAP0.fake_e[23:0]
 @1000200
 -Fake

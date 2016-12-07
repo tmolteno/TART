@@ -54,7 +54,7 @@ module fifo_control
     output reg         cmd_request = 1'b0,
     output reg         cmd_write = 1'b0,
     output reg [ASB:0] cmd_address = {CSB{1'b0}},
-    output reg [31:0]  cmd_data_in = 32'b0,
+    output [31:0]      cmd_data_in,
 
     output reg         overflow_o = 1'b0,
     output reg         readback_o = 1'b0,
@@ -89,9 +89,14 @@ module fifo_control
                         bb_rd_adr[8:0] == bb_wr_adr[8:0];
 
    //-------------------------------------------------------------------------
+   //  A MCB command-signal assignments.
+   assign cmd_accept  = cmd_waiting && cmd_request;
+
+   //-------------------------------------------------------------------------
    //  Output assignments.
    assign bb_rd_adr_o = bb_rd_adr[8:0];
    assign bb_wr_adr_o = bb_wr_adr[8:0];
+   assign cmd_data_in = bb_rd_dat_i;
    assign aq_state_o  = aq_state;
 
 
@@ -103,6 +108,16 @@ module fifo_control
        bb_wr_adr <= #DELAY 10'h0;
      else if (enable_i && strobe_i)
        bb_wr_adr <= #DELAY bb_wr_nxt[9:0];
+
+
+   //-------------------------------------------------------------------------
+   //  FIFO read-address logic.
+   //-------------------------------------------------------------------------
+   always @(posedge clock_i)
+     if (reset_i)
+       bb_rd_adr <= #DELAY 10'h0;
+     else if (cmd_accept && cmd_write)
+       bb_rd_adr <= #DELAY bb_rd_nxt[9:0];
 
 
    //-------------------------------------------------------------------------
@@ -118,10 +133,10 @@ module fifo_control
    //-------------------------------------------------------------------------
    //  Assert overflow if write is attempted while full.
    always @(posedge clock_i)
-     if (reset_i)
-       readback_o <= #DELAY 1'b0;
-     else if (enable_i && aq_state > 1)
-       readback_o <= #DELAY 1'b1;
+     if (reset_i || !enable_i)
+       overflow_o <= #DELAY 1'b0;
+     else if (bb_full && strobe_i)
+       overflow_o <= #DELAY 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -131,66 +146,58 @@ module fifo_control
      if (reset_i) begin
         sdram_wr_ptr <= #DELAY 0; // 1 bit bigger than needed.
         sdram_rd_ptr <= #DELAY 0; // 1 bit bigger than needed.
-        aq_state     <= #DELAY `AQ_WAITING;
+        cmd_request  <= #DELAY 1'b0;
         cmd_write    <= #DELAY 1'b0;
-        bb_rd_adr    <= #DELAY 10'h0;
+        aq_state     <= #DELAY `AQ_WAITING;
      end
      else
        case (aq_state)
          `AQ_WAITING: begin
-            if (sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-1])
-              aq_state <= #DELAY `AQ_READBACK;
-            else if (bb_empty_n)
-              aq_state <= #DELAY `AQ_BUFFERING;
+            if (sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-1]) begin
+               cmd_request <= #DELAY 1'b1;
+               cmd_write   <= #DELAY 1'b0;
+               cmd_address <= #DELAY sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+               aq_state    <= #DELAY `AQ_READBACK;
+            end
+            else if (bb_empty_n) begin
+               cmd_request <= #DELAY 1'b1;
+               cmd_write   <= #DELAY 1'b1;
+               cmd_address <= #DELAY sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+               aq_state    <= #DELAY `AQ_BUFFERING;
+            end
          end // case: `AQ_WAITING
 
          `AQ_BUFFERING: begin
-            if (cmd_waiting && !cmd_request) begin
-               cmd_write    <= #DELAY 1'b1;
-               cmd_address  <= #DELAY sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+            if (cmd_accept) begin
+               cmd_request  <= #DELAY 1'b0;
                sdram_wr_ptr <= #DELAY sdram_wr_ptr + 1'b1;
-               cmd_data_in  <= #DELAY bb_rd_dat_i[23:0];
-               bb_rd_adr    <= #DELAY bb_rd_nxt[8:0];
                aq_state     <= #DELAY `AQ_WAITING;
             end
          end // case: `AQ_BUFFERING
 
          `AQ_READBACK: begin
-            if (cmd_waiting && !cmd_request) begin
-               cmd_write    <= #DELAY 1'b0;
-               cmd_address  <= #DELAY sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+            if (cmd_accept) begin
+               cmd_request  <= #DELAY 1'b0;
                sdram_rd_ptr <= #DELAY sdram_rd_ptr + 1'b1;
                aq_state     <= #DELAY `AQ_IDLE;
             end
          end // case: `AQ_READBACK
 
          `AQ_IDLE: begin
+            cmd_address <= #DELAY sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
             if (sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-1])
               aq_state <= #DELAY `AQ_FINISHED;
-            else if (aq_rd_req_i)
-              aq_state <= #DELAY `AQ_READBACK;
+            else if (aq_rd_req_i) begin
+               cmd_request <= #DELAY 1'b1;
+               cmd_write   <= #DELAY 1'b0;
+               cmd_address <= #DELAY sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
+               aq_state    <= #DELAY `AQ_READBACK;
+            end
          end // case: `AQ_IDLE
 
          `AQ_FINISHED: begin
             $display("Finished.");
          end // case: `AQ_FINISHED
-
-       endcase // case (aq_state)
-
-
-   //-------------------------------------------------------------------------
-   //  Issue READ/WRITE requests to the memory controller.
-   //-------------------------------------------------------------------------
-   always @(posedge clock_i)
-     if (reset_i || cmd_request)
-       cmd_request <= #DELAY 1'b0;
-     else
-       case (aq_state)
-         `AQ_BUFFERING, `AQ_READBACK:
-           cmd_request  <= #DELAY cmd_waiting;
-
-         default:
-           cmd_request  <= #DELAY 1'b0;
 
        endcase // case (aq_state)
 

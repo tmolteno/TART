@@ -53,6 +53,7 @@ module raw_acquire
     //  NOTE: Bus clock-domain (6x, DDR oversampled).
     input          locked_i,
     input          strobe_i, // bus-domain signal-strobe
+    input          middle_i, // bus-domain mid-signal strobe
     input [MSB:0]  signal_i, // supersampled & aligned antenna signals
 
     //  Memory Controller Block (MCB) signals:
@@ -79,10 +80,10 @@ module raw_acquire
    //-------------------------------------------------------------------------
    //  Increment address after each write.
    //-------------------------------------------------------------------------
-   reg             write = 1'b0;
-
-   always @(posedge clock_i)
-     write <= #DELAY locked_i && strobe_i;
+//    reg             write = 1'b0;
+// 
+//    always @(posedge clock_i)
+//      write <= #DELAY locked_i && strobe_i;
 
        
    //-------------------------------------------------------------------------
@@ -97,7 +98,8 @@ module raw_acquire
        .read_data_o    (rdata),
        // write port:
        .write_clock_i  (clock_i),
-       .write_enable_i (write),
+//        .write_enable_i (write),
+       .write_enable_i (middle_i),
        .write_address_i(waddr),
        .write_data_i   (signal_i)
        );
@@ -113,7 +115,8 @@ module raw_acquire
      ( .clock_i (clock_i),           // bus-clock
        .reset_i (reset_i),           // global reset (bus-domain)
        .enable_i(capture_i),
-       .strobe_i(write),
+//        .strobe_i(write),
+       .strobe_i(strobe_i),
 
        .bb_rd_adr_o(raddr),
        .bb_wr_adr_o(waddr),

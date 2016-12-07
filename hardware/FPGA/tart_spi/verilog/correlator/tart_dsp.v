@@ -22,12 +22,16 @@
  *  Reg#   7           6           5          4      3     2     1     0
  *      -------------------------------------------------------------------
  *   00 ||                 VISIBILITIES STREAM DATA                      ||
+ *      ||                            (RO)                               ||
  *      -------------------------------------------------------------------
  *   01 || AVAILABLE | ACCESSED  | OVERFLOW | 1'b0 |         BANK        ||
+ *      ||    (RO)   |   (RO)    |   (RO)   |      |        (R/W)        ||
  *      -------------------------------------------------------------------
  *   10 ||   STUCK   |   LIMP    |                  6'h00                ||
+ *      ||    (RO)   |   (RO)    |                                       ||
  *      -------------------------------------------------------------------
  *   11 ||  ENABLED  | OVERWRITE |   1'b0   |         BLOCK SIZE         ||
+ *      ||   (R/W)   |   (R/W)   |          |            (R/W)           ||
  *      -------------------------------------------------------------------
  * 
  * By default, the DSP/visibilities unit has address 7'b100_00xx.
@@ -425,43 +429,11 @@ module tart_dsp
    //  Synchroniser registers for correlator control-signals.
    (* NOMERGE = "TRUE" *)
    reg [MSB:0]  block_x = {ACCUM{1'b0}}, block_s = {ACCUM{1'b0}};
-   (* NOMERGE = "TRUE" *)
-   reg          enable_x = 1'b0, enable_s = 1'b0, dsp_en_x = 1'b0;
 
    always @(posedge clk_x) begin
       block_s  <= #DELAY blocksize;
-      enable_s <= #DELAY enabled;
-   end
-
-   always @(posedge clk_x) begin
       block_x  <= #DELAY block_s;
-      enable_x <= #DELAY enable_s;
-
-      // enable the correlators only once new data arrives:
-      if (new_x)
-        dsp_en_x <= #DELAY enable_x;
    end
-
-
-   //-------------------------------------------------------------------------
-   //  Lift source-signals into the 12x domain.
-   //-------------------------------------------------------------------------
-   //  TODO: This is just a temporary hack. Change over to using the DDR-
-   //    (over-)sampled, bus-domain signals.
-   reg          pre_x, new_x, vld_x;
-   reg [NSB:0]  sig_x;
-   wire         pre_w, new_w;
-
-   assign pre_w = new_i && !pre_x;
-   assign new_w = pre_x && !new_x;
-
-   always @(posedge clk_x)
-     begin
-        pre_x <= #DELAY pre_w;
-        new_x <= #DELAY new_w;
-        vld_x <= #DELAY vld_i;
-        sig_x <= #DELAY vld_x && new_x ? sig_i : sig_x;
-     end
 
 
 
@@ -664,11 +636,13 @@ module tart_dsp
          .dat_i(v_dtx),
          .dat_o(v_drx),
 
+         .vld_i(enabled),       // bus clock-domain source & framing
+         .new_i(new_i),         // signal inputs
+         .sig_i(sig_i),
+
          .switching_o(switched), // asserts on bank-switch (bus domain)
 
-         .ce_x_i  (dsp_en_x),  // begins correlating once asserted
          .sums_x_i(block_x),   // number of samples per visibility sum
-         .data_x_i(sig_x),     // antenna data
          .swap_x_o(swp_x),     // bank-switch strobe
          .bank_x_o()           // bank address
          );

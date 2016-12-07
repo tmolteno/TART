@@ -99,18 +99,22 @@ module tart_correlator
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
 
+    //  Bus clock-domain source & framing signals:
+    input          vld_i,       // enables the correlators when valid
+    input          new_i,       // new sample next clock-cycle
+    input [ISB:0]  sig_i,       // oversampled source signal
+
     //  Bus clock-domain status & control signals:
     output         switching_o,
 
     //  Correlator clock-domain status & control signals:
-    input          ce_x_i, // enable correlators?
     input [MSB:0]  sums_x_i, // number of products to accumulate
-    input [ISB:0]  data_x_i, // antenna data input
     output         swap_x_o, // bank-switch strobe
     output [XSB:0] bank_x_o
     );
 
 
+   //-------------------------------------------------------------------------
    //  SRAM control and data signals.
    wire            sram_ce;
    wire [JSB:0]    sram_ad;
@@ -118,18 +122,24 @@ module tart_correlator
    wire [MSB:0]    sram_do;
    reg [MSB:0]     sram_out;
 
+   //-------------------------------------------------------------------------
+   //  Wishbone control and data signals.
    reg [2:0]       sel0, sel1;
    wire [2:0]      sel_w, sel;
    wire [JSB:0]    adr_w;
    wire            stb_w;
 
-   //  Antenna data, bank selection, and switching signals.
-   wire            go_x, sw_x, frame_x, strobe_x;
-   wire [ISB:0]    re_x, im_x;
+   //-------------------------------------------------------------------------
+   //  Antenna data, Hilbert-transformed, bank selection, and switching
+   //  signals.
+   reg          pre_x, strobe_x, go_x;
+   reg [ISB:0]  re_x, im_x;
+   wire         sw_x, go_b, strobe_b;
+   wire [ISB:0] re_b, im_b;
 
 
    //-------------------------------------------------------------------------
-   //  Internal bus signals.
+   //  Internal bus-signal assignments.
    //-------------------------------------------------------------------------
    //  Ignore the CYC signal if using a point-to-point interconnect, else
    //  be a bit more careful.
@@ -165,20 +175,37 @@ module tart_correlator
 
 
    //-------------------------------------------------------------------------
+   //  Lift source-signals into the 12x domain.
+   //-------------------------------------------------------------------------
+   always @(posedge clk_x)
+     begin
+        pre_x    <= #DELAY strobe_b && !pre_x && !strobe_x;
+        strobe_x <= #DELAY pre_x;
+        go_x     <= #DELAY go_b;
+        re_x     <= #DELAY re_b;
+        im_x     <= #DELAY im_b;
+     end
+
+
+   //-------------------------------------------------------------------------
    //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
+   (* AREA_GROUP = "hilb" *)
    fake_hilbert
      #(  .WIDTH(IBITS)
          ) HILB0
-       ( .clk   (clk_x),
-         .rst   (rst_i),
-         .en    (ce_x_i),
-         .d     (data_x_i),
-         .valid (go_x),
-         .strobe(strobe_x), // `antenna` data is valid
-         .frame (frame_x),  // last cycle for `antenna` data to be valid
-         .re    (re_x),
-         .im    (im_x)
+       ( .clock_i (clk_i),
+         .reset_i (rst_i),
+
+         .enable_i(vld_i),      // input source & framing signals
+         .strobe_i(new_i),
+         .signal_i(sig_i),
+
+         .locked_o(go_b),
+         .strobe_o(strobe_b),    // new `antenna` sample next cycle
+         .framed_o(),            // last cycle of sample
+         .sig_re_o(re_b),
+         .sig_im_o(im_b)
          );
 
 
@@ -193,7 +220,7 @@ module tart_correlator
          .clk_i   (clk_i),
          .rst_i   (rst_i),
          .ce_i    (go_x),
-         .frame_i (frame_x),
+         .frame_i (strobe_x),
          .bcount_i(sums_x_i),
          .swap_x  (sw_x),
          .swap_o  (switching_o)

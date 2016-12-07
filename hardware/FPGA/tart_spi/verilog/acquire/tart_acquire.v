@@ -24,16 +24,20 @@
  *  Reg#   7         6       5       4       3       2      1      0
  *      -------------------------------------------------------------------
  *   00 ||                 RAW-DATA STREAM REGISTER                      ||
+ *      ||                           (RO)                                ||
  *      -------------------------------------------------------------------
  *   01 ||                         RESERVED                              ||
+ *      ||                                                               ||
  *      -------------------------------------------------------------------
  *   10 ||                         RESERVED                              ||
+ *      ||                                                               ||
  *      -------------------------------------------------------------------
  *   11 || ENABLED | ERROR | READY | 512Mb | OFLOW |        STATE        ||
+ *      ||  (R/W)  | (RO)  | (RO)  | (RO)  | (RO)  |        (RO)         ||
  *      -------------------------------------------------------------------
- *          (R/W)        (MCB, and RO)              (Acquisition, and RO)
  * 
  * By default, the raw-data acquisition unit has address 7'b010_00xx.
+ * 
  * 
  * NOTE:
  *  + supports both classic and pipelined transfers;
@@ -94,6 +98,7 @@ module tart_acquire
     // Raw-data inputs:
     input          locked_i, // oversampled (6x, DDR), acquisition-data
     input          strobe_i,
+    input          middle_i,
     input [MSB:0]  signal_i,
 
     // Wishbone-like bus interface:
@@ -338,6 +343,7 @@ module tart_acquire
         //  External antenna data:
         .locked_i (locked_i),
         .strobe_i (strobe_i),
+        .middle_i (middle_i),
         .signal_i (signal_i),
 
         //  Module control-signals:

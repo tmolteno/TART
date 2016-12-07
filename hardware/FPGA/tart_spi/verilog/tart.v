@@ -219,7 +219,6 @@ module tart
    (* PERIOD = "5.091 ns" *) wire clk_x;
    (* KEEP   = "TRUE"     *) wire reset;
 
-   wire                rst_x;
    wire                clock_n, reset_n;
    wire                clock_b, reset_b; // WB system signals
 
@@ -583,7 +582,6 @@ module tart
         .ALIGN(ALIGN),
         .RATIO(TRATE),
         .RBITS(TBITS),
-        .CYCLE(1),
         .TICKS(4),              // to match pipeline-register delays
         // Wishbone mode settings
         .RESET(RESET),
@@ -658,6 +656,7 @@ module tart
          //  Raw-data inputs.
          .locked_i (cx_enabled),
          .strobe_i (cx_strobe),
+         .middle_i (cx_middle),
          .signal_i (cx_signal),
 
          //  Wishbone (SPEC B4) bus for raw-data and visibilities.
@@ -802,10 +801,10 @@ module tart
         .dat_i(sys_dtx),
         .dat_o(sys_drx),
 
-        .status_i  (sys_status),
-        .extra_i   (spi_status),
-        .reset_ni  (reset_n),
-        .reset_o   (reset)
+        .status_i(sys_status),
+        .extra_i (spi_status),
+        .reset_ni(reset_n),
+        .reset_o (reset)
         );
 
 

@@ -22,23 +22,24 @@
  *  Reg#   7        6       5        4       3       2       1       0
  *      --------------------------------------------------------------------
  *   00 || CENTRE | DRIFT | INVERT | 1'b0  |             DELAY            ||
+ *      || (R/W)  | (R/W) | (R/W)  |       |             (R/W)            ||
  *      --------------------------------------------------------------------
  *   01 ||               DELTA             |             PHASE            ||
+ *      ||               (RO)              |             (RO)             ||
  *      --------------------------------------------------------------------
  *   10 || DEBUG  | COUNT | SHIFT  |               #ANTENNA               ||
+ *      || (R/W)  | (R/W) | (R/W)  |                 (RO)                 ||
  *      --------------------------------------------------------------------
  *   11 || ENABLE | ERROR | LOCKED |                SELECT                ||
+ *      || (R/W)  | (R/W) |  (RO)  |                (R/W)                 ||
  *      --------------------------------------------------------------------
  * 
  * By default, the capture unit has address 7'b000_00xx.
  * 
+ * 
  * NOTE:
  *  + the `e` suffix is used to tag signals from the external (signal) clock-
  *    domain;
- *  + the 'ALIGN' parameter selects whether to oversample the antenna
- *    signals, and perform clock-recovery, if enabled (1) -- or instead to
- *    cross the clock-domain (to the correlator domain) using an asynchronous
- *    FIFO (0);
  *  + DDR registers (via the 'IDDR2' primitives) are used to capture the
  *    signal inputs, and by using the 6x clock, the sources are effectively
  *    oversampled at 12x the sources' clock-rate;
@@ -90,9 +91,8 @@ module tart_capture
     parameter CDATA = 24'h0,    // constant data value
 
     //  Data-alignment options:
-    parameter ALIGN = 1,        // (re-)align captured data?
+    parameter ALIGN = 1,        // enable the phase-delay unit?
     parameter DRIFT = 1,        // incrementally change the phase (0/1)?
-    parameter CYCLE = 1,        // auto-strobe when not centring
     parameter RATIO = 12,       // oversampling ratio?
     parameter RMAX  = RATIO-1,  // maximum clock-counter value
     parameter RBITS = 4,        // bit-width of clock-counter
@@ -289,11 +289,20 @@ module tart_capture
 
    always @(posedge clock_i)
      if (reset_i && RESET)
-       {tc_drift, tc_invert, tc_delay} <= #DELAY {RBITS+2{1'b0}};
+       {tc_drift, tc_invert} <= #DELAY 2'b00;
      else if (store && adr_i == `CAP_CENTRE)
-       {tc_drift, tc_invert, tc_delay} <= #DELAY {dat_i[6:5], dat_i[RSB:0]};
+       {tc_drift, tc_invert} <= #DELAY dat_i[6:5];
      else
-       {tc_drift, tc_invert, tc_delay} <= #DELAY {tc_drift, tc_invert, tc_delay};
+       {tc_drift, tc_invert} <= #DELAY {tc_drift, tc_invert};
+
+   //  Sets the requested delay (if built with 'ALIGN == 1').
+   always @(posedge clock_i)
+     if (reset_i && RESET)
+       tc_delay <= #DELAY {RBITS{1'b0}};
+     else if (ALIGN && store && adr_i == `CAP_CENTRE)
+       tc_delay <= #DELAY dat_i[RSB:0];
+     else
+       tc_delay <= #DELAY tc_delay;
 
    //  Pulse the restart if enable of an active unit is requested.
    always @(posedge clock_i)
@@ -309,7 +318,7 @@ module tart_capture
    always @(posedge clock_i)
      if (reset_i)
        {en_debug, tc_count, tc_shift} <= #DELAY 3'h0;
-     else if (store && adr_i == `CAP_DEBUG)
+     else if (DEBUG && store && adr_i == `CAP_DEBUG)
        {en_debug, tc_count, tc_shift} <= #DELAY dat_i[7:5];
      else
        {en_debug, tc_count, tc_shift} <= #DELAY {en_debug, tc_count, tc_shift};
@@ -352,9 +361,9 @@ module tart_capture
    //  Make sure that the reset-signal is asserted for at least one slow-
    //  clock period.
    always @(posedge clock_e or posedge reset_i)
-     if (reset_i)
+     if (reset_i && DEBUG)
        reset_e <= #DELAY 1'b1;
-     else if (reset_n)
+     else if (reset_n || !DEBUG)
        reset_e <= #DELAY 1'b0;
      else
        reset_e <= #DELAY reset_e;
@@ -381,14 +390,14 @@ module tart_capture
    //  Bring both components into the same clock-domain (in a way that mimicks
    //  the 'IDDR2' primitive with 'DDR_ALIGNMENT = "C0"').
    always @(posedge clock_i) begin
-     fake_b_p <= #DELAY fake_e;
+     fake_b_p <= #DELAY DEBUG ? fake_e : {AXNUM{1'b0}};
      fake_b_n <= #DELAY fake_n_n;
    end
 
    //  Capture the "negedge" component using the DCM's 180 degree phase-
    //  shifted clock output.
    always @(posedge clock_n)
-     fake_n_n <= #DELAY fake_e;
+     fake_n_n <= #DELAY DEBUG ? fake_e : {AXNUM{1'b0}};
 
    //-------------------------------------------------------------------------
    //  Source-select MUX (fake or external), to be fed into the phase-
@@ -499,6 +508,10 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  Programmable delay that is used to phase-shift the incoming signal.
    //-------------------------------------------------------------------------
+   wire [MSB:0] phased;
+
+   assign signal_w = ALIGN ? phased : source;
+
    (* AREA_GROUP = "shreg" *)
    shift_reg
      #(  .DEPTH(8),         // should synthesise to SRL16E primitives?
@@ -506,10 +519,10 @@ module tart_capture
          .DELAY(DELAY)
          ) SHREG [MSB:0]
        ( .clk(clock_i),
-         .ce (en_capture),
-         .a  (tc_delay[3:1]),
+         .ce (ALIGN && en_capture),
+         .a  (ALIGN ? tc_delay[3:1] : 3'h0),
          .d  (source),
-         .q  (signal_w)
+         .q  (phased)
          );
 
 
