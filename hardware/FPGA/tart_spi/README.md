@@ -82,4 +82,4 @@ The 24 hardware correlators are arranged in six blocks of four, and 16 of the co
 
 
 [synth]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART-timing.png "TART place-and-route timing report"
-[floor]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART.jpg "TART place-and-route floorplan"
+[floor]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART.png "TART place-and-route floorplan"
