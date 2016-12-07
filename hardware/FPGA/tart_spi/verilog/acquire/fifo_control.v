@@ -18,7 +18,7 @@
  * TODO:
  * 
  * Changelog:
- *  + asynchronous resets changed to synchronous resets;
+ *  + 04/12/2016  --  asynchronous resets changed to synchronous resets;
  * 
  */
 

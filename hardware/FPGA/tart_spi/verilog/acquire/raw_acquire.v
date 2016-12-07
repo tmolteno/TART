@@ -69,6 +69,7 @@ module raw_acquire
     );
 
 
+`ifdef __USE_ACQUISITION
    //-------------------------------------------------------------------------
    //  Acquistion-block signals:
    //  TODO: Which domains do these belong to?
@@ -76,16 +77,6 @@ module raw_acquire
    wire [8:0]      raddr, waddr;
 
 
-`ifdef __USE_ACQUISITION
-   //-------------------------------------------------------------------------
-   //  Increment address after each write.
-   //-------------------------------------------------------------------------
-//    reg             write = 1'b0;
-// 
-//    always @(posedge clock_i)
-//      write <= #DELAY locked_i && strobe_i;
-
-       
    //-------------------------------------------------------------------------
    //  Xilinx block SRAM for temporary buffering.
    //-------------------------------------------------------------------------
@@ -98,7 +89,6 @@ module raw_acquire
        .read_data_o    (rdata),
        // write port:
        .write_clock_i  (clock_i),
-//        .write_enable_i (write),
        .write_enable_i (middle_i),
        .write_address_i(waddr),
        .write_data_i   (signal_i)
@@ -115,7 +105,6 @@ module raw_acquire
      ( .clock_i (clock_i),           // bus-clock
        .reset_i (reset_i),           // global reset (bus-domain)
        .enable_i(capture_i),
-//        .strobe_i(write),
        .strobe_i(strobe_i),
 
        .bb_rd_adr_o(raddr),
