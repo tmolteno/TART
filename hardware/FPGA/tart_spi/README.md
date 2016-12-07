@@ -75,7 +75,11 @@ Many Wishbone modules have parameters:
 All development and testing uses Xilinx ISE 14.7, and this is what we recommend that you use as well. Many Xilinx-specific primitives and constraints have been used to meet speed & area targets, and the synthesis software needs to support these.
 
 The design uses some procedurally generated placement constraints to meet timing. An example timing report is the following:
-[synth]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART-timing.png "TART place-and-route timing report"
+![TART place-and-route timing report][synth]
 
 The 24 hardware correlators are arranged in six blocks of four, and 16 of the correlators use the Spartan 6's DSP48A1 primitives, the rest use the carry-chain, and floor-planned to give the following circuit layout:
+![TART place-and-route floorplan][floor]
+
+
+[synth]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART-timing.png "TART place-and-route timing report"
 [floor]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART.jpg "TART place-and-route floorplan"
