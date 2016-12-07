@@ -46,8 +46,8 @@ module IDDR2
    wire    CLR, PRE;
    wire    RST, SET;
 
-   pulldown (S);
-   pulldown (R);
+//    pulldown (S);
+//    pulldown (R);
 
 
    //-------------------------------------------------------------------------

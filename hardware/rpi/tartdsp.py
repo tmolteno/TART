@@ -467,7 +467,7 @@ if __name__ == '__main__':
     tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter, noisy=args.verbose)
 
     print "Setting capture registers:"
-    tart.capture(on=True, noisy=args.verbose)
+    tart.capture(on=True, source=args.source, noisy=args.verbose)
     tart.centre(args.centre, noisy=args.verbose)
 
     print "Setting up correlators (block-size = 2^%d):" % args.blocksize
@@ -498,7 +498,7 @@ if __name__ == '__main__':
 
     print "\nTesting acquisition."
     tart.debug(on=True, noisy=args.verbose)
-    tart.capture(on=True, noisy=args.verbose)
+    tart.capture(on=True, source=args.source, noisy=args.verbose)
     tart.start_acquisition(1.1, True)
 
     print "\nSetting up correlators (block-size = 2^%d)" % args.blocksize

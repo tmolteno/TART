@@ -104,14 +104,14 @@ module tart_dsp
     parameter NOISY = 0,       // display extra debug info?
     parameter DELAY = 3)       // simulated combinational delay (ns)
    (
+    input          clk_x, // correlator clock
     input          clk_i, // bus clock
     input          rst_i, // global reset
 
-    //  DSP-domain inputs.
-    input          clk_x, // correlator clock
-    input          vld_x, // signal data is valid (TODO: unused)
-    input          new_x, // strobes for each new sample
-    input [NSB:0]  sig_x, // (oversampled) signal data
+    //  Oversampled signal inputs (bus domain).
+    input          vld_i,
+    input          new_i,
+    input [NSB:0]  sig_i,
 
     //  Wishbone-like bus interface for reading visibilities.
     input          cyc_i,
@@ -319,20 +319,21 @@ module tart_dsp
        endcase // case (adr_i)
      else begin
         upd_bnk <= #DELAY 1'b0;
-        dsp_set <= #DELAY 1'b0;
+        dsp_set <= #DELAY dsp_set ? !enabled : 1'b0;
         dsp_clr <= #DELAY 1'b0;
      end
 
 
    //-------------------------------------------------------------------------
-   //  Visibilities access and control circuit.
+   //  Visibilities-unit control-signals.
    //-------------------------------------------------------------------------
-   //  Enable the visibilities unit when a write is performed to the control-
-   //  register, and disable it upon overflow, if overwrite mode is disabled.
+   //  Once the 'enable' flag (of the visibilities unit) is set, then wait
+   //  for valid & new data before enabling the DSP pipeline.
+   //  NOTE: Disable it upon overflow, if overwrite mode is disabled.
    always @(posedge clk_i)
      if (rst_i || overflow && !overwrite || dsp_clr)
        enabled <= #DELAY 1'b0;
-     else if (dsp_set)
+     else if (dsp_set && vld_i && new_i)
        enabled <= #DELAY 1'b1;
      else
        enabled <= #DELAY enabled;
@@ -443,6 +444,28 @@ module tart_dsp
 
 
    //-------------------------------------------------------------------------
+   //  Lift source-signals into the 12x domain.
+   //-------------------------------------------------------------------------
+   //  TODO: This is just a temporary hack. Change over to using the DDR-
+   //    (over-)sampled, bus-domain signals.
+   reg          pre_x, new_x, vld_x;
+   reg [NSB:0]  sig_x;
+   wire         pre_w, new_w;
+
+   assign pre_w = new_i && !pre_x;
+   assign new_w = pre_x && !new_x;
+
+   always @(posedge clk_x)
+     begin
+        pre_x <= #DELAY pre_w;
+        new_x <= #DELAY new_w;
+        vld_x <= #DELAY vld_i;
+        sig_x <= #DELAY vld_x && new_x ? sig_i : sig_x;
+     end
+
+
+
+   //-------------------------------------------------------------------------
    //     
    //  BANK-OVERWRITE DETECTION LOGIC.
    //     
@@ -462,6 +485,7 @@ module tart_dsp
       overflow   <= #DELAY overflow_s;
    end
 `endif
+
 
 
    //-------------------------------------------------------------------------

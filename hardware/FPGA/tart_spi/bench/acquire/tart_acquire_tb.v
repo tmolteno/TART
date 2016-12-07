@@ -53,10 +53,11 @@ module tart_acquire_tb;
 
    //-------------------------------------------------------------------------
    //  Extra simulation options:
-   parameter SHAKE = 3;         // signal noise (jitter + offset)
+   parameter SHAKE = 2;         // signal noise (jitter + offset)
+   parameter PHASE = 0;         // phase-delay for the generated signal
+   parameter HAMEN = 1;         // use Hamster SDRAM (0/1)?
    parameter NOISY = 0;         // extra debug info?
    parameter DELAY = 3;         // simulated combinational-delay (ns)
-   parameter HAMEN = 1;         // use Hamster SDRAM (0/1)?
 
 
    //-------------------------------------------------------------------------
@@ -102,7 +103,7 @@ module tart_acquire_tb;
    //-------------------------------------------------------------------------
    //  Read-back stuffs:
    reg          io_busy = 1'b0;
-   wire         aq_enabled;
+   wire         aq_enabled, oflow;
    wire [2:0]   cap_state;
 
 
@@ -142,6 +143,11 @@ module tart_acquire_tb;
    integer      num = 0;
    integer      ptr = 0;
    integer      source = 23;
+
+   wire [MSB:0] sig_b, sig_w, sig_n, sig_p;
+   reg [3:0]    delay = PHASE;
+
+   assign sig_b = delay[0] ? sig_n : sig_p;
 
    initial begin : SIM_BLOCK
       if (CBITS < 7) begin
@@ -197,6 +203,8 @@ module tart_acquire_tb;
    //  Synchronise the strobe across domains.
    //-------------------------------------------------------------------------
    reg             strobe = 1'b0, strobe_1 = 1'b0, strobe_0 = 1'b0;
+   reg             locked = 1'b0;
+   reg [MSB:0]     signal;
 
    always @(posedge b_clk or posedge new_e)
      if (new_e)
@@ -206,6 +214,16 @@ module tart_acquire_tb;
 
    always @(posedge b_clk)
      {strobe, strobe_1} <= #DELAY {strobe_1, strobe_0};
+
+   always @(posedge b_clk)
+     if (strobe) begin
+        locked <= #DELAY vld_e;
+        signal <= #DELAY sig_w;
+     end
+     else begin
+        locked <= #DELAY locked;
+        signal <= #DELAY signal;
+     end
 
 
 
@@ -228,10 +246,9 @@ module tart_acquire_tb;
         .clock_i  (b_clk),      // bus-domain clock & reset
         .reset_i  (b_rst),
 
-        .clock_x  (clk_x),      // oversampled antenna signals
-        .reset_x  (rst_x),
-        .strobe_x (new_x),
-        .signal_x (sig_x),
+        .locked_i (locked),
+        .strobe_i (strobe),
+        .signal_i (signal),
 
         .cyc_i    (cyc),        // Wishbone (SPEC B4) interconnect
         .stb_i    (stb),
@@ -245,7 +262,6 @@ module tart_acquire_tb;
         .dat_o    (drx),
 
         .io_busy_i(io_busy),
-        .strobe_i (strobe),
 
         .mcb_ce_o (cmd_request), // memory controller signals (bus-domain)
         .mcb_rdy_i(mcb_avail),
@@ -256,6 +272,7 @@ module tart_acquire_tb;
         .mcb_dat_o(cmd_data_in),
 
         .enabled_o(aq_enabled), // status & debug info
+        .oflow_o  (oflow),
         .state_o  (cap_state)
         );
 
@@ -391,6 +408,43 @@ module tart_acquire_tb;
         .strobe(new_e),
         .signal(sig_e)
         );
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  IOB, DDR, SIGNAL-CAPTURE REGISTERS.
+   //
+   //-------------------------------------------------------------------------
+   //  NOTE: This allow half-rate sampling, but at the expense of twice the
+   //    usage of routing-resources.
+   IDDR2
+     #( .DDR_ALIGNMENT("C0"),
+        .SRTYPE("SYNC")
+        ) IOBS [MSB:0]
+     ( .C0(b_clk),
+       .C1(n_clk),
+       .R (b_rst),
+       .CE(vld_e),
+       .D (sig_e),
+       .Q0(sig_p),
+       .Q1(sig_n)               // lags by 180 degrees
+       );
+
+   //-------------------------------------------------------------------------
+   //  Programmable delay that is used to phase-shift the incoming signal.
+   //-------------------------------------------------------------------------
+   shift_reg
+     #(  .DEPTH(8),
+         .ABITS(3),
+         .DELAY(DELAY)
+         ) SHREG [MSB:0]
+       ( .clk(b_clk),
+         .ce (vld_e),
+         .a  (delay[3:1]),
+         .d  (sig_b),
+         .q  (sig_w)
+         );
 
 
 

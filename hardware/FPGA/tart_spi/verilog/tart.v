@@ -219,10 +219,9 @@ module tart
    (* PERIOD = "5.091 ns" *) wire clk_x;
    (* KEEP   = "TRUE"     *) wire reset;
 
-   wire                rst_x, vld_x, new_x;
-   wire [NSB:0]        sig_x;
+   wire                rst_x;
    wire                clock_n, reset_n;
-   wire                clock_b, reset_b, strobe_b; // WB system signals
+   wire                clock_b, reset_b; // WB system signals
 
    (* KEEP   = "TRUE"    *)
    wire                rx_clk_16_buf;
@@ -280,6 +279,8 @@ module tart
    //-------------------------------------------------------------------------
    //  Capture-unit info signals:
    wire                cx_enabled, cx_debug;
+   wire                cx_strobe, cx_middle, cx_locked;
+   wire [MSB:0]        cx_signal;
 
    //-------------------------------------------------------------------------
    //  Acquisition (of antenna raw-data) signals:   
@@ -313,14 +314,9 @@ module tart
    assign led = 1'b0;
 `else
    reg          blink = 1'b0;
-   reg [23:0]   counter = 0;
 
 //    assign led = aq_state >= 2; // asserted when data can be read back
-//    assign led = blink;
-   assign led = counter[23];
-
-   always @(posedge clk_x)
-     if (new_x) counter <= #DELAY counter + 1;
+   assign led = blink;
 
    always @(posedge clock_b)
      if (vx_newblock) blink <= #DELAY ~blink;
@@ -588,7 +584,7 @@ module tart
         .RATIO(TRATE),
         .RBITS(TBITS),
         .CYCLE(1),
-        .TICKS(2),              // to match pipeline-register delays
+        .TICKS(4),              // to match pipeline-register delays
         // Wishbone mode settings
         .RESET(RESET),
         .PIPED(PIPED),
@@ -604,8 +600,6 @@ module tart
        (//--------------------------------------------------------------------
         //  Global clocks & resets:
         .clock_e   (rx_clk_16_buf),
-        .clock_x   (clk_x),
-        .reset_x   (rst_x),
         .clock_n   (clock_n),   // negated system-clock
         .clock_i   (clock_b),
         .reset_i   (reset_b),
@@ -627,16 +621,13 @@ module tart
         //  External antenna data:
         .signal_e_i(antenna),
 
-        //--------------------------------------------------------------------
-        //  Correlator-domain acquisition data & status signals:
-        .enable_x_o(vld_x),     // acquired (and oversampled) data
-        .strobe_x_o(new_x),     // outputs
-        .signal_x_o(sig_x),
-
         //-------------------------------------------------------------------------
-        //  Debug info:
-        .strobe_o (strobe_b),
+        //  Source signals, and debug/info:
         .enabled_o(cx_enabled),
+        .strobe_o (cx_strobe),
+        .middle_o (cx_middle),
+        .signal_o (cx_signal),
+        .centred_o(cx_locked),
         .debug_o  (cx_debug)
         );
 
@@ -665,10 +656,9 @@ module tart
          .reset_i  (reset_b),
 
          //  Raw-data inputs.
-         .clock_x  (clk_x),
-         .reset_x  (rst_x),
-         .strobe_x (new_x),
-         .signal_x (sig_x),
+         .locked_i (cx_enabled),
+         .strobe_i (cx_strobe),
+         .signal_i (cx_signal),
 
          //  Wishbone (SPEC B4) bus for raw-data and visibilities.
          .cyc_i    (acq_cyc),
@@ -683,7 +673,6 @@ module tart
          .dat_o    (acq_drx),
 
          .io_busy_i(spi_busy),
-         .strobe_i (strobe_b),
 
          //  Memory controller signals (bus-domain).
          .mcb_ce_o (cmd_enable),
@@ -711,31 +700,31 @@ module tart
    //   + system-control registers are mapped to '0b10nnnnn'.
    //  
    tart_dsp
-     #( .AXNUM(ANTENNAE),        // number of attached antennae
-        .ACCUM(ACCUM),           // accumulator bit-width
-        .TRATE(TRATE),           // time multiplexing (TMUX) rate
-        .TBITS(TBITS),           // TMUX counter bit-width
-        .NREAD(NREAD),           // visibilities read-count
+     #( .AXNUM(ANTENNAE),       // number of attached antennae
+        .ACCUM(ACCUM),          // accumulator bit-width
+        .TRATE(TRATE),          // time multiplexing (TMUX) rate
+        .TBITS(TBITS),          // TMUX counter bit-width
+        .NREAD(NREAD),          // visibilities read-count
         .RBITS(RBITS),
-        .XBITS(XBITS),           // visibilities-bank address bit-width
-        .CBITS(CBITS),           // correlator address bit-width
+        .XBITS(XBITS),          // visibilities-bank address bit-width
+        .CBITS(CBITS),          // correlator address bit-width
         //  Wishbone settings:
-        .PIPED(PIPED),           // Wishbone pipelined mode?
-        .CHECK(CHECK),           // bus sanity-checking?
-        .VIZWR(VIZWR),           // bidirectional streaming access?
+        .PIPED(PIPED),          // Wishbone pipelined mode?
+        .CHECK(CHECK),          // bus sanity-checking?
+        .VIZWR(VIZWR),          // bidirectional streaming access?
         //  Simulation-only options:
-        .DELAY(DELAY)            // simulation-only settings
+        .DELAY(DELAY)           // simulation-only settings
         ) DSP
        (//--------------------------------------------------------------------
-        .clk_i(clock_b),         // Wishbone/system clock
-        .rst_i(reset_b),         // bus/system reset
+        .clk_x(clk_x),          // correlator clock
+        .clk_i(clock_b),        // Wishbone/system clock
+        .rst_i(reset_b),        // bus/system reset
 
         //--------------------------------------------------------------------
         //  Captured, oversampled antenna control & data signals:
-        .clk_x(clk_x),           // correlator clock
-        .vld_x(vld_x),
-        .new_x(new_x),
-        .sig_x(sig_x),           // recovered signal
+        .vld_i(cx_enabled),
+        .new_i(cx_strobe),      // strobes before each new sample
+        .sig_i(cx_signal),      // recovered signal
 
         //--------------------------------------------------------------------
         //  Wishbone (SPEC B4) bus between DSP and acquisition unit:

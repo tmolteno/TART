@@ -73,6 +73,7 @@ module tart_dsp_tb;
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
+   parameter PHASE = 0;         // phase-delay for the generated signal
    parameter DELAY = `DELAY;       // Simulated combinational delay
    parameter NOISY = 1;            // display extra debug info
 
@@ -90,6 +91,7 @@ module tart_dsp_tb;
 
    //  Clock & reset signals.
    reg          clk_x = 1'b1, b_clk = 1'b1, rst = 1'b0;
+   wire         n_clk = ~b_clk;
 
    //  Correlator-domain signals.
    reg          vld_x = 1'b0, new_x = 1'b0;
@@ -104,7 +106,7 @@ module tart_dsp_tb;
    reg          read_en = 1'b0;
    wire [MSB:0] blocksize;
    wire [31:0]  checksum;
-   wire         dsp_en, enabled, newblock, streamed;
+   wire         enabled, newblock, streamed;
    wire         overflow, accessed, available, switched;
    wire         dsp_stuck, dsp_limp;
    wire [XSB:0] dsp_bank;
@@ -115,7 +117,6 @@ module tart_dsp_tb;
    reg [4:0]    log_bsize = COUNT[4:0];
    reg [XSB:0]  viz_bank = {XBITS{1'b0}};
 
-   assign dsp_en  = enabled;
 
 
    //-------------------------------------------------------------------------
@@ -145,9 +146,20 @@ module tart_dsp_tb;
 
 
    //-------------------------------------------------------------------------
+   //  Source-signal routing.
+   //-------------------------------------------------------------------------
+   wire [NSB:0] sig_b, sig_w, sig_n, sig_p;
+   reg [3:0]    delay = PHASE;
+
+   assign sig_b = delay[0] ? sig_n : sig_p;
+
+
+   //-------------------------------------------------------------------------
    //  Simulate two visibility calculations.
+   //-------------------------------------------------------------------------
    integer      num = 0;
    integer      ptr = 0;
+
    initial begin : SIM_BLOCK
       if (COUNT < 8) begin
          $dumpfile ("vcd/dsp_tb.vcd");
@@ -175,8 +187,8 @@ module tart_dsp_tb;
       else
         $display("%12t:  (Data is just increasing counter values)", $time);
       for (ptr = 0; ptr < 256; ptr = ptr+1) begin
-         if (RNG) data[ptr] <= $random;
-         else     data[ptr] <= ptr;
+         if (RNG) data[ptr] = $random;
+         else     data[ptr] = ptr;
       end
 
 
@@ -378,9 +390,10 @@ module tart_dsp_tb;
      end
 
 
+
    //-------------------------------------------------------------------------
    //  
-   //  GENERATE FAKE DRAM CONTENTS.
+   //  GENERATE FAKE SRAM CONTENTS.
    //  
    //-------------------------------------------------------------------------
    wire [NSB:0] antenna;
@@ -390,20 +403,27 @@ module tart_dsp_tb;
    integer      adr_x = 0;
    wire [32:0]  nxt_x = adr_x + 1;
    reg          end_x = 1'b0;
-   wire [NSB:0] sig_w = vld_x ? sig_x : {AXNUM{1'bz}};
+   wire [NSB:0] sig_o = vld_x ? sig_x : {AXNUM{1'bz}};
+   reg          cap_en = 1'b0;
 
    assign antenna = data[adr_x[7:0]];
 
    always @(posedge clk_x)
      if (rst)
+       cap_en <= #DELAY 1'b0;
+     else
+       cap_en <= #DELAY 1'b1;
+
+   always @(posedge clk_x)
+     if (rst)
        cnt <= #DELAY 0;
      else
-       cnt <= #DELAY dsp_en || vld_x ? next_cnt : cnt;
+       cnt <= #DELAY cap_en || vld_x ? next_cnt : cnt;
 
    always @(posedge clk_x)
      if (rst)
        {end_x, new_x} <= #DELAY 0;
-     else if (dsp_en)
+     else if (cap_en)
        {end_x, new_x} <= #DELAY {1'b0, wrap_cnt};
      else
        {end_x, new_x} <= #DELAY {vld_x && wrap_cnt, 1'b0};
@@ -425,7 +445,34 @@ module tart_dsp_tb;
      if (rst)
        adr_x <= #DELAY 0;
      else
-       adr_x <= #DELAY dsp_en && wrap_cnt ? nxt_x[31:0] : adr_x;
+       adr_x <= #DELAY cap_en && wrap_cnt ? nxt_x[31:0] : adr_x;
+
+
+   //-------------------------------------------------------------------------
+   //  Synchronise the strobe across domains.
+   //-------------------------------------------------------------------------
+   reg             strobe = 1'b0, strobe_1 = 1'b0, strobe_0 = 1'b0;
+   reg             locked = 1'b0;
+   reg [MSB:0]     signal;
+
+   always @(posedge b_clk or posedge new_x)
+     if (new_x)
+       strobe_0 <= #DELAY 1'b1;
+     else
+       strobe_0 <= #DELAY 1'b0;
+
+   always @(posedge b_clk)
+     {strobe, strobe_1} <= #DELAY {strobe_1, strobe_0};
+
+   always @(posedge b_clk)
+     if (strobe) begin
+        locked <= #DELAY vld_x;
+        signal <= #DELAY sig_w;
+     end
+     else begin
+        locked <= #DELAY locked;
+        signal <= #DELAY signal;
+     end
 
 
 
@@ -489,13 +536,13 @@ module tart_dsp_tb;
         .DELAY(DELAY)
         ) TART_DSP
        (
+        .clk_x(clk_x),          // correlator-domain signals
         .clk_i(b_clk),          // bus-domain control signals
         .rst_i(rst),
 
-        .clk_x(clk_x),          // correlator-domain signals
-        .vld_x(vld_x),
-        .new_x(new_x),
-        .sig_x(sig_x),
+        .vld_i(locked),
+        .new_i(strobe),
+        .sig_i(signal),
 
         .cyc_i(cyc),            // Wishbone interface
         .stb_i(stb),
@@ -520,6 +567,44 @@ module tart_dsp_tb;
         .stuck_o(dsp_stuck),        // debug signals
         .limp_o (dsp_limp)
         );
+
+
+
+   //-------------------------------------------------------------------------
+   //
+   //  IOB, DDR, SIGNAL-CAPTURE REGISTERS.
+   //
+   //-------------------------------------------------------------------------
+   //  NOTE: This allow half-rate sampling, but at the expense of twice the
+   //    usage of routing-resources.
+   IDDR2
+     #( .DDR_ALIGNMENT("C0"),
+        .SRTYPE("SYNC")
+        ) IOBS [NSB:0]
+     ( .C0(b_clk),
+       .C1(n_clk),
+       .R (b_rst),
+       .CE(vld_x),
+       .D (sig_x),
+       .Q0(sig_p),
+       .Q1(sig_n)               // lags by 180 degrees
+       );
+
+
+   //-------------------------------------------------------------------------
+   //  Programmable delay that is used to phase-shift the incoming signal.
+   //-------------------------------------------------------------------------
+   shift_reg
+     #(  .DEPTH(8),
+         .ABITS(3),
+         .DELAY(DELAY)
+         ) SHREG [NSB:0]
+       ( .clk(b_clk),
+         .ce (vld_x),
+         .a  (delay[3:1]),
+         .d  (sig_b),
+         .q  (sig_w)
+         );
 
 
 

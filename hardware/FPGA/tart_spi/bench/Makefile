@@ -21,7 +21,7 @@ LIB =$(FIFO)/afifo16.v $(FIFO)/fifo_dc_gray.v $(FIFO)/afifo_gray.v $(MISC)/shift
 
 # Simulation-only files:
 XIL =xilinx
-SIM =$(XIL)/DSP48A1.v $(XIL)/LUT6.v $(XIL)/MUXF7.v
+SIM =$(XIL)/DSP48A1.v $(XIL)/LUT6.v $(XIL)/MUXF7.v ${XIL}/IDDR2.v
 
 DEP =$(LIB) $(SPI)/spi_layer.v $(SPI)/spi_slave_wb.v $(SPI)/spi_slave.v $(SPI)/spi_master.v $(ACQ)/dram_prefetch.v
 

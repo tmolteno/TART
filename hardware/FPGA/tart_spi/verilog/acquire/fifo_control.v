@@ -33,7 +33,7 @@
 `define AQ_FINISHED  3'd4
 
 
-module fifo_sdram_fifo_scheduler
+module fifo_control
   #(parameter SDRAM_ADDRESS_WIDTH = 25,
     parameter ASB   = SDRAM_ADDRESS_WIDTH-2,
     parameter CSB   = SDRAM_ADDRESS_WIDTH-1,
@@ -44,44 +44,84 @@ module fifo_sdram_fifo_scheduler
     input              enable_i,
     input              strobe_i,
 
-    output reg [8:0]   aq_bb_rd_adr = 9'b0,
-    output reg [8:0]   aq_bb_wr_adr = 9'b0,
-    input [23:0]       aq_read_data,
+    output [8:0]       bb_rd_adr_o,
+    output [8:0]       bb_wr_adr_o,
+    input [23:0]       bb_rd_dat_i,
 
-    input              spi_buffer_read_complete,
+    input              aq_rd_req_i,
 
     input              cmd_waiting,
     output reg         cmd_request = 1'b0,
-    output reg         cmd_write   = 1'b0,
+    output reg         cmd_write = 1'b0,
     output reg [ASB:0] cmd_address = {CSB{1'b0}},
     output reg [31:0]  cmd_data_in = 32'b0,
 
-    output reg [2:0]   tart_state  = `AQ_WAITING
+    output reg         overflow_o = 1'b0,
+    output reg         readback_o = 1'b0,
+    output [2:0]       aq_state_o
     );
 
 
    //-------------------------------------------------------------------------
    //  Address pointers.
    //-------------------------------------------------------------------------
+   //  SDRAM address pointers.
    //  NOTE: 1-bit bigger than needed.
    reg [CSB:0]         sdram_wr_ptr = {SDRAM_ADDRESS_WIDTH{1'b0}};
    reg [CSB:0]         sdram_rd_ptr = {SDRAM_ADDRESS_WIDTH{1'b0}};
-   reg [1:0]           Sync_start = 2'b0;
 
-   // new signal synchronized to (=ready to be used in) clock_iB domain
-   wire                enable = Sync_start[1];
+   //-------------------------------------------------------------------------
+   //  FIFO address pointers.
+   //  NOTE: The extra MSB is for overflow detection.
+   reg [9:0]           bb_rd_adr = 10'h0, bb_wr_adr = 10'h0;
+   wire [10:0]         bb_wr_nxt, bb_rd_nxt;
+   wire                bb_empty_n, bb_full;
+   reg [2:0]           aq_state = `AQ_WAITING;
 
 
    //-------------------------------------------------------------------------
-   //  Write addresses.
+   //  FIFO signal assignments.
    //-------------------------------------------------------------------------
-   //  TODO: Counts 6x too fast?
-   //  TODO: Write addresses aren't used.
+   assign bb_rd_nxt   = bb_rd_adr + 1;
+   assign bb_wr_nxt   = bb_wr_adr + 1;
+   assign bb_empty_n  = bb_rd_adr != bb_wr_adr;
+   assign bb_full     = bb_rd_adr[9] != bb_wr_adr[9] &&
+                        bb_rd_adr[8:0] == bb_wr_adr[8:0];
+
+   //-------------------------------------------------------------------------
+   //  Output assignments.
+   assign bb_rd_adr_o = bb_rd_adr[8:0];
+   assign bb_wr_adr_o = bb_wr_adr[8:0];
+   assign aq_state_o  = aq_state;
+
+
+   //-------------------------------------------------------------------------
+   //  FIFO write-address logic.
+   //-------------------------------------------------------------------------
    always @(posedge clock_i)
      if (reset_i)
-       aq_bb_wr_adr <= #DELAY 9'b0;
+       bb_wr_adr <= #DELAY 10'h0;
      else if (enable_i && strobe_i)
-       aq_bb_wr_adr <= #DELAY aq_bb_wr_adr + 1'b1;
+       bb_wr_adr <= #DELAY bb_wr_nxt[9:0];
+
+
+   //-------------------------------------------------------------------------
+   //  FIFO state & control signals.
+   //-------------------------------------------------------------------------
+   //  Assert availability for read-backs, once the buffering has completed.
+   always @(posedge clock_i)
+     if (reset_i)
+       readback_o <= #DELAY 1'b0;
+     else if (enable_i && aq_state > 1)
+       readback_o <= #DELAY 1'b1;
+
+   //-------------------------------------------------------------------------
+   //  Assert overflow if write is attempted while full.
+   always @(posedge clock_i)
+     if (reset_i)
+       readback_o <= #DELAY 1'b0;
+     else if (enable_i && aq_state > 1)
+       readback_o <= #DELAY 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -91,17 +131,17 @@ module fifo_sdram_fifo_scheduler
      if (reset_i) begin
         sdram_wr_ptr <= #DELAY 0; // 1 bit bigger than needed.
         sdram_rd_ptr <= #DELAY 0; // 1 bit bigger than needed.
-        tart_state   <= #DELAY `AQ_WAITING;
+        aq_state     <= #DELAY `AQ_WAITING;
         cmd_write    <= #DELAY 1'b0;
-        aq_bb_rd_adr <= #DELAY 9'b0;
+        bb_rd_adr    <= #DELAY 10'h0;
      end
      else
-       case (tart_state)
+       case (aq_state)
          `AQ_WAITING: begin
             if (sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-1])
-              tart_state <= #DELAY `AQ_READBACK;
-            else if (aq_bb_rd_adr != aq_bb_wr_adr)
-              tart_state <= #DELAY `AQ_BUFFERING;
+              aq_state <= #DELAY `AQ_READBACK;
+            else if (bb_empty_n)
+              aq_state <= #DELAY `AQ_BUFFERING;
          end // case: `AQ_WAITING
 
          `AQ_BUFFERING: begin
@@ -109,9 +149,9 @@ module fifo_sdram_fifo_scheduler
                cmd_write    <= #DELAY 1'b1;
                cmd_address  <= #DELAY sdram_wr_ptr[SDRAM_ADDRESS_WIDTH-2:0];
                sdram_wr_ptr <= #DELAY sdram_wr_ptr + 1'b1;
-               cmd_data_in  <= #DELAY aq_read_data[23:0];
-               aq_bb_rd_adr <= #DELAY aq_bb_rd_adr + 1'b1;
-               tart_state   <= #DELAY `AQ_WAITING;
+               cmd_data_in  <= #DELAY bb_rd_dat_i[23:0];
+               bb_rd_adr    <= #DELAY bb_rd_nxt[8:0];
+               aq_state     <= #DELAY `AQ_WAITING;
             end
          end // case: `AQ_BUFFERING
 
@@ -120,22 +160,22 @@ module fifo_sdram_fifo_scheduler
                cmd_write    <= #DELAY 1'b0;
                cmd_address  <= #DELAY sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-2:0];
                sdram_rd_ptr <= #DELAY sdram_rd_ptr + 1'b1;
-               tart_state   <= #DELAY `AQ_IDLE;
+               aq_state     <= #DELAY `AQ_IDLE;
             end
          end // case: `AQ_READBACK
 
          `AQ_IDLE: begin
             if (sdram_rd_ptr[SDRAM_ADDRESS_WIDTH-1])
-              tart_state <= #DELAY `AQ_FINISHED;
-            else if (spi_buffer_read_complete)
-              tart_state <= #DELAY `AQ_READBACK;
+              aq_state <= #DELAY `AQ_FINISHED;
+            else if (aq_rd_req_i)
+              aq_state <= #DELAY `AQ_READBACK;
          end // case: `AQ_IDLE
 
          `AQ_FINISHED: begin
             $display("Finished.");
          end // case: `AQ_FINISHED
 
-       endcase // case (tart_state)
+       endcase // case (aq_state)
 
 
    //-------------------------------------------------------------------------
@@ -145,14 +185,14 @@ module fifo_sdram_fifo_scheduler
      if (reset_i || cmd_request)
        cmd_request <= #DELAY 1'b0;
      else
-       case (tart_state)
+       case (aq_state)
          `AQ_BUFFERING, `AQ_READBACK:
            cmd_request  <= #DELAY cmd_waiting;
 
          default:
            cmd_request  <= #DELAY 1'b0;
 
-       endcase // case (tart_state)
+       endcase // case (aq_state)
 
 
-endmodule // fifo_sdram_fifo_scheduler
+endmodule // fifo_control

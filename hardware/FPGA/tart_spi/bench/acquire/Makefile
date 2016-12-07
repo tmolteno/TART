@@ -22,7 +22,7 @@ LIB =${RTL}/fifo/afifo_gray.v ${RTL}/mfsr/mfsr32.v ${MISC}/shift_reg.v ${BUS}/wb
 
 # Simulation-only files:
 XIL =../xilinx
-SIM =mcb_dummy.v ${XIL}/ODDR2.v ${XIL}/IOBUF.v
+SIM =mcb_dummy.v ${XIL}/IOBUF.v ${XIL}/IDDR2.v ${XIL}/ODDR2.v
 DEP =${LIB} ${RTL}/SDRAM_Controller_v.v ${ACQ}/raw_acquire.v ${ACQ}/block_buffer.v ${ACQ}/fifo_control.v ${ACQ}/dram_prefetch.v ${FAK}/fake_signal.v ${FAK}/signal_stagger.v
 TOP =${ACQ}/tart_acquire.v
 

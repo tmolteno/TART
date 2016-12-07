@@ -98,11 +98,11 @@ module signal_stagger
    //  Setup mode from the module's parameters.
    //-------------------------------------------------------------------------
    // Choose a phase-offset on start-up.
-   initial begin : INITIAL_VALUES
+   initial begin
       phase_offset = $random;
       phase_offset = phase_offset % (PHASE_OFFSET + 1);
       if (NOISY)
-        $display("Phase offset:\t%d", phase_offset);
+        $display("Phase offset (%m):\t%d", phase_offset);
    end
 
 

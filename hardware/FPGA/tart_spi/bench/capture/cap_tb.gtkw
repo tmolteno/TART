@@ -1,19 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Tue Dec  6 03:03:32 2016
+[*] Wed Dec  7 00:16:13 2016
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/cap_tb.vcd"
-[dumpfile_mtime] "Tue Dec  6 03:02:46 2016"
-[dumpfile_size] 1623156
+[dumpfile_mtime] "Wed Dec  7 00:16:08 2016"
+[dumpfile_size] 1725567
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/capture/cap_tb.gtkw"
 [timestart] 0
 [size] 2560 1416
 [pos] -1 -1
-*-18.559813 708000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.933039 843000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_capture_tb.
 [treeopen] tart_capture_tb.CAP0.
 [sst_width] 223
-[signals_width] 134
+[signals_width] 142
 [sst_expanded] 1
 [sst_vpaned_height] 447
 @800200
@@ -148,15 +148,14 @@ tart_capture_tb.CAP0.tc_system[7:0]
 -Regs
 @c00200
 -Oversamp
-@28
-tart_capture_tb.CAP0.capture_x
 @22
-tart_capture_tb.CAP0.source_x[23:0]
 tart_capture_tb.CAP0.signal_w[23:0]
 @1401200
 -Oversamp
-@c00200
+@800200
 -Phase
+@22
+tart_capture_tb.CAP0.tc_strobe
 @24
 tart_capture_tb.CAP0.tc_select[4:0]
 @28
@@ -166,16 +165,14 @@ tart_capture_tb.CAP0.source_n
 tart_capture_tb.CAP0.PHASE.phase[3:0]
 @420
 tart_capture_tb.CAP0.PHASE.delta[3:0]
-@22
-tart_capture_tb.CAP0.source_x[23:0]
 @28
-tart_capture_tb.CAP0.strobe_x
-@22
-tart_capture_tb.CAP0.signal_w[23:0]
+tart_capture_tb.CAP0.tc_locked
+tart_capture_tb.CAP0.tc_invalid
+tart_capture_tb.CAP0.PHASE.ledge
+tart_capture_tb.CAP0.PHASE.bound
 @c00200
 -DDR
 @22
-tart_capture_tb.CAP0.sig_x_ddr[23:0]
 tart_capture_tb.CAP0.signal_p[23:0]
 tart_capture_tb.CAP0.signal_n[23:0]
 @1401200
@@ -189,6 +186,7 @@ tart_capture_tb.CAP0.PHASE.edg_w
 tart_capture_tb.CAP0.PHASE.pos_w
 @1401200
 -Internal
+@1000200
 -Phase
 @800200
 -Centre
@@ -210,26 +208,59 @@ tart_capture_tb.tc_stb
 tart_capture_tb.tc_mid
 tart_capture_tb.tc_cen
 tart_capture_tb.tc_dbg
-@22
-tart_capture_tb.tc_pos[23:0]
-tart_capture_tb.tc_neg[23:0]
 @1401200
 -Info
 @c00200
 -Pipes
-@28
-tart_capture_tb.CAP0.clock_x
-@22
+@c00022
 tart_capture_tb.CAP0.signal_e_i[23:0]
+@28
+(0)tart_capture_tb.CAP0.signal_e_i[23:0]
+(1)tart_capture_tb.CAP0.signal_e_i[23:0]
+(2)tart_capture_tb.CAP0.signal_e_i[23:0]
+(3)tart_capture_tb.CAP0.signal_e_i[23:0]
+(4)tart_capture_tb.CAP0.signal_e_i[23:0]
+(5)tart_capture_tb.CAP0.signal_e_i[23:0]
+(6)tart_capture_tb.CAP0.signal_e_i[23:0]
+(7)tart_capture_tb.CAP0.signal_e_i[23:0]
+(8)tart_capture_tb.CAP0.signal_e_i[23:0]
+(9)tart_capture_tb.CAP0.signal_e_i[23:0]
+(10)tart_capture_tb.CAP0.signal_e_i[23:0]
+(11)tart_capture_tb.CAP0.signal_e_i[23:0]
+(12)tart_capture_tb.CAP0.signal_e_i[23:0]
+(13)tart_capture_tb.CAP0.signal_e_i[23:0]
+(14)tart_capture_tb.CAP0.signal_e_i[23:0]
+(15)tart_capture_tb.CAP0.signal_e_i[23:0]
+(16)tart_capture_tb.CAP0.signal_e_i[23:0]
+(17)tart_capture_tb.CAP0.signal_e_i[23:0]
+(18)tart_capture_tb.CAP0.signal_e_i[23:0]
+(19)tart_capture_tb.CAP0.signal_e_i[23:0]
+(20)tart_capture_tb.CAP0.signal_e_i[23:0]
+(21)tart_capture_tb.CAP0.signal_e_i[23:0]
+(22)tart_capture_tb.CAP0.signal_e_i[23:0]
+(23)tart_capture_tb.CAP0.signal_e_i[23:0]
+@1401200
+-group_end
+@22
 tart_capture_tb.CAP0.signal_p[23:0]
 tart_capture_tb.CAP0.signal_n[23:0]
-tart_capture_tb.CAP0.sig_x_ddr[23:0]
-tart_capture_tb.CAP0.source_x[23:0]
+tart_capture_tb.CAP0.sig_ddr[23:0]
+tart_capture_tb.CAP0.source[23:0]
 tart_capture_tb.CAP0.signal_w[23:0]
-tart_capture_tb.CAP0.signal_x_o[23:0]
+tart_capture_tb.CAP0.signal[23:0]
 @1401200
 -Pipes
+@800200
+-Fake
+@28
+tart_capture_tb.CAP0.reset_e
+tart_capture_tb.CAP0.debug_e
+tart_capture_tb.CAP0.shift_e
+tart_capture_tb.CAP0.count_e
+@23
+tart_capture_tb.CAP0.fake_e[23:0]
 @1000200
+-Fake
 -Capture
 [pattern_trace] 1
 [pattern_trace] 0

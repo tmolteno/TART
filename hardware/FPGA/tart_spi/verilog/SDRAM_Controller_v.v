@@ -189,9 +189,10 @@ module SDRAM_Controller_v (
    parameter end_of_col    = sdram_column_bits-2;
    parameter start_of_bank = sdram_column_bits-1;
    parameter end_of_bank   = sdram_column_bits;
-   parameter start_of_row  = sdram_column_bits+1;
-   parameter end_of_row    = sdram_address_width-2;
+   parameter START_OF_ROW  = sdram_column_bits+1;
+   parameter END_OF_ROW    = sdram_address_width-2;
    parameter prefresh_cmd  = 10;
+   parameter ROW_PAD_BITS  = 12 + START_OF_ROW - END_OF_ROW;
 
 
    // tell the outside world when we can accept a new transaction;
@@ -199,8 +200,7 @@ module SDRAM_Controller_v (
    //--------------------------------------------------------------------------
    // Seperate the address into row / bank / address
    //--------------------------------------------------------------------------
-   //assign addr_row[12] = 1'b0; // only needed for 64Mb chip.
-   assign addr_row[end_of_row-start_of_row:0] = cmd_address[end_of_row:start_of_row];
+   assign addr_row  = {{ROW_PAD_BITS{1'b0}}, cmd_address[END_OF_ROW:START_OF_ROW]};
    assign addr_bank = cmd_address[end_of_bank:start_of_bank];
    
    assign addr_col[12:sdram_column_bits] = 3'b00; //

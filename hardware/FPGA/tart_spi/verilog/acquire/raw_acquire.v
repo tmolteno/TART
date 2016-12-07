@@ -44,18 +44,16 @@ module raw_acquire
    (
     input          clock_i, // bus clock
     input          reset_i, // bus-domain reset
-    input          clock_x, // data-sampling clock
-    input          reset_x, // sample-domain reset
 
     //  Module control-signals:
     input          capture_i, // enable raw-data capture (0/1)
     input          request_i, // retrieve sample from SDRAM
-    input          strobe_i,  // bus-domain signal-strobe
-   
+
     //  Raw signal data input:
-    //  NOTE: Sample/correlator clock-domain.
-    input          strobe_x_i, // strobes for each new sample
-    input [MSB:0]  signal_x_i, // supersampled & aligned antenna signals
+    //  NOTE: Bus clock-domain (6x, DDR oversampled).
+    input          locked_i,
+    input          strobe_i, // bus-domain signal-strobe
+    input [MSB:0]  signal_i, // supersampled & aligned antenna signals
 
     //  Memory Controller Block (MCB) signals:
     output         mcb_ce_o,
@@ -64,6 +62,8 @@ module raw_acquire
     output [ASB:0] mcb_adr_o,
     output [31:0]  mcb_dat_o,
 
+    //  Debug/info signal outputs:
+    output         oflow_o, // FIFO overflow?
     output [2:0]   state_o      // just for debug info
     );
 
@@ -72,29 +72,17 @@ module raw_acquire
    //  Acquistion-block signals:
    //  TODO: Which domains do these belong to?
    wire [MSB:0]    rdata;
-   wire [8:0]      raddr;
-   reg [8:0]       waddr_x = 9'h0;
-   wire [9:0]      waddr_x_next;
+   wire [8:0]      raddr, waddr;
 
 
 `ifdef __USE_ACQUISITION
    //-------------------------------------------------------------------------
    //  Increment address after each write.
    //-------------------------------------------------------------------------
-   reg             write_x = 1'b0;
+   reg             write = 1'b0;
 
-   assign waddr_x_next = waddr_x + 1;
-
-   always @(posedge clock_x)
-     write_x <= #DELAY strobe_x_i;
-
-   always @(posedge clock_x)
-     if (reset_x && RESET)      // not really needed, as continually wraps by
-       waddr_x <= #DELAY 9'h0;  // default ...
-     else if (write_x)
-       waddr_x <= #DELAY waddr_x_next[8:0];
-     else
-       waddr_x <= #DELAY waddr_x;
+   always @(posedge clock_i)
+     write <= #DELAY locked_i && strobe_i;
 
        
    //-------------------------------------------------------------------------
@@ -108,10 +96,10 @@ module raw_acquire
        .read_address_i (raddr),
        .read_data_o    (rdata),
        // write port:
-       .write_clock_i  (clock_x),
-       .write_enable_i (write_x),
-       .write_address_i(waddr_x),
-       .write_data_i   (signal_x_i)
+       .write_clock_i  (clock_i),
+       .write_enable_i (write),
+       .write_address_i(waddr),
+       .write_data_i   (signal_i)
        );
 
 
@@ -119,18 +107,19 @@ module raw_acquire
    //  Storage block controller.
    //-------------------------------------------------------------------------
    //  NOTE: Bus-clock domain.
-   fifo_sdram_fifo_scheduler
+   fifo_control
      #(.SDRAM_ADDRESS_WIDTH(ABITS+1))
    SCHEDULER0
      ( .clock_i (clock_i),           // bus-clock
        .reset_i (reset_i),           // global reset (bus-domain)
        .enable_i(capture_i),
-       .strobe_i(strobe_i),
+       .strobe_i(write),
 
-       .aq_bb_rd_adr(raddr),
-       .aq_read_data(rdata),
+       .bb_rd_adr_o(raddr),
+       .bb_wr_adr_o(waddr),
+       .bb_rd_dat_i(rdata),
 
-       .spi_buffer_read_complete(request_i),
+       .aq_rd_req_i(request_i),
 
        .cmd_request(mcb_ce_o),
        .cmd_write  (mcb_wr_o),
@@ -138,7 +127,8 @@ module raw_acquire
        .cmd_address(mcb_adr_o),
        .cmd_data_in(mcb_dat_o),
 
-       .tart_state (state_o)
+       .overflow_o (oflow_o),
+       .aq_state_o (state_o)
        );
 
 

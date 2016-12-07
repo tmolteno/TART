@@ -50,8 +50,8 @@ module signal_phase_DDR
 
     //  Signal-locking settings:
     parameter LIMIT = 2,        // signal valid if delta doesn't exceed this
-    parameter COUNT = 3,        // number of samples for a lock
-    parameter CBITS = 2,        // counter bit-width
+    parameter COUNT = 7,        // number of samples for a lock
+    parameter CBITS = 3,        // counter bit-width
     parameter CSB   = CBITS-1,  // MSB of counter
     parameter CZERO = 0,
 
@@ -147,14 +147,11 @@ module signal_phase_DDR
    //  positive-edge of the (half-rate) sampling-clock.
    assign edg_0   = sig_p ^ sig_p_i && sig_n ^ sig_n_i;
    assign edg_1   = sig_p ^ sig_n;
-//    assign edg_1   = sig_p_i ^ sig_n_i;
 
    //-------------------------------------------------------------------------
    //  An edge has been found whenever any of the previous values differ from
    //  the current values.
-//    assign edg_w   = sig_p ^ sig_p_i;
    assign edg_w   = sig_n ^ sig_n_i;
-//    assign edg_w   = sig_p ^ sig_p_i || sig_n ^ sig_n_i;
 
 
 
@@ -242,31 +239,59 @@ module signal_phase_DDR
      end
 
 
-`ifdef __USE_UNFINISHED_SIGNAL_LOCKING_EVEN_THOUGH_IT_DOES_NOT_WORK
+
    //-------------------------------------------------------------------------
    //
    //  SIGNAL LOCKING.
    //
    //-------------------------------------------------------------------------
-   wire [CBITS:0] lnext = count + 1;
-   wire           lwrap = lnext == COUNT[CBITS:0];
-   wire           llost = delta < -LIMIT || delta > LIMIT;
+   wire [CBITS:0] lnext;
+   wire           lwrap, llost, bound;
    reg [CSB:0]    count = CZERO;
+   reg            ledge = 1'b0;
 
+
+   assign lnext = count + 1;
+   assign lwrap = lnext == COUNT[CBITS:0];
+   assign llost = valid && (delta < -LIMIT || delta > LIMIT);
+   assign bound = -LIMIT <= delta && delta <= LIMIT;
+
+
+   //-------------------------------------------------------------------------
+   //  Detect valid edges.
    always @(posedge clk_s_i)
-     if (reset_i || llost)
-       count <= #DELAY CZERO;
-     else if (enable_i && stb_p && !lwrap)
-       count <= #DELAY lnext;
-   
+     ledge <= #DELAY enable_i && (|xedge) && !error;
+
+   //-------------------------------------------------------------------------
+   //  Detect out-of-bounds errors.
    always @(posedge clk_s_i)
-     if (reset_i || !enable_i || llost)
-       valid <= #DELAY 1'b0;
-     else if (enable_i && lwrap)
-       valid <= #DELAY 1'b1;
-`else // !`ifdef __USE_UNFINISHED_SIGNAL_LOCKING_EVEN_THOUGH_IT_DOES_NOT_WORK
-   
-`endif // !`ifdef __USE_UNFINISHED_SIGNAL_LOCKING_EVEN_THOUGH_IT_DOES_NOT_WORK
+     if (reset_i && RESET || retry_i || !enable_i)
+       error <= #DELAY 1'b0;
+     else if (valid && !bound)
+       error <= #DELAY 1'b1;
+
+
+   //-------------------------------------------------------------------------
+   //  Consider the signal locked if the delta stays within some predefined
+   //  bounds.
+   //-------------------------------------------------------------------------
+   always @(posedge clk_s_i)
+     if (reset_i && RESET || error || retry_i || !enable_i) begin
+        valid <= #DELAY 1'b0;
+        count <= #DELAY CZERO;
+     end
+     else if (valid) begin
+        valid <= #DELAY valid;
+        count <= #DELAY count;
+     end
+     else if (ledge &&  bound) begin
+        valid <= #DELAY lwrap;
+        count <= #DELAY lnext;
+     end
+     else if (ledge && !bound) begin
+        valid <= #DELAY 1'b0;
+        count <= #DELAY CZERO;
+     end
 
 
 

@@ -38,7 +38,7 @@ module fake_signal
     );
 
 
-   reg [MSB:0]     raw;          // raw, random signal data
+   reg [MSB:0]     raw = 'bz;   // raw, random signal data
    wire [MSB:0]    valids, pulses;
 
 
@@ -72,8 +72,9 @@ module fake_signal
    //-------------------------------------------------------------------------
    signal_stagger
      #( .PHASE_JITTER(SHAKE),
-        .PHASE_OFFSET(SHAKE+1),
-        .CYCLE_JITTER(0)        // UNIMPLEMENTED:
+        .PHASE_OFFSET(SHAKE > 0 ? SHAKE+1 : 0),
+        .CYCLE_JITTER(0),       // UNIMPLEMENTED:
+        .NOISY(NOISY)
         ) STAG [MSB:0]
      (  .clk(clock),
         .rst(reset),

@@ -29,7 +29,7 @@
  *      -------------------------------------------------------------------
  *   10 ||                         RESERVED                              ||
  *      -------------------------------------------------------------------
- *   11 || ENABLED | ERROR | READY | 512Mb |  1'b0 |        STATE        ||
+ *   11 || ENABLED | ERROR | READY | 512Mb | OFLOW |        STATE        ||
  *      -------------------------------------------------------------------
  *          (R/W)        (MCB, and RO)              (Acquisition, and RO)
  * 
@@ -92,10 +92,9 @@ module tart_acquire
     input          reset_i,
 
     // Raw-data inputs:
-    input          clock_x, // oversampled, acquisition-data clock
-    input          reset_x,
-    input          strobe_x,
-    input [MSB:0]  signal_x,
+    input          locked_i, // oversampled (6x, DDR), acquisition-data
+    input          strobe_i,
+    input [MSB:0]  signal_i,
 
     // Wishbone-like bus interface:
     input          cyc_i,
@@ -111,7 +110,6 @@ module tart_acquire
 
     // Flag for when the I/O (SPI by default) interace is active:
     input          io_busy_i,
-    input          strobe_i,    // bus-domain signal strobe
 
     //  Memory Controller Block (MCB) signals:
     output         mcb_ce_o,
@@ -124,6 +122,7 @@ module tart_acquire
 
     //  Debug/status outputs:
     output         enabled_o,
+    output         oflow_o,
     output [2:0]   state_o
     );
 
@@ -153,7 +152,7 @@ module tart_acquire
    //  Data-streaming registers & signals.
    reg             data_sent = 1'b0;
    reg [1:0]       index = 2'h0;
-   wire            send, wrap_index;
+   wire            send, wrap_index, oflow;
    wire [2:0]      next_index;
 
 
@@ -161,6 +160,7 @@ module tart_acquire
    //  Debug-signal assignments.
    //-------------------------------------------------------------------------
    assign enabled_o  = en_acquire;
+   assign oflow_o    = oflow;
    assign state_o    = cap_state;
 
 
@@ -174,7 +174,7 @@ module tart_acquire
                        data_in[7:0];
 
    //  Data acquisition status, and control register.
-   assign aq_system  = {en_acquire, mcb_err, mcb_rdy_i, mcb_512mb, 1'b0, cap_state};
+   assign aq_system  = {en_acquire, mcb_err, mcb_rdy_i, mcb_512mb, oflow, cap_state};
 
    //  Extended-memory device?
    assign mcb_512mb  = ABITS >= 25;
@@ -332,29 +332,28 @@ module tart_acquire
         .DELAY(DELAY)
         ) RAWDATA
        (
-        .clock_i   (clock_i),
-        .reset_i   (reset_i),
+        .clock_i  (clock_i),
+        .reset_i  (reset_i),
 
         //  External antenna data:
-        .clock_x   (clock_x),
-        .reset_x   (reset_x),
-        .strobe_x_i(strobe_x),
-        .signal_x_i(signal_x),
+        .locked_i (locked_i),
+        .strobe_i (strobe_i),
+        .signal_i (signal_i),
 
         //  Module control-signals:
-        .capture_i (en_acquire),
-        .request_i (request),
-        .strobe_i  (strobe_i),
+        .capture_i(en_acquire),
+        .request_i(request),
 
         //  Memory controller signals (bus-domain):
-        .mcb_ce_o  (mcb_ce_o),
-        .mcb_wr_o  (mcb_wr_o),
-        .mcb_rdy_i (mcb_rdy_i),
-        .mcb_adr_o (mcb_adr_o),
-        .mcb_dat_o (mcb_dat_o),
+        .mcb_ce_o (mcb_ce_o),
+        .mcb_wr_o (mcb_wr_o),
+        .mcb_rdy_i(mcb_rdy_i),
+        .mcb_adr_o(mcb_adr_o),
+        .mcb_dat_o(mcb_dat_o),
 
         //  Debug signals:
-        .state_o   (cap_state)
+        .oflow_o  (oflow),
+        .state_o  (cap_state)
         );
 
 
