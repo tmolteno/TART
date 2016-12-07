@@ -78,4 +78,4 @@ The design uses some procedurally generated placement constraints to meet timing
 [synth]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART-timing.png "TART place-and-route timing report"
 
 The 24 hardware correlators are arranged in six blocks of four, and 16 of the correlators use the Spartan 6's DSP48A1 primitives, the rest use the carry-chain, and floor-planned to give the following circuit layout:
-[floor]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART.png "TART place-and-route floorplan"
+[floor]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART.jpg "TART place-and-route floorplan"
