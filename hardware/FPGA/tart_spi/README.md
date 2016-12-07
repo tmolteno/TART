@@ -20,6 +20,14 @@ Copyright (C) 2016 Tim Molteno, Max Scheel, and Patrick Suggate.
 * papilio/             -- Xilinx implementation constraint files;
 * data/                -- data-files for the current configuration;
 
+The configuration (include) file for the TART synthesis options, `tartcfg.v`, contains a lot of settings, but only a few would typically be useful to change. Most of them are to ease the task of porting to another architecture, though this hasn't been done.
+
+Settings:
+* __512Mb_SDRAM     -- when the standard 64Mb SDRAM has been replaced with the larger one;
+* __USE_ACQUISITION -- sometimes the hardware may be used for just raw-data acquisition;
+* __USE_CORRELATORS -- or just for the calculation of visibilities, in real-time;
+* __RELEASE_BUILD   -- possibly useful if some of the debugging & fake-data stuff isn't needed;
+
 ### TART Hardware Descriptions
 * verilog/             -- most TART-specific code;
 * verilog/capture/     -- cores for the raw-signal clock-recovery, and data-capture;
@@ -41,6 +49,7 @@ There is an additional library of simple Wishbone cores in the `wishbone` direct
 
 
 ## Naming Conventions
+Some signals are have *_x* tags and/or suffixes, to indicate that they belong to the ~200 MHz (12x the XTAL clock) correlator clock-domain, and others have *_e* for the external crystal (16.368 MHz) clock-domain signals.  Most of the rest of the signals belong to the bus clock-domain, which is ~100 MHz (6x the XTAL clock).
 
 ### Wishbone(-like) Interfaces and Signals
 Instead of calling the Wishbone *STALL_I* signal by its proper name, it's instead called *WAT_I*; i.e., WAiT-state.
