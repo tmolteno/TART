@@ -10,6 +10,15 @@ Copyright (C) 2016 Tim Molteno, Max Scheel, and Patrick Suggate.
 
 **TODO license**
 
+# TART Python Scripts
+
+These are located within the folder `hardware/rpi/`, and contain the scripts:
+* `tartdsp.py`        -- sets and queries the states for a DSP build of the TART hardware;
+* `calibrate.py`      -- utilities for measuring the phase-delays of each of the antennae;
+* `tart_testbench.py` -- tests the raw-data acquisition and read-back modes of the hardware;
+
+**TODO scripts**
+
 # TART Source
 
 ## Directories and Files
