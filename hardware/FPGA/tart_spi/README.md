@@ -2,6 +2,8 @@
 
 The TART hardware uses a Xilinx Spartan 6 FPGA, from a Papilio Pro board, for a SPI-connected device that captures and processes antenna signals. It supports both raw-data aquisition, and real-time visibilities calculation.
 
+When configured to use 24 antennae, the real-time correlators perform about 20 billion arithmetic operations (MAC's) per second.
+
 # License
 
 Copyright (C) 2016 Tim Molteno, Max Scheel, and Patrick Suggate.
