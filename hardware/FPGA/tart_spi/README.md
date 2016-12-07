@@ -69,3 +69,13 @@ Many Wishbone modules have parameters:
 * *CHECK* which enables additional (standard) checking; e.g., for ignoring spurious signals like an *ACK_I* when *CYC_O* isn't asserted;
 * *PIPED* for enabling (Wishbone SPEC B4) pipelined burst-mode transfers;
 * *ASYNC* to reduce/eliminate synchronous delays for circuits that are fast enough (and/or the bus clock is slow enough) to not need them;
+
+## Synthesis
+
+All development and testing uses Xilinx ISE 14.7, and this is what we recommend that you use as well. Many Xilinx-specific primitives and constraints have been used to meet speed & area targets, and the synthesis software needs to support these.
+
+The design uses some procedurally generated placement constraints to meet timing. An example timing report is the following:
+[synth]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART-timing.png "TART place-and-route timing report"
+
+The 24 hardware correlators are arranged in six blocks of four, and 16 of the correlators use the Spartan 6's DSP48A1 primitives, the rest use the carry-chain, and floor-planned to give the following circuit layout:
+[floor]: https://github.com/tmolteno/TART/blob/master/hardware/FPGA/tart_spi/doc/img/TART.png "TART place-and-route floorplan"
