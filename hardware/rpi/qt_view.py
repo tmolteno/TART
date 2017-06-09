@@ -10,6 +10,8 @@ import time
 from multiprocessing import Queue
 from threading import Thread
 
+from pyqtgraph.widgets.RawImageWidget import RawImageWidget
+
 class QtPlotter(object):
     def __init__(self, app):
         super(QtPlotter, self).__init__()
@@ -17,24 +19,24 @@ class QtPlotter(object):
         self.create_QtPlotter()
 
     def create_QtPlotter(self):
-        self.win = QtGui.QMainWindow()
-        self.win.resize(400,400)
-        self.page = QtGui.QWidget()
-        self.graphicsView = pg.GraphicsView()
-        vb = pg.ViewBox()
-        self.graphicsView.setCentralItem(vb)
-        vb.setAspectLocked()
-        self.imv = pg.ImageItem()
-        vb.addItem(self.imv)
-        self.win.setCentralWidget(self.graphicsView)
-        self.win.show()
-        self.win.setWindowTitle('TART2 - Live View')
+        self.RAW = 1
+        if self.RAW:
+          self.win = QtGui.QMainWindow()
+          self.rawImg = RawImageWidget(self.win)
+          self.win.setCentralWidget(self.rawImg)
+          self.win.resize(128,128)
+          self.win.show()
+        else:
+          self.win = pg.GraphicsLayoutWidget()
+          self.win.show()
+          self.win.setWindowTitle('TART2 - Live View')
+          view = self.win.addViewBox()
+          self.img = pg.ImageItem()
+          view.addItem(self.img)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update)
         self.timer.start(0)
         self.q = Queue()
-    
-    #def worker(self, q)
     
     def getPort(self):
         return self.q
@@ -47,7 +49,16 @@ class QtPlotter(object):
         #        print 'dropping frames'
         #    else:
         data = self.q.get()
-        self.imv.setImage(data,autoRange=True,autoLevels=True)
+        #self.imv.setImage(data,autoRange=True,autoLevels=True)
+        d_max = data.max()
+        #print data[0]
+        if self.RAW:
+          data = data/d_max*255
+          self.rawImg.setImage(data)#/d_max)
+        else:
+          data = np.log(data)#*255
+          data = (data - data.min())/data.max()*255
+          self.img.setImage(data)
         self.app.processEvents()
         #except Queue.Empty:
         #    pass

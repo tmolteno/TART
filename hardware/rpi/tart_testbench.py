@@ -52,11 +52,13 @@ if __name__ == '__main__':
   t0   = time.time()
 #   data = tart.read_data(num_words=num_words, blocksize=800)
   data = tart.read_data(num_words=num_words, blocksize=1024)
-  base = convert(data[0])
   t1   = time.time()
+  print 'elapsed time:\t%2.3f' % (t1-t0)
+  base = convert(data[0])
+  t2   = time.time()
   if args.verbose:
-    print 'elapsed time:\t%2.3f' % (t1-t0)
     print 'base = %d (%x)\n\n' % (base, base)
+    print 'time for convert:\t%2.3f' % (t2-t1)
 
   if args.dump:
     for x in data:

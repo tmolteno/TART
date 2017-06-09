@@ -58,6 +58,7 @@ def capture_loop(process_queue, ):
     permutation = tart_instance.load_permute()
     tart_instance.debug(on=False, shift=False, count=False, noisy=True)
     tart_instance.read_status(True)
+    tart_instance.capture(on=True, noisy=False)
     tart_instance.start(blocksize, True)
 
     while True:
@@ -78,10 +79,14 @@ def capture_loop(process_queue, ):
     the files.
 '''
 def process_loop(process_queue, result_queue, config, n_samples):
+    p_bool = 0
     while (True):
-        #'ProcessQ: %i \n ResultQ: %i' % (process_queue.qsize, result_queue.qsize)
         if (False == process_queue.empty()):
             try:
+                p_bool += 1
+                if p_bool >20:
+                    p_bool = 0
+                    print 'ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), result_queue.qsize())
                 data = process_queue.get()
                 vis, means = get_vis_object(data, n_samples, config)
                 result_queue.put((vis, means))
@@ -99,7 +104,8 @@ def result_loop(result_queue, chunk_size):
                 vis, means = result_queue.get()
                 vislist.append(vis)
                 if len(vislist)>chunk_size:
-                    fname =  "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second)
+                    fname = ARGS.vis_prefix + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
+                    #fname =  "%s_%02i_%02i_%02i.vis" %(ARGS.vis_prefix, vis.timestamp.hour, vis.timestamp.minute, vis.timestamp.second)
                     print 'saved ', vis, ' to', fname
                     visibility.Visibility_Save(vislist, fname)
                     vislist = []
@@ -107,7 +113,7 @@ def result_loop(result_queue, chunk_size):
                 logger.error( "PostProcessing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
-            time.sleep(0.001)
+            time.sleep(0.00001)
 
 import logging.config
 import yaml
@@ -169,6 +175,8 @@ if __name__=="__main__":
     
     capture_process = multiprocessing.Process(target=capture_loop, args=(proc_queue,))
     capture_process.start()
-    
-    QtGui.QApplication.instance().exec_()
+    print 'started capture loop...'
+ 
+    if ARGS.mode == 'qt':
+        QtGui.QApplication.instance().exec_()
 

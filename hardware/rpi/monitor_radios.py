@@ -6,99 +6,31 @@ import time
 import yaml
 import logging
 import logging.config
-import os.path
-import os
 
-# BUG: resuQ piles up.
 
-def gen_calib_image(vislist):
-    CAL_MEASURE_VIS_LIST = []
-    t_cal = time.time()
-    #cal_file = 'cal.json'
-    cal_file = '/home/pi/calibration.json'
-    MIN = 0
-    for vis in vislist[:1]:
-        if not os.path.exists(cal_file):
-	    cv = calibration.CalibratedVisibility(vis)
-            flagged_bl = []
-	    for i in range(0,24-1):
-	        for j in range(i+1,24):
-	  	    if (i > 5) or (j > 5):
-		      flagged_bl.append([i,j])
-		      #print i,j
-	    cv.set_flagged_baselines(flagged_bl)
-	    if MIN:
-              print 'fmin'
-            else:
-	        for i in range(1,6):
-	            a_i = np.abs(cv.get_visibility(0,i))
-	            ang_i = np.angle(cv.get_visibility(0,i))
-	            cv.set_gain(i, 1./a_i)
-	            cv.set_phase_offset(i, ang_i)
-	    cv.to_json(cal_file)
-	else:
-	  print 'loading.. calibration'
-	  cv = calibration.from_JSON_file(vis, cal_file)
-        CAL_MEASURE_VIS_LIST.append(cv)
-    #print 't_cal', time.time()- t_cal
-    #t_obj = time.time()
-    CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
-    #print 't_obj', time.time()- t_obj
-    t_ift = time.time()
-    #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
-    CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift_simp(nw=20, num_bin=2**7)
-    #print 't_uv,ift', time.time()- t_ift
-    return CAL_IFT, CAL_EXTENT
+def gen_qt_vis_abs_ang(vislist, plotQ):
+    print vislist[0].v[0]
 
-def gen_qt_image(vislist, plotQ):
-    res, ex = gen_calib_image(vislist)
-    #a = np.random.random(size=(2**7,2**7))*np.sin(np.arange(2**7))
-    #res = np.fft.fft2(a)
-    #plotQ.put(np.abs(res).T.astype(np.float16))
-    plotQ.put(np.abs(res).astype(np.float16))
-    #plotQ.put(np.abs(res).T.astype(np.int8))
-
-def gen_qt_vis_abs_ang(vislist,meanslist, plotQ):
-    #graphs = [[np.angle(v.v[i]) for v in vislist] for i in range(5)]
-    graphs = np.array(meanslist)[:,:6].T
-    #print meanslist
-    plotQ.put(np.array(graphs))
-
-def gen_mpl_image(vislist, gfx, fig, ax , cb):
-    CAL_IFT, CAL_EXTENT = gen_calib_image(vislist)
-    abs_v = CAL_IFT.real
-    if gfx is None:
-        gfx = ax.imshow(abs_v, extent=CAL_EXTENT, cmap=plt.cm.rainbow)
-        cb = fig.colorbar(gfx, orientation='horizontal')
-    else:
-        gfx.set_data(abs_v)
-        cb.set_clim(vmin=np.min(abs_v), vmax=np.max(abs_v))
-        cb.draw_all()
-        fig.canvas.draw()
-    return gfx, cb
+    #plotQ.put(res.real.T)
 
 def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
     logger = logging.getLogger(__name__)
 
-    if not ('qt' in mode):
-    #if ARGS.mode!= 'qt':
+    if mode!='qt':
         import matplotlib.pyplot as plt
         plt.ion()
         fig, ax = plt.subplots(1,1)
         gfx = None
         cb = None
     cnt = 0
-    max_len = 200
+    max_len = 1000
     res = []
     vislist = []
-    meanslist = []
     while (True):
         if (False == result_queue.empty()):
             try:
-                #print 'ResuQ size', result_queue.qsize()
-                vis, means = result_queue.get() 
+                vis = result_queue.get() 
                 vislist.insert(0,vis)
-                meanslist.insert(0,means)
                 if mode=='syn':
                     if len(vislist)>=chunk_size:
                         gfx, cb = gen_mpl_image(vislist, gfx, fig, ax, cb)
@@ -107,14 +39,7 @@ def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
                     if len(vislist)>=chunk_size:
                         gen_qt_image(vislist, plotQ)
                         vislist = []
-                elif mode =='qt_vis':
-                    cnt += 1
-                    if cnt >= chunk_size:
-                        cnt = 0
-                        gen_qt_vis_abs_ang(vislist,meanslist,plotQ)
-                    if len(vislist)>max_len:
-                        vislist.pop()
-                        meanslist.pop()
+
                 elif mode=='absang':
                     if gfx is None:
                         gfx, = ax.plot([],[],c='blue')
@@ -163,6 +88,6 @@ def result_loop(result_queue, chunk_size, mode='syn', plotQ=None):
                 logger.error( "Measurement Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
-            time.sleep(0.0001)
+            time.sleep(0.001)
 
 

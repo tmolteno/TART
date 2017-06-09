@@ -26,7 +26,7 @@ class CalibratedVisibility(object):
     def flag_baseline(self,i,j):
         bl = [i,j]
         if bl not in self.flagged_baselines:
-            vis_idx = self.vis.baselines.index(bl)
+            #vis_idx = self.vis.baselines.index(bl)
             self.flagged_baselines.append(bl)
             # print 'flagged', vis_idx, bl
 

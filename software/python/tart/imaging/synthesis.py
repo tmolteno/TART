@@ -8,6 +8,7 @@ from tart.util import angle
 import numpy as np
 #import pyfftw.interfaces.numpy_fft as fft
 import numpy.fft as fft
+import time
 
 import os
 import copy
@@ -98,21 +99,73 @@ class Synthesis_Imaging(object):
       os.system("rm out.uvfits")
   
   def get_uuvvwwvis_zenith(self):
-    for cal_vis in copy.deepcopy(self.cal_vis_list):
-      t_g_bl = time.time()
+    vis_l = []
+    #for cal_vis in copy.deepcopy(self.cal_vis_list[:1]):
+    for cal_vis in self.cal_vis_list[:1]:
+      ant_p = np.array(cal_vis.get_config().ant_positions)
       bls = cal_vis.get_baselines()
-      print '  get bl', time.time()-t_g_bl
-      c = cal_vis.get_config()
-      ant_p = np.array(c.ant_positions)
-      print bls
       pos_pairs = ant_p[np.array(bls)]
       uu_a, vv_a, ww_a = (pos_pairs[:,0] - pos_pairs[:,1]).T/constants.L1_WAVELENGTH
-      t_getvis = time.time()
       for bl in bls:
         ant_i, ant_j = bl
         vis_l.append(cal_vis.get_visibility(ant_i,ant_j))
-      print '   get v', time.time()-t_getvis
     return uu_a, vv_a, ww_a, np.array(vis_l)
+
+  def get_grid_idxs(self,uu_a, vv_a, num_bin, nw):
+    uu_edges = np.linspace(-nw, nw, num_bin+1)
+    vv_edges = np.linspace(-nw, nw, num_bin+1)
+    import cPickle 
+    try:
+      grid_file = 'grid.idxs'
+      print 'loading'
+      grid_idx = cPickle.load(open(grid_file, 'rb'))
+    except:
+      print 'generating...'
+      grid_idx = []
+      for uu, vv in zip(uu_a, vv_a):
+        i = uu_edges.__lt__(uu).sum()-1
+        j = vv_edges.__lt__(vv).sum()-1
+        i2 = uu_edges.__lt__(-uu).sum()-1
+        j2 = vv_edges.__lt__(-vv).sum()-1
+        grid_idx.append([i,j,i2,j2])
+      grid_idx = np.array(grid_idx)
+      save_ptr = open(grid_file, 'wb')
+      cPickle.dump(grid_idx, save_ptr, cPickle.HIGHEST_PROTOCOL)
+      save_ptr.close()
+    return grid_idx 
+
+ 
+  def get_uvplane_zenith(self, num_bin = 1600, nw = 36,):
+    import time
+    t_st = time.time()
+    uu_a, vv_a, ww_a, vis_l = self.get_uuvvwwvis_zenith()
+#    print 'uuvvww_zenith', time.time()-t_st
+    arr = np.zeros((num_bin, num_bin), dtype=np.complex64)
+    count_arr = np.zeros((num_bin, num_bin), dtype=np.int16)
+    t_st = time.time()
+    # place complex visibilities in the UV grid and prepare averaging by counting entries.
+    grid_idxs = self.get_grid_idxs(uu_a, vv_a, num_bin, nw)
+#    print 'loading took', time.time()-t_st
+#    t_st = time.time()
+    #for k, v_l in enumerate(vis_l):
+    #  i,j,i2,j2 = grid_idxs[k]
+    #  count_arr[j, i] += 1
+    #  count_arr[j2, i2] += 1
+    if count_arr.max()>1:
+      # apply the masked array and divide by number of entries
+      for k, v_l in enumerate(vis_l):
+        i,j,i2,j2 = grid_idxs[k]
+        arr[j, i] += v_l
+        arr[j2, i2] += np.conjugate(v_l)
+      n_arr = n_arr/(count_arr) 
+    else:
+      arr[grid_idxs[:,1],grid_idxs[:,0]] = vis_l
+      arr[grid_idxs[:,3],grid_idxs[:,2]] = np.conjugate(vis_l)
+#    print 'forloop', time.time()-t_st
+#    t_st = time.time()
+    n_arr = np.ma.masked_array(arr[:, :], count_arr.__lt__(1.))
+#    print 'div', time.time()-t_st
+    return n_arr
 
   def get_uvplane(self, num_bin = 1600, nw = 36, grid_kernel_r_pixels=0.5, use_kernel=True):
     pixels_per_wavelength = num_bin/(nw*2.)
@@ -143,6 +196,12 @@ class Synthesis_Imaging(object):
     vv_a = np.array(vv_l)
     ww_a = np.array(ww_l)
     vis_l = np.array(vis_l)
+    #uu_a2, vv_a2, ww_a2, vis_l2 = self.get_uuvvwwvis_zenith()
+    #print 'uu',uu_a-uu_a2
+    #print 'vv',vv_a-vv_a2
+    #print 'ww',ww_a-ww_a2
+    #print 'vd',vis_l - vis_l2
+
     #print 't uu,vv,ll,vis', time.time()-t_dv
     #t_gridding = time.time()
     outest_point = max(uu_a.max(), vv_a.max(), -vv_a.min(), -uu_a.min())
@@ -211,8 +270,19 @@ class Synthesis_Imaging(object):
 
     #print 'gridding', time.time()-t_gridding
     return (n_arr, uu_edges, vv_edges)
+ 
+  def get_ift_simp(self, nw = 30, num_bin = 2**7):
+    #t_st = time.time()
+    uv_plane = self.get_uvplane_zenith(num_bin=num_bin, nw=nw)
+    #print 'full UV plane', time.time() - t_st
+    #t_st = time.time()
+    ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
+    #print 'full fft', time.time() - t_st
+    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+    extent = [maxang, -maxang, -maxang, maxang]
+    return [ift, extent]
 
-
+ 
   def get_ift(self, nw = 30, num_bin = 2**7, use_kernel=True):
     uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
     ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
