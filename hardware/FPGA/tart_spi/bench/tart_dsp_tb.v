@@ -66,16 +66,20 @@ module tart_dsp_tb;
 
 //    parameter NREAD = 4;
 //    parameter NREAD = 48;
-   parameter NREAD = 72;
+//    parameter NREAD = 72;
 //    parameter NREAD = 144;
 //    parameter NREAD = 288;
-//    parameter NREAD = 576;
+   parameter NREAD = 576;
 
    //  Additional simulation settings:
    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
    parameter PHASE = 0;         // phase-delay for the generated signal
    parameter DELAY = `DELAY;       // Simulated combinational delay
    parameter NOISY = 1;            // display extra debug info
+
+   //  Random-data array settings:
+   parameter DBITS = 7;
+   parameter DSIZE = 1 << DBITS;
 
 
    //-------------------------------------------------------------------------
@@ -112,11 +116,10 @@ module tart_dsp_tb;
    wire [XSB:0] dsp_bank;
 
    //  Data memories & signals.
-   reg [NSB:0]  data [0:255];
+   reg [NSB:0]  data [0:DSIZE-1];
    reg [31:0]   viz = 32'h0;
    reg [4:0]    log_bsize = COUNT[4:0];
    reg [XSB:0]  viz_bank = {XBITS{1'b0}};
-
 
 
    //-------------------------------------------------------------------------
@@ -162,8 +165,12 @@ module tart_dsp_tb;
 
    initial begin : SIM_BLOCK
       if (COUNT < 8) begin
-         $dumpfile ("vcd/dsp_tb.vcd");
+         $write("%12t: ", $time);
+         $dumpfile("vcd/dsp_tb.vcd");
          $dumpvars;
+      end
+      else begin
+         $display("%12t: Simulation too large to write to file.\n", $time);
       end
 
       //----------------------------------------------------------------------
@@ -186,7 +193,7 @@ module tart_dsp_tb;
         $display("%12t:  (Data is random values)", $time);
       else
         $display("%12t:  (Data is just increasing counter values)", $time);
-      for (ptr = 0; ptr < 256; ptr = ptr+1) begin
+      for (ptr = 0; ptr < DSIZE; ptr = ptr+1) begin
          if (RNG) data[ptr] = $random;
          else     data[ptr] = ptr;
       end
@@ -406,7 +413,7 @@ module tart_dsp_tb;
    wire [NSB:0] sig_o = vld_x ? sig_x : {AXNUM{1'bz}};
    reg          cap_en = 1'b0;
 
-   assign antenna = data[adr_x[7:0]];
+   assign antenna = data[adr_x[DBITS-1:0]];
 
    always @(posedge clk_x)
      if (rst)
@@ -584,6 +591,7 @@ module tart_dsp_tb;
      ( .C0(b_clk),
        .C1(n_clk),
        .R (b_rst),
+       .S ({AXNUM{1'b0}}),
        .CE(vld_x),
        .D (sig_x),
        .Q0(sig_p),

@@ -36,13 +36,13 @@ FAK =$(COR) $(CORD)/tart_fake_dsp.v
 # TODO:
 TOP =$(DEP) $(COR) $(ACQ)/align_captures.v $(ACQ)/signals_capture.v $(ACQ)/capture.v $(ACQ)/raw_capture.v $(ACQ)/tart_capture.v $(RTL)/tart.v
 
-all: soc
+all: dsp
 
 cor: ${DEP} ${COR} correlator/tart_correlator_tb.v
 	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(COR) $(SIM) correlator/tart_correlator_tb.v
 
 dsp: ${DEP} ${DSP} tart_dsp_tb.v
-	$(IVC) $(OPT) -o $(OUT)/tart.out $(DEP) $(DSP) $(SIM) tart_dsp_tb.v
+	$(IVC) $(OPT) -s tart_dsp_tb -o $(OUT)/tart.out $(DEP) $(DSP) $(SIM) tart_dsp_tb.v
 
 fak: ${DEP} ${FAK} tart_dsp_tb.v
 	$(IVC) $(OPT) -D__USE_FAKE_DSP -o $(OUT)/tart.out $(DEP) $(FAK) $(SIM) tart_dsp_tb.v

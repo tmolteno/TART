@@ -225,11 +225,11 @@ params a b m =
 -- * Emitters.
 ------------------------------------------------------------------------------
 -- | Generate the Verilog parameters, for the correlator-blocks.
-makeParams :: Z -> Z -> Z -> Shell Text
+makeParams :: Z -> Z -> Z -> Shell Line
 makeParams a b m = emitParams a b m $ params a b m
 
 -- | Emit the generated parameters.
-emitParams :: Z -> Z -> Z -> Blocks Z -> Shell Text
+emitParams :: Z -> Z -> Z -> Blocks Z -> Shell Line
 emitParams a b m bz =
   let -- ^ number of index-bits:
       ib = ceiling $ log (fromIntegral a) / log 2
@@ -241,7 +241,7 @@ emitParams a b m bz =
       hx x = printf "{%d'h%x};" (ib*2*m) x :: String
       px = concatMap (map (hx . toBitfield ib)) bz
       pp = zipWith (++) (repeat "   parameter ") (zipWith (++) lx px)
-  in  select $ pack <$> (emitHeader a b m:pp)
+  in  select $ unsafeTextToLine . pack <$> (emitHeader a b m:pp)
 
 emitHeader :: Z -> Z -> Z -> String
 emitHeader a b m =
@@ -327,8 +327,8 @@ parser  = (,,,,,) <$> optInt  "antennae"  'a' "The number of antennae"
 --   TODO: Display the permutation vector.
 verbose :: Z -> Z -> Z -> FilePath -> IO ()
 verbose a b m o = do
-  stdout "// \n//  == Antenna pair generation =="
-  stdout "// \n// Correlator block parameters:\n// "
+  stdout $ select ["// ", "//  == Antenna pair generation ==",
+                   "// ", "// Correlator block parameters:", "// "]
   stdout $ makeParams a b m
   stdout ""
   let f  = Set.fromList . uncurry (++) . unzip
@@ -356,9 +356,9 @@ verbose a b m o = do
 --     
 --     > viz = tart.vis_read()[pp]
 --     
-makePermute :: Z -> Z -> Z -> Shell Text
+makePermute :: Z -> Z -> Z -> Shell Line
 makePermute a b =
-  select . (:[]) . pack . intercalate " " . map show . permute a b
+  select . (:[]) . unsafeTextToLine . pack . intercalate " " . map show . permute a b
 
 ------------------------------------------------------------------------------
 -- | Generate antenna-pair indices, for the correlators.
