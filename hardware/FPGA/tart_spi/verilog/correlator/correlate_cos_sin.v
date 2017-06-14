@@ -31,9 +31,15 @@ module correlate_cos_sin
     output [MSB:0] qcos,
     output [MSB:0] qsin
     );
-   
+
+
+`ifdef __USE_SWAPPED_MEANS
    wire        c0 = SUMHI && hi ? br == 1'b1 : ar == br;
    wire        c1 = SUMHI && hi ? ar == 1'b1 : ar == bi;
+`else
+   wire        c0 = SUMHI && hi ? ar == 1'b1 : ar == br;
+   wire        c1 = SUMHI && hi ? br == 1'b1 : ar == bi;
+`endif
 
    always @(posedge clk)
      valid <= #DELAY en;

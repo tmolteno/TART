@@ -43,8 +43,13 @@ module correlate_cos_sin_DSP
    wire [17:0] a = {dsin[11:0], dcos[23:18]};
    wire [17:0] b = dcos[17:0];
    
+`ifdef __USE_SWAPPED_MEANS
    wire        c0 = SUMHI && hi ? br == 1'b1 : ar == br;
    wire        c1 = SUMHI && hi ? ar == 1'b1 : ar == bi;
+`else
+   wire        c0 = SUMHI && hi ? ar == 1'b1 : ar == br;
+   wire        c1 = SUMHI && hi ? br == 1'b1 : ar == bi;
+`endif
    wire [XSB:0] c = {{MSB{1'b0}}, c1, {MSB{1'b0}}, c0};
 
 

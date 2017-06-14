@@ -8,6 +8,10 @@ pairs:
 permute:
 	runhaskell script/pairs.hs --antennae=24 --blocksize=6 --multiplex=12 --permute --outfile data/permute.txt
 
+.PHONY: hex
+hex:
+	runhaskell script/pairs.hs --antennae=24 --blocksize=6 --multiplex=12 --hex --verbose --outfile data/permute.hex
+
 .PHONY: floor
 floor:
 	runhaskell script/floor.hs --numDSP=4 --prefix="DSP/COR/CXB" --outfile papilio/floor.ucf

@@ -83,7 +83,8 @@ permute a b m =
       ps = concat $ concat <$> pz
       pm = pairIndex a ps
       go (Pair p q:ps) = p:q:go ps
-      go (Mean p q:ps) = p:q:go ps
+--       go (Mean p q:ps) = p:q:go ps -- unflipped means
+      go (Mean p q:ps) = q:p:go ps -- flip the means
       go           []  = []
   in  revperm $ go pm
 
@@ -311,13 +312,14 @@ toMeans  = map (uncurry Mean)
 -- * Program main.
 ------------------------------------------------------------------------------
 -- | Parse command-line options.
-parser :: Parser (Z, Z, Z, FilePath, Bool, Bool)
-parser  = (,,,,,) <$> optInt  "antennae"  'a' "The number of antennae"
-                  <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
-                  <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
-                  <*> optPath "outfile"   'o' "Output filename"
-                  <*> switch  "verbose"   'v' "Show extra information"
-                  <*> switch  "permute"   'p' "Generate permutation vector"
+parser :: Parser (Z, Z, Z, FilePath, Bool, Bool, Bool)
+parser  = (,,,,,,) <$> optInt  "antennae"  'a' "The number of antennae"
+                   <*> optInt  "blocksize" 'b' "The size of the antenna blocks"
+                   <*> optInt  "multiplex" 'm' "The time-multiplexing ratio"
+                   <*> optPath "outfile"   'o' "Output filename"
+                   <*> switch  "verbose"   'v' "Show extra information"
+                   <*> switch  "permute"   'p' "Generate permutation vector"
+                   <*> switch  "hex"       'h' "Hexadecimal permutation vector"
 
 ------------------------------------------------------------------------------
 -- | Display extra information when the `--verbose` option is used.
@@ -360,6 +362,12 @@ makePermute :: Z -> Z -> Z -> Shell Line
 makePermute a b =
   select . (:[]) . unsafeTextToLine . pack . intercalate " " . map show . permute a b
 
+-- | Produces the permutation data in hexadecimal format, and suitable for
+--   reading back with Verilog's `$readmemh` command.
+makePermHex :: Z -> Z -> Z -> Shell Line
+makePermHex a b =
+  select . map (unsafeTextToLine . pack . printf "%03x") . permute a b
+
 ------------------------------------------------------------------------------
 -- | Generate antenna-pair indices, for the correlators.
 --   Default (Makefile) options:
@@ -369,12 +377,13 @@ makePermute a b =
 --   
 main :: IO ()
 main  = do
-  (a, b, m, o, v, p) <- options "" parser
+  (a, b, m, o, v, p, h) <- options "" parser
 
   unless (a == 24 && b == 6 && m == 12) $ do
     putStrLn "Unsupported input parameters."
 
   when v $ verbose a b m o
-  if p
-    then output o $ makePermute a b m
-    else output o $ makeParams  a b m
+  when p $ output o (makePermute a b m)
+  when h $ output o (makePermHex a b m)
+  when (not p && not h) $
+    output o (makeParams a b m)

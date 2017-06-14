@@ -72,7 +72,8 @@ module tart_dsp_tb;
    parameter NREAD = 576;
 
    //  Additional simulation settings:
-   parameter RNG   = `RANDOM_DATA; // Use random antenna data?
+   parameter RNG   = 0; // Use random antenna data?
+//    parameter RNG   = `RANDOM_DATA; // Use random antenna data?
    parameter PHASE = 0;         // phase-delay for the generated signal
    parameter DELAY = `DELAY;       // Simulated combinational delay
    parameter NOISY = 1;            // display extra debug info
@@ -80,6 +81,11 @@ module tart_dsp_tb;
    //  Random-data array settings:
    parameter DBITS = 7;
    parameter DSIZE = 1 << DBITS;
+//    parameter DMASK = 24'hffffff; // AND-mask of the antenna data
+   parameter DMASK = 24'h000001; // AND-mask of the antenna data
+
+   //  Permute data before displaying?
+   parameter DPERM = 1;
 
 
    //-------------------------------------------------------------------------
@@ -378,8 +384,17 @@ module tart_dsp_tb;
 
    //-------------------------------------------------------------------------
    //  Format and display the retrieved visibilities.
-   integer idx;
+   integer idx, tot;
    parameter CHUNK = NREAD / 6;
+   integer perm [0:575];
+
+   initial begin : INIT_PERM
+      if (DPERM) $readmemh("../data/permute.hex", perm);
+   end
+//    initial begin
+//       #10 for (idx = 0; idx < 576; idx = idx + 1)
+//         $write(" %03x", perm[idx]);
+//    end
 
    always @(posedge fin)
      if (f_adr >= NREAD-1) begin
@@ -387,8 +402,14 @@ module tart_dsp_tb;
         for (idx = 0; idx < NREAD; idx = idx + CHUNK) begin
            for (ptr = 0; ptr < CHUNK; ptr = ptr + TRATE) begin
               $write("\t");
-              for (num = 0; num < TRATE; num = num + 1)
-                $write("%06x ", fetched[idx + ptr + num]);
+              for (num = 0; num < TRATE; num = num + 1) begin
+                 //  Permute the output?
+                 if (DPERM)
+                   tot = perm[idx + ptr + num];
+                 else
+                   tot = idx + ptr + num;
+                 $write("%06x ", fetched[tot]);
+              end
               $write("\n");
            end
            $write("\n");
@@ -413,7 +434,7 @@ module tart_dsp_tb;
    wire [NSB:0] sig_o = vld_x ? sig_x : {AXNUM{1'bz}};
    reg          cap_en = 1'b0;
 
-   assign antenna = data[adr_x[DBITS-1:0]];
+   assign antenna = data[adr_x[DBITS-1:0]] & DMASK;
 
    always @(posedge clk_x)
      if (rst)

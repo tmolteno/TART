@@ -114,6 +114,13 @@
 // `define CONST_DATA 1
 `define CONST_WORD 24'h000000
 
+//----------------------------------------------------------------------------
+//  Flip the ordering of the pairs of means?
+//  NOTE: Requires that the means need to be flipped when computing the
+//    permutation vectors, as well (which is the default).
+// `undef __USE_SWAPPED_MEANS
+`define __USE_SWAPPED_MEANS
+
 
 
 //==========================================================================//
