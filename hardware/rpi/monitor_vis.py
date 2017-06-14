@@ -13,9 +13,8 @@ import os
 
 def gen_calib_image(vislist):
     CAL_MEASURE_VIS_LIST = []
-    t_cal = time.time()
-    #cal_file = 'cal.json'
-    cal_file = '/home/pi/calibration.json'
+    sub_dir = '6_ant_acq_dir/'
+    cal_file = sub_dir + 'monitor_vis_calibration.json'
     MIN = 0
     for vis in vislist[:1]:
         if not os.path.exists(cal_file):
@@ -25,7 +24,6 @@ def gen_calib_image(vislist):
 	        for j in range(i+1,24):
 	  	    if (i > 5) or (j > 5):
 		      flagged_bl.append([i,j])
-		      #print i,j
 	    cv.set_flagged_baselines(flagged_bl)
 	    if MIN:
               print 'fmin'
@@ -40,14 +38,10 @@ def gen_calib_image(vislist):
 	  print 'loading.. calibration'
 	  cv = calibration.from_JSON_file(vis, cal_file)
         CAL_MEASURE_VIS_LIST.append(cv)
-    #print 't_cal', time.time()- t_cal
-    #t_obj = time.time()
     CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
-    #print 't_obj', time.time()- t_obj
-    t_ift = time.time()
+    CAL_SYN.set_grid_file(sub_dir + 'monitor_vis_grid.idx')
     #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
     CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift_simp(nw=20, num_bin=2**7)
-    #print 't_uv,ift', time.time()- t_ift
     return CAL_IFT, CAL_EXTENT
 
 def gen_qt_image(vislist, plotQ):
