@@ -1,6 +1,7 @@
 #!/usr/bin/env runhaskell
-{-# LANGUAGE OverloadedStrings, TypeOperators #-}
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
+{-# LANGUAGE OverloadedStrings, TypeOperators,
+             DeriveFunctor, DeriveFoldable, DeriveTraversable
+  #-}
 
 ------------------------------------------------------------------------------
 -- |

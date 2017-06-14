@@ -79,10 +79,10 @@ module tart_dsp_tb;
    parameter NOISY = 1;            // display extra debug info
 
    //  Random-data array settings:
-   parameter DBITS = 7;
+   parameter DBITS = 8;
    parameter DSIZE = 1 << DBITS;
 //    parameter DMASK = 24'hffffff; // AND-mask of the antenna data
-   parameter DMASK = 24'h000001; // AND-mask of the antenna data
+   parameter DMASK = 24'h00007f; // AND-mask of the antenna data
 
    //  Permute data before displaying?
    parameter DPERM = 1;
@@ -157,10 +157,11 @@ module tart_dsp_tb;
    //-------------------------------------------------------------------------
    //  Source-signal routing.
    //-------------------------------------------------------------------------
-   wire [NSB:0] sig_b, sig_w, sig_n, sig_p;
+   wire [NSB:0] sig_w;
+//    wire [NSB:0] sig_b, sig_w, sig_n, sig_p;
    reg [3:0]    delay = PHASE;
 
-   assign sig_b = delay[0] ? sig_n : sig_p;
+//    assign sig_b = delay[0] ? sig_n : sig_p;
 
 
    //-------------------------------------------------------------------------
@@ -603,6 +604,7 @@ module tart_dsp_tb;
    //  IOB, DDR, SIGNAL-CAPTURE REGISTERS.
    //
    //-------------------------------------------------------------------------
+/*
    //  NOTE: This allow half-rate sampling, but at the expense of twice the
    //    usage of routing-resources.
    IDDR2
@@ -634,7 +636,19 @@ module tart_dsp_tb;
          .d  (sig_b),
          .q  (sig_w)
          );
+*/
 
+   iobs
+     #(  .WIDTH(AXNUM),
+         .DELAY(DELAY)
+         ) IOBS
+       ( .clk(b_clk),
+         .rst(b_rst),
+         .en (vld_x),
+         .dly(delay),
+         .raw(sig_x),
+         .sig(sig_w)
+         );
 
 
    //-------------------------------------------------------------------------
@@ -678,3 +692,57 @@ module tart_dsp_tb;
 
 
 endmodule // tart_dsp_tb
+
+
+module iobs
+  #(parameter WIDTH = 24,
+    parameter MSB   = WIDTH-1,
+    parameter DELAY = `DELAY
+    )
+   (
+    input          clk,
+    input          rst,
+    input          en,
+    input [3:0]    dly,
+    input [MSB:0]  raw,
+    output [MSB:0] sig
+   );
+
+   wire [MSB:0]    ddr, neg, pos;
+
+   assign ddr = dly[0] ? neg : pos;
+
+   //  NOTE: This allow half-rate sampling, but at the expense of twice the
+   //    usage of routing-resources.
+   IDDR2
+     #( .DDR_ALIGNMENT("C0"),
+        .SRTYPE("SYNC")
+        ) IOBS [MSB:0]
+     ( .C0(clk),
+       .C1(~clk),
+       .R (rst),
+       .S ({WIDTH{1'b0}}),
+       .CE(en),
+       .D (raw),
+       .Q0(pos),
+       .Q1(neg)               // lags by 180 degrees
+       );
+
+
+   //-------------------------------------------------------------------------
+   //  Programmable delay that is used to phase-shift the incoming signal.
+   //-------------------------------------------------------------------------
+   shift_reg
+     #(  .DEPTH(8),
+         .ABITS(3),
+         .DELAY(DELAY)
+         ) SHREG [MSB:0]
+       ( .clk(clk),
+         .ce (en),
+         .a  (dly[3:1]),
+         .d  (ddr),
+         .q  (sig)
+         );
+
+   
+endmodule // iobs

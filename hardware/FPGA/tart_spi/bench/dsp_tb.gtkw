@@ -1,24 +1,27 @@
 [*]
-[*] GTKWave Analyzer v3.3.64 (w)1999-2014 BSI
-[*] Wed Dec  7 04:35:05 2016
+[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
+[*] Wed Jun 14 06:46:46 2017
 [*]
 [dumpfile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/vcd/dsp_tb.vcd"
-[dumpfile_mtime] "Wed Dec  7 04:31:47 2016"
-[dumpfile_size] 39794122
+[dumpfile_mtime] "Wed Jun 14 06:46:25 2017"
+[dumpfile_size] 18623440
 [savefile] "/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi/bench/dsp_tb.gtkw"
 [timestart] 0
-[size] 2560 1416
+[size] 1440 876
 [pos] -1 -1
-*-21.066874 298000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.066874 178000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tart_dsp_tb.
 [treeopen] tart_dsp_tb.TART_DSP.
 [treeopen] tart_dsp_tb.TART_DSP.COR.
+[treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.
 [treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.BDSP.
+[treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.BDSP.CORN0.
+[treeopen] tart_dsp_tb.TART_DSP.COR.CXB0.BDSP.CORN0.CS0.
 [treeopen] tart_dsp_tb.TART_DSP.COR.CXB4.BSDP.
 [treeopen] tart_dsp_tb.TART_DSP.VIZ.
 [treeopen] tart_dsp_tb.TART_DSP.VIZ.BUF0.
 [treeopen] tart_dsp_tb.TART_DSP.VIZ.BUF0.FETCH0.
-[sst_width] 223
+[sst_width] 225
 [signals_width] 150
 [sst_expanded] 1
 [sst_vpaned_height] 447
@@ -46,7 +49,7 @@ tart_dsp_tb.sig_o[23:0]
 @28
 tart_dsp_tb.locked
 tart_dsp_tb.strobe
-@22
+@23
 tart_dsp_tb.signal[23:0]
 @1000200
 -DDR
@@ -97,9 +100,6 @@ tart_dsp_tb.XFER.done_w
 @28
 tart_dsp_tb.get
 tart_dsp_tb.set
-@22
-tart_dsp_tb.num[31:0]
-@28
 tart_dsp_tb.rdy
 tart_dsp_tb.f_cnt[1:0]
 @22
@@ -229,7 +229,7 @@ tart_dsp_tb.TART_DSP.COR.im_x[23:0]
 @1000200
 -Out
 -Hilb
-@c00201
+@c00200
 -Internal
 @22
 tart_dsp_tb.TART_DSP.COR.sram_d0[23:0]
@@ -239,7 +239,7 @@ tart_dsp_tb.TART_DSP.COR.sel[2:0]
 @22
 tart_dsp_tb.TART_DSP.COR.sram_do[23:0]
 tart_dsp_tb.TART_DSP.COR.sram_out[23:0]
-@1401201
+@1401200
 -Internal
 @28
 tart_dsp_tb.TART_DSP.COR.CXB0.BDSP.sram_ce_i
