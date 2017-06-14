@@ -49,18 +49,12 @@ Update to latest firmware.
     sudo apt-get update
     sudo apt-get dist-upgrade 
     sudo aptitude install python-setuptools ntp
+    sudo aptitude install python-dev autossh
 
     git clone https://github.com/tmolteno/TART.git
     cd TART/python
     sudo python setup.py install
 
-##  SPI
-
-    sudo aptitude install python-dev autossh
-
-    git clone https://github.com/maxscheel/SPI-NumPy.git
-    cd SPI-NumPy
-    sudo python setup.py install
 
 ## Network setup
 
@@ -177,8 +171,3 @@ Login to electron to check:
 
     ssh tart@electron.otago.ac.nz
   
-Test the file saving script:
-
-    sh ~/TART/rpi/software/copy_data_remote.sh
-  
-If it goes you are done.

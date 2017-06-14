@@ -47,6 +47,7 @@ class TartSPI:
     self.spi.bits_per_word = 8
     self.spi.max_speed_hz = int(speed)
     self.perm = None
+    self.load_permute()
 
   def close(self, noisy=False):
     self.spi.close()
@@ -357,7 +358,7 @@ class TartSPI:
     val = self.vis_convert(res)
     if noisy:
       tim = time.time()
-      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val, sum(val))
+      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[pp], sum(val))
     return val
 
   def vis_ready(self, noisy=False):
@@ -460,8 +461,9 @@ if __name__ == '__main__':
   if args.monitor or args.correlate:
     print "\nLoading permutation vector"
     pp = tart.load_permute()
-#     pp = numpy.array(range(0,576), dtype='int')
-#     print pp
+    #vec = numpy.array(range(0,576), dtype='int')
+    #print vec
+    #print vec[pp]
 
     print "Enabling DEBUG mode"
     tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter, noisy=args.verbose)
@@ -485,7 +487,8 @@ if __name__ == '__main__':
       else:
         viz = tart.vis_read(False)
         tim = time.clock()
-        print " Reordered visibilities (@t = %g):\n%s (sum = %d)" % (tim, viz[pp], sum(viz))
+        #print " Reordered (   permuted) visibilities (@t = %g):\n%s (sum = %d)" % (tim, viz[pp], sum(viz))
+        #print " Reordered (non permuted) visibilities (@t = %g):\n%s (sum = %d)" % (tim, viz, sum(viz))
       if args.correlate:
         tart.close()
         exit(0)

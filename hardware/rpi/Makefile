@@ -1,14 +1,12 @@
-obs:
-	python acquire.py --data-dir /freenas2/tart/data/
 
-lobs:
-	python acquire.py --data-dir test
+online_imaging:
+	python acquire_continuous.py  --config 6_ant_acq_dir/6_antenna_board_config.json --blocksize 22 --chunk 2 --mode qt
 
-fobs:
-	python acquire.py --debug --data-dir test
+dsp_acquire:
+	python tartdsp.py --monitor --verbose --blocksize 23 --speed 32 --acquire
 
-debug10:
-	python tart_testbench.py --internal --bramexp 10
+dsp_counter:
+	python tartdsp.py --monitor --verbose --blocksize 23 --speed 32 --counter
 
-debug:
-	python tart_testbench.py --internal --bramexp 21
+dsp_shift:
+	python tartdsp.py --monitor --verbose --blocksize 23 --speed 32 --shift
