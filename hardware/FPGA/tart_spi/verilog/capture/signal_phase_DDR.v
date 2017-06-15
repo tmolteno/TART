@@ -19,9 +19,6 @@
  *    same resolution as using a 12x clock with only SDR);
  *  + DDR sampling is used so that the input signals can be captured, and then
  *    distributed, with clocks slow enough for XST to easily meet timing;
- *  + by oversampling the external (XTAL) clock, then edge (positive,
- *    or negative) transitions can be used as a reference, as to which
- *    phase shifts from the source signals will be measured.
  *  + assumes that the input signals are fairly well-behaved in that they are
  *    largely free from transients, have low jitter, and that the maximum
  *    phase-difference between any pair of antennas is less than quarter of a

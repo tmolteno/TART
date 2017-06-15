@@ -21,8 +21,11 @@ NET "SPI_SCK"            TNM_NET=FFS "GRP_S";
 NET "rx_clk_16_buf"      TNM_NET=FFS "GRP_E"; # External crystal
 
 # Correlator <-> WB bus data-path constraints:
-TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 5.0ns DATAPATHONLY;
-TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 5.0ns DATAPATHONLY;
+TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 9.0ns;
+TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 5.0ns;
+
+# TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 5.0ns DATAPATHONLY;
+# TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 5.0ns DATAPATHONLY;
 
 # External <-> Correlator data-path constraints:
 TIMESPEC TSe_to_x=FROM "GRP_E" TO "GRP_X"  5.0ns DATAPATHONLY;
@@ -36,6 +39,13 @@ TIMESPEC TSb_to_s=FROM "GRP_B" TO "GRP_S" 8.0ns DATAPATHONLY;
 TIMESPEC TSe_to_b=FROM "GRP_E" TO "GRP_B" 10.0ns DATAPATHONLY;
 TIMESPEC TSb_to_e=FROM "GRP_B" TO "GRP_E" 10.0ns DATAPATHONLY;
 
+
+##--------------------------------------------------------------------------##
+#  Domain-crossing for the captured antenna-signal:
+#
+NET "DSP/COR/strobe_b" TNM_NET="SIGB";
+NET "DSP/COR/pre_x"    TNM_NET="SIGX";
+TIMESPEC "TSxdom"=FROM "SIGB" TO "SIGX" 2.0ns DATAPATHONLY;
 
 ##
 ##  Signal-capture & synchroniser registers.

@@ -17,6 +17,28 @@
  * multiplexing, so that 576 correlations are performed for each antenna
  * sample (with default settings).
  * 
+ * The rough schematic/flow-diagram of this module:
+ * 
+ *                    24
+ * sig  o-------------/-----------+      (Bus clock domain, 98.208 MHz)
+ *                                |
+ *                +-----------+   |   +-------------+
+ *                |           |   +-> |             |
+ *  WB  o===<>==> |  Control  |       | Correlators | <=== WB ==<>
+ *          ||    |           | <-+-> |             |           ||
+ *          ||    +-----------+   |   +-------------+           ||
+ *          ||                    |                             ||
+ *          ||                    +-------------------+         \/
+ *          ||                                        |   +--------------+
+ *          ||    +------------+       +----------+   +-> |              |
+ *          ||    |            |       |  Port A  | <===> | Visibilities |
+ *          <>==> | Vis-stream |       + -  --  - +       |   Prefetch   |
+ *                |            | <===> |  Port B  |       |              |
+ *                +------------+       +----------+       +--------------+
+ *                                       (SRAM's)
+ * 
+ * where just the data-paths are shown; i.e., the flags are not shown.
+ * 
  * 
  * REGISTERS:
  *  Reg#   7           6           5          4      3     2     1     0

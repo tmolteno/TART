@@ -36,9 +36,10 @@
 module Main where
 
 import qualified System.Environment as Sys
+import Data.Word
 import Data.Bool
 import Data.List (tails, intercalate)
--- import Data.Bits
+import Data.Bits
 import Text.Printf
 
 
@@ -89,22 +90,38 @@ dump vs = let ts  = printf "%06x " <$> vs :: [String]
               ts' = map unlines $ go 8 $ ('\t':) . concat <$> go 12 ts :: [String]
           in  putStrLn $ intercalate "\n" ts'
 
+------------------------------------------------------------------------------
+-- | Shift-register to use as a pseudorandom signal-source.
+mfsr32 :: Word32 -> Word32
+mfsr32 w = let tap0 = w .&. 0x02
+               tap1 = w `shiftR` 26 .&. 0x04
+               taps = tap0 .|. tap1
+           in  w `rotateL` 1 `xor` taps
+
+tobits :: Word32 -> [Bool]
+tobits w = let go 32 _ = []
+               go  n x = (x .&. 1 == 1):go (n+1) (x `shiftR` 1)
+           in  go 0 w
+
 
 -- * Generate visibilities from synthetic inputs.
 ------------------------------------------------------------------------------
 -- | Compute synthetic visibilities, and with input arguments:
 --    `l`  --  number of antennae (or, length of bit-strings);
 --    `m`  --  number of mask-bits, for testing subranges of the input;
---    `n`  --  number of iterations; and
+--    `e`  --  exponent of the number of iterations; and
 --    `d`  --  number of initial samples to drop.
 --   For example, to duplicate the behaviour of `tart_dsp_tb`, `d = 2`, and
 --   `l = 24`.
 main :: IO ()
 main  = do
   args <- Sys.getArgs
-  let (l:m:n:d:_) = read <$> args
-      bz = drop d $ map (zipWith (&&) ms) $ iterate incr $ replicate l False
+  let (l:m:e:d:_) = read <$> args
+      cz = drop d $ map (zipWith (&&) ms) $ iterate incr $ replicate l False
+      rz = drop d $ map (take l . tobits) $ iterate mfsr32 1
+      bz = rz
       ms = mask l m
+      n  = 2^e
       (bz' , xs) = calc n bz
       (bz'', ys) = calc n bz'
   printf "Synthetic visibilities data-generator (%d, %d, %d, %d):\n" l m n d

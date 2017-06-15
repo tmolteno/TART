@@ -59,10 +59,10 @@ module tart_dsp_tb;
    parameter READS = 2;         // Banks of visibilities to read
 
 //    parameter COUNT = 3; // count down from:  (1 << COUNT) - 1;
-   parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
+//    parameter COUNT = 6; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 8; // count down from:  (1 << COUNT) - 1;
 //    parameter COUNT = 10; // count down from:  (1 << COUNT) - 1;
-//    parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
+   parameter COUNT = 12; // count down from:  (1 << COUNT) - 1;
 
 //    parameter NREAD = 4;
 //    parameter NREAD = 48;
@@ -81,11 +81,14 @@ module tart_dsp_tb;
    //  Random-data array settings:
    parameter DBITS = 8;
    parameter DSIZE = 1 << DBITS;
-//    parameter DMASK = 24'hffffff; // AND-mask of the antenna data
-   parameter DMASK = 24'h00007f; // AND-mask of the antenna data
+   parameter DMASK = 24'hffffff; // AND-mask of the antenna data
+//    parameter DMASK = 24'h00007f; // AND-mask of the antenna data
+//    parameter DMFSR = 0;
+   parameter DMFSR = 1;
 
    //  Permute data before displaying?
-   parameter DPERM = 1;
+//    parameter DPERM = 1;
+   parameter DPERM = 0;
 
 
    //-------------------------------------------------------------------------
@@ -101,6 +104,7 @@ module tart_dsp_tb;
 
    //  Clock & reset signals.
    reg          clk_x = 1'b1, b_clk = 1'b1, rst = 1'b0;
+   reg          clk_e = 1'b1;
    wire         n_clk = ~b_clk;
 
    //  Correlator-domain signals.
@@ -152,6 +156,7 @@ module tart_dsp_tb;
    //  Setup correlator and bus clocks, respectively.
    always #`CLK_X  clk_x <= ~clk_x;
    always #`CLK_B  b_clk <= ~b_clk;
+   always #`CLK_E  clk_e <= ~clk_e;
 
 
    //-------------------------------------------------------------------------
@@ -435,7 +440,7 @@ module tart_dsp_tb;
    wire [NSB:0] sig_o = vld_x ? sig_x : {AXNUM{1'bz}};
    reg          cap_en = 1'b0;
 
-   assign antenna = data[adr_x[DBITS-1:0]] & DMASK;
+   assign antenna = DMFSR ? mfsr : data[adr_x[DBITS-1:0]] & DMASK;
 
    always @(posedge clk_x)
      if (rst)
@@ -475,6 +480,20 @@ module tart_dsp_tb;
        adr_x <= #DELAY 0;
      else
        adr_x <= #DELAY cap_en && wrap_cnt ? nxt_x[31:0] : adr_x;
+
+
+   //-------------------------------------------------------------------------
+   //  Use a shift-register for a pseudorandom signal-source.
+   reg [31:0]  mfsr = 32'h0000_0001;
+   wire [31:0]  next;
+   wire         new_w = cap_en && wrap_cnt;
+
+   always @(clk_x)
+     if (rst)        mfsr <= #DELAY 32'h0000_0001;
+     else if (new_w) mfsr <= #DELAY next;
+     else            mfsr <= #DELAY mfsr;
+
+   mfsr32 MFSR32 (mfsr, next);
 
 
    //-------------------------------------------------------------------------
@@ -561,7 +580,7 @@ module tart_dsp_tb;
         .CBITS(CBITS),
         .PIPED(1),
         .CHECK(1),
-        .VIZWR(1),               // TODO: test
+        .VIZWR(0),               // TODO: test
         .DELAY(DELAY)
         ) TART_DSP
        (
