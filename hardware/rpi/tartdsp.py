@@ -415,7 +415,7 @@ if __name__ == '__main__':
   parser.add_argument('--source', default=0, type=int, help='antenna source to calibrate')
   parser.add_argument('--capture', action='store_true', help='just enable the data-capture unit')
   parser.add_argument('--centre', action='store_true', help='enable the clock-recovery unit')
-
+  parser.add_argument('--setdelay', default=0, type=int, help='set signal phase-delay')
   # TODO:
   parser.add_argument('--phases', default='', type=str, help='file of antenna phase-delays')
 
@@ -455,6 +455,12 @@ if __name__ == '__main__':
       tart.close()
       exit(0)
 
+  ##------------------------------------------------------------------------##
+  ##  Set the phase-delay, for the data-capture circuit.
+  if args.verbose:
+    print "\nSetting the input phase-delay (allowable 0-11)"
+  tart.set_sample_delay(args.setdelay)
+  tart.read_sample_delay(args.verbose)
 
   ##------------------------------------------------------------------------##
   ##  Monitor the visibilities, or perform just a single correlation?

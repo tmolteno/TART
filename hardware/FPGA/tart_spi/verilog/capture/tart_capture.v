@@ -10,12 +10,38 @@
  * Stability   : Experimental
  * Portability : only tested with a Papilio board (Xilinx Spartan 6)
  * 
+ * The raw antenna signal is captured (12x oversampling), and aligned, using
+ * either a predetermined phase-shift, or the value determined by the phase-
+ * detection circuit.
+ * 
  * The external antennae typically operate at 16.368 MHz, driven by an off-
  * chip crystal oscillator, and the resulting raw-data signals need to be
  * captured (and, optionally aligned using a clock-recovery circuit).
  * 
  * Alternatively, for testing & configuring TART fake-data can also be
  * generated, and this fake-data can be of several types.
+ * 
+ * The schematic of this module, for the antenna signals:
+ * 
+ *   \|/                                                                     
+ *    |                                                                      
+ *    |        +---------+                                                      
+ *    |        |  Fake   |          (6x Clock Domain, 98.208 MHz)               
+ *    | WB o=> | Antenna |--+                                                  
+ *    |        |         |  |                                                  
+ *    |        +---------+  |            +-----------+                      
+ *    |                     o--> |\      |   Phase   |    4                 
+ *    | reference o------------> | |---> | Detectors |----/---o phase
+ *    |                  oo====> |/      |           |                        
+ *    |                  || |            +-----------+                        
+ *    |                  || |                                              
+ *    |     +---------+  || |            +-----------+              
+ *    |     |  IOBS   |  || +-> |\       |   Shift   |    24       
+ *    +---> |  (DDR)  |==oo===> | |----> | Registers |----/---o signal
+ * 16.368   |         |         |/       |           |
+ *  (MHz)   +---------+          |       +-----------+
+ *             4                 |    3        |   
+ *  delay o----/-----------------o----/--------+        
  * 
  * 
  * REGISTERS:
