@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 all: pairs permute floor build
 
 .PHONY: pairs
@@ -44,7 +46,7 @@ TARGET=xc6slx9-tqg144-2
 # TARGET=xc2v3000-ff1152-6
 
 # export XILINX=/usr/local/Xilinx
-export XILINX=/home/patrick/bucket/patrick/Xilinx/ISE_DS_14.7/14.7/ISE_DS/ISE/bin/lin64
+export XILINX=/mnt/bucket/Xilinx/14.7/ISE_DS/ISE/bin/lin64
 
 
 ##--------------------------------------------------------------------------##
@@ -85,7 +87,7 @@ SIM=${DIR}/bench
 ##--------------------------------------------------------------------------##
 ##  File & top-level groups.
 ##--------------------------------------------------------------------------##
-COMMON_FILES=${RTL}/tart.v ${RTL}/tart_dcm.v ${RTL}/tart_wishbone.v ${RTL}/tart_control.v ${RTL}/SDRAM_Controller_v.v ${LIB_FILES} ${XIL_FILES} ${WB4_FILES} ${SPI_FILES} ${CAP_FILES} ${ACQ_FILES} ${DSP_FILES}
+COMMON_FILES=${RTL}/tart.v ${RTL}/tart_dual_dcm.v ${RTL}/tart_wishbone.v ${RTL}/tart_control.v ${RTL}/SDRAM_Controller_v.v ${LIB_FILES} ${XIL_FILES} ${WB4_FILES} ${SPI_FILES} ${CAP_FILES} ${ACQ_FILES} ${DSP_FILES}
 
 XFILES=${COMMON_FILES}
 IFILES=${COMMON_FILES} ${SIM}/correlator/tart_dsp_tb.v
@@ -147,7 +149,7 @@ ICARUS_OPTIONS=
 #########################################################
 
 # Internal settings. Probably no need to tamper with these
-X_SETTINGS = /home/patrick/bucket/patrick/Xilinx/ISE_DS_14.7/14.7/ISE_DS/settings64.sh
+X_SETTINGS = ${XILINX}/../../../settings64.sh
 X_PREFIX   = _xilinx_int
 X_LABEL    = ${BUILD}/${X_PREFIX}
 

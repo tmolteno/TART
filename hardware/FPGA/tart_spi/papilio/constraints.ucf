@@ -2,10 +2,8 @@
 #  Timing nets.
 NET "rx_clk_16" TNM_NET="src_clk";
 NET "SPI_SCK"   TNM_NET="spi_clk";
-NET "TART_DCM0/clk6x_l"  TNM_NET="sys_clk";
-NET "TART_DCM0/clk12x_l" TNM_NET="vis_clk";
-# NET "fpga_clk"  TNM_NET="sys_clk";
-# NET "clk_x"     TNM_NET="vis_clk";
+NET "TART_DCM0/clk6p_l" TNM_NET="sys_clk";
+NET "TART_DCM0/clk12_l" TNM_NET="vis_clk";
 TIMESPEC "TSsrc_clk"=PERIOD "src_clk" 61.095 ns HIGH 50%;
 TIMESPEC "TSsys_clk"=PERIOD "sys_clk" 10.18  ns HIGH 50%;
 TIMESPEC "TSvis_clk"=PERIOD "vis_clk" 5.091  ns HIGH 50%;
@@ -15,21 +13,14 @@ TIMESPEC "TSspi_clk"=PERIOD "spi_clk" 8.000  ns HIGH 50%;
 # Constrain the data-path (combinational) latency, between the asynchronous
 # clock domains.
 #
-NET "TART_DCM0/clk12x_l" TNM_NET=FFS "GRP_X";
-NET "TART_DCM0/clk6x_l"  TNM_NET=FFS "GRP_B";
-NET "SPI_SCK"            TNM_NET=FFS "GRP_S";
-NET "rx_clk_16_buf"      TNM_NET=FFS "GRP_E"; # External crystal
+NET "TART_DCM0/clk12_l" TNM_NET=FFS "GRP_X";
+NET "TART_DCM0/clk6p_l" TNM_NET=FFS "GRP_B";
+NET "SPI_SCK"           TNM_NET=FFS "GRP_S";
+NET "rx_clk_16_buf"     TNM_NET=FFS "GRP_E"; # External crystal
 
 # Correlator <-> WB bus data-path constraints:
 TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 9.0ns;
 TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 5.0ns;
-
-# TIMESPEC TSx_to_b=FROM "GRP_X" TO "GRP_B" 5.0ns DATAPATHONLY;
-# TIMESPEC TSb_to_x=FROM "GRP_B" TO "GRP_X" 5.0ns DATAPATHONLY;
-
-# External <-> Correlator data-path constraints:
-TIMESPEC TSe_to_x=FROM "GRP_E" TO "GRP_X"  5.0ns DATAPATHONLY;
-TIMESPEC TSx_to_e=FROM "GRP_X" TO "GRP_E" 15.0ns DATAPATHONLY;
 
 # SPI <-> WB bus data-path constraints:
 TIMESPEC TSs_to_b=FROM "GRP_S" TO "GRP_B" 8.0ns DATAPATHONLY;

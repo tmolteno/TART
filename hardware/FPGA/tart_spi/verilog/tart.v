@@ -329,24 +329,28 @@ module tart
    //
    //-------------------------------------------------------------------------
 `ifdef __USE_OLD_CLOCKS
-   tart_clk_generator clknetwork
-     (
-      .CLKIN  (rx_clk_16),      // 16.368 MHz
-      .CLKOUT0(rx_clk_16_buf),  // 16.368 MHz buffered
-      .CLKOUT1(fpga_clk),       // 16.368x6 = 98.208 MHz
-      .reset_n(reset_n)
-      );
+   tart_dcm TART_DCM0
+     ( .clk_pin_i(rx_clk_16),     // 16.368 MHZ
+       .clk_rst_i(1'b0),
+       .clk_ext_o(rx_clk_16_buf), // 16.368 MHz buffered
+       .clk6x_o  (fpga_clk),      // 16.368x6  =  98.208 MHz
+       .clk6n_o  (clock_n),       // 16.368x6  =  98.208 MHz
+       .clk12x_o (clk_x),         // 16.368x12 = 196.416 MHz
+       .reset_no (reset_n),
+       .status_no()
+       );
 
 `else
-   tart_dcm TART_DCM0
-     ( .clk_pin(rx_clk_16),     // 16.368 MHZ
-       .clk_rst(1'b0),
-       .clk_ext(rx_clk_16_buf), // 16.368 MHz buffered
-       .clk6x  (fpga_clk),      // 16.368x6  =  98.208 MHz
-       .clk6n  (clock_n),      // 16.368x6  =  98.208 MHz
-       .clk12x (clk_x),         // 16.368x12 = 196.416 MHz
-       .reset_n(reset_n),
-       .status_n()
+   //  NOTE: This is the DEFAULT.
+   tart_dual_dcm TART_DCM0
+     ( .clk_pin_i(rx_clk_16),     // 16.368 MHZ
+       .clk_rst_i(1'b0),
+       .clk_ext_o(rx_clk_16_buf), // 16.368 MHz buffered
+       .clk6x_o  (fpga_clk),      // 16.368x6  =  98.208 MHz
+       .clk6n_o  (clock_n),       // 16.368x6  =  98.208 MHz
+       .clk12x_o (clk_x),         // 16.368x12 = 196.416 MHz
+       .reset_no (reset_n),
+       .status_no()
        );
 `endif // !__USE_OLD_CLOCKS
 
@@ -365,6 +369,11 @@ module tart
    //  SDRAM CONTROLLER FOR THE RAW ANTENNA DATA
    //  
    //-------------------------------------------------------------------------
+   (* NOMERGE *) reg reset_sdram = 1'b1;
+
+   always @(posedge clock_b)
+     reset_sdram <= #DELAY reset_b;
+
    SDRAM_Controller_v
      #( .sdram_address_width (SDRAM_ADDRESS_WIDTH),
         .sdram_column_bits   (SDRAM_COLUMN_BITS),
@@ -373,7 +382,7 @@ module tart
         ) HAMSTER_SDRAM
        (
         .clk            (clock_b),
-        .reset          (reset_b),
+        .reset          (reset_sdram),
 
         .cmd_ready      (cmd_ready),     // (O) MCB has initialised?
         .cmd_enable     (cmd_enable),    // (I) start a MCB operation
@@ -424,6 +433,13 @@ module tart
    //  TART SYSTEM-WIDE, WISHBONE (SPEC B4) INTERCONNECT AND PERIPHERALS.
    //
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the Wishbone controller.
+   (* NOMERGE *) reg reset_tartwb = 1'b1;
+
+   always @(posedge clock_b)
+     reset_tartwb <= #DELAY reset_b;
+
+   //-------------------------------------------------------------------------
    //  The TART Wishbone bus connects the lone Wishbone master (the SPI slave
    //  core) to the:
    //   + raw-data capture unit;
@@ -449,7 +465,7 @@ module tart
          .DELAY(DELAY)
          ) ARB
        ( .bus_clk_i(clock_b),
-         .bus_rst_i(reset_b),
+         .bus_rst_i(reset_tartwb),
 
          //-------------------------------------------------------------------
          //  SPI Wishbone master.
@@ -522,6 +538,13 @@ module tart
    //  SPI SLAVE CORE.
    //
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the SPI interface.
+   (* NOMERGE *) reg reset_spi = 1'b1;
+
+   always @(posedge clock_b)
+     reset_spi <= #DELAY reset_b;
+
+   //-------------------------------------------------------------------------
    //  NOTE:
    //   + this module is the lone, Wishbone (SPEC B4), master device;
    //   + electrically capable of operating at above 64 MHz, but currently
@@ -534,7 +557,7 @@ module tart
         ) SPI0
        (
         .clk_i     (clock_b),
-        .rst_i     (reset_b),
+        .rst_i     (reset_spi),
 
         //  Wishbone master interface.
         .cyc_o     (spi_cyc),
@@ -566,6 +589,13 @@ module tart
    //
    //  RAW-DATA CAPTURE & CLOCK-RECOVERY.
    //
+   //-------------------------------------------------------------------------
+   //  Local synchronous reset for the data-capture module.
+   (* NOMERGE *) reg reset_capture = 1'b1;
+
+   always @(posedge clock_b)
+     reset_capture <= #DELAY reset_b;
+
    //-------------------------------------------------------------------------
    //  Raw-data generally requires clock-recovery, as each antenna's clock
    //  has an unknown phase-delay associated with it. Clock-recovery for each
@@ -600,7 +630,7 @@ module tart
         .clock_e   (rx_clk_16_buf),
         .clock_n   (clock_n),   // negated system-clock
         .clock_i   (clock_b),
-        .reset_i   (reset_b),
+        .reset_i   (reset_capture),
 
         //--------------------------------------------------------------------
         //  Wishbone (SPEC B4) interconnect:
@@ -636,6 +666,13 @@ module tart
    //  RAW-DATA ACQUISITION-CONTROL & READ-BACK.
    //
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the raw-data acquisition unit.
+   (* NOMERGE *) reg reset_acquire = 1'b1;
+
+   always @(posedge clock_b)
+     reset_acquire <= #DELAY reset_b;
+
+   //-------------------------------------------------------------------------
    //  This module controls the raw-data acquisition unit.
    //  
    //  NOTE:
@@ -651,7 +688,7 @@ module tart
          .DELAY    (DELAY)
          ) ACQUIRE
        ( .clock_i  (clock_b),
-         .reset_i  (reset_b),
+         .reset_i  (reset_acquire),
 
          //  Raw-data inputs.
          .locked_i (cx_enabled),
@@ -695,6 +732,13 @@ module tart
    //  CORRELATOR / VISIBILITIES BLOCK.
    //     
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the DSP functional unit.
+   (* NOMERGE *) reg reset_dsp = 1'b1;
+
+   always @(posedge clock_b)
+     reset_dsp <= #DELAY reset_b;
+
+   //-------------------------------------------------------------------------
    //  NOTE:
    //   + system-control registers are mapped to '0b10nnnnn'.
    //  
@@ -717,7 +761,7 @@ module tart
        (//--------------------------------------------------------------------
         .clk_x(clk_x),          // correlator clock
         .clk_i(clock_b),        // Wishbone/system clock
-        .rst_i(reset_b),        // bus/system reset
+        .rst_i(reset_dsp),      // bus/system reset
 
         //--------------------------------------------------------------------
         //  Captured, oversampled antenna control & data signals:

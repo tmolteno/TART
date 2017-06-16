@@ -43,7 +43,7 @@ module wb_reset
     );
 
    reg             reset  = 1'b0;
-   reg [RTIME-1:0] resets = {RTIME{1'b0}};
+   reg [RSB:0]     resets = {RTIME{1'b0}};
    wire            reset_w;
 
 
@@ -63,14 +63,24 @@ module wb_reset
 
 
    //-------------------------------------------------------------------------
+   //  Synchronise the `reset_ni` signal, as this could be from an unknown/
+   //  different clock-domain.
+   //-------------------------------------------------------------------------
+   reg             rstn_0, rstn_1;
+
+   always @(posedge clk_i)
+     {rstn_1, rstn_0} <= #DELAY {rstn_0, reset_ni};
+
+
+   //-------------------------------------------------------------------------
    //  Reset logic.
    //-------------------------------------------------------------------------
+   //  NOTE: The current behaviour is to hold `reset` high until the DCM's
+   //    are locked, or else allow reset-requests to come from over Wishbone.
+   //  TODO: Not possible for `rstn_1` to ever be used?
    always @(posedge clk_i)
-     if (rst_i)
-       reset <= #DELAY 1'b0;
-     else
-       reset <= #DELAY reset ? ~reset_ni : reset_w;
-//        reset <= #DELAY reset || reset_o ? 1'b0 : (!reset_ni || reset_w);
+     if (rst_i) reset <= #DELAY 1'b0;
+     else       reset <= #DELAY reset ? ~rstn_1 : reset_w;
 
    always @(posedge clk_i) begin
       reset_o <= #DELAY |resets;

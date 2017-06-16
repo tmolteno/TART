@@ -1,13 +1,18 @@
 `timescale 1ns/100ps
 /*
- *
- * TODO:
- *  + needs a pair of DCM's, so that phase can be locked?
+ * Module      : verilog/tart_dual_dcm.v
+ * Copyright   : (C) Tim Molteno     2017
+ *             : (C) Max Scheel      2017
+ *             : (C) Patrick Suggate 2017
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : only tested with a Papilio board (Xilinx Spartan VI)
  * 
  */
 
-// Create Date:    17:29:42 09/02/2014 
-module tart_dcm
+module tart_dual_dcm
   (
    input  clk_pin_i, // 16.368 MHZ
    input  clk_rst_i, // Active HIGH, to reset the DCM
@@ -21,16 +26,15 @@ module tart_dcm
    );
 
    wire [7:0] STATUS;
-   wire       clk_ibufg, clk_buf, clk_1, clk_2, clk_xtal, clk_mux, clk_fb;
+   wire       clk_ibufg, clk_buf, clk_local, clk_xtal, clk_fb;
 
    (* PERIOD = "10.18 ns" *)
-   wire       clk6x_l;
-   (* PERIOD = "10.18 ns" *)
-   wire       clk6n_l;
+   wire       clk6x_l, clk6p_l, clk6n_l;
    (* PERIOD = "5.091 ns" *)
-   wire       clk12x_l;
+   wire       clk12_l;
 
    assign reset_no = reset0_n && reset1_n;
+   assign status_n = 1'b1;
 
 
    //-------------------------------------------------------------------------
@@ -66,7 +70,7 @@ module tart_dcm
      #( .DIVIDE_BYPASS("TRUE")  // Bypass the divider circuitry (TRUE/FALSE)
         ) BUFIO2_FBCLK0
        (
-        .I(clk_ext_o),          // Clock input (connect to IBUFG)
+        .I(clk_local),          // Clock input (connect to IBUFG)
         .O(clk_fb)              // Divided (optional) clock output
         );
 
@@ -77,7 +81,6 @@ module tart_dcm
    // Condition the incoming clock.
    DCM_SP
      #(  .CLKDV_DIVIDE(2.0),             // CLKDV divide value
-         // (1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,9,10,11,12,13,14,15,16).
          .CLKFX_DIVIDE(1),               // Divide value on CLKFX outputs - D - (1-32)
          .CLKFX_MULTIPLY(6),             // Multiply value on CLKFX outputs - M - (2-32)
          .CLKIN_DIVIDE_BY_2("FALSE"),    // CLKIN divide by two (TRUE/FALSE)
@@ -94,14 +97,13 @@ module tart_dcm
          .STARTUP_WAIT("FALSE")
          ) DCM0
        ( .CLKIN (clk_buf),  // 1-bit input: Clock input
-         .RST   (clk_rst_i),// 1-bit input: Active high reset input
+         .RST   (1'b0),     // 1-bit input: Active high reset input
          .LOCKED(reset0_n), // 1-bit output: DCM_SP Lock Output
-//          .CLKFB (clk_ext_o),// 1-bit input: Clock feedback input
          .CLKFB (clk_fb),   // 1-bit input: Clock feedback input
 
-         .CLK0  (clk_1),    // 1-bit output: 0 degree clock output
+         .CLK0  (clk_local),// 1-bit output: 0 degree clock output
          .CLKFX (clk6x_l),  // 1-bit output: Digital Frequency Synthesizer (DFS)
-         .CLKFX180(clk6n_l),// 1-bit output: Digital Frequency Synthesizer (DFS)
+         .CLKFX180(),       // 1-bit output: Digital Frequency Synthesizer (DFS)
 
          .DSSEN(1'b0),      // 1-bit input: Unsupported, specify to GND.
          .PSCLK(1'b0),      // 1-bit input: Phase shift clock input
@@ -110,79 +112,43 @@ module tart_dcm
          );
 
 
-`ifdef __USE_DCM_CLKGEN
    //-------------------------------------------------------------------------
-   //  Clock-generator DCM mode (that supports free-running clocks, but isn't
-   //  locked to the input-clock, by a constant ratio).
-   //  
-   //  NOTE: Not synchronous with `DCM0`, which makes clock domain-crossing
-   //    much more difficult.
+   //  This DCM is used to ensure that a known, and controllable, phase exists
+   //  between the 6x and 12x clock-domains.
    //-------------------------------------------------------------------------
-   assign status_no = STATUS[2];
-   assign clk_xtal  = clk_1;
-
-   // Synthesise the TART system clocks.
-   (* DFS_OSCILLATOR_MODE = "PHASE_FREQ_LOCK" *)
-   DCM_CLKGEN
-     #(  .SPREAD_SPECTRUM("NONE"),
-         .CLKIN_PERIOD(61.095),  // Input clock period specified in nS
-         .CLKFX_MULTIPLY(12),    // Multiply value on CLKFX outputs - M - (2-256)
-         .CLKFX_DIVIDE(1),       // Divide value on CLKFX outputs - D - (1-256)
-         .CLKFXDV_DIVIDE(2),     // CLKFXDV divide value, from {(2),4,8,16,32}
-         .STARTUP_WAIT("FALSE")  // Delay config DONE until DCM_CLKGEN LOCKED (TRUE/FALSE)
-         ) TART_DCM1
-       ( .CLKIN   (clk_buf),     // 1-bit input: Clock input
-         .RST     (clk_rst_i),   // 1-bit input: Active high reset input
-         .CLKFX   (clk12x_l),    // 1-bit output: Digital Frequency Synthesizer output (DFS)
-         .CLKFX180(clk12x_n_l),  // 1-bit output: 180 degree CLKFX output
-         .CLKFXDV (clk6x_gen),   // 1-bit output: Digital Frequency Synthesizer output (DFS)
-         .STATUS  (STATUS),      // 8-bit output: DCM_CLKGEN status output
-         .LOCKED  (reset1_n)     // 1-bit output: DCM_CLKGEN Lock Output
-         );
-
-
-`else // !`ifdef __USE_DCM_CLKGEN
-   //-------------------------------------------------------------------------
-   //  Standard DCM mode.
-   //  
-   //  NOTE: This is the DEFAULT.
-   //-------------------------------------------------------------------------
-   assign status_n = 1'b1;
-   assign clk_xtal = clk_2;
-
    DCM_SP
-     #(  .CLKDV_DIVIDE(2.0),                   // CLKDV divide value
-         // (1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,9,10,11,12,13,14,15,16).
-         .CLKFX_DIVIDE(1),                     // Divide value on CLKFX outputs - D - (1-32)
-         .CLKFX_MULTIPLY(12),                  // Multiply value on CLKFX outputs - M - (2-32)
-         .CLKIN_DIVIDE_BY_2("FALSE"),          // CLKIN divide by two (TRUE/FALSE)
-         .CLKIN_PERIOD(61.095),                // Input clock period specified in nS
-         .CLKOUT_PHASE_SHIFT("NONE"),          // Output phase shift (NONE, FIXED, VARIABLE)
-         .CLK_FEEDBACK("1X"),                // Feedback source (NONE, 1X, 2X)
+     #(  .CLKDV_DIVIDE(6.0),             // CLKDV divide value
+         .CLKFX_DIVIDE(1),               // Divide value on CLKFX outputs - D - (1-32)
+         .CLKFX_MULTIPLY(2),             // Multiply value on CLKFX outputs - M - (2-32)
+         .CLKIN_DIVIDE_BY_2("FALSE"),    // CLKIN divide by two (TRUE/FALSE)
+         .CLKIN_PERIOD(10.1825),         // Input clock period specified in nS
+         .CLKOUT_PHASE_SHIFT("NONE"),    // Output phase shift (NONE, FIXED, VARIABLE)
+         .CLK_FEEDBACK("1X"),            // Feedback source (NONE, 1X, 2X)
          .DESKEW_ADJUST("SYSTEM_SYNCHRONOUS"), // SYSTEM_SYNCHRNOUS or SOURCE_SYNCHRONOUS
-         .DFS_FREQUENCY_MODE("LOW"),           // Unsupported - Do not change value
-         .DLL_FREQUENCY_MODE("LOW"),           // Unsupported - Do not change value
-         .DSS_MODE("NONE"),                    // Unsupported - Do not change value
-         .DUTY_CYCLE_CORRECTION("TRUE"),       // Unsupported - Do not change value
-         .FACTORY_JF(16'hc080),                // Unsupported - Do not change value
-         .PHASE_SHIFT(0),                      // Amount of fixed phase shift (-255 to 255)
+         .DFS_FREQUENCY_MODE("LOW"),     // Unsupported - Do not change value
+         .DLL_FREQUENCY_MODE("LOW"),     // Unsupported - Do not change value
+         .DSS_MODE("NONE"),              // Unsupported - Do not change value
+         .DUTY_CYCLE_CORRECTION("TRUE"), // Unsupported - Do not change value
+         .FACTORY_JF(16'hc080),          // Unsupported - Do not change value
+         .PHASE_SHIFT(0),                // Amount of fixed phase shift (-255 to 255)
          .STARTUP_WAIT("FALSE")
          ) TART_DCM1
-       ( .CLKIN (clk_buf),  // 1-bit input: Clock input
-         .RST   (clk_rst_i),// 1-bit input: Active high reset input
+       ( .CLKIN (clk6x_l),  // 1-bit input: Clock input
+         .RST   (1'b0),     // 1-bit input: Active high reset input
          .LOCKED(reset1_n), // 1-bit output: DCM_SP Lock Output
-//          .CLKFB (clk_ext_o),// 1-bit input: Clock feedback input
-         .CLKFB (clk_fb),   // 1-bit input: Clock feedback input
+         .CLKFB (clk6x_o),  // 1-bit input: Clock feedback input
 
-         .CLK0  (clk_2),    // 1-bit output: 0 degree clock output
-         .CLKFX (clk12x_l), // 1-bit output: Digital Frequency Synthesizer output (DFS)
+         .CLK0  (clk6p_l),  // 1-bit output: 0 degree clock output
+         .CLK180(clk6n_l),  // 1-bit output: 0 degree clock output
+         .CLKDV (clk_xtal), // 1-bit output: 0 degree clock output
+         .CLK2X (clk12_l),
+         .CLKFX (),         // 1-bit output: Digital Frequency Synthesizer output (DFS)
 
          .DSSEN(0),         // 1-bit input: Unsupported, specify to GND.
          .PSCLK(0),         // 1-bit input: Phase shift clock input
          .PSEN(0),          // 1-bit input: Phase shift enable
          .PSINCDEC(0)       // 1-bit input: Phase shift increment/decrement input
          );
-`endif //  `ifdef !__USE_DCM_CLKGEN
 
 
    //-------------------------------------------------------------------------
@@ -190,9 +156,9 @@ module tart_dcm
    //-------------------------------------------------------------------------
    // Global clock buffers for TART's system clocks.
    BUFG BUFG_SYSCLK ( .I(clk_xtal), .O(clk_ext_o) );
-   BUFG BUFG_CLK6X  ( .I( clk6x_l), .O(  clk6x_o) );
+   BUFG BUFG_CLK6X  ( .I( clk6p_l), .O(  clk6x_o) );
    BUFG BUFG_CLK6N  ( .I( clk6n_l), .O(  clk6n_o) );
-   BUFG BUFG_CLK12X ( .I(clk12x_l), .O( clk12x_o) );
+   BUFG BUFG_CLK12X ( .I( clk12_l), .O( clk12x_o) );
 
 
-endmodule // tart_dcm
+endmodule // tart_dual_dcm

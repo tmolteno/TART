@@ -188,6 +188,16 @@ module tart_correlator
 
 
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the correlator-blocks.
+   //  NOTE: Needs to be synchronised from the bus-clock domain.
+   //-------------------------------------------------------------------------
+   (* NOMERGE *) reg rst_x = 1'b1, rst_s = 1'b1;
+
+   always @(posedge clk_x)
+     {rst_x, rst_s} <= #DELAY {rst_s, rst_i};
+
+
+   //-------------------------------------------------------------------------
    //  Hilbert transform to recover imaginaries.
    //-------------------------------------------------------------------------
    (* AREA_GROUP = "hilb" *)
@@ -212,11 +222,19 @@ module tart_correlator
    //-------------------------------------------------------------------------
    //  TART bank-switching unit.
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the visibilities read-back core.
+   (* NOMERGE *) reg rst_b = 1'b1;
+
+   always @(posedge clk_x)
+     rst_b <= #DELAY rst_x;
+
+   //-------------------------------------------------------------------------
    bank_switch
      #(  .COUNT(ACCUM),
          .TICKS(4)
          ) SW0
        ( .clk_x   (clk_x),
+         .rst_x   (rst_b),
          .clk_i   (clk_i),
          .rst_i   (rst_i),
          .ce_i    (go_x),
@@ -258,8 +276,8 @@ module tart_correlator
         ) CXB0
        (
         .clk_x(clk_x),
+        .rst_x(rst_x),
         .clk_i(clk_i), // SRAM/bus clock
-        .rst_i(rst_i),
 
         //  Real and imaginary components from the antennas:
         .sw_i(sw_x), // switch banks
@@ -299,8 +317,8 @@ module tart_correlator
         ) CXB1
        (
         .clk_x(clk_x),
+        .rst_x(rst_x),
         .clk_i(clk_i), // SRAM/bus clock
-        .rst_i(rst_i),
 
         //  Real and imaginary components from the antennas:
         .sw_i(sw_x), // switch banks
@@ -340,8 +358,8 @@ module tart_correlator
         ) CXB2
        (
         .clk_x(clk_x),
+        .rst_x(rst_x),
         .clk_i(clk_i), // SRAM/bus clock
-        .rst_i(rst_i),
 
         //  Real and imaginary components from the antennas:
         .sw_i(sw_x), // switch banks
@@ -381,8 +399,8 @@ module tart_correlator
         ) CXB3
        (
         .clk_x(clk_x),
+        .rst_x(rst_x),
         .clk_i(clk_i), // SRAM/bus clock
-        .rst_i(rst_i),
 
         //  Real and imaginary components from the antennas:
         .sw_i(sw_x), // switch banks
@@ -426,8 +444,8 @@ module tart_correlator
         ) CXB4
        (
         .clk_x(clk_x),
+        .rst_x(rst_x),
         .clk_i(clk_i), // SRAM/bus clock
-        .rst_i(rst_i),
 
         //  Real and imaginary components from the antennas:
         .sw_i(sw_x), // switch banks
@@ -467,8 +485,8 @@ module tart_correlator
         ) CXB5
        (
         .clk_x(clk_x),
+        .rst_x(rst_x),
         .clk_i(clk_i), // SRAM/bus clock
-        .rst_i(rst_i),
 
         //  Real and imaginary components from the antennas:
         .sw_i(sw_x), // switch banks

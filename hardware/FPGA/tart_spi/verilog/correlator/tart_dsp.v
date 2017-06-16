@@ -564,6 +564,13 @@ module tart_dsp
    //  VISIBILITIES READ-BACK UNIT.
    //
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the visibilities read-back core.
+   (* NOMERGE *) reg rst_viz = 1'b1;
+
+   always @(posedge clk_i)
+     rst_viz <= #DELAY rst_i;
+
+   //-------------------------------------------------------------------------
    parameter BSIZE = TRATE*2;   // sine & cosine components in the SRAM's
    parameter DBITS = TBITS+1;   // distributed SRAM address bits
    parameter COUNT = 24;        // correlator number/count
@@ -584,7 +591,7 @@ module tart_dsp
          .DELAY(DELAY)
          ) VIZ
        ( .clk_i(clk_i),
-         .rst_i(rst_i),
+         .rst_i(rst_viz),
 
          //  Wishbone interconnect between correlators and prefetch SRAM:
          .cyc_o(v_cyc),
@@ -624,6 +631,13 @@ module tart_dsp
    //  TOP-LEVEL CORRELATORS-BLOCK FUNCTIONAL UNIT.
    //
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the correlators.
+   (* NOMERGE *) reg rst_cor = 1'b1;
+
+   always @(posedge clk_i)
+     rst_cor <= #DELAY rst_i;
+
+   //-------------------------------------------------------------------------
    //  Combined bank-index and visibility-address.
    assign c_adr = {bank, v_adr};
 
@@ -645,7 +659,7 @@ module tart_dsp
          ) COR
        ( .clk_x(clk_x),         // 12x data-rate sampling clock
          .clk_i(clk_i),         // bus and SRAM-read clock
-         .rst_i(rst_i),
+         .rst_i(rst_cor),
 
          .cyc_i(v_cyc),         // the correlator connects to the read-back
          .stb_i(v_stb),         // unit for the visibilities, via this bus

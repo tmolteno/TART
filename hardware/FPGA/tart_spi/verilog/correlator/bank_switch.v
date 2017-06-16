@@ -28,6 +28,7 @@ module bank_switch
      parameter DELAY = 3)
    (
     input         clk_x, // correlator clock
+    input         rst_x,
     input         clk_i, // bus clock
     input         rst_i,
     input         ce_i,
@@ -60,7 +61,7 @@ module bank_switch
    //  Count the number of correlations for the current bank, and signal a
    //  bank-switch when the counter reaches its maximum.
    always @(posedge clk_x)
-     if (rst_i) begin
+     if (rst_x) begin
         sw    <= #DELAY 1'b0;
         count <= #DELAY {COUNT{1'b0}};
      end
@@ -74,7 +75,7 @@ module bank_switch
      end
 
    always @(posedge clk_x)
-     delays <= #DELAY {delays[TSB-1:0], !rst_i && frame_i};
+     delays <= #DELAY {delays[TSB-1:0], !rst_x && frame_i};
 
 
    //-------------------------------------------------------------------------
@@ -82,12 +83,12 @@ module bank_switch
    //-------------------------------------------------------------------------
    //  TODO: Is this OK?
    always @(posedge clk_x)
-     if (rst_i || frame_i) sw_x <= #DELAY 1'b0;
+     if (rst_x || frame_i) sw_x <= #DELAY 1'b0;
      else if (sw)          sw_x <= #DELAY 1'b1;
      else                  sw_x <= #DELAY sw_x;
 
    always @(posedge clk_x)
-     if (rst_i) sw_d <= #DELAY 0;
+     if (rst_x) sw_d <= #DELAY 0;
      else       sw_d <= #DELAY sw_x && frame_i;
 
    always @(posedge clk_i or posedge sw_d)

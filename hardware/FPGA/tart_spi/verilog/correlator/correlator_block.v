@@ -79,8 +79,8 @@ module correlator_block
     parameter DELAY = 3)
    (
     input          clk_x, // correlator clock
+    input          rst_x,
     input          clk_i, // SRAM/bus clock
-    input          rst_i,
 
     // Real and imaginary components from the antennas:
     input          sw_i, // switch banks
@@ -112,6 +112,15 @@ module correlator_block
 
 
    //-------------------------------------------------------------------------
+   //  Local synchronous reset for the correlator controllers.
+   //-------------------------------------------------------------------------
+   (* NOMERGE *) reg rst_ctrl = 1'b1;
+
+   always @(posedge clk_x)
+     rst_ctrl <= #DELAY rst_x;
+
+
+   //-------------------------------------------------------------------------
    //  Correlator (block) control unit.
    //-------------------------------------------------------------------------
    control
@@ -124,7 +133,7 @@ module correlator_block
         .DELAY(DELAY)
         ) CTRL
        (.clk_x     (clk_x), // correlator clock
-        .rst       (rst_i),
+        .rst       (rst_ctrl),
         .sw_i      (sw_i), // switch banks
         .en_i      (en_i), // data is valid
         .re_i      (re_i), // real component of input
