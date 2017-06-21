@@ -63,33 +63,24 @@ def capture_loop(process_queue, blocksize, chunksize=None):
     tart_instance.capture(on=True, noisy=False)
     tart_instance.start(blocksize, True)
 
+    active = True
     if chunksize is not None:
         num_vis=0
-        while num_vis < chunksize:
-            try:
-                # Add the data to the process queue
-                data = get_data(tart_instance)
-                process_queue.put(data)
+    while active:
+        try:
+            # Add the data to the process queue
+            data = get_data(tart_instance)
+            process_queue.put(data)
+            if chunksize is not None:
                 num_vis += 1
-            except Exception, e:
-                logger.error( "Capture Loop Error %s" % str(e))
-                logger.error(traceback.format_exc())
+                if num_vis == chunksize:
+                    active = False
+        except Exception, e:
+            logger.error( "Capture Loop Error %s" % str(e))
+            logger.error(traceback.format_exc())
 
-            finally:
-                print  'Acquired', data[0]
-    else:
-        while True:
-            try:
-                # Add the data to the process queue
-                data = get_data(tart_instance)
-                process_queue.put(data)
-                num_vis += 1
-            except Exception, e:
-                logger.error( "Capture Loop Error %s" % str(e))
-                logger.error(traceback.format_exc())
-
-            finally:
-                print  'Acquired', data[0]
+        finally:
+              print  'Acquired', data[0]
     print 'Done acquisition. Closing Capture.'
     tart_instance.close()
     return 1
@@ -101,34 +92,28 @@ def process_loop(process_queue, result_queue, config, blocksize, chunksize=None)
     p_bool = 0
     n_samples = 2**blocksize
 
+    active = True
     if chunksize is not None:
         num_vis=0
-        while num_vis < chunksize:
-            if (False == process_queue.empty()):
-                try:
-                    data = process_queue.get()
-                    vis, means = get_vis_object(data, n_samples, config)
-                    result_queue.put((vis, means))
+    while active:
+        if (False == process_queue.empty()):
+            try:
+                p_bool += 1
+                if p_bool >10:
+                    p_bool = 0
+                    print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), result_queue.qsize())
+                    #print '!!!!!!!!!!!!!!!!!!!!!! dropping frames when displaying  !!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+                data = process_queue.get()
+                vis, means = get_vis_object(data, n_samples, config)
+                print means
+                result_queue.put((vis, means))
+                if chunksize is not None:
                     num_vis += 1
-                except Exception, e:
-                    logger.error( "Processing Error %s" % str(e))
-                    logger.error(traceback.format_exc())
-
-    else:
-        while (True):
-            if (False == process_queue.empty()):
-                try:
-                    p_bool += 1
-                    if p_bool >10:
-                        p_bool = 0
-                        print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), result_queue.qsize())
-                        #print '!!!!!!!!!!!!!!!!!!!!!! dropping frames when displaying  !!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-                    data = process_queue.get()
-                    vis, means = get_vis_object(data, n_samples, config)
-                    result_queue.put((vis, means))
-                except Exception, e:
-                    logger.error( "Processing Error %s" % str(e))
-                    logger.error(traceback.format_exc())
+                    if num_vis == chunksize:
+                        active = False
+            except Exception, e:
+                logger.error( "Processing Error %s" % str(e))
+                logger.error(traceback.format_exc())
         #else:
             #time.sleep(0.00001)
 
@@ -158,7 +143,7 @@ if __name__=="__main__":
     # Import result_loop
 
     if ARGS.mode == 'save':
-        vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, settings.Settings(ARGS.config), ARGS.blocksize,))
+        vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, settings.Settings(ARGS.config), ARGS.blocksize, None))
         from save_vis import result_loop
         post_process = multiprocessing.Process(target=result_loop, args=(result_queue, ARGS.chunksize,ARGS.vis_prefix,logger))
         capture_process = multiprocessing.Process(target=capture_loop, args=(proc_queue, ARGS.blocksize))
@@ -171,18 +156,18 @@ if __name__=="__main__":
         capture_process = multiprocessing.Process(target=capture_loop, args=(proc_queue, ARGS.blocksize, ARGS.chunksize))
 
 
-    elif 'qt' in ARGS.mode:
-        vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, settings.Settings(ARGS.config), ARGS.blocksize,))
+    elif ARGS.mode == 'qt':
+        vis_calc_process = multiprocessing.Process(target=process_loop, args=(proc_queue, result_queue, settings.Settings(ARGS.config), ARGS.blocksize, None))
         from pyqtgraph.Qt import QtGui, QtCore
         import qt_view
-        import qt_graph
+        #import qt_graph
         print 'importing alternative result_loop'
         from monitor_vis import result_loop
         app = QtGui.QApplication([])
         if ARGS.mode == 'qt':
             plotter = qt_view.QtPlotter(app)
-        else:
-            plotter = qt_graph.QtPlotter(app)
+        #else:
+            #plotter = qt_graph.QtPlotter(app)
         plotQ = plotter.getPort()
         post_process = multiprocessing.Process(target=result_loop, args=(result_queue, ARGS.chunksize, ARGS.mode, plotQ, ARGS.calibration_dir))
         capture_process = multiprocessing.Process(target=capture_loop, args=(proc_queue, ARGS.blocksize))
@@ -195,10 +180,11 @@ if __name__=="__main__":
     capture_process.start()
     print 'Process chain started.'
 
-    post_process.join()
-    vis_calc_process.join()
-    capture_process.join()
-    print 'Process chain finished.'
+    if ARGS.mode == 'save_single':
+        post_process.join()
+        vis_calc_process.join()
+        capture_process.join()
+        print 'Process chain finished.'
 
 
     if ARGS.mode == 'qt':

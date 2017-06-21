@@ -15,29 +15,30 @@ import os
 def gen_calib_image(vislist, calibration_dir):
     CAL_MEASURE_VIS_LIST = []
     cal_file = calibration_dir + 'monitor_vis_calibration.json'
-    MIN = 0
+    MIN = True
     for vis in vislist[:1]:
         if not os.path.exists(cal_file):
-	    cv = calibration.CalibratedVisibility(vis)
-            flagged_bl = []
-	    for i in range(0,24-1):
-	        for j in range(i+1,24):
-	  	    if (i > 5) or (j > 5):
-		      flagged_bl.append([i,j])
-	    cv.set_flagged_baselines(flagged_bl)
-	    if MIN:
+          cv = calibration.CalibratedVisibility(vis)
+          flagged_bl = []
+          dead = [0,2,4,7,9,14,20,22]
+          for i in range(0,24-1):
+              for j in range(i+1,24):               #if (i > 5) or (j > 5):
+                  if (i in dead) or (j in dead):
+                      flagged_bl.append([i,j])
+          cv.set_flagged_baselines(flagged_bl)
+          if MIN:
               print 'fmin'
-            else:
-	        for i in range(1,6):
-	            a_i = np.abs(cv.get_visibility(0,i))
-	            ang_i = np.angle(cv.get_visibility(0,i))
-	            cv.set_gain(i, 1./a_i)
-	            cv.set_phase_offset(i, ang_i)
-	    cv.to_json(cal_file)
-	else:
-	  #print 'loading.. calibration'
-	  cv = calibration.from_JSON_file(vis, cal_file)
-        CAL_MEASURE_VIS_LIST.append(cv)
+          else:
+              for i in range(1,6):
+                  a_i = np.abs(cv.get_visibility(0,i))
+                  ang_i = np.angle(cv.get_visibility(0,i))
+                  cv.set_gain(i, 1./a_i)
+                  cv.set_phase_offset(i, ang_i)
+          cv.to_json(cal_file)
+        else:
+            #print 'loading.. calibration'
+            cv = calibration.from_JSON_file(vis, cal_file)
+            CAL_MEASURE_VIS_LIST.append(cv)
     CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
     CAL_SYN.set_grid_file(calibration_dir + 'monitor_vis_grid.idx')
     #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
@@ -74,13 +75,13 @@ def gen_mpl_image(vislist, gfx, fig, ax , cb, calibration_dir):
 def result_loop(result_queue, chunk_size, mode='syn', plotQ=None, calibration_dir=None):
     logger = logging.getLogger(__name__)
 
-    if not ('qt' in mode):
-    #if ARGS.mode!= 'qt':
-        import matplotlib.pyplot as plt
-        plt.ion()
-        fig, ax = plt.subplots(1,1)
-        gfx = None
-        cb = None
+    #if not ('qt' in mode):
+    ##if ARGS.mode!= 'qt':
+        #import matplotlib.pyplot as plt
+        #plt.ion()
+        #fig, ax = plt.subplots(1,1)
+        #gfx = None
+        #cb = None
     cnt = 0
     max_len = 200
     res = []
@@ -90,18 +91,19 @@ def result_loop(result_queue, chunk_size, mode='syn', plotQ=None, calibration_di
         if (False == result_queue.empty()):
             try:
                 #print 'ResuQ size', result_queue.qsize()
-                while result_queue.qsize()>1:
+                while result_queue.qsize()>0:
                     vis, means = result_queue.get()
-                vislist.insert(0,vis)
-                meanslist.insert(0,means)
+                    vislist.insert(0,vis)
+                    meanslist.insert(0,means)
+                gen_qt_image(vislist, plotQ, calibration_dir)
+                vislist = []
+
                 #if mode=='syn':
                     #if len(vislist)>=chunk_size:
                         #gfx, cb = gen_mpl_image(vislist, gfx, fig, ax, cb, calibration_dir)
                         #vislist = []
                 #elif mode =='qt':
                     #if len(vislist)>=chunk_size:
-                gen_qt_image(vislist, plotQ, calibration_dir)
-                vislist = []
                 #elif mode =='qt_vis':
                     #cnt += 1
                     #if cnt >= chunk_size:

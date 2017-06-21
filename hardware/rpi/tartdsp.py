@@ -311,7 +311,7 @@ class TartSPI:
     for i in range(0, blk):
       dat += self.getbytes(self.AQ_STREAM, blocksize*3)
     dat += self.getbytes(self.AQ_STREAM, lst*3)
-    # Convert to a 
+    # Convert to a
     dat = numpy.array(dat, dtype=numpy.uint32).reshape(-1,3)
     return dat
 
@@ -337,6 +337,7 @@ class TartSPI:
       else:
         ow = 0x00
       bs  = 0x80 | ow | int(blocksize)
+      self.blocksize = blocksize
       ret = self.spi.xfer([self.WRITE_CMD | self.VX_SYSTEM, bs])
       self.pause()
       if noisy:
@@ -358,7 +359,7 @@ class TartSPI:
     val = self.vis_convert(res)
     if noisy:
       tim = time.time()
-      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[pp], sum(val))
+      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[pp]-int(2**(self.blocksize-1)), sum(val))
     return val
 
   def vis_ready(self, noisy=False):
@@ -408,7 +409,6 @@ if __name__ == '__main__':
   parser.add_argument('--monitor', action='store_true', help='monitor for visibilities')
   parser.add_argument('--correlate', action='store_true', help='perform a single correlation')
   parser.add_argument('--verbose', action='store_true', help='extra debug output')
-  parser.add_argument('--permute', action='store_true', help='permute the visibilities')
   parser.add_argument('--counter', action='store_true', help='fake data using a counter')
   parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
   parser.add_argument('--acquire', action='store_true', help='use real antenna data')

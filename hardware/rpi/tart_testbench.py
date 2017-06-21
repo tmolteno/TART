@@ -19,7 +19,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=32, type=int, help='Specify the SPI CLK speed (in MHz)')
   parser.add_argument('--bramexp', default=10, type=float, help='exponent of bram depth')
-  parser.add_argument('--reset', action='store_true', help='reset after transmission?')
+  #parser.add_argument('--reset', action='store_true', help='reset after transmission?')
   parser.add_argument('--internal', action='store_true', help='fake data generator')
   parser.add_argument('--counter', action='store_true', help='fake data using a counter')
   parser.add_argument('--shifter', action='store_true', help='fake data using a MFSR')
@@ -87,4 +87,4 @@ if __name__ == '__main__':
     print 'sum_of_errors: ', diffssum
     index = np.arange(len(diffs))
     print diffs[diffs.__ne__(1)]
-    print index[diffs.__ne__(1)] 
+    print index[diffs.__ne__(1)]
