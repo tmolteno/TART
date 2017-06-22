@@ -61,6 +61,9 @@
 // `define __USE_DCM_CLKGEN
 
 
+`define __NAUGHTY_FEEDBACK
+
+
 //----------------------------------------------------------------------------
 //  Sufficient for acquisition only.
 // `define __USE_OLD_CLOCKS

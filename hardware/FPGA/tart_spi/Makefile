@@ -52,7 +52,7 @@ export XILINX=/mnt/bucket/Xilinx/14.7/ISE_DS/ISE/bin/lin64
 ##--------------------------------------------------------------------------##
 ##  Synthesis files.
 ##--------------------------------------------------------------------------##
-DIR=/home/patrick/Dropbox/Projects/TART/hardware/FPGA/tart_spi
+DIR=$(shell pwd)
 RTL=${DIR}/verilog
 UCF=${DIR}/papilio
 INC=${DIR}/include

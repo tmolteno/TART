@@ -350,7 +350,8 @@ main  = do
 --   stdout "\nCorrelator block parameters:"
   let p = maybe "DSP/COR/CXB" toString mp
       d = fromMaybe 4 md
-      u = fromString $ floorplan p d
+--       u = fromString $ floorplan p d
+      u = select $ fromString <$> lines (floorplan p d)
   maybe (stdout u) (`output` u) mo
 --   output o pz
 --  stdout ""

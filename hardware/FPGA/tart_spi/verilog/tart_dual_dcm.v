@@ -70,7 +70,11 @@ module tart_dual_dcm
      #( .DIVIDE_BYPASS("TRUE")  // Bypass the divider circuitry (TRUE/FALSE)
         ) BUFIO2_FBCLK0
        (
-        .I(clk_local),          // Clock input (connect to IBUFG)
+`ifdef __NAUGHTY_FEEDBACK
+        .I(clk_xtal),           // Use the `bus/6` clock as feedback
+`else
+        .I(clk_local),          // Use the conditioned external clock
+`endif
         .O(clk_fb)              // Divided (optional) clock output
         );
 
