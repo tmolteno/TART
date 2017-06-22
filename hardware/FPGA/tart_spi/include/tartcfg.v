@@ -61,6 +61,12 @@
 // `define __USE_DCM_CLKGEN
 
 
+//----------------------------------------------------------------------------
+//  Use a feedback path that goes from CLKDV (bus clock divided by 6) of the
+//  second DCM, back to the external-clock's feedback buffer, and then into
+//  the first DCM?
+//  NOTE: The default configuration is to use this feedback path, though it
+//    seems to be not supported by Xilinx.
 `define __NAUGHTY_FEEDBACK
 
 
