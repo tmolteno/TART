@@ -37,6 +37,16 @@ class TartSPI:
 
   LATENCY   = 2
 
+  regs = [TC_CENTRE, TC_STATUS, TC_DEBUG, TC_SYSTEM,
+          AQ_STREAM,                      AQ_SYSTEM,
+          VX_STREAM, VX_STATUS, VX_DEBUG, VX_SYSTEM,
+          SYS_STATS, SPI_STATS] #, self.SPI_RESET]
+
+  regs_s= ['TC_CENTRE', 'TC_STATUS', 'TC_DEBUG', 'TC_SYSTEM',
+          'AQ_STREAM',                          'AQ_SYSTEM',
+          'VX_STREAM', 'VX_STATUS', 'VX_DEBUG', 'VX_SYSTEM',
+          'SYS_STATS', 'SPI_STATS'] #, self.SPI_RESET]
+
   ##--------------------------------------------------------------------------
   ##  TART SPI interface commands.
   ##--------------------------------------------------------------------------
@@ -175,6 +185,45 @@ class TartSPI:
     }
     return msgs.get(reg, 'WARNING: Not a status register.')
 
+  def extract(self,vals):
+    import numpy as np
+    unpack = lambda x: np.unpackbits(np.array([x,],dtype=np.uint8))[::-1]
+    extractors = {
+	    self.TC_CENTRE:  lambda val: dict(zip(['centre','drift','invert','delay'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
+        self.TC_STATUS:  lambda val: dict(zip(['delta','phase'], [(val >>4) & 0x0f, val & 0x0f])),
+        self.TC_DEBUG:   lambda val: dict(zip(['debug','count','shift','numantenna'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
+        self.TC_SYSTEM:  lambda val: dict(zip(['enabled','error','locked','source'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
+
+        self.AQ_STREAM:  lambda val: dict(zip(['data',], [val,])),
+        self.AQ_SYSTEM:  lambda val: dict(zip(['enabled','error','SDRAM ready','512Mb','overflow','state'],  unpack(val)[[7,6,5,4,3]].tolist()+[val & 0x07,])),
+
+        self.VX_STREAM:  lambda val: dict(zip(['data',], [val,])),
+        self.VX_STATUS:  lambda val: dict(zip(['available','accessed','overflow','bank'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
+        self.VX_DEBUG:   lambda val: dict(zip(['stuck','limp'], unpack(val)[[7,6]].tolist())),
+        self.VX_SYSTEM:  lambda val: dict(zip(['enabled','overwrite','blocksize'], unpack(val)[[7,6]].tolist() + [val & 0x1f,])),
+
+        self.SYS_STATS:  lambda val: dict(zip(['viz_en','viz_pend','cap_en','cap_debug','acq_en','state'], unpack(val)[[7,6,5,4,3]].tolist() + [val & 0x07,])),
+
+        self.SPI_STATS:  lambda val: dict(zip(['FIFO overflow','FIFO underrun','spi_busy'],unpack(val)[[7,6,0]].tolist())),
+        self.SPI_RESET:  lambda val: dict(zip(['reset',],[unpack(val)[0],])),
+    }
+    ret = {}
+    for reg,reg_s,val in zip(self.regs, self.regs_s, vals):
+      if extractors.has_key(reg):
+        ret[reg_s] = extractors[reg](val)
+    return ret
+
+  def get_status_json(self):
+    '''Generate JSON from status'''
+    import json
+    import socket
+    import datetime
+    vals = self.read_status(False)
+    d = self.extract(vals)
+    d['timestamp (UTC)'] = datetime.datetime.utcnow().isoformat()
+    d['hostname'] = socket.gethostname()
+    d_json = json.dumps(d)
+    return d, d_json
 
   ##--------------------------------------------------------------------------
   ##  Data-capture & clock-recovery settings.
@@ -395,6 +444,26 @@ class TartSPI:
 #endclass TartSPI
 
 
+
+def rr(n,prec=3):
+  f=10.**prec
+  return int(n*f)/f
+
+def ph_stats(vals, stable_threshold, N_samples):
+  expval = np.exp(1j*np.asarray(vals)*np.pi/6.)
+  m = np.angle(np.mean(expval))
+  s = np.abs(expval.sum())/(1.*len(vals))
+  if m<0:
+    m += 2*np.pi
+  mean_rounded = np.int(np.round(m/(2*np.pi)*12))
+  return [mean_rounded, rr(s,3), stable_threshold, N_samples, int(s>stable_threshold)]
+
+def mean_stats(vals,mean_threshold):
+  m = np.mean(vals)
+  return [rr(m,4), mean_threshold, int(abs(m-0.5)<mean_threshold)]
+
+
+
 ##----------------------------------------------------------------------------
 ##  Basic device querying and verification functionality.
 ##----------------------------------------------------------------------------
@@ -416,6 +485,8 @@ if __name__ == '__main__':
   parser.add_argument('--capture', action='store_true', help='just enable the data-capture unit')
   parser.add_argument('--centre', action='store_true', help='enable the clock-recovery unit')
   parser.add_argument('--setdelay', default=0, type=int, help='set signal phase-delay')
+  parser.add_argument('--diagnostic', action='store_true', help='run diagnostic')
+
   # TODO:
   parser.add_argument('--phases', default='', type=str, help='file of antenna phase-delays')
 
@@ -498,6 +569,84 @@ if __name__ == '__main__':
       if args.correlate:
         tart.close()
         exit(0)
+
+  if args.diagnostic:
+    import json
+    import numpy as np
+
+    pp = tart.load_permute()
+    print "Enabling DEBUG mode"
+    tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter, noisy=args.verbose)
+    print "Setting capture registers:"
+
+    num_ant = 24
+
+    N_samples = 20       # Number of samples for each antenna
+    stable_threshold=0.95 # 95% in same direction
+
+    phases = []
+
+    for src in range(num_ant):
+      tart.reset()
+      tart.capture(on=True, source=src, noisy=args.verbose)
+      tart.centre(args.centre, noisy=args.verbose)
+      tart.start(args.blocksize, True)
+      k=0
+      measured_phases = []
+      while k<N_samples:
+        k+=1
+        d, d_json = tart.get_status_json()
+        measured_phases.append(d["TC_STATUS"]['phase'])
+
+      phases.append(dict(zip(['measured','stability','threshold','N_samples','ok'],ph_stats(measured_phases, stable_threshold, N_samples))))
+
+    mean_phases = []
+    for i in range(num_ant):
+      mean_phases.append(phases[i]['measured'])
+
+    print 'median:', np.median(mean_phases)
+    delay_to_be_set = (np.median(mean_phases) + 6) %12
+    print 'set delay to:', delay_to_be_set
+
+    print 'small test acquisition'
+
+    tart.reset()
+    tart.debug(on=False, noisy=args.verbose)
+    tart.capture(on=True, source=0, noisy=args.verbose)
+    tart.set_sample_delay(delay_to_be_set)
+
+    tart.start_acquisition(1.1, True)
+    while not tart.data_ready():
+      tart.pause()
+    print '\nAcquisition complete, beginning read-back.'
+    tart.capture(on=False, noisy=args.verbose)
+
+    data = tart.read_data(num_words=2**12)
+    data = np.asarray(data,dtype=np.uint8)
+    ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
+
+    radio_means = []
+    mean_threshold = 0.2
+    for i in range(num_ant):
+      radio_means.append(dict(zip(['mean','threshold','ok'],mean_stats(ant_data[i],mean_threshold))))
+
+    channels = []
+
+    for i in range(num_ant):
+      channel = {}
+      channel['id'] = i
+      channel['phase'] = phases[i]
+      channel['radio_mean'] =radio_means[i]
+      channels.append(channel)
+
+    d, d_json = tart.get_status_json()
+    d['channels'] = channels
+
+    with open('/var/www/html/status.json', 'w') as outfile:
+      json.dump(d, outfile)
+
+    tart.close()
+    print "\nDone."
 
   else:
     print "\nCycling through sampling-delays:"
