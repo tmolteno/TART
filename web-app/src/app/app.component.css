@@ -1,0 +1,18 @@
+.object-value {
+    margin: 0 12px 0 0;
+    font-size: 16px;
+}
+.string-value , .status-content {
+    margin: 0 0 20px 20px;
+}
+.status-row {
+    margin-bottom: 16px;
+}
+.inline-btn, .status-content {
+    display: inline !important;
+}
+
+.channel-card {
+    margin: 2px -12px;
+    padding: 4px;
+}

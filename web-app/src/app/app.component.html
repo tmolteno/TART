@@ -1,0 +1,55 @@
+<div>
+    <app-nav-bar></app-nav-bar>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <app-status-row-header
+                    [headerTitle]="'FGPA Status'"
+                    [contentVisible]="fpgaStatusVisible"
+                    (toggleVisible)="toggleFpgaStatus($event)">
+                </app-status-row-header>
+                <div id="status-container" class="row status-row" *ngFor="let statusKey of fpgaStatus | keys">
+                    <div class="col-sm-12">
+                        <h5>{{statusKey}}</h5>
+                    </div>
+                    <div *ngIf='getType(fpgaStatus[statusKey]) === "object"'>
+                        <div class="status-content" *ngFor='let key of fpgaStatus[statusKey] | keys'>
+                            <span class="btn btn-outline-info btn-sm inline-btn">{{key}}</span><span class="object-value"> {{fpgaStatus[statusKey][key]}}</span>
+                        </div>
+                    </div>
+                    <div *ngIf='getType(fpgaStatus[statusKey]) === "string"'>
+                        <span class="string-value">{{fpgaStatus[statusKey]}}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <app-status-row-header
+                    [headerTitle]="'Channel Status'"
+                    [contentVisible]="channelsVisible"
+                    (toggleVisible)="toggleChannelStatus($event)"> </app-status-row-header>
+                <div class="row">
+                    <div class="col-sm-12 col-md-2" *ngFor="let channel of channelsStatus">
+                        <div class="card channel-card bg-success"
+                            [class.bg-danger]="channel.phase.ok === 0 || channel.radio_mean.ok === 0">
+                            <h5>{{channel.id}}</h5>
+                            <div>
+                                <h5>phase</h5>
+                                <div>N samples: {{channel.phase.N_samples}}</div>
+                                <div>measured: {{channel.phase.measured}}</div>
+                                <div>ok: {{channel.phase.ok}}</div>
+                                <div>stability: {{channel.phase.stability}}</div>
+                                <div>threshold: {{channel.phase.threshold}}</div>
+                            </div>
+                            <div>
+                                <h5>radio mean</h5>
+                                <div>mean: {{channel.radio_mean.mean}}</div>
+                                <div>ok: {{channel.radio_mean.ok}}</div>
+                                <div>threshold: {{channel.radio_mean.threshold}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,13 @@
+.title-row {
+    position: relative;
+    margin-bottom: 8px;
+}
+.title-row-header {
+    margin-bottom: 0px;
+}
+.title-row-toggle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding-bottom: 2px;
+}
