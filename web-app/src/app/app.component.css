@@ -1,18 +1,11 @@
-.object-value {
-    margin: 0 12px 0 0;
-    font-size: 16px;
-}
-.string-value , .status-content {
-    margin: 0 0 20px 20px;
-}
-.status-row {
-    margin-bottom: 16px;
-}
-.inline-btn, .status-content {
-    display: inline !important;
+#main-container {
+    margin-top: 28px;
+    margin-bottom: 28px;
+    flex: 1 0 auto;
 }
 
-.channel-card {
-    margin: 2px -12px;
-    padding: 4px;
+#wrap-container {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
 }

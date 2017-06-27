@@ -14,7 +14,6 @@ export class TartService {
         });
   }
 
-
   getChannelStatus() {
       return this.http.get(`http://tart2-raspberry:5000/status/channel`)
         .map((res:Response) => {

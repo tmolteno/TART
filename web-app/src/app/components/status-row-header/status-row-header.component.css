@@ -11,3 +11,7 @@
     right: 0;
     padding-bottom: 2px;
 }
+.visibility-toggle {
+    color: #5bc0de;
+    cursor: pointer;
+}
