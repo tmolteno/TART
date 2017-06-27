@@ -45,7 +45,7 @@ the following commands would connect back to the TART (wherever it was in the wo
 #Machine Setup
 
 Update to latest firmware.
-
+```
     sudo apt-get update
     sudo apt-get dist-upgrade 
     sudo aptitude install python-setuptools ntp
@@ -54,6 +54,19 @@ Update to latest firmware.
     git clone https://github.com/tmolteno/TART.git
     cd TART/python
     sudo python setup.py install
+```
+
+#Install telescope API
+```
+cd telescope_api
+sudo pip install -e .
+```
+
+#Run telescope API
+```
+export FLASK_APP=telescope_api
+flask run -h 0.0.0.0 -p 5000
+```
 
 
 ## Network setup
@@ -79,63 +92,6 @@ and then issuing the following command
 
 And you should now be connected to the tag. This can be done in the field using the 
 JuiceSSH client on an android phone.
-
-##Install 3G Dongle
-
-We use the Huawei HiLink 3G modems, and to install use the instuctions at:
-
-  http://techmind.org/rpi/
-  
-While still logged into the pi:
-
-    sudo apt-get install sg3-utils
-    sudo reboot
-    ssh -p 2222 pi@localhost
-  
-Set the mode of the Huawei modem:
-
-    sudo /usr/bin/sg_raw /dev/sr0 11 06 20 00 00 00 00 00 01 00
-  
-You should get back:
-
-    SCSI Status: Good
-        
-    Sense Information:
-    sense buffer empty
-
-Set an address on the new eth1:
-
-    ifconfig eth1 192.168.1.10
-  
-The Huawei address is set in firmware as 192.168.1.1
-
-To automate the mode switch, create a new file /etc/udev/rules.d/10-Huawei.rules
-
-    sudo nano /etc/udev/rules.d/10-Huawei.rules
-
-and paste in the following content:
-
-    SUBSYSTEMS=="usb", ATTRS{modalias}=="usb:v12D1p1F01*", SYMLINK+="hwcdrom", RUN+="/usr/bin/sg_raw /dev/hwcdrom 11 06 20 00 00 00 00 00 01 00"
-
-Save the modified file.
-
-Next customise the /etc/network/interfaces configuration file:
-
-    sudo nano /etc/network/interfaces
-
-Paste at the end of the file:
-
-    allow-hotplug eth1
-    iface eth1 inet dhcp
-
-Save the modified file.
-
-Reboot the Pi:
-
-    sudo reboot
-
-The Pi should now say "My IP address is xxx.xxx.xxx.xxx 192.168.1.100", where xxx.xxx.xxx.xxx = the IP address of the RJ45 ethernet, and 192.168.1.100 is the address assigned to the Pi by the Huawei.
-
 
 
 ## Automatically run at startup
