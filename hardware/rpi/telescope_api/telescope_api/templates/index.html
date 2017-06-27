@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<style>
+  .hide { position:absolute; top:-1px; left:-1px; width:1px; height:1px; }
+</style>
+
+<iframe name="hiddenFrame" class="hide"></iframe>
+
+
+  <h2>Select Mode</h2>
+
+<div class="container">
+
+ 
+  <form action="http://tart2-raspberry:5000/mode/off" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Turn Off"></form>
+   <form action="http://tart2-raspberry:5000/mode/diagnose" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Diagnose"></form>
+   <form action="http://tart2-raspberry:5000/mode/acquire/raw" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Raw data"></form>
+   <form action="http://tart2-raspberry:5000/mode/acquire/vis" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Vis data"></form>
+   
+</div>
+
+</body>
+</html>
+
