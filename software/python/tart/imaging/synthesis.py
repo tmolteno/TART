@@ -63,7 +63,12 @@ class Synthesis_Imaging(object):
     # dec = angle.from_dms(-90.00)
     # print 'phasecenter:', ra, dec
     self.phase_center = radio_source.CosmicSource(ra, dec)
+    self.grid_file = 'grid.idx'
+    self.grid_idx = None
     #print 'debug:' , self.phase_center.to_horizontal(vt.config.get_loc(),vt.timestamp)
+
+  def set_grid_file(self,fpath):
+    self.grid_file = fpath
 
   def get_uvfits(self):
     os.system("rm out.uvfits")
@@ -112,15 +117,15 @@ class Synthesis_Imaging(object):
     return uu_a, vv_a, ww_a, np.array(vis_l)
 
   def get_grid_idxs(self,uu_a, vv_a, num_bin, nw):
-    uu_edges = np.linspace(-nw, nw, num_bin+1)
-    vv_edges = np.linspace(-nw, nw, num_bin+1)
-    import cPickle 
     try:
-      grid_file = 'grid.idxs'
-      print 'loading'
-      grid_idx = cPickle.load(open(grid_file, 'rb'))
+      if self.grid_idx is None:
+        import cPickle 
+        self.grid_idx = cPickle.load(open(self.grid_file, 'rb'))
+        #print 'finished loading ' + self.grid_file
     except:
       print 'generating...'
+      uu_edges = np.linspace(-nw, nw, num_bin+1)
+      vv_edges = np.linspace(-nw, nw, num_bin+1)
       grid_idx = []
       for uu, vv in zip(uu_a, vv_a):
         i = uu_edges.__lt__(uu).sum()-1
@@ -128,25 +133,19 @@ class Synthesis_Imaging(object):
         i2 = uu_edges.__lt__(-uu).sum()-1
         j2 = vv_edges.__lt__(-vv).sum()-1
         grid_idx.append([i,j,i2,j2])
-      grid_idx = np.array(grid_idx)
-      save_ptr = open(grid_file, 'wb')
-      cPickle.dump(grid_idx, save_ptr, cPickle.HIGHEST_PROTOCOL)
+      self.grid_idx = np.array(grid_idx)
+      save_ptr = open(self.grid_file, 'wb')
+      cPickle.dump(self.grid_idx, save_ptr, cPickle.HIGHEST_PROTOCOL)
       save_ptr.close()
-    return grid_idx 
+    return self.grid_idx 
 
  
   def get_uvplane_zenith(self, num_bin = 1600, nw = 36,):
-    import time
-    t_st = time.time()
     uu_a, vv_a, ww_a, vis_l = self.get_uuvvwwvis_zenith()
-#    print 'uuvvww_zenith', time.time()-t_st
     arr = np.zeros((num_bin, num_bin), dtype=np.complex64)
-    count_arr = np.zeros((num_bin, num_bin), dtype=np.int16)
-    t_st = time.time()
     # place complex visibilities in the UV grid and prepare averaging by counting entries.
     grid_idxs = self.get_grid_idxs(uu_a, vv_a, num_bin, nw)
-#    print 'loading took', time.time()-t_st
-#    t_st = time.time()
+    count_arr = np.zeros((num_bin, num_bin), dtype=np.int16)
     #for k, v_l in enumerate(vis_l):
     #  i,j,i2,j2 = grid_idxs[k]
     #  count_arr[j, i] += 1
@@ -161,10 +160,7 @@ class Synthesis_Imaging(object):
     else:
       arr[grid_idxs[:,1],grid_idxs[:,0]] = vis_l
       arr[grid_idxs[:,3],grid_idxs[:,2]] = np.conjugate(vis_l)
-#    print 'forloop', time.time()-t_st
-#    t_st = time.time()
     n_arr = np.ma.masked_array(arr[:, :], count_arr.__lt__(1.))
-#    print 'div', time.time()-t_st
     return n_arr
 
   def get_uvplane(self, num_bin = 1600, nw = 36, grid_kernel_r_pixels=0.5, use_kernel=True):
@@ -174,8 +170,6 @@ class Synthesis_Imaging(object):
     vv_l = []
     ww_l = []
     vis_l = []
-    #import time
-    #t_dv = time.time()
     for cal_vis in copy.deepcopy(self.cal_vis_list):
       ts = cal_vis.get_timestamp()
       ra, dec = self.phase_center.radec(ts)
