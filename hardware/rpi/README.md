@@ -56,10 +56,16 @@ Update to latest firmware.
     sudo python setup.py install
 ```
 
+#Install SPI driver communication with FPGA
+```
+cd tart_dsp
+sudo python setup.py develop
+```
+
 #Install telescope API
 ```
 cd telescope_api
-sudo pip install -e .
+sudo python setup.py develop
 ```
 
 #Run telescope API
