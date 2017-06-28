@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from tartspi import TartSPI
+from tart_dsp.tartspi import *
+from tart_dsp.highlevel_modes_api import *
 
 import argparse
 
