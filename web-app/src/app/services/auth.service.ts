@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
+import { environment } from '../../environments/environment';
+
 import 'rxjs/add/operator/map';
 
 @Injectable()
@@ -10,14 +12,14 @@ export class AuthService {
     tokenGetTimeStorageKey: string = 'tokenGetTime';
     tokenMaxAge: number = 270000; // 4 minutes 30 seconds in milleseconds
 
-    apiUrl: string = 'http://tart2-raspberry:5000';
+    apiUrl: string = '';
 
     public login$: Observable<boolean>;
     private loginObserver: any;
     private loginStatus: boolean;
 
     constructor(private http: Http) {
-        console.log('getting login status');
+        this.apiUrl = environment.apiUrl;
         this.loginStatus = this.isTokenValid();
         this.login$ = new Observable(observer => {
             this.loginObserver = observer;
