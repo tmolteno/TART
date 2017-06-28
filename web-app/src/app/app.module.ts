@@ -4,13 +4,14 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
-
+import { AuthService } from './services/auth.service';
 import { TartService } from './services/tart.service';
 import { KeysPipe } from './keys-pipe';
 
 import { AppComponent } from './app.component';
 /** Views */
 import { StatusComponent } from './views/status/status.component';
+import { ModeComponent } from './views/mode/mode.component';
 import { LoginComponent } from './views/login/login.component';
 /** Components */
 import { StatusRowHeaderComponent } from './components/status-row-header/status-row-header.component';
@@ -21,6 +22,10 @@ const appRoutes = [
     {
         path: 'status',
         component: StatusComponent
+    },
+    {
+        path: 'mode',
+        component: ModeComponent
     },
     {
         path: 'login',
@@ -41,7 +46,8 @@ const appRoutes = [
     StatusRowHeaderComponent,
     NavBarComponent,
     LoginComponent,
-    FooterComponent
+    FooterComponent,
+    ModeComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
@@ -49,7 +55,10 @@ const appRoutes = [
     FormsModule,
     HttpModule
   ],
-  providers: [TartService],
+  providers: [
+      TartService,
+      AuthService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

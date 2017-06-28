@@ -36,9 +36,7 @@ export class StatusComponent {
 
     getChannelStatus() {
         this.tartService.getChannelStatus()
-            .subscribe(data => {
-                this.channelsStatus = data;
-            });
+            .subscribe(data => this.channelsStatus = data);
     }
 
     getType(item) {

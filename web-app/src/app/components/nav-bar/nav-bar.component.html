@@ -5,7 +5,16 @@
     <a class="navbar-brand" href="#" routerLink="/status">TART</a>
     <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
         <ul class="navbar-nav">
+            <li *ngIf="isLoggedIn" class="nav-item">
+                <a class="nav-link" href="#" routerLink="/mode" routerLinkActive="active">Mode</a>
+            </li>
             <li class="nav-item">
+                <a class="nav-link" href="#" routerLink="/status" routerLinkActive="active">Status</a>
+            </li>
+            <li *ngIf="isLoggedIn" class="nav-item">
+                <a class="nav-link" href="#" routerLink="/login" (click)="onLogoutClick()" >Logout</a>
+            </li>
+            <li *ngIf="!isLoggedIn" class="nav-item">
                 <a class="nav-link" href="#" routerLink="/login" routerLinkActive="active">Login</a>
             </li>
         </ul>

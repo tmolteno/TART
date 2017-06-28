@@ -5,26 +5,28 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class TartService {
 
-  constructor(private http: Http) { }
+    apiUrl: string = 'http://tart2-raspberry:5000';
 
-  getStatus() {
-      return this.http.get(`http://tart2-raspberry:5000/status`)
-        .map((res:Response) => {
-            return res.json();
-        });
-  }
+    constructor(private http: Http) { }
 
-  getChannelStatus() {
-      return this.http.get(`http://tart2-raspberry:5000/status/channel`)
-        .map((res:Response) => {
-            return res.json();
-        });
-  }
+    getStatus() {
+        return this.http.get(`${this.apiUrl}/status`)
+            .map((res:Response) => {
+                return res.json();
+            });
+    }
 
-  getFpgaStatus() {
-      return this.http.get(`http://tart2-raspberry:5000/status/fpga`)
-        .map((res:Response) => {
-            return res.json();
-        });
-  }
+    getChannelStatus() {
+        return this.http.get(`${this.apiUrl}/status/channel`)
+            .map((res:Response) => {
+                return res.json();
+            });
+    }
+
+    getFpgaStatus() {
+        return this.http.get(`${this.apiUrl}/status/fpga`)
+            .map((res:Response) => {
+                return res.json();
+            });
+    }
 }
