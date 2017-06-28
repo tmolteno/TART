@@ -1,13 +1,13 @@
 #from tartdsp import TartSPI
 
-import os,sys,inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-parentdir2 = os.path.dirname(parentdir)
-sys.path.insert(0,parentdir2)
+#import os,sys,inspect
+#currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+#parentdir = os.path.dirname(currentdir)
+#parentdir2 = os.path.dirname(parentdir)
+#sys.path.insert(0,parentdir2)
 
-import tartdsp
-import highlevel_modes_api
+from tart_dsp.tartspi import *
+from tart_dsp.highlevel_modes_api import *
 import time
 import json
 import threading
@@ -75,12 +75,12 @@ def create_app():
         with dataLock:
           if runtime_config['mode'] == 'diag':
               runtime_config['acquire'] = False
-              highlevel_modes_api.run_diagnostic(telescope_instance, runtime_config)
+              run_diagnostic(telescope_instance, runtime_config)
               print 'diag'
 
           elif runtime_config['mode'] == 'raw':
               runtime_config['acquire'] = True
-              highlevel_modes_api.run_acquire_raw(telescope_instance, runtime_config)
+              run_acquire_raw(telescope_instance, runtime_config)
               print 'raw'
 
           elif runtime_config['mode'] == 'off':
@@ -114,7 +114,7 @@ def create_app():
                                     'config'   : 'telescope_config.json',\
                                     'base_path': '.'}
             runtime_config['diagnostic'] = {'num_ant': 24, 'N_samples' : 200, 'stable_threshold' : 0.95}
-            telescope_instance = tartdsp.TartSPI(speed=runtime_config['spi_speed'])
+            telescope_instance = TartSPI(speed=runtime_config['spi_speed'])
         # Create thread
         telescope_thread = threading.Timer(POOL_TIME, telescope_run, ())
         telescope_thread.start()
