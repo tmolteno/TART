@@ -45,7 +45,7 @@ def identity(payload):
 POOL_TIME = 1 #Seconds
 
 # Globals:
-users = [User(1, 'admin' , 'password'),]
+users = [User(1, 'admin' , 'password'),User(2,'admin','1')]
 username_table = {u.username: u for u in users}
 userid_table = {u.id: u for u in users}
 
@@ -60,9 +60,9 @@ telescope_thread = threading.Thread()
 def create_app():
     app = Flask(__name__)
     CORS(app)
+    app.config['SECRET_KEY'] = 'super-secret'
     jwt = JWT(app, authenticate, identity)
 
-    app.config['SECRET_KEY'] = 'super-secret'
 
     def interrupt():
         global telescope_thread
