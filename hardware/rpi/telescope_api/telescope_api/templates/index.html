@@ -23,12 +23,12 @@
 
 <div class="container">
 
- 
-  <form action={{ url_for('set_off_mode') }} method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Turn Off"></form>
-   <form action={{ url_for('set_diagnose_mode') }} method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Diagnose"></form>
-   <form action={{ url_for('set_acquire_raw_mode') }} method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Raw data"></form>
-   <form action={{ url_for('set_acquire_vis_mode') }} method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Vis data"></form>
-   
+
+  <form action="http://tart2-raspberry:5000/mode/off" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Turn Off"></form>
+  <form action="http://tart2-raspberry:5000/mode/diag" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Diagnose"></form>
+  <form action="http://tart2-raspberry:5000/mode/raw" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Raw data"></form>
+  <form action="http://tart2-raspberry:5000/mode/vis" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Vis data"></form>
+  <form action="http://tart2-raspberry:5000/mode/cal" method="post" target="hiddenFrame"><input type="submit" class="btn btn-info" value="Calibrate with Source"></form>
 </div>
 
 </body>

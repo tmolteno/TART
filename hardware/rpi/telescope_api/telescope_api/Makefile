@@ -1,2 +1,4 @@
 apidoc:
-	python manage_apidoc.py apidoc
+	apidoc
+	rm -rf /var/www/html/doc
+	mv doc /var/www/html/doc

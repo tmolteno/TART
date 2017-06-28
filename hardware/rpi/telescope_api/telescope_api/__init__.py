@@ -60,7 +60,6 @@ telescope_thread = threading.Thread()
 def create_app():
     app = Flask(__name__)
     CORS(app)
-    doc = ApiDoc(app=app)
     jwt = JWT(app, authenticate, identity)
 
     app.config['SECRET_KEY'] = 'super-secret'
@@ -114,7 +113,7 @@ def create_app():
                                     'N_samples_exp': 22,\
                                     'config'   : 'telescope_config.json',\
                                     'base_path': '.'}
-            runtime_config['diagnostic'] = {'num_ant': 24, 'N_samples' : 100, 'stable_threshold' : 0.95}
+            runtime_config['diagnostic'] = {'num_ant': 24, 'N_samples' : 200, 'stable_threshold' : 0.95}
             telescope_instance = tartdsp.TartSPI(speed=runtime_config['spi_speed'])
         # Create thread
         telescope_thread = threading.Timer(POOL_TIME, telescope_run, ())
