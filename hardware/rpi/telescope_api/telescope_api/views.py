@@ -130,7 +130,7 @@ def get_status_channel_i(channel_idx):
       return jsonify({})
 
 
-available_modes = ['off','diag','raw','vis', 'cal', 'rt_syn_img']
+available_modes =
 
 @app.route('/mode/current', methods=['GET',])
 def get_current_mode():
@@ -153,7 +153,8 @@ def get_mode():
     @apiName get_mode
     @apiSuccess {String[]} modes Available operating modes.
     """
-    return jsonify({'modes':available_modes})
+    runtime_config = get_config()
+    return jsonify({'modes':runtime_config['modes_available']})
 
 
 @app.route('/protected')
@@ -173,8 +174,8 @@ def set_mode(mode):
     @apiSuccess {String} mode Current mode of the telescope.
 
     """
-    if mode in available_modes:
-        runtime_config = get_config()
+    runtime_config = get_config()
+    if mode in runtime_config['modes_available']:
         runtime_config['mode'] = mode
     return jsonify({'mode':runtime_config['mode']})
 

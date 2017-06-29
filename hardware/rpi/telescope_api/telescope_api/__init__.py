@@ -93,6 +93,7 @@ def create_app():
             runtime_config['verbose'] = False
             runtime_config['centre'] = True
             runtime_config['blocksize'] = 22
+            runtime_config['modes_available'] = ['off','diag','raw','vis', 'cal', 'rt_syn_img']
             runtime_config['mode'] = 'off'
             runtime_config['raw'] = {'save': 0, \
                                     'N_samples_exp': 22,\
