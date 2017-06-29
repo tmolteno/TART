@@ -26,7 +26,7 @@ export class LoginComponent {
         this.authService.login(this.password)
             .subscribe(res => {
                 if (res) {
-                    this.router.navigateByUrl('/mode');
+                    this.router.navigateByUrl('/off-mode');
                 } else {
                     this.displayLoginFailMsg = true;
                 }

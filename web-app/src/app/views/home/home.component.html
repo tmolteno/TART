@@ -1,0 +1,18 @@
+<div *ngIf="currentMode === 'off'">
+  <app-off-mode></app-off-mode>
+</div>
+<div *ngIf="currentMode === 'diag'">
+  <app-diagnose-mode></app-diagnose-mode>
+</div>
+<div *ngIf="currentMode === 'raw'">
+  <app-raw-mode></app-raw-mode>
+</div>
+<div *ngIf="currentMode === 'vis'">
+  <app-vis-mode></app-vis-mode>
+</div>
+<div *ngIf="currentMode === 'cal'">
+  <app-cal-mode></app-cal-mode>
+</div>
+<div *ngIf="currentMode === 'hd_img'">
+  <app-hd-img-mode></app-hd-img-mode>
+</div>

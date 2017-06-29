@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { TartService } from '../../services/tart.service';
 
 @Component({
@@ -8,7 +8,7 @@ import { TartService } from '../../services/tart.service';
     providers: []
 })
 
-export class StatusComponent {
+export class StatusComponent implements OnInit {
 
     fpgaStatus: Object = {};
     channelsStatus: Object[] = [];
@@ -16,7 +16,12 @@ export class StatusComponent {
     fpgaStatusVisible: boolean = true;
     channelsVisible: boolean = true;
 
-    constructor(private tartService: TartService) {
+    constructor(
+        private tartService: TartService,
+        private ref: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
         this.getFpgaStatus();
         this.getChannelStatus();
     }
@@ -31,12 +36,18 @@ export class StatusComponent {
 
     getFpgaStatus() {
         this.tartService.getFpgaStatus()
-            .subscribe(data => this.fpgaStatus = data);
+            .subscribe(result => {
+                this.fpgaStatus = result;
+                this.ref.detectChanges();
+            });
     }
 
     getChannelStatus() {
         this.tartService.getChannelStatus()
-            .subscribe(data => this.channelsStatus = data);
+            .subscribe(result => {
+                this.channelsStatus = result;
+                this.ref.detectChanges();
+            });
     }
 
     getType(item) {

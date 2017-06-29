@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, Response } from '@angular/http';
+import { Http, Response, RequestOptions, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { environment } from '../../environments/environment';
 
@@ -8,11 +8,11 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class AuthService {
 
-    tokenStorageKey: string = 'token';
-    tokenGetTimeStorageKey: string = 'tokenGetTime';
-    tokenMaxAge: number = 270000; // 4 minutes 30 seconds in milleseconds
+    private tokenStorageKey: string = 'token';
+    private tokenGetTimeStorageKey: string = 'tokenGetTime';
+    public tokenMaxAge: number = 270000; // 4 minutes 30 seconds in milleseconds
 
-    apiUrl: string = '';
+    private apiUrl: string = '';
 
     public login$: Observable<boolean>;
     private loginObserver: any;
@@ -85,5 +85,17 @@ export class AuthService {
         return localStorage.getItem(this.tokenStorageKey);
         // TODO: if there is a way to get a new token from an old token,
         // TODO: and the old token is near expiry, get a new token.
+    }
+
+    getAuthRequestOptions() {
+        let token = this.getAuthToken();
+        if (token === null) {
+            throw new Error('token not found or expired');
+        }
+        return new RequestOptions({
+            headers: new Headers({
+                'Authorization': `JWT ${token}`
+            })
+        });
     }
 }

@@ -14,21 +14,25 @@ export class TartService {
 
     getStatus() {
         return this.http.get(`${this.apiUrl}/status`)
-            .map((res:Response) => {
+            .map((res: Response) => {
                 return res.json();
             });
     }
 
     getChannelStatus() {
         return this.http.get(`${this.apiUrl}/status/channel`)
-            .map((res:Response) => {
-                return res.json();
+            .map((res: Response) => {
+                let channels = res.json();
+                if (!Array.isArray(channels)) {
+                    channels = [];
+                }
+                return channels;
             });
     }
 
     getFpgaStatus() {
         return this.http.get(`${this.apiUrl}/status/fpga`)
-            .map((res:Response) => {
+            .map((res: Response) => {
                 return res.json();
             });
     }

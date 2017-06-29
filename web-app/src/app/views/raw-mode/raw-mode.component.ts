@@ -5,13 +5,11 @@ import { AuthService } from '../../services/auth.service';
 import { ModeService } from '../../services/mode.service';
 
 @Component({
-      selector: 'app-mode',
-      templateUrl: './mode.component.html',
-      styleUrls: ['./mode.component.css']
+    selector: 'app-raw-mode',
+    templateUrl: './raw-mode.component.html',
+    styleUrls: ['./raw-mode.component.css']
 })
-export class ModeComponent implements OnInit {
-
-    private currentMode: string = '';
+export class RawModeComponent implements OnInit {
 
     constructor(
         private authService: AuthService,
@@ -21,22 +19,14 @@ export class ModeComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        if (!this.authService.isTokenValid()) {
+        if (!this.authService.isTokenValid()
+            && this.router.url === '/raw-data-mode') {
             this.router.navigateByUrl('/');
         }
         this.authService.login$.subscribe(loginStatus => {
-            if (!loginStatus) {
+            if (!loginStatus && this.router.url === '/raw-data-mode') {
                 this.router.navigateByUrl('/');
             }
         });
-        this.getActiveMode();
-    }
-
-    getActiveMode() {
-        this.modeService.getOperatingMode()
-            .subscribe(mode => {
-                this.currentMode = mode;
-                this.ref.detectChanges();
-            });
     }
 }

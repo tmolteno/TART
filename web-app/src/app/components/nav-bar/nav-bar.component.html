@@ -6,12 +6,6 @@
     <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
         <ul class="navbar-nav">
             <li *ngIf="isLoggedIn" class="nav-item">
-                <a class="nav-link" href="#" routerLink="/mode" routerLinkActive="active">Mode</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" routerLink="/status" routerLinkActive="active">Status</a>
-            </li>
-            <li *ngIf="isLoggedIn" class="nav-item">
                 <a class="nav-link" href="#" routerLink="/login" (click)="onLogoutClick()" >Logout</a>
             </li>
             <li *ngIf="!isLoggedIn" class="nav-item">
@@ -20,3 +14,23 @@
         </ul>
     </div>
 </nav>
+<ul class="nav nav-tabs" *ngIf="isLoggedIn">
+    <li class="nav-item">
+        <a class="nav-link" href="#" routerLink="/off-mode" routerLinkActive="active text-primary bg-light-grey">Turn Off</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" routerLink="/diag-mode" routerLinkActive="active text-primary bg-light-grey">Diagnose</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" routerLink="/raw-data-mode" routerLinkActive="active text-primary bg-light-grey">Raw Data</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" routerLink="/vis-data-mode" routerLinkActive="active text-primary bg-light-grey">Vis Data</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" routerLink="/calibrate-mode" routerLinkActive="active text-primary bg-light-grey">Calibrate</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" routerLink="/hd-img-mode" routerLinkActive="active text-primary bg-light-grey">Harddrive Image</a>
+    </li>
+</ul>
