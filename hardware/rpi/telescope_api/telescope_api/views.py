@@ -1,6 +1,6 @@
 from flask import Flask
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, send_file
 from flask_jwt import jwt_required, current_identity
 
 from telescope_api import app, get_config
@@ -129,17 +129,32 @@ def get_status_channel_i(channel_idx):
     else:
       return jsonify({})
 
-@app.route('/mode/', methods=['GET',])
-def get_mode():
+
+available_modes = ['off','diag','raw','vis', 'cal', 'rt_syn_img']
+
+@app.route('/mode/current', methods=['GET',])
+def get_current_mode():
     """
     @api {get} /mode/ Request telescope operating mode
     @apiGroup mode
 
-    @apiName get_mode
+    @apiName get_current_mode
     @apiSuccess {String} mode Current mode of the telescope.
     """
     runtime_config = get_config()
     return jsonify({'mode':runtime_config['mode']})
+
+@app.route('/mode', methods=['GET',])
+def get_mode():
+    """
+    @api {get} /mode Request telescopes available operating modes
+    @apiGroup mode
+
+    @apiName get_mode
+    @apiSuccess {String[]} modes Available operating modes.
+    """
+    return jsonify({'modes':available_modes})
+
 
 @app.route('/protected')
 @jwt_required()
@@ -154,13 +169,27 @@ def set_mode(mode):
     @apiGroup mode
 
     @apiName set_mode
-    @apiParam {String ="off","diag","raw","vis","cal"} mode Telescope operation mode.
+    @apiParam {String ="off","diag","raw","vis","cal","rt_syn_img"} mode Telescope operation mode.
     @apiSuccess {String} mode Current mode of the telescope.
 
     """
-    if mode in ['off','diag','raw','vis', 'cal']:
+    if mode in available_modes:
         runtime_config = get_config()
         runtime_config['mode'] = mode
     return jsonify({'mode':runtime_config['mode']})
 
 
+# Example to serve an image without creating a file.
+#def serve_pil_image(pil_img):
+#    import StringIO
+#    img_io = StringIO.StringIO()
+#    pil_img.save(img_io, 'JPEG', quality=70)
+#    img_io.seek(0)
+#    return send_file(img_io, mimetype='image/jpeg')
+
+#@app.route('/pic')
+#def serve_img():
+#    from PIL import Image
+#    import numpy as np
+#    img = Image.fromarray(np.random.uniform(0,255,(255,255)).astype(np.uint8))
+#    return serve_pil_image(img)

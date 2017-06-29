@@ -1,5 +1,6 @@
 from tart_dsp.tartspi import *
 from tart_dsp.highlevel_modes_api import *
+from tart_dsp.stream_vis import *
 
 import threading
 import atexit
@@ -66,6 +67,11 @@ def create_app():
               runtime_config['acquire'] = False
               print 'offline'
 
+          elif runtime_config['mode'] == 'hd_img':
+              runtime_config['acquire'] = False
+              vis_to_latest_image(telescope_instance, runtime_config)
+              print 'offline'
+
           else:
               runtime_config['acquire'] = False
               print runtime_config['mode'], 'not implemented yet'
@@ -92,7 +98,12 @@ def create_app():
                                     'N_samples_exp': 22,\
                                     'config'   : 'telescope_config.json',\
                                     'base_path': '.'}
-            runtime_config['diagnostic'] = {'num_ant': 24, 'N_samples' : 200, 'stable_threshold' : 0.95}
+            runtime_config['diagnostic'] = {'num_ant': 24, 'N_samples' : 100, 'stable_threshold' : 0.97}
+            runtime_config['telescope_config_path'] = '6_ant_setup/6_antenna_board_config.json'
+            runtime_config['calibration_dir'] = '6_ant_setup/'
+            runtime_config['realtime_image_path'] = '/var/www/html/assets/img/image.png'
+            runtime_config['chunksize'] = 2
+
             telescope_instance = TartSPI(speed=runtime_config['spi_speed'])
         # Create thread
         telescope_thread = threading.Timer(POOL_TIME, telescope_run, ())

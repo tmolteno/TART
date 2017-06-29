@@ -4,9 +4,6 @@ fast:
 6:
 	python acquire_continuous.py  --config 6_ant_setup/6_antenna_board_config.json --blocksize 22 --chunk 2 --mode qt --calib 6_ant_setup/
 
-API:
-	export FLASK_APP=run_telescope.py; flask run -h 0.0.0.0
-
 online_imaging:
 	python acquire_continuous.py  --config 6_ant_setup/6_antenna_board_config.json --blocksize 22 --chunk 2 --mode qt --calib 6_ant_setup/
 

@@ -20,10 +20,11 @@ def gen_calib_image(vislist, calibration_dir):
         if not os.path.exists(cal_file):
           cv = calibration.CalibratedVisibility(vis)
           flagged_bl = []
-          dead = [0,2,4,7,9,14,20,22]
+          #dead = [0,2,4,7,9,14,20,22]
           for i in range(0,24-1):
-              for j in range(i+1,24):               #if (i > 5) or (j > 5):
-                  if (i in dead) or (j in dead):
+              for j in range(i+1,24):
+		  if (i > 5) or (j > 5):
+                  #if (i in dead) or (j in dead):
                       flagged_bl.append([i,j])
           cv.set_flagged_baselines(flagged_bl)
           if MIN:
