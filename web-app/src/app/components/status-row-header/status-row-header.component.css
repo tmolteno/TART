@@ -15,3 +15,9 @@
     color: #5bc0de;
     cursor: pointer;
 }
+
+@media(max-width: 575px) {
+    .title-row-header {
+        margin-bottom: 24px;
+    }
+}
