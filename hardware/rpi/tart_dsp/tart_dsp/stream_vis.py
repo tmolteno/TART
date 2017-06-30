@@ -49,8 +49,6 @@ def get_data(tart):
     viz = tart.vis_read(False)
     return viz[tart.perm]
 
-
-
 def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
 
     tart.reset()
@@ -121,7 +119,6 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
 
 from PIL import Image
 import time
-
 from tart.imaging import calibration
 from tart.imaging import synthesis
 
@@ -183,15 +180,14 @@ def stream_vis_to_queue(tart, runtime_config):
     return vis_queue, vis_calc_process, capture_process, vis_calc_cmd_queue, capture_cmd_queue
 
 
-def vis_to_latest_image(tart_instance, runtime_config):
+def vis_to_latest_image(tart_instance, runtime_config,):
     '''take vis off queue and synthesize and image'''
     vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
-
-    while (runtime_config['mode']=='rt_syn_img'):
+    while (runtime_config['mode'] =='rt_syn_img'):
         vis = None
         while vis_q.qsize()>0:
             vis, means = vis_q.get()
-            print 'here', vis
+            #print 'here', vis
         if vis is not None:
             res, ex = gen_calib_image([vis,], runtime_config['calibration_dir'])
             res = np.abs(res)
@@ -200,6 +196,15 @@ def vis_to_latest_image(tart_instance, runtime_config):
             im = Image.fromarray(rescaled)
             im.save(runtime_config['realtime_image_path'])
             print 'saved file'
+
+            if runtime_config.has_key('loop_mode'):
+                if runtime_config['loop_mode']=='loop_n':
+                    runtime_config['loop_idx'] += 1
+                    print runtime_config['loop_idx']
+                    if runtime_config['loop_idx'] == runtime_config['loop_n']:
+                        runtime_config['loop_idx'] = 0
+                        runtime_config['mode'] = 'off'
+
         else:
           time.sleep(0.05)
     print 'stopping'

@@ -130,8 +130,6 @@ def get_status_channel_i(channel_idx):
       return jsonify({})
 
 
-available_modes =
-
 @app.route('/mode/current', methods=['GET',])
 def get_current_mode():
     """
@@ -176,8 +174,44 @@ def set_mode(mode):
     """
     runtime_config = get_config()
     if mode in runtime_config['modes_available']:
-        runtime_config['mode'] = mode
-    return jsonify({'mode':runtime_config['mode']})
+      runtime_config['mode'] = mode
+      return jsonify({'mode':runtime_config['mode']})
+    return jsonify({})
+
+
+@app.route('/loop/<loop_mode>', methods=['POST',])
+def set_loop_mode(loop_mode):
+    """
+    @api {post} /loop/<loop_mode> Set telescopes loop mode.
+    @apiGroup loop_mode
+
+    @apiName set_loop_mode
+    @apiParam {String ="loop","single","loop_n"} mode Telescopes loop mode. Perform single, loop n times or loop indefinit in selected mode before returning to offline mode.
+    @apiSuccess {String} loop_mode Current mode of the telescope.
+
+    """
+    runtime_config = get_config()
+    if loop_mode in runtime_config['loop_mode_available']:
+      runtime_config['loop_mode'] = loop_mode
+      return jsonify({'loop_mode':runtime_config['loop_mode']})
+    return jsonify({})
+
+
+@app.route('/loop/<int:loop_n>', methods=['POST',])
+def set_loop_n(loop_n):
+    """
+    @api {post} /loop/<loop_n> Set telescopes loop mode.
+    @apiGroup loop_mode
+
+    @apiName set_loop_mode
+    @apiParam {int =0-100} loop_n Number of loops in selected mode before returning to offline mode.
+    @apiSuccess {String} loop_mode Current mode of the telescope.
+
+    """
+    runtime_config = get_config()
+    runtime_config['loop_n'] = loop_mode
+    return jsonify({'loop_mode':runtime_config['loop_mode']})
+
 
 
 # Example to serve an image without creating a file.
