@@ -79,7 +79,7 @@ def get_status_fpga():
 @app.route('/status/channel', methods=['GET',])
 def get_status_channel_all():
     """
-    @api {get} /status/channel/ Request telescope all channel information.
+    @api {get} /status/channel Request telescope all channel information.
     @apiGroup status
 
     @apiName get_status_channel_all
