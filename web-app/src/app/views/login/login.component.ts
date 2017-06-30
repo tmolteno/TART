@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { ModeService } from '../../services/mode.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -8,15 +9,24 @@ import { AuthService } from '../../services/auth.service';
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
 
+    currentMode: string = '';
     password: string = '';
     displayLoginFailMsg: boolean = false;
 
     constructor(
         private authService: AuthService,
+        private modeService: ModeService,
         private router: Router
-    ) {}
+    ) { }
+
+    ngOnInit() {
+        this.modeService.getOperatingMode()
+            .subscribe(mode => {
+                this.currentMode = mode;
+            });
+    }
 
     onPasswordKeyPress() {
         this.displayLoginFailMsg = false;
@@ -26,7 +36,7 @@ export class LoginComponent {
         this.authService.login(this.password)
             .subscribe(res => {
                 if (res) {
-                    this.router.navigateByUrl('/off-mode');
+                    this.redirectToModePage();
                 } else {
                     this.displayLoginFailMsg = true;
                 }
@@ -34,5 +44,30 @@ export class LoginComponent {
             err => {
                 this.displayLoginFailMsg = true;
             });
+    }
+
+    redirectToModePage() {
+        switch(this.currentMode) {
+            case 'off':
+                this.router.navigateByUrl('/off-mode');
+                break;
+            case 'diag':
+                this.router.navigateByUrl('/diag-mode');
+                break;
+            case 'raw':
+                this.router.navigateByUrl('/raw-data-mode');
+                break;
+            case 'vis':
+                this.router.navigateByUrl('/vis-data-mode');
+                break;
+            case 'cal':
+                this.router.navigateByUrl('/calibrate-mode');
+                break;
+            case 'hd_img':
+                this.router.navigateByUrl('/hd-img-mode');
+                break;
+            default:
+                break;
+        }
     }
 }

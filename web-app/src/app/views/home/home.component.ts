@@ -21,11 +21,9 @@ export class HomeComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        console.log("getting operating mode");
         this.modeService.getOperatingMode()
             .subscribe(mode => {
                 this.currentMode = mode;
-                console.log("current mode is: " + mode);
                 this.ref.detectChanges();
                 if (this.authService.isTokenValid()) {
                     this.redirectToModePage();
