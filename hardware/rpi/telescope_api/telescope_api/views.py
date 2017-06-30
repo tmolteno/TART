@@ -133,7 +133,7 @@ def get_status_channel_i(channel_idx):
 @app.route('/mode/current', methods=['GET',])
 def get_current_mode():
     """
-    @api {get} /mode/ Request telescope operating mode
+    @api {get} /mode/current Request current telescope operating mode
     @apiGroup mode
 
     @apiName get_current_mode
