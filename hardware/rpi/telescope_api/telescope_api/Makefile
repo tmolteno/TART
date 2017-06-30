@@ -1,4 +1,4 @@
 apidoc:
-	apidoc
-	rm -rf /var/www/html/doc
-	mv doc /var/www/html/doc
+	sed "s/localhost/`hostname`/g" -i apidoc.json
+	apidoc -i ./ -o /var/www/html/doc
+	sed "s/`hostname`/localhost/g" -i apidoc.json
