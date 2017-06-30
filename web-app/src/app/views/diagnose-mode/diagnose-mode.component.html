@@ -13,8 +13,8 @@
                 <div class="col-sm-12">
                     <h5>{{statusKey}}</h5>
                 </div>
-                <div *ngIf='getType(fpgaStatus[statusKey]) === "object"'>
-                    <div class="status-content col-sm-1" *ngFor='let key of fpgaStatus[statusKey] | keys'>
+                <div class="row col-sm-12" *ngIf='getType(fpgaStatus[statusKey]) === "object"'>
+                    <div class="col-sm-2 col-lg-1 status-content" *ngFor='let key of fpgaStatus[statusKey] | keys'>
                         <span class="btn btn-outline-info btn-sm inline-btn">{{key}}</span><span class="object-value"> {{fpgaStatus[statusKey][key]}}</span>
                     </div>
                 </div>

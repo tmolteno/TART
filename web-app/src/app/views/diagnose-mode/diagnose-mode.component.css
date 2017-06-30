@@ -8,8 +8,11 @@
 .status-row {
     margin-bottom: 16px;
 }
-.inline-btn, .status-content {
+.inline-btn {
     display: inline !important;
+}
+.status-content {
+    padding:0px;
 }
 
 .channel-card {
