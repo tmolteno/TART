@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 @Injectable()
 export class ModeService {
 
-    public operatingModes: string[] = [];
+    public operatingModes: string[] = ['off', 'diag', 'raw', 'vis', 'cal'];
     private apiUrl: string = '';
 
     private modes$: Observable<string[]>;
@@ -22,12 +22,6 @@ export class ModeService {
         this.modes$ = new Observable(observer => {
             this.modeObserver = observer;
         }).share();
-
-        this.getModes()
-            .subscribe(modes => {
-                this.operatingModes = modes;
-                this.modeObserver.next(this.operatingModes);
-            });
     }
 
     getModes() {
@@ -40,7 +34,7 @@ export class ModeService {
     getOperatingMode() {
         return this.http.get(`${this.apiUrl}/mode/current`)
             .map((res: Response) => {
-                return res.json().mode; // TODO: extract mode string and return that?
+                return res.json().mode;
             })
     }
 

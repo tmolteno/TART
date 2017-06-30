@@ -13,7 +13,6 @@ import { TartService } from './services/tart.service';
 
 import { AppComponent } from './app.component';
 /** Views */
-import { StatusComponent } from './views/status/status.component';
 import { ModeComponent } from './views/mode/mode.component';
 import { LoginComponent } from './views/login/login.component';
 
@@ -73,7 +72,6 @@ const appRoutes = [
   declarations: [
     AppComponent,
     KeysPipe,
-    StatusComponent,
     StatusRowHeaderComponent,
     NavBarComponent,
     LoginComponent,

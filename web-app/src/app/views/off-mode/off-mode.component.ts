@@ -19,20 +19,36 @@ export class OffModeComponent implements OnInit {
     ) { }
 
     ngOnInit() {
+        let isTokenValid = this.authService.isTokenValid();
         if (!this.authService.isTokenValid()
             && this.router.url === '/off-mode') {
             this.router.navigateByUrl('/');
-        }  else {
-            this.modeService.setOperatingMode('off')
-                .subscribe(res => {
-                    console.log('set off mode!');
-                    // TODO: get and display data for this mode
-                });
+        }  else if (isTokenValid) {
+            this.setOffMode();
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/off-mode') {
                 this.router.navigateByUrl('/');
             }
         });
+    }
+
+    setOffMode() {
+        this.modeService.setOperatingMode('off')
+            .subscribe(res => {
+                console.log('set off mode!');
+                if (res.mode !== 'off') {
+                    this.setOffMode();
+                }
+            });
+    }
+
+    checkCorrectMode() {
+        this.modeService.getOperatingMode()
+            .subscribe(mode => {
+                if (mode !== 'off') {
+                    this.setOffMode();
+                }
+            })
     }
 }
