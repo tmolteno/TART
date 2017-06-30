@@ -33,6 +33,7 @@ When done boot up raspberry pi.
     sudo mkdir /data
     chown -R pi:pi /data
     sudo mkdir -p /var/www/html/assets/img/
+    sudo mkdir -p /var/www/html/doc
     chown -R pi:pi /var/www/html/
 ```
 ## Update to latest firmware
@@ -41,7 +42,13 @@ When done boot up raspberry pi.
     sudo apt-get dist-upgrade
     sudo apt-get aptitude
 
-    sudo aptitude install python-setuptools ntp python-dev autossh git
+    sudo apt-get install python-setuptools ntp python-dev autossh git
+  
+    sudo apt-get install npm 
+    sudo npm cache clean -f
+    sudo npm install -g n
+    sudo n stable
+    sudo npm install apidoc -g
 ```
 
 ## Clone TART project repository
@@ -56,16 +63,33 @@ When done boot up raspberry pi.
     sudo aptitude install nginx
 ```
 
+### Configure NGINX
+Edit /etc/nginx/sites-available/default
+```
+	...
+        server_name _;
+	
+        location /api/v1 {
+                rewrite ^/api/v1(.*) /$1 break;
+                proxy_pass http://127.0.0.1:5000;
+        }
+
+        location / {
+	...
+```
+
 ### Install SPI driver communication with FPGA
 ```
     cd tart_dsp
     sudo python setup.py develop
 ```
 
-### Install telescope API
+### Install telescope API and APIDOC
 ```
     cd telescope_api
     sudo python setup.py develop
+    cd telescope_api
+    make
 ```
 
 #### Run telescope API
