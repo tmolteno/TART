@@ -1,6 +1,6 @@
 from flask import Flask
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, send_file
 from flask_jwt import jwt_required, current_identity
 
 from telescope_api import app, get_config
@@ -129,17 +129,31 @@ def get_status_channel_i(channel_idx):
     else:
       return jsonify({})
 
-@app.route('/mode/', methods=['GET',])
-def get_mode():
+
+@app.route('/mode/current', methods=['GET',])
+def get_current_mode():
     """
-    @api {get} /mode/ Request telescope operating mode
+    @api {get} /mode/current Request current telescope operating mode
     @apiGroup mode
 
-    @apiName get_mode
+    @apiName get_current_mode
     @apiSuccess {String} mode Current mode of the telescope.
     """
     runtime_config = get_config()
     return jsonify({'mode':runtime_config['mode']})
+
+@app.route('/mode', methods=['GET',])
+def get_mode():
+    """
+    @api {get} /mode Request telescopes available operating modes
+    @apiGroup mode
+
+    @apiName get_mode
+    @apiSuccess {String[]} modes Available operating modes.
+    """
+    runtime_config = get_config()
+    return jsonify({'modes':runtime_config['modes_available']})
+
 
 @app.route('/protected')
 @jwt_required()
@@ -154,13 +168,63 @@ def set_mode(mode):
     @apiGroup mode
 
     @apiName set_mode
-    @apiParam {String ="off","diag","raw","vis","cal"} mode Telescope operation mode.
+    @apiParam {String ="off","diag","raw","vis","cal","rt_syn_img"} mode Telescope operation mode.
     @apiSuccess {String} mode Current mode of the telescope.
 
     """
-    if mode in ['off','diag','raw','vis', 'cal']:
-        runtime_config = get_config()
-        runtime_config['mode'] = mode
-    return jsonify({'mode':runtime_config['mode']})
+    runtime_config = get_config()
+    if mode in runtime_config['modes_available']:
+      runtime_config['mode'] = mode
+      return jsonify({'mode':runtime_config['mode']})
+    return jsonify({})
 
 
+@app.route('/loop/<loop_mode>', methods=['POST',])
+def set_loop_mode(loop_mode):
+    """
+    @api {post} /loop/<loop_mode> Set telescopes loop mode.
+    @apiGroup loop_mode
+
+    @apiName set_loop_mode
+    @apiParam {String ="loop","single","loop_n"} mode Telescopes loop mode. Perform single, loop n times or loop indefinit in selected mode before returning to offline mode.
+    @apiSuccess {String} loop_mode Current mode of the telescope.
+
+    """
+    runtime_config = get_config()
+    if loop_mode in runtime_config['loop_mode_available']:
+      runtime_config['loop_mode'] = loop_mode
+      return jsonify({'loop_mode':runtime_config['loop_mode']})
+    return jsonify({})
+
+
+@app.route('/loop/<int:loop_n>', methods=['POST',])
+def set_loop_n(loop_n):
+    """
+    @api {post} /loop/<loop_n> Set telescopes loop mode.
+    @apiGroup loop_mode
+
+    @apiName set_loop_mode
+    @apiParam {int =0-100} loop_n Number of loops in selected mode before returning to offline mode.
+    @apiSuccess {String} loop_mode Current mode of the telescope.
+
+    """
+    runtime_config = get_config()
+    runtime_config['loop_n'] = loop_mode
+    return jsonify({'loop_mode':runtime_config['loop_mode']})
+
+
+
+# Example to serve an image without creating a file.
+#def serve_pil_image(pil_img):
+#    import StringIO
+#    img_io = StringIO.StringIO()
+#    pil_img.save(img_io, 'JPEG', quality=70)
+#    img_io.seek(0)
+#    return send_file(img_io, mimetype='image/jpeg')
+
+#@app.route('/pic')
+#def serve_img():
+#    from PIL import Image
+#    import numpy as np
+#    img = Image.fromarray(np.random.uniform(0,255,(255,255)).astype(np.uint8))
+#    return serve_pil_image(img)

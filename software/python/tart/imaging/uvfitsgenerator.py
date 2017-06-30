@@ -3,7 +3,11 @@ Generate UVFITS file from visibility object.
 '''
 
 
-import pyfits # easy_install pyfits
+try:
+  import pyfits # easy_install pyfits
+except:
+  print 'pyfits not found, try "sudo easy_install pyfits"'
+  pass
 import numpy as np
 
 from tart.imaging import tart_util
