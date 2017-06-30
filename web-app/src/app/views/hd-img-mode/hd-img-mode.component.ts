@@ -22,6 +22,16 @@ export class HdImgModeComponent implements OnInit {
         if (!this.authService.isTokenValid()
             && this.router.url === '/hd-img-mode') {
             this.router.navigateByUrl('/');
+        } else {
+            this.modeService.setOperatingMode('hd_img')
+                .subscribe(
+                res => {
+                    console.log('set hd img mode!');
+                    // TODO: get and display data for this mode
+                },
+                err => {
+                    console.log('it failed :(');
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/hd-img-mode') {
@@ -30,5 +40,4 @@ export class HdImgModeComponent implements OnInit {
         });
         // TODO: swtch mode
   }
-
 }

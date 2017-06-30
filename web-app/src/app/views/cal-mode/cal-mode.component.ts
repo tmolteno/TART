@@ -22,6 +22,12 @@ export class CalModeComponent implements OnInit {
         if (!this.authService.isTokenValid()
             && this.router.url === '/calibrate-mode') {
             this.router.navigateByUrl('/');
+        } else {
+            this.modeService.setOperatingMode('cal')
+                .subscribe(res => {
+                    console.log('set calibrate mode!');
+                    // TODO: get and display data for this mode
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/calibrate-mode') {

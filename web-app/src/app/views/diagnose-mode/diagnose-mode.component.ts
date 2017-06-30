@@ -22,6 +22,12 @@ export class DiagnoseModeComponent implements OnInit {
         if (!this.authService.isTokenValid()
             && this.router.url === '/diag-mode') {
             this.router.navigateByUrl('/');
+        } else {
+            this.modeService.setOperatingMode('diag')
+                .subscribe(res => {
+                    console.log('set diag mode!');
+                    // TODO: get and display data for this mode (fgpa and status)
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/diag-mode') {

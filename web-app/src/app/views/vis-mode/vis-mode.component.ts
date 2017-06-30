@@ -22,6 +22,12 @@ export class VisModeComponent implements OnInit {
         if (!this.authService.isTokenValid()
             && this.router.url === '/vis-data-mode') {
             this.router.navigateByUrl('/');
+        } else {
+            this.modeService.setOperatingMode('vis')
+                .subscribe(res => {
+                    console.log('set vis data mode!');
+                    // TODO: get and display data for this mode
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/vis-data-mode') {

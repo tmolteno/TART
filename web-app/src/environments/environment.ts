@@ -5,5 +5,5 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://tart2-raspberry:5000'
+  apiUrl: 'http://tart2-pear:5000'
 };

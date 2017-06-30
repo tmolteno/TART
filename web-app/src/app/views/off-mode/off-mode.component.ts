@@ -22,6 +22,12 @@ export class OffModeComponent implements OnInit {
         if (!this.authService.isTokenValid()
             && this.router.url === '/off-mode') {
             this.router.navigateByUrl('/');
+        }  else {
+            this.modeService.setOperatingMode('off')
+                .subscribe(res => {
+                    console.log('set off mode!');
+                    // TODO: get and display data for this mode
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/off-mode') {

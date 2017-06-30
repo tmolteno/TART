@@ -3,6 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
+import { NgLoadingBarModule } from 'ng-loading-bar';
 
 import { KeysPipe } from './keys-pipe';
 /** Services */
@@ -88,6 +89,7 @@ const appRoutes = [
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
+    NgLoadingBarModule.forRoot(),
     BrowserModule,
     FormsModule,
     HttpModule

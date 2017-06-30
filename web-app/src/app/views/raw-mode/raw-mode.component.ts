@@ -22,6 +22,12 @@ export class RawModeComponent implements OnInit {
         if (!this.authService.isTokenValid()
             && this.router.url === '/raw-data-mode') {
             this.router.navigateByUrl('/');
+        }  else {
+            this.modeService.setOperatingMode('raw')
+                .subscribe(res => {
+                    console.log('set raw data mode!');
+                    // TODO: get and display data for this mode
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/raw-data-mode') {
