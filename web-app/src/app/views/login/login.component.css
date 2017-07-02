@@ -1,16 +1,8 @@
 #login-component {
     padding-top: 80px;
 }
-#login-form-row {
-    margin-top: 40px;
-}
 
-@media (max-width: 767px) {
-    #login-component {
-        padding-top: 20px;
-    }
-    #admin-login-btn {
-        width: 100%;
-        margin-top: 20px;
-    }
+#admin-login-btn {
+    margin-top: 8px;
+    width: 100%;
 }

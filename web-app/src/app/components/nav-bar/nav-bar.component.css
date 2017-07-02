@@ -1,3 +1,7 @@
 .bg-light-grey {
     background-color: #e0e0e0 !important;
 }
+
+#loginBtn {
+    cursor: pointer;
+}

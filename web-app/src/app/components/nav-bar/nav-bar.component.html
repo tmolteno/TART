@@ -9,8 +9,13 @@
                 <a class="nav-link" href="#" routerLink="/login" (click)="onLogoutClick()" >Logout</a>
             </li>
             <li *ngIf="!isLoggedIn" class="nav-item">
-                <a class="nav-link" href="#" routerLink="/login" routerLinkActive="active">Login</a>
-                <!--a class="nav-link" href="#" data-toggle="popover" data-placement="bottom">Login</a-->
+                <popover-content #loginPopover
+                    id="loginPopover"
+                    title="Admin Login"
+                    [closeOnClickOutside]="true">
+                    <app-login></app-login>
+                </popover-content>
+                <span id="loginBtn" [popover]="loginPopover" class="nav-link" href="#">Login</span>
             </li>
         </ul>
     </div>
