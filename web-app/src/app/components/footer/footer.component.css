@@ -8,3 +8,6 @@ footer {
 .footer-right {
     float: right;
 }
+.footer-right > a {
+    margin-left: 20px;
+}

@@ -1,0 +1,63 @@
+<div id="imaging-container" class="row center-horizontal">
+    <!--canvas
+        id="imaging-canvas"
+        #imagingCanvas
+        width={{canvasSize}}
+        height={{canvasSize}}>Loading...</canvas-->
+    <div id="imaging-image-container" [class.center-image-container]="isHeightBigger">
+        <img
+            (window:resize)="updateImageSize($event)"
+            src="image.png"
+            height={{canvasSize}}
+            width={{canvasSize}} />
+    </div>
+    <div id="imaging-config-container" [class.tall-view]="isHeightBigger">
+        <h3>Configure Visibles</h3>
+        <!-- num_bin = number of bins/cells 2^5 -> 2^12 default 2^7 -->
+        <div class="form-group row config-row"><!-- TODO: componentize this -->
+            <label for="num-bins-input" class="col-3 col-form-label">
+                number of bins (2<sup>n</sup>)
+            </label>
+            <div class="col-9">
+                <input
+                    id="num-bins-input"
+                    class="form-control"
+                    type="number"
+                    value={{defaultBins}}>
+            </div>
+        </div>
+        <!-- numw = number of wave lengths 10 -> 100 default 36 -->
+        <div class="form-group row config-row">
+            <label for="num-waves-input" class="col-3 col-form-label">
+                number of waves
+            </label>
+            <div class="col-9">
+                <input
+                    id="num-bins-input"
+                    class="form-control"
+                    type="number"
+                    value={{defaultWaves}}>
+            </div>
+        </div>
+        <!-- refresh timer (5 sec default) -->
+        <div class="form-group row config-row">
+            <label for="refresh-timer-input" class="col-3 col-form-label">
+                refresh timer (seconds)
+            </label>
+            <div class="col-9">
+                <input
+                    id="refresh-timer-input"
+                    class="form-control"
+                    type="number"
+                    value={{defaultRefreshTime}}>
+            </div>
+        </div>
+        <div class="form-group row config-row">
+            <div class="col-sm-12">
+                <button (click)="drawImage()" class="btn btn-primary float-right">Display</button>
+            </div>
+        </div>
+        <!--api/v1/imaging/timestamp -->
+        <!-- api/v1/imaging/vis -->
+    </div>
+</div>

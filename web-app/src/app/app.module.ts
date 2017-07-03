@@ -27,6 +27,7 @@ import { HomeComponent } from './views/home/home.component';
 import { StatusRowHeaderComponent } from './components/status-row-header/status-row-header.component';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { FooterComponent } from './components/footer/footer.component';
+import { ImagingComponent } from './components/imaging/imaging.component';
 /** Routes */
 const appRoutes = [
     {
@@ -83,7 +84,8 @@ const appRoutes = [
     VisModeComponent,
     CalModeComponent,
     HdImgModeComponent,
-    HomeComponent
+    HomeComponent,
+    ImagingComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),

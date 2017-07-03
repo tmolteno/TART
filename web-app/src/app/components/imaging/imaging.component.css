@@ -1,0 +1,28 @@
+
+.center-horizontal {
+    margin: 0 auto;
+}
+
+#imaging-image-container {
+    display: inline-block;
+    /** margin-right: 20px; */
+}
+
+#imaging-config-container {
+    width: 49%;
+    display: inline-block;
+    margin-left: 12px;
+}
+.config-row {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.tall-view {
+    margin-top: 20px;
+    width: 100% !important;
+    margin-left: 0px !important;
+}
+.center-image-container {
+    margin: auto;
+}
