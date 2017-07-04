@@ -2,7 +2,7 @@
   "name": "vis_imaging",
   "version": "1.0.0",
   "description": "Synthesis Imaging from visibilities provided by the TART.",
-  "main": "./src/synthesis.js",
+  "main": "./src/api_synthesis.js",
   "dependencies": {
     "jpeg-js": "^0.3.3",
     "json": "^9.0.6",

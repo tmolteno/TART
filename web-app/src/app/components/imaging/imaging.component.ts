@@ -2,7 +2,7 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/forkJoin';
-import { imaging } from 'vis_imaging';
+import { gen_image } from 'vis_imaging';
 
 @Component({
     selector: 'app-imaging',
@@ -52,10 +52,9 @@ export class ImagingComponent {
                 let visData = result[0];
                 let antennaPos = result[1];
 
-                let genImg = imaging.gen_image(visData, antennaPos, 36, 2**7);
-                let genImgData = genImg.getImageData.getContext('2d')
-                    .getImageData(0, 0, genImgData.width, genImgData.height);
-                var myCanvas = document.getElementById('my-canvas');
+                let genImg = gen_image(visData, antennaPos, 36, 2**7);
+                let genImgData = genImg.getContext('2d').getImageData(0, 0, genImg.width, genImg.height);
+                var myCanvas:HTMLElement = document.getElementById('my-canvas');
                 var ctx = myCanvas.getContext('2d');
                 ctx.putImageData(genImgData, 0, 0);
             });
