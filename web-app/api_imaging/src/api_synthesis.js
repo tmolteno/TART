@@ -63,7 +63,7 @@ function abs(real, imag){
 }
 
 
-function gen_image(vis, ant_pos, nw, num_bin){
+var gen_image = function(vis, ant_pos, nw, num_bin){
     var L1_WAVELENGTH = 0.1905; // meter
     var uu_a = [];
     var vv_a = [];
@@ -124,6 +124,7 @@ function gen_image(vis, ant_pos, nw, num_bin){
 
 module.exports = {
   gen_image: gen_image,
+  hi: "omg it works!"
 }
 
 

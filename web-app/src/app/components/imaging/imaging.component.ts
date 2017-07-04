@@ -1,8 +1,8 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
+const thing = require('vis_imaging/src/api_synthesis');
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/forkJoin';
-import { gen_image } from 'vis_imaging';
 
 @Component({
     selector: 'app-imaging',
@@ -10,7 +10,7 @@ import { gen_image } from 'vis_imaging';
     styleUrls: ['./imaging.component.css']
 })
 export class ImagingComponent {
-    //@ViewChild('imagingCanvas') imagingCanvas: ElementRef;
+    @ViewChild('my-canvas') imagingCanvas: ElementRef;
 
     canvasSizeModifier = 0.8;
     // number of bins picker settings
@@ -37,8 +37,9 @@ export class ImagingComponent {
     }
 
     ngAfterViewInit() {
-        console.log("afterViewInit called")
-
+        
+        console.log("afterViewInit called");
+        console.log(thing.hi);
         this.drawImage();
     }
 
@@ -51,11 +52,10 @@ export class ImagingComponent {
             ]).subscribe(result => {
                 let visData = result[0];
                 let antennaPos = result[1];
-
-                let genImg = gen_image(visData, antennaPos, 36, 2**7);
+                console.log("result: " + JSON.stringify(result));
+                let genImg = thing.gen_image(visData, antennaPos, 36, 2**7);
                 let genImgData = genImg.getContext('2d').getImageData(0, 0, genImg.width, genImg.height);
-                var myCanvas:HTMLElement = document.getElementById('my-canvas');
-                var ctx = myCanvas.getContext('2d');
+                var ctx = this.imagingCanvas.nativeElement.getContext('2d');
                 ctx.putImageData(genImgData, 0, 0);
             });
         // call draw jpg code, then display jpg in window

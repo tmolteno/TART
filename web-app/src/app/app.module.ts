@@ -7,6 +7,7 @@ import { NgLoadingBarModule } from 'ng-loading-bar';
 import { PopoverModule } from 'ngx-popover';
 import { KeysPipe } from './keys-pipe';
 import { NouisliderModule } from 'ng2-nouislider';
+
 /** Services */
 import { ModeService } from './services/mode.service';
 import { AuthService } from './services/auth.service';
