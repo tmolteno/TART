@@ -4,14 +4,10 @@
   "description": "Synthesis Imaging from visibilities provided by the TART.",
   "main": "./src/synthesis.js",
   "dependencies": {
-    "axios": "^0.16.2",
-    "file-system": "^2.2.2",
-    "fs": "0.0.1-security",
     "jpeg-js": "^0.3.3",
     "json": "^9.0.6",
     "linspace": "^1.0.0",
     "ndarray-fft": "^1.0.3",
-    "ndarray-ops": "^1.2.2",
     "request": "^2.81.0",
     "save-pixels": "^2.3.4",
     "zeros": "^1.0.0"
