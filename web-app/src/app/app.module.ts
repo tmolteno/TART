@@ -4,12 +4,14 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { NgLoadingBarModule } from 'ng-loading-bar';
-import { PopoverModule } from '../../node_modules/ngx-popover';
+import { PopoverModule } from 'ngx-popover';
 import { KeysPipe } from './keys-pipe';
+import { NouisliderModule } from 'ng2-nouislider';
 /** Services */
 import { ModeService } from './services/mode.service';
 import { AuthService } from './services/auth.service';
 import { TartService } from './services/tart.service';
+import { ImagingService } from './services/imaging.service';
 
 import { AppComponent } from './app.component';
 /** Views */
@@ -28,6 +30,7 @@ import { StatusRowHeaderComponent } from './components/status-row-header/status-
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { ImagingComponent } from './components/imaging/imaging.component';
+import { VisiblesConfigSliderComponent } from './components/visibles-config-slider/visibles-config-slider.component';
 /** Routes */
 const appRoutes = [
     {
@@ -85,7 +88,8 @@ const appRoutes = [
     CalModeComponent,
     HdImgModeComponent,
     HomeComponent,
-    ImagingComponent
+    ImagingComponent,
+    VisiblesConfigSliderComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
@@ -93,12 +97,14 @@ const appRoutes = [
     BrowserModule,
     FormsModule,
     HttpModule,
-    PopoverModule
+    PopoverModule,
+    NouisliderModule
   ],
   providers: [
       TartService,
       AuthService,
-      ModeService
+      ModeService,
+      ImagingService
   ],
   bootstrap: [AppComponent]
 })

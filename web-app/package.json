@@ -22,16 +22,19 @@
     "@angular/router": "^3.3.1",
     "core-js": "^2.4.1",
     "ng-loading-bar": "0.0.8",
+    "ng2-nouislider": "^1.6.1",
     "ngx-popover": "0.0.16",
+    "nouislider": "^9.2.0",
     "rxjs": "^5.0.1",
     "ts-helpers": "^1.1.1",
-    "zone.js": "^0.7.2"
+    "zone.js": "^0.7.2",
+    "vis_imaging": "file:api_imaging/index.js"
   },
   "devDependencies": {
     "@angular/compiler-cli": "^2.3.1",
     "@types/jasmine": "2.5.38",
     "@types/node": "^6.0.42",
-    "angular-cli": "^1.0.0-beta.28.3",
+    "@angular/cli": "^1.0.0-beta.28.3",
     "codelyzer": "~2.0.0-beta.1",
     "jasmine-core": "2.5.2",
     "jasmine-spec-reporter": "2.5.0",
@@ -44,5 +47,13 @@
     "ts-node": "1.2.1",
     "tslint": "^4.3.0",
     "typescript": "~2.0.3"
+  },
+  "nouislider": {
+    "main": "distribute/nouislider.js",
+    "defaultExtension": "js"
+  },
+  "ng2-nouislider": {
+    "main": "src/nouislider.js",
+    "defaultExtension": "js"
   }
 }

@@ -1,0 +1,19 @@
+<div class="form-group row config-row">
+    <div class="col-12">
+        <label for="num-bins-input" class="col-3 col-form-label">
+            {{labelText}}
+        </label>
+        <span>
+            {{labelValue}}
+        </span>
+    </div>
+    <div class="col-12">
+        <nouislider
+            [min]="minValue"
+            [max]="maxValue"
+            [step]="stepSize"
+            (slide)="onSliderSlide($event)"
+            [(ngModel)]="sliderValue">
+        </nouislider>
+    </div>
+</div>
