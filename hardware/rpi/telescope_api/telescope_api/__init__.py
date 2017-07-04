@@ -59,6 +59,10 @@ def tart_p():
           runtime_config['acquire'] = True
           run_acquire_raw(telescope_instance, runtime_config)
 
+      elif runtime_config['mode'] == 'vis':
+          runtime_config['acquire'] = False
+          vis_to_dict(telescope_instance, runtime_config)
+
       elif runtime_config['mode'] == 'rt_syn_img':
           runtime_config['acquire'] = False
           vis_to_latest_image(telescope_instance, runtime_config)
@@ -90,7 +94,7 @@ runtime_config['centre'] = True
 runtime_config['blocksize'] = 22
 runtime_config['modes_available'] = ['off','diag','raw','vis', 'cal', 'rt_syn_img']
 runtime_config['mode'] = 'off'
-runtime_config['loop_mode'] = 'loop_n'
+runtime_config['loop_mode'] = 'loop'
 runtime_config['loop_mode_available'] = ['loop','single','loop_n']
 runtime_config['loop_n'] = 5
 runtime_config['loop_idx'] = 0

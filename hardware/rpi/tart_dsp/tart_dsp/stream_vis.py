@@ -213,3 +213,44 @@ def vis_to_latest_image(tart_instance, runtime_config,):
     vis_calc_p.join()
     capture_p.join()
     print 'stopped'
+
+
+
+def vis_to_dict(tart_instance, runtime_config,):
+    '''take vis off queue and synthesize and image'''
+    vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
+    while (runtime_config['mode'] =='vis'):
+        vis = None
+        while vis_q.qsize()>0:
+            vis, means = vis_q.get()
+            #print 'here', vis
+        if vis is not None:
+            d = {}
+            for (b, v) in zip(vis.baselines, vis.v):
+                key = str(b)
+                d[key] = (v.real, v.imag)
+            print 'here'
+            runtime_config['vis_current'] = d
+            runtime_config['vis_antenna_positions'] = vis.config.ant_positions
+            runtime_config['vis_timestamp'] = vis.timestamp
+
+            if runtime_config.has_key('loop_mode'):
+                if runtime_config['loop_mode']=='loop_n':
+                    runtime_config['loop_idx'] += 1
+                    print runtime_config['loop_idx']
+                    if runtime_config['loop_idx'] == runtime_config['loop_n']:
+                        runtime_config['loop_idx'] = 0
+                        runtime_config['mode'] = 'off'
+
+        else:
+          time.sleep(0.05)
+    print 'stopping'
+    capture_cmd_q.put('stop')
+    vis_calc_cmd_q.put('stop')
+    vis_calc_p.join()
+    capture_p.join()
+    print 'stopped'
+
+
+
+

@@ -212,8 +212,50 @@ def set_loop_n(loop_n):
     runtime_config['loop_n'] = loop_mode
     return jsonify({'loop_mode':runtime_config['loop_mode']})
 
+@app.route('/imaging/vis')
+def get_latest_vis():
+    """
+    @api {get} /imaging/vis Request latest visibilities.
+    @apiGroup imaging
 
+    @apiName get_latest_vis
+    @apiSuccess {Object[]} vis Get visibilities.
+    """
+    runtime_config = get_config()
+    if runtime_config.has_key('vis_current'):
+        return jsonify(runtime_config['vis_current'])
+    else:
+        return jsonify({})
 
+@app.route('/imaging/antenna_positions')
+def get_imaging_antenna_positions():
+    """
+    @api {get} /imaging/antenna_positions Request antenna_positions.
+    @apiGroup imaging
+
+    @apiName get_imaging_antenna_positions
+    @apiSuccess {Object[]} antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
+    """
+    runtime_config = get_config()
+    if runtime_config.has_key('vis_antenna_positions'):
+        return jsonify(runtime_config['vis_antenna_positions'])
+    else:
+        return jsonify({})
+
+@app.route('/imaging/timestamp')
+def get_imaging_timestamp():
+    """
+    @api {get} /imaging/timestamp Request timestamp.
+    @apiGroup imaging
+
+    @apiName get_imaging_timestamp
+    @apiSuccess {Object[]} timestamp Get timestamp.
+    """
+    runtime_config = get_config()
+    if runtime_config.has_key('vis_timestamp'):
+        return jsonify(runtime_config['vis_timestamp'])
+    else:
+        return jsonify({})
 # Example to serve an image without creating a file.
 #def serve_pil_image(pil_img):
 #    import StringIO
