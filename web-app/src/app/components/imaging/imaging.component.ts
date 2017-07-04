@@ -1,6 +1,6 @@
+const visImaging = require('vis_imaging/src/api_synthesis');
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
-const thing = require('vis_imaging/src/api_synthesis');
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/forkJoin';
 
@@ -10,7 +10,7 @@ import 'rxjs/add/observable/forkJoin';
     styleUrls: ['./imaging.component.css']
 })
 export class ImagingComponent {
-    @ViewChild('my-canvas') imagingCanvas: ElementRef;
+    @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
 
     canvasSizeModifier = 0.8;
     // number of bins picker settings
@@ -37,30 +37,33 @@ export class ImagingComponent {
     }
 
     ngAfterViewInit() {
-        
-        console.log("afterViewInit called");
-        console.log(thing.hi);
+        //this.imagingCanvas.nativeElement.width = 50; // TODO: calcualate size of canvas
+        //this.imagingCanvas.nativeElement.height = 50;
         this.drawImage();
     }
 
     drawImage() {
-        //let visData = ;
-        //let antennaPos = ;
         Observable.forkJoin([
-                this.imagingService.getVis(),
-                this.imagingService.getAntennaPositions()
-            ]).subscribe(result => {
-                let visData = result[0];
-                let antennaPos = result[1];
-                console.log("result: " + JSON.stringify(result));
-                let genImg = thing.gen_image(visData, antennaPos, 36, 2**7);
-                let genImgData = genImg.getContext('2d').getImageData(0, 0, genImg.width, genImg.height);
-                var ctx = this.imagingCanvas.nativeElement.getContext('2d');
-                ctx.putImageData(genImgData, 0, 0);
-            });
+            this.imagingService.getVis(),
+            this.imagingService.getAntennaPositions()
+        ]).subscribe(result => {
+
+            let visData = result[0];
+            let antennaPos = result[1];
+            let genImg = visImaging.gen_image(visData, antennaPos, 36, 2**7);
+
+            let img = new Image();
+            img.onload = () => {
+                let ctx = this.imagingCanvas.nativeElement.getContext('2d');
+                let widthScale = this.imagingCanvas.nativeElement.width / genImg.width;
+                let heightScale = this.imagingCanvas.nativeElement.height / genImg.height;
+                ctx.scale(widthScale, heightScale);
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = genImg.toDataURL();
+        });
         // call draw jpg code, then display jpg in window
         // TODO: more important to redraw current data than get new data
-        console.log("drawing visibles");
     }
 
     onNumBinsChanged(value) {

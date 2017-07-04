@@ -17,10 +17,6 @@
 #num-bins-input {
     margin-left: 16px;
 }
-.config-row { /* TODO: delete when config slider component is implemented. */
-    margin-top: 20px;
-    width: 100%;
-}
 
 .tall-view {
     margin-top: 20px;

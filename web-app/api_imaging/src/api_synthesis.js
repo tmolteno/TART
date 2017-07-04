@@ -123,8 +123,5 @@ var gen_image = function(vis, ant_pos, nw, num_bin){
 
 
 module.exports = {
-  gen_image: gen_image,
-  hi: "omg it works!"
+  gen_image: gen_image
 }
-
-
