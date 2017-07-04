@@ -4,18 +4,24 @@
 
 ```npm install``` to install node packages
 
-```npm install -g angular-cli``` to install angular cli
-
 ## Development server
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `npm run ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+<br/><br/>
+Note: when running in development mode, all API requests will be made to `http://tart2-raspberry/api/v1`.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag and `--env=prod` for a production build.
+Run `npm run ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag and `--env=prod` for a production build.
+<br/><br/>
+Note: when running a development build, all API requests will be made to `http://tart2-raspberry/api/v1`. In a production build, the API requests will be made to `http://<hostname>/api/v1`
+
+## Deploy build to TARTs
+Upload build in `./dist/` to `/var/www/html/` on target hosts.
+`make upload`
 
 ## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `npm run ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
 ## Running end-to-end tests
 
