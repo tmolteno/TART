@@ -2,7 +2,6 @@
 // npm init
 // npm install zeros ndarray-fft ndarray-ops save-pixels fs linspace --save
 
-var axios = require('axios');
 var zeros = require("zeros")
 var ndarray = require("ndarray")
 var ops = require("ndarray-ops")
@@ -11,15 +10,16 @@ var savePixels = require("save-pixels")
 var linspace = require('linspace');
 
 
-var api_endpoint = "http://tart2-raspberry/api/v1"
-
-function api_get_vis(){
-  return axios.get(api_endpoint+'/imaging/vis');
-}
-
-function api_get_antenna_positions(){
-  return axios.get(api_endpoint+'/imaging/antenna_positions');
-}
+// var axios = require('axios');
+// var api_endpoint = "http://tart2-raspberry/api/v1"
+//
+// function api_get_vis(){
+//   return axios.get(api_endpoint+'/imaging/vis');
+// }
+//
+// function api_get_antenna_positions(){
+//   return axios.get(api_endpoint+'/imaging/antenna_positions');
+// }
 
 
 function number_of_bins_lt_x(array, x){
@@ -36,10 +36,10 @@ function number_of_bins_lt_x(array, x){
   return ret
 }
 
-function ifftshift(array,num_bin){
-  var ret = ndarray(new Float64Array(num_bin**2), array.shape);
+function ifftshift(array){
   arr_len = array.shape[0];
-//   console.log('arrlen', arr_len);
+  var ret = ndarray(new Float64Array(arr_len**2), array.shape);
+  //   console.log('arrlen', arr_len);
   arr_len2 = arr_len/2;
   for(var i=0; i<arr_len; i++){
     for(var j=0; j<arr_len; j++){
@@ -66,113 +66,82 @@ function scale(array){
       array.set(i,j,((255./max) * (array.get(i,j)-min)));
     }
   }
-  return array
+  return array;
 }
 
-function abs(real, imag,num_bin){
-  var ret = ndarray(new Float64Array(num_bin**2), real.shape);
+function abs(real, imag){
+  real_len = real.shape[0]
+  var ret = ndarray(new Float64Array(real_len**2), real.shape);
   for(var i=0; i<real.shape[0]; i++) {
     for(var j=0; j<real.shape[1]; j++) {
       ret.set(i,j, (real.get(i,j)**2 + imag.get(i,j)**2)**(0.5)    );
     }
   }
-  return ret
+  return ret;
 }
 
 
-// var vis = null;
-// var ant_pos = null
-// var L1_WAVELENGTH = 0.1905; // meter
-//
-// var nw = 30; // Number of wavelengths
-// var num_bin = 2**9; // bins in the fft
+function gen_image(vis, ant_pos, nw, num_bin){
+    var L1_WAVELENGTH = 0.1905; // meter
+    var uu_a = [];
+    var vv_a = [];
+    var ww_a = [];
+    var vis_l = [];
+    for(key in vis){
+      var a = eval(key)
+      uu_a.push((ant_pos[a[0]][0] - ant_pos[a[1]][0])/L1_WAVELENGTH);
+      vv_a.push((ant_pos[a[0]][1] - ant_pos[a[1]][1])/L1_WAVELENGTH);
+      ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
+      vis_l.push(vis[key]);
+    }
 
-// api_get_vis()
-// .then(function(data) {
-//   // do something with data
-//   console.log(Object.keys(data));
-//   vis = data.data;
-//   return api_get_antenna_positions();
-// })
-// .then(function(more_data) {
-//   ant_pos = more_data.data;
-//   console.log(Object.keys(more_data));
-//   gen_image_zenith(vis, ant_pos, nw, num_bin, null,'CANVAS')
-// })
-// .catch(function(error){
-//   console.log(error.stack);
-// })
+    var uu_edges = linspace(-nw, nw, num_bin+1);
+    console.log(uu_edges);
+    var vv_edges = linspace(-nw, nw, num_bin+1);
+    var grid_idxs = [];
+    for(var k=0; k<uu_a.length;k++){
+      var uu = uu_a[k];
+      var vv = vv_a[k];
+      i = number_of_bins_lt_x(uu_edges,uu)-1;
+      j = number_of_bins_lt_x(vv_edges,vv)-1;
+      i2 = number_of_bins_lt_x(uu_edges,-uu)-1;
+      j2 = number_of_bins_lt_x(vv_edges,-vv)-1;
+      grid_idxs.push([i,j,i2,j2])
+    }
 
+    var real_part = zeros([num_bin, num_bin]);
+    var imag_part = zeros([num_bin, num_bin]);
 
-function gen_image_zenith(vis,ant_pos,nw, num_bin, out,out_format){
-          var uu_a = [];
-          var vv_a = [];
-          var ww_a = [];
-          var vis_l = [];
-          for(key in vis){
-            var a = eval(key)
-            uu_a.push((ant_pos[a[0]][0] - ant_pos[a[1]][0])/L1_WAVELENGTH);
-            vv_a.push((ant_pos[a[0]][1] - ant_pos[a[1]][1])/L1_WAVELENGTH);
-            ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
-            vis_l.push(vis[key]);
-          }
+    for(var i=0; i<grid_idxs.length;i++){
+      var idx =grid_idxs[i];
+      real_part.set(idx[0],idx[1],vis_l[i][0]);
+      imag_part.set(idx[0],idx[1],vis_l[i][1]);
+      real_part.set(idx[2],idx[3],vis_l[i][0]);
+      imag_part.set(idx[2],idx[3],-vis_l[i][1]);
+    }
 
-          var uu_edges = linspace(-nw, nw, num_bin+1);
-          console.log(uu_edges);
-          var vv_edges = linspace(-nw, nw, num_bin+1);
-          var grid_idxs = [];
-          for(var k=0; k<uu_a.length;k++){
-            var uu = uu_a[k];
-            var vv = vv_a[k];
-            i = number_of_bins_lt_x(uu_edges,uu)-1;
-            j = number_of_bins_lt_x(vv_edges,vv)-1;
-            i2 = number_of_bins_lt_x(uu_edges,-uu)-1;
-            j2 = number_of_bins_lt_x(vv_edges,-vv)-1;
-            grid_idxs.push([i,j,i2,j2])
-          }
+    var shifted_real_part = ifftshift(real_part);
+    var shifted_imag_part = ifftshift(imag_part);
 
-          var real_part = zeros([num_bin, num_bin]);
-          var imag_part = zeros([num_bin, num_bin]);
+    //Invert transform
+    fft(1, shifted_real_part, shifted_imag_part)
 
-          for(var i=0; i<grid_idxs.length;i++){
-            var idx =grid_idxs[i];
-            real_part.set(idx[0],idx[1],vis_l[i][0]);
-            imag_part.set(idx[0],idx[1],vis_l[i][1]);
-            real_part.set(idx[2],idx[3],vis_l[i][0]);
-            imag_part.set(idx[2],idx[3],-vis_l[i][1]);
-          }
+    real_part = ifftshift(shifted_real_part);
+    imag_part = ifftshift(shifted_imag_part);
 
-          var shifted_real_part = ifftshift(real_part,num_bin);
-          var shifted_imag_part = ifftshift(imag_part,num_bin);
+    // Absolute value from real and imag part
+    SAbs = abs(real_part,imag_part);
 
-          //Invert transform
-          fft(1, shifted_real_part, shifted_imag_part)
+    SAbs_scaled = scale(SAbs);
 
-          real_part = ifftshift(shifted_real_part,num_bin);
-          imag_part = ifftshift(shifted_imag_part,num_bin);
+//     console.log(SAbs_scaled);
+    return savePixels(SAbs_scaled, 'CANVAS');
 
-          // Absolute value from real and imag part
-          SAbs = abs(real_part,imag_part, num_bin);
-
-          SAbs_scaled = scale(SAbs);
-
-          console.log(SAbs_scaled);
-          return savePixels(SAbs_scaled, out_format);
-
-
-        };
-//         )
-//       );
-// };
-
-
-function gen_image(vis,ant_pos,nw, num_bin){
-  return gen_image_zenith(vis,ant_pos,nw, num_bin,null, 'CANVAS')
-}
+};
 
 
 module.exports = {
-  gen_image: gen_image
+  gen_image: gen_image,
 }
 
 

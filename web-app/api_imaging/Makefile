@@ -1,7 +1,9 @@
 #install webpack
 # sudo npm install webpack -g
 
+build:
+	npm install
 pack:
 	webpack ./synthesis.js synthesis.bundle.js
-example:
+exa:
 	npm run build-example
