@@ -1,26 +1,9 @@
 
-// npm init
-// npm install zeros ndarray-fft ndarray-ops save-pixels fs linspace --save
-
 var zeros = require("zeros")
 var ndarray = require("ndarray")
-var ops = require("ndarray-ops")
 var fft = require("ndarray-fft")
 var savePixels = require("save-pixels")
 var linspace = require('linspace');
-
-
-// var axios = require('axios');
-// var api_endpoint = "http://tart2-raspberry/api/v1"
-//
-// function api_get_vis(){
-//   return axios.get(api_endpoint+'/imaging/vis');
-// }
-//
-// function api_get_antenna_positions(){
-//   return axios.get(api_endpoint+'/imaging/antenna_positions');
-// }
-
 
 function number_of_bins_lt_x(array, x){
   var ret = 0;
@@ -39,7 +22,6 @@ function number_of_bins_lt_x(array, x){
 function ifftshift(array){
   arr_len = array.shape[0];
   var ret = ndarray(new Float64Array(arr_len**2), array.shape);
-  //   console.log('arrlen', arr_len);
   arr_len2 = arr_len/2;
   for(var i=0; i<arr_len; i++){
     for(var j=0; j<arr_len; j++){
