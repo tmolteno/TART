@@ -33,6 +33,7 @@ import { FooterComponent } from './components/footer/footer.component';
 import { ImagingComponent } from './components/imaging/imaging.component';
 import { VisiblesConfigSliderComponent } from './components/visibles-config-slider/visibles-config-slider.component';
 /** Routes */
+
 const appRoutes = [
     {
         path: 'home',
@@ -68,7 +69,7 @@ const appRoutes = [
     },
     {
         path: '',
-        redirectTo: '/home',
+        redirectTo: 'home',
         pathMatch: 'full'
     }
 ]

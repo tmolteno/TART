@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
-import { environment } from '../../environments/environment';
+import { PlatformLocation } from '@angular/common';
 import 'rxjs/add/operator/map';
 
 @Injectable()
@@ -8,8 +8,11 @@ export class ImagingService {
 
     apiUrl: string = '';
 
-    constructor(private http: Http) {
-        this.apiUrl = environment.apiUrl;
+    constructor(
+        private http: Http,
+        private platformLocation: PlatformLocation
+    ) {
+        this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
     }
 
     getVis() {

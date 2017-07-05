@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Response, RequestOptions, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
-import { environment } from '../../environments/environment';
+import { PlatformLocation } from '@angular/common';
 
 import { AuthService } from './auth.service';
 
@@ -16,9 +16,10 @@ export class ModeService {
 
     constructor(
         private http: Http,
-        private authService: AuthService
+        private authService: AuthService,
+        private platformLocation: PlatformLocation
     ) {
-        this.apiUrl = environment.apiUrl;
+        this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
         this.modes$ = new Observable(observer => {
             this.modeObserver = observer;
         }).share();

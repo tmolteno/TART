@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Response, RequestOptions, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
-import { environment } from '../../environments/environment';
+import { PlatformLocation } from '@angular/common';
 
 import 'rxjs/add/operator/map';
 
@@ -18,8 +18,11 @@ export class AuthService {
     private loginObserver: any;
     private loginStatus: boolean;
 
-    constructor(private http: Http) {
-        this.apiUrl = environment.apiUrl;
+    constructor(
+        private http: Http,
+        private platformLocation: PlatformLocation
+    ) {
+        this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
         this.loginStatus = this.isTokenValid();
         this.login$ = new Observable(observer => {
             this.loginObserver = observer;
