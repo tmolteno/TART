@@ -47,6 +47,7 @@ def tart_p():
   active = 1
   prev_mode = 'off'
   while active:
+      time.sleep(0.1)
       if (prev_mode!=runtime_config['mode']):
           runtime_config['loop_idx'] = 0
           prev_mode = runtime_config['mode']
@@ -54,7 +55,6 @@ def tart_p():
       if runtime_config['mode'] == 'off':
           runtime_config['acquire'] = False
           print 'offline'
-          time.sleep(0.1)
 
       elif runtime_config['mode'] == 'diag':
           runtime_config['acquire'] = False
