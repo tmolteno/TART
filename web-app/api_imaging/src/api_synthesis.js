@@ -52,11 +52,11 @@ function scale(array){
 }
 
 function abs(real, imag){
-  real_len = real.shape[0]
-  var ret = ndarray(new Float64Array(real_len**2), real.shape);
+  real_len = real.shape[0];
+  var ret = ndarray(new Float64Array(Math.pow(real_len,2)), real.shape);
   for(var i=0; i<real.shape[0]; i++) {
     for(var j=0; j<real.shape[1]; j++) {
-      ret.set(i,j, (real.get(i,j)**2 + imag.get(i,j)**2)**(0.5)    );
+      ret.set(i,j, Math.sqrt(Math.pow(real.get(i,j),2) + Math.pow(imag.get(i,j),2))    );
     }
   }
   return ret;
