@@ -62,6 +62,7 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
     active = 1
     while active:
         try:
+            time.sleep(0.01)
             if (cmd_queue.empty() == False):
                 cmd = cmd_queue.get()
                 if cmd == 'stop':
@@ -92,6 +93,7 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
     active = 1
     while active:
         try:
+            time.sleep(0.01)
             if (cmd_queue.empty() == False):
                 cmd = cmd_queue.get()
                 if cmd == 'stop':
@@ -185,6 +187,7 @@ def vis_to_latest_image(tart_instance, runtime_config,):
     vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
     while (runtime_config['mode'] =='rt_syn_img'):
         vis = None
+        time.sleep(0.05)
         while vis_q.qsize()>0:
             vis, means = vis_q.get()
             #print 'here', vis
@@ -221,6 +224,7 @@ def vis_to_dict(tart_instance, runtime_config,):
     vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
     while (runtime_config['mode'] =='vis'):
         vis = None
+        time.sleep(0.05)
         while vis_q.qsize()>0:
             vis, means = vis_q.get()
             #print 'here', vis
