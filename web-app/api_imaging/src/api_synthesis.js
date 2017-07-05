@@ -78,7 +78,6 @@ var gen_image = function(vis, ant_pos, nw, num_bin){
     }
 
     var uu_edges = linspace(-nw, nw, num_bin+1);
-    console.log(uu_edges);
     var vv_edges = linspace(-nw, nw, num_bin+1);
     var grid_idxs = [];
     for(var k=0; k<uu_a.length;k++){
