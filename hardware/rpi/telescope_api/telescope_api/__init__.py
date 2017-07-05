@@ -2,8 +2,7 @@ from tart_dsp.tartspi import *
 from tart_dsp.highlevel_modes_api import *
 from tart_dsp.stream_vis import *
 
-#import threading
-#import atexit
+import os
 
 from flask import Flask
 from flask_cors import CORS, cross_origin
@@ -17,7 +16,13 @@ class User(object):
         self.username = username
         self.password = password
 
-Admin = User(1,'admin','password')
+
+if os.environ.has_key('LOGIN_PW'):
+  pw = os.environ['LOGIN_PW']
+else:
+  pw = 'password'
+
+Admin = User(1,'admin',pw)
 
 def authenticate(username, password):
     if safe_str_cmp(Admin.password.encode('utf-8'), password.encode('utf-8')):
