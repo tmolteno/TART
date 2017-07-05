@@ -21,7 +21,7 @@ function number_of_bins_lt_x(array, x){
 
 function ifftshift(array){
   arr_len = array.shape[0];
-  var ret = ndarray(new Float64Array(arr_len**2), array.shape);
+  var ret = ndarray(new Float64Array(Math.pow(arr_len,2)), array.shape);
   arr_len2 = arr_len/2;
   for(var i=0; i<arr_len; i++){
     for(var j=0; j<arr_len; j++){
