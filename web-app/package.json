@@ -8,7 +8,7 @@
     "raspberry-build": "ng build --prod --base-href /dev/",
     "pear-build": "ng build --prod --base-href /signal/",
     "start": "ng serve",
-    "test": "ng test",
+    "test": "snyk test && ng test",
     "pree2e": "webdriver-manager update --standalone false --gecko false",
     "e2e": "protractor"
   },
@@ -48,7 +48,8 @@
     "protractor": "^5.1.2",
     "ts-node": "1.2.1",
     "tslint": "^4.3.0",
-    "typescript": "~2.0.3"
+    "typescript": "~2.0.3",
+    "snyk": "^1.36.2"
   },
   "nouislider": {
     "main": "distribute/nouislider.js",
