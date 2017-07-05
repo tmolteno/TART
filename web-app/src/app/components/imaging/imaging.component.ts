@@ -50,7 +50,7 @@ export class ImagingComponent {
 
             let visData = result[0];
             let antennaPos = result[1];
-            let genImg = visImaging.gen_image(visData, antennaPos, 36, 2**7);
+            let genImg = visImaging.gen_image(visData, antennaPos, 36, Math.pow(2,7));
 
             let img = new Image();
             img.onload = () => {

@@ -11,7 +11,8 @@ import { ModeService } from '../../services/mode.service';
 })
 export class ModeComponent implements OnInit {
 
-    private currentMode: string = '';
+    currentMode: string = '';
+    //private currentMode: string = '';
 
     constructor(
         private authService: AuthService,
