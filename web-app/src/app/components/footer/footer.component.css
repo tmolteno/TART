@@ -3,11 +3,12 @@ footer {
     padding-right: 20px;
     height: 64px;
     line-height: 64px;
-    font-size: 14px;
+    font-size: 12px;
 }
 .footer-right {
     float: right;
 }
 .footer-right > a {
+    font-size: 14px;
     margin-left: 20px;
 }

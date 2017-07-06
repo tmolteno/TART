@@ -26,15 +26,17 @@ export class ImagingComponent {
     maxWaves: number = 100;
     wavesStep: number = 1;
     wavesLabel: string = "UV-Plane Extend [# wavelengths]"
-    //refresh time settings
+    // refresh time settings
     refreshTime: number = 5;
     minRefreshTime: number = 5;
     maxRefreshTime: number = 60;
     refreshTimeStep: number = 5;
     refreshTimeLabel: string = "Refresh timer (seconds)";
 
-    //flag to block refresh image update
+    // flag to block refresh image update
     blockRefresh: boolean = false;
+    // timer
+    updateImageTimer: any;
 
     constructor(private imagingService: ImagingService) { }
 
@@ -56,10 +58,26 @@ export class ImagingComponent {
     }
 
     ngAfterViewInit() {
-        this.drawImage();
+        this.startUpdateImageTimer();
+    }
+
+    startUpdateImageTimer() {        
+        this.updateImageTimer = Observable.timer(0, this.refreshTime * 1000);
+        this.updateImageTimer.subscribe((tick) => this.onRefreshTimerTick(tick));
+    }
+
+    ngOnDestroy() {
+        this.updateImageTimer.unsubscribe();
+    }
+
+    onRefreshTimerTick(tick) {
+        if (!this.blockRefresh) {
+            this.drawImage();
+        }
     }
 
     drawImage() {
+        this.blockRefresh = true;
         Observable.forkJoin([
             this.imagingService.getVis(),
             this.imagingService.getAntennaPositions()
@@ -80,9 +98,10 @@ export class ImagingComponent {
                 ctx.drawImage(img, 0, 0);
                 ctx.restore();
                 this.blockRefresh = false;
-                // TODO: setup timer to redraw
             };
             img.src = genImg.toDataURL();
+        }, err => {
+            this.blockRefresh = false;
         });
         // call draw jpg code, then display jpg in window
         // TODO: more important to redraw current data than get new data
@@ -91,7 +110,6 @@ export class ImagingComponent {
     onNumBinsChanged(value) {
         if (value !== this.numBins) {
             this.numBins = value;
-            this.blockRefresh = true;
             this.drawImage();
         }
     }
@@ -99,15 +117,15 @@ export class ImagingComponent {
     onNumWavesChanged(value) {
         if (value !== this.waves) {
             this.waves = value;
-            this.blockRefresh = true;
             this.drawImage();
         }
     }
 
     onRefreshTimerChanged(value) {
-        /*if (value !== this.refreshTime) {
+        if (value !== this.refreshTime) {
+            this.updateImageTimer.unsubscribe();
             this.refreshTime = value;
-            // TODO: modify refresh timer
-        }*/
+            this.startUpdateImageTimer();
+        }
     }
 }
