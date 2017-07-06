@@ -2,6 +2,7 @@ const visImaging = require('vis_imaging/src/api_synthesis'); // I would use impo
 import { Component, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
 import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/observable/forkJoin';
 
 @Component({
@@ -40,6 +41,7 @@ export class ImagingComponent {
     blockRefresh: boolean = false;
     // timer
     updateImageTimer: any;
+    timerSubscription: any;
 
     constructor(private imagingService: ImagingService) { }
 
@@ -66,11 +68,12 @@ export class ImagingComponent {
 
     startUpdateImageTimer() {
         this.updateImageTimer = Observable.timer(0, this.refreshTime * 1000);
-        this.updateImageTimer.subscribe((tick) => this.onRefreshTimerTick(tick));
+        this.timerSubscription = this.updateImageTimer
+            .subscribe(tick => this.onRefreshTimerTick(tick));
     }
 
     ngOnDestroy() {
-        this.updateImageTimer.unsubscribe();
+        this.timerSubscription.unsubscribe();
     }
 
     onRefreshTimerTick(tick) {

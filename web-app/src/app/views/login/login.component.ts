@@ -21,12 +21,7 @@ export class LoginComponent implements OnInit {
         private router: Router
     ) { }
 
-    ngOnInit() {
-        this.modeService.getOperatingMode()
-            .subscribe(mode => {
-                this.currentMode = mode;
-            });
-    }
+    ngOnInit() { }
 
     onPasswordKeyPress() {
         this.displayLoginFailMsg = false;
@@ -47,27 +42,35 @@ export class LoginComponent implements OnInit {
     }
 
     redirectToModePage() {
-        switch(this.currentMode) {
-            case 'off':
-                this.router.navigateByUrl('/off-mode');
-                break;
-            case 'diag':
-                this.router.navigateByUrl('/diag-mode');
-                break;
-            case 'raw':
-                this.router.navigateByUrl('/raw-data-mode');
-                break;
-            case 'vis':
-                this.router.navigateByUrl('/vis-data-mode');
-                break;
-            case 'cal':
-                this.router.navigateByUrl('/calibrate-mode');
-                break;
-            case 'hd_img':
-                this.router.navigateByUrl('/hd-img-mode');
-                break;
-            default:
-                break;
-        }
+
+        this.modeService.getOperatingMode()
+            .subscribe(mode => {
+                console.log("mode get " + mode);
+                switch(mode) {
+                    case 'off':
+                        this.router.navigateByUrl('off-mode');
+                        break;
+                    case 'diag':
+                        this.router.navigateByUrl('diag-mode');
+                        break;
+                    case 'raw':
+                        this.router.navigateByUrl('raw-data-mode');
+                        break;
+                    case 'vis':
+                        this.router.navigateByUrl('vis-data-mode');
+                        break;
+                    case 'cal':
+                        this.router.navigateByUrl('calibrate-mode');
+                        break;
+                    case 'hd_img':
+                        this.router.navigateByUrl('hd-img-mode');
+                        break;
+                    default:
+                        break;
+                }
+            },
+            err => {
+                console.log(`something broke: ${err.message}`);
+            });
     }
 }
