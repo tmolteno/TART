@@ -141,10 +141,6 @@ RUN TART in raw data acquisition mode
 
 def run_acquire_raw(tart, runtime_config):
 
-    if not runtime_config.has_key('sample_delay'):
-        print 'no sample_delay determinded yet. running diagnostic'
-        run_diagnostic(tart, runtime_config)
-
     tart.reset()
     tart.debug(on=not runtime_config['acquire'], \
                 shift=runtime_config['shifter'], \

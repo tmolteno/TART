@@ -256,6 +256,28 @@ def get_imaging_timestamp():
         return jsonify(runtime_config['vis_timestamp'])
     else:
         return jsonify({})
+
+
+@app.route('/acquire/raw/save/<int:flag>', methods=['POST','GET'])
+def set_raw_save_flag(flag):
+    """
+    @api {post} /acquire/raw/save/<flag> Set save_flag for raw data acquisition.
+    @apiGroup Acquisition
+
+    @apiName set_raw_save_flag
+    @apiParam {int =0-1} flag Default 0. To enable saving after acquistion set to 1.
+    @apiSuccess {String} loop_mode Current mode of the telescope.
+
+    """
+    runtime_config = get_config()
+    # Assign dict. update value. reassign updated dict to runtime config.
+    # This makes sure the multiprossing manager updates the resource across the other processes.
+    r = runtime_config['raw']
+    r['save'] = flag
+    runtime_config['raw'] = r
+    return jsonify({'save':runtime_config['raw']['save']})
+
+
 # Example to serve an image without creating a file.
 #def serve_pil_image(pil_img):
 #    import StringIO

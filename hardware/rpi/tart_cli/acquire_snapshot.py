@@ -41,4 +41,4 @@ if __name__ == '__main__':
   runtime_config['diagnostic'] = {'num_ant': 24, 'N_samples' : 100, 'stable_threshold' : 0.95}
 
   tart = TartSPI(speed=runtime_config['spi_speed'])
-  highlevel_modes_api.run_acquire_raw(tart, runtime_config)
+  run_acquire_raw(tart, runtime_config)
