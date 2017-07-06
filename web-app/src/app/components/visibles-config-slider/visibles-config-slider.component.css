@@ -1,4 +1,25 @@
-.config-row {
-    margin-top: 20px;
-    width: 100%;
+.slider-label-container {
+    display: -webkit-inline-flex;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
+}
+
+.slider-label-key {
+    margin-bottom: 0px;
+}
+
+.slider-label-value {
+    margin-left: 20px;
+}
+
+@media (max-width: 575px) {
+    .slider-label-container {
+        -webkit-flex-flow: column nowrap;
+        flex-flow: column nowrap;
+    }
+
+    .slider-label-value {
+        margin-left: 0;
+    }
 }

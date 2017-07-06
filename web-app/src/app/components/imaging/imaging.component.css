@@ -15,21 +15,30 @@
 #imaging-canvas {
     -webkit-order: 1;
     order: 1;
-
 }
 
 #imaging-config-container {
     -webkit-order: 2;
     order: 2;
+    flex-grow: 1;
+    -webkit-flex-grow: 1;
+    margin-left: 24px;
 }
 
 #num-bins-input {
     margin-left: 16px;
 }
 
+@media (max-width: 991px) {
+    #big-space {
+        margin-top:60px;
+    }
+    #imaging-canvas {
+        margin-top: 12px;
+    }
 
-@media (max-width: 575px) {
-    #imaging-container {
-        width: 100%;
+    #imaging-config-container {
+        margin-top: 20px;
+        margin-left: auto;
     }
 }

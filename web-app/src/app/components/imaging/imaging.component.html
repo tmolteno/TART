@@ -6,8 +6,8 @@
 
     <div id="imaging-config-container">
         <h3>Synthesis Parameters</h3>
-
-        <app-visibles-config-slider
+        <!-- number of bins slider -->
+        <app-visibles-config-slider            
             [startValue]="numBins"
             [minValue]="minNumBins"
             [maxValue]="maxNumBins"
@@ -15,7 +15,7 @@
             [labelText]="numBinsLabel"
             (valueChanged)="onNumBinsChanged($event)">
         </app-visibles-config-slider>
-
+        <!-- number of waves slider -->
         <app-visibles-config-slider
             [startValue]="waves"
             [minValue]="minWaves"
@@ -24,7 +24,7 @@
             [labelText]="wavesLabel"
             (valueChanged)="onNumWavesChanged($event)">
         </app-visibles-config-slider>
-
+        <!-- update image timer slider -->
         <app-visibles-config-slider
             [startValue]="refreshTime"
             [minValue]="minRefreshTime"
@@ -34,9 +34,4 @@
             (valueChanged)="onRefreshTimerChanged($event)">
         </app-visibles-config-slider>
     </div>
-        <!-- numw = number of wave lengths 10 -> 100 default 36 -->
-        <!-- num_bin = number of bins/cells 2^5 -> 2^12 default 2^7 -->
-        <!-- refresh timer (5 sec default) -->
-        <!--api/v1/imaging/timestamp -->
-        <!-- api/v1/imaging/vis -->
 </div>

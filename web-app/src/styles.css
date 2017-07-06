@@ -1,2 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~nouislider/distribute/nouislider.min.css";
+body, app-root {
+   display: flex;
+   min-height: 100vh;
+   -webkit-flex-direction: column;
+   flex-direction: column;
+}

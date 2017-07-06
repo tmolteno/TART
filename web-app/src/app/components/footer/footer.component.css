@@ -1,13 +1,38 @@
 footer {
-    padding-left: 20px;
-    padding-right: 20px;
-    height: 64px;
-    line-height: 64px;
+    padding: 20px;
+    display: -webkit-inline-flex;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
+    -webkit-align-items: center;
+    align-items: center;
+    font-size: 12px;
+}
+
+.footer-link {
     font-size: 14px;
 }
-.footer-right {
-    float: right;
+
+@media (max-width: 575px) {
+    footer {
+        -webkit-flex-flow: column nowrap;
+        flex-flow: column nowrap;
+    }
+    #apidoc-link-container {
+        margin-top: 16px;
+    }
 }
-.footer-right > a {
-    margin-left: 20px;
+
+@media (min-width: 576px) {
+    #copyright-notice-container {
+        margin-left: 20px;
+    }
+
+    #apidoc-link-container {
+        margin-left: auto;
+    }
+
+    #github-link-container {
+        margin-left: 20px;
+    }
 }

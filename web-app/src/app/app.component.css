@@ -1,11 +1,8 @@
 #main-container {
-    margin: 28px auto;
     flex: 1 0 auto;
-    width:100%;
-}
-
-#wrap-container {
-    display: flex;
-    min-height: 100vh;
-    flex-direction: column;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    padding: 8px;
 }
