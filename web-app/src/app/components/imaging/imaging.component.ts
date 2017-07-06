@@ -12,33 +12,50 @@ import 'rxjs/add/observable/forkJoin';
 export class ImagingComponent {
     @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
 
-    canvasSizeModifier = 0.8;
+    canvasSizeModifierLandscape: number = 0.6;
+    canvasSizeModifierPortrait: number = 0.8;
     // number of bins picker settings
-    numBins: number = 7;
-    minBins: number = 5;
-    maxBins: number = 12;
+    numBins: number = 9;
+    minNumBins: number = 5;
+    maxNumBins: number = 12; // TODO: be careful :)
+    numBinsStep: number = 1;
+    numBinsLabel: string = "Number of bins (2**n)";
     // number of waves settings
-    defaultWaves: number = 36;
+    waves: number = 36;
+    minWaves: number = 10;
+    maxWaves: number = 100;
+    wavesStep: number = 1;
+    wavesLabel: string = "UV-Plane Extend [# wavelengths]"
     //refresh time settings
-    defaultRefreshTime: number = 5;
-    canvasSize: number = 0;
-    isHeightBigger: boolean = false;
+    refreshTime: number = 5;
+    minRefreshTime: number = 5;
+    maxRefreshTime: number = 60;
+    refreshTimeStep: number = 5;
+    refreshTimeLabel: string = "Refresh timer (seconds)";
+
+    //flag to block refresh image update
+    blockRefresh: boolean = false;
 
     constructor(private imagingService: ImagingService) { }
 
     ngOnInit() {
-        this.updateImageSize();
+        this.setCanvasSize();
     }
 
-    updateImageSize() {
-        this.isHeightBigger = window.innerHeight > window.innerWidth;
-        let baseSize = Math.min(window.innerHeight, window.innerWidth);
-        this.canvasSize = Math.floor(baseSize * this.canvasSizeModifier);
+    setCanvasSize() {    // TODO: need to call this on window resize (find out how this is done)
+        let baseSize = 0;
+        let viewWidth = window.innerWidth;
+        let viewHeight = window.innerHeight;
+        if (viewWidth >= viewHeight) {
+            baseSize = viewHeight * this.canvasSizeModifierLandscape;
+        } else {
+            baseSize = viewWidth * this.canvasSizeModifierPortrait;
+        }
+        this.imagingCanvas.nativeElement.width = baseSize;
+        this.imagingCanvas.nativeElement.height = baseSize;
     }
 
     ngAfterViewInit() {
-        //this.imagingCanvas.nativeElement.width = 50; // TODO: calcualate size of canvas
-        //this.imagingCanvas.nativeElement.height = 50;
         this.drawImage();
     }
 
@@ -50,15 +67,20 @@ export class ImagingComponent {
 
             let visData = result[0];
             let antennaPos = result[1];
-            let genImg = visImaging.gen_image(visData, antennaPos, 36, Math.pow(2,7));
+            let genImg = visImaging.gen_image(visData, antennaPos, this.waves,
+                Math.pow(2, this.numBins));
 
             let img = new Image();
             img.onload = () => {
                 let ctx = this.imagingCanvas.nativeElement.getContext('2d');
                 let widthScale = this.imagingCanvas.nativeElement.width / genImg.width;
                 let heightScale = this.imagingCanvas.nativeElement.height / genImg.height;
+                ctx.save();
                 ctx.scale(widthScale, heightScale);
                 ctx.drawImage(img, 0, 0);
+                ctx.restore();
+                this.blockRefresh = false;
+                // TODO: setup timer to redraw
             };
             img.src = genImg.toDataURL();
         });
@@ -67,10 +89,25 @@ export class ImagingComponent {
     }
 
     onNumBinsChanged(value) {
-        console.log("updated num bins");
+        if (value !== this.numBins) {
+            this.numBins = value;
+            this.blockRefresh = true;
+            this.drawImage();
+        }
     }
 
     onNumWavesChanged(value) {
-        console.log("updated num waves");
+        if (value !== this.waves) {
+            this.waves = value;
+            this.blockRefresh = true;
+            this.drawImage();
+        }
+    }
+
+    onRefreshTimerChanged(value) {
+        /*if (value !== this.refreshTime) {
+            this.refreshTime = value;
+            // TODO: modify refresh timer
+        }*/
     }
 }

@@ -13,6 +13,7 @@
             [max]="maxValue"
             [step]="stepSize"
             (slide)="onSliderSlide($event)"
+            (end)="onSliderEnd($event)"
             [(ngModel)]="sliderValue">
         </nouislider>
     </div>

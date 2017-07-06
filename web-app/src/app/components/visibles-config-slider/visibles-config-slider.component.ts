@@ -38,8 +38,10 @@ export class VisiblesConfigSliderComponent {
     }
 
     onSliderSlide(value) {
-        console.log("did a slide");
         this.labelValue = value;
+    }
+
+    onSliderEnd(value) {
         this.valueChanged.emit(value);
     }
 }

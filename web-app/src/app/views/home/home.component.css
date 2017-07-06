@@ -1,9 +1,7 @@
 .centered {
-    /*position: relative;
-    top: 50%;
-    transform: translateY(-50%);*/
     height:80vh;
     display:flex;
     align-items: center;
-    justify-content:center;
+    justify-content: center;
+    -webkit-justify-content: center;
 }
