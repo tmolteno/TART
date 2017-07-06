@@ -1,13 +1,13 @@
-<div class="form-group row config-row">
-    <div class="col-12">
-        <label for="num-bins-input" class="col-3 col-form-label">
+<div class="form-group slider-component-container">
+    <div class="slider-label-container">
+        <label for="num-bins-input" class="slider-label-key">
             {{labelText}}
         </label>
-        <span>
+        <span class="slider-label-value">
             {{labelValue}}
         </span>
     </div>
-    <div class="col-12">
+    <div class="slider-input-container">
         <nouislider
             [min]="minValue"
             [max]="maxValue"
