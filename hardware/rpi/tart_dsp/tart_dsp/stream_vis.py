@@ -57,6 +57,8 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
     tart.debug(on=False, shift=False, count=False, noisy=True)
     tart.read_status(True)
     tart.capture(on=True, noisy=False)
+    tart.set_sample_delay(runtime_config['sample_delay'])
+    tart.centre(runtime_config['centre'], noisy=runtime_config['verbose'])
     tart.start(runtime_config['blocksize'], True)
 
     active = 1
@@ -71,10 +73,6 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
             # Add the data to the process queue
             data = get_data(tart)
             process_queue.put(data)
-            #if chunksize is not None:
-                #num_vis += 1
-                #if num_vis == chunksize:
-                    #active = False
             print  'Capture Loop: Acquired', data[0]
         except Exception, e:
             logger.error( "Capture Loop Error %s" % str(e))
@@ -224,7 +222,7 @@ def vis_to_dict(tart_instance, runtime_config,):
     vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
     while (runtime_config['mode'] =='vis'):
         vis = None
-        time.sleep(0.05)
+        #time.sleep(0.05)
         while vis_q.qsize()>0:
             vis, means = vis_q.get()
             #print 'here', vis
@@ -254,6 +252,53 @@ def vis_to_dict(tart_instance, runtime_config,):
     vis_calc_p.join()
     capture_p.join()
     print 'stopped'
+
+
+def vis_to_disc(tart_instance, runtime_config,):
+    '''take vis off queue and save them in chuncks'''
+    vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
+    vislist = []
+    while (runtime_config['mode'] =='vis_save'):
+        #time.sleep(0.05)
+        while vis_q.qsize()>0:
+            vis, means = vis_q.get()
+            vislist.append(vis)
+
+            if len(vislist)==runtime_config['chunksize']:
+                fname = runtime_config['vis_prefix'] + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
+                visibility.Visibility_Save(vislist, fname)
+                print 'saved ', vis, ' to', fname
+                vislist = []
+
+            if vis is not None:
+                d = {}
+                for (b, v) in zip(vis.baselines, vis.v):
+                    key = str(b)
+                    d[key] = (v.real, v.imag)
+                print 'updating latest visibilities in runtime dict.'
+                runtime_config['vis_current'] = d
+                runtime_config['vis_antenna_positions'] = vis.config.ant_positions
+                runtime_config['vis_timestamp'] = vis.timestamp
+
+            if runtime_config.has_key('loop_mode'):
+                if runtime_config['loop_mode']=='loop_n':
+                    runtime_config['loop_idx'] += 1
+                    print runtime_config['loop_idx']
+                    if runtime_config['loop_idx'] == runtime_config['loop_n']:
+                        runtime_config['loop_idx'] = 0
+                        runtime_config['mode'] = 'off'
+                if runtime_config['loop_mode']=='single':
+		    runtime_config['mode'] = 'off'
+        else:
+          time.sleep(0.01)
+    print 'stopping'
+    capture_cmd_q.put('stop')
+    vis_calc_cmd_q.put('stop')
+    vis_calc_p.join()
+    capture_p.join()
+    print 'stopped'
+
+
 
 
 
