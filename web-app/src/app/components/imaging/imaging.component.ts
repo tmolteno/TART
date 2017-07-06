@@ -1,5 +1,5 @@
-const visImaging = require('vis_imaging/src/api_synthesis');
-import { Component, ElementRef, ViewChild } from '@angular/core';
+const visImaging = require('vis_imaging/src/api_synthesis'); // I would use import, but it cannot find this.
+import { Component, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/forkJoin';
@@ -7,7 +7,10 @@ import 'rxjs/add/observable/forkJoin';
 @Component({
     selector: 'app-imaging',
     templateUrl: './imaging.component.html',
-    styleUrls: ['./imaging.component.css']
+    styleUrls: ['./imaging.component.css'],
+    host: {
+        '(window:resize)': 'onResize($event)'
+    }
 })
 export class ImagingComponent {
     @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
@@ -44,7 +47,7 @@ export class ImagingComponent {
         this.setCanvasSize();
     }
 
-    setCanvasSize() {    // TODO: need to call this on window resize (find out how this is done)
+    setCanvasSize() {
         let baseSize = 0;
         let viewWidth = window.innerWidth;
         let viewHeight = window.innerHeight;
@@ -61,7 +64,7 @@ export class ImagingComponent {
         this.startUpdateImageTimer();
     }
 
-    startUpdateImageTimer() {        
+    startUpdateImageTimer() {
         this.updateImageTimer = Observable.timer(0, this.refreshTime * 1000);
         this.updateImageTimer.subscribe((tick) => this.onRefreshTimerTick(tick));
     }
@@ -127,5 +130,10 @@ export class ImagingComponent {
             this.refreshTime = value;
             this.startUpdateImageTimer();
         }
+    }
+
+    onResize(event) {
+        this.setCanvasSize();
+        this.drawImage();
     }
 }
