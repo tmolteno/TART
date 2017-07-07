@@ -176,7 +176,7 @@ def set_mode(mode):
 
     @apiHeaderExample {String} Authorization Header Example
         Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGl0eSI6MSwiaWF0IjoxNDk5Mzg2ODE3LCJuYmYiOjE0OTkzODY4MTcsImV4cCI6MTQ5OTM4NzExN30.q7k0HmcDCMHIGOqc6wACh08B1abBZ4GApXF0ap5zJFs
-    
+
     @apiSuccess (200) {String} mode Current mode of the telescope.
 
     @apiSuccess (401) {Object} message Error Information
@@ -299,9 +299,19 @@ def get_info():
 
     @apiName get_info
     @apiSuccess {Object} info General site and telescope information.
-    @apiSuccess {Number[]} info.location Lon, Lat, Altitude.
-
+    @apiSuccess {Number[]} info.location Location Coordinates
+    @apiSuccess {Number} info.location.lon Longitude
+    @apiSuccess {Number} info.location.lan Latitude
+    @apiSuccess {Number} info.location.alt Altitude
+    @apiSuccess {Number} info.operating_frequency Operating frequency of the radio
+    @apiSuccess {Number} info.L0_frequency L0 frequency of the radio
+    @apiSuccess {Number} info.baseband_frequency Baseband frequency of the radio
+    @apiSuccess {Number} info.sampling_frequency Sampling frequency of the radio
+    @apiSuccess {Number} info.bandwidth Bandwidth of the radio
+    @apiSuccess {Number} info.num_antenna Number of antennas in the telescope
+    @apiSuccess {Number} info.name Telescope site name
     """
+
     runtime_config = get_config()
     t_c = runtime_config['telescope_config']
     ret = {}
@@ -310,8 +320,8 @@ def get_info():
     ret['L0_frequency'] = t_c['L0_frequency']
     ret['baseband_frequency'] = t_c['baseband_frequency']
     ret['sampling_frequency'] = t_c['sampling_frequency']
-    ret['bandwidth'] = t_c['bandwidth'] 
-    ret['num_antenna'] = t_c['num_antenna'] 
+    ret['bandwidth'] = t_c['bandwidth']
+    ret['num_antenna'] = t_c['num_antenna']
     ret['location'] = {'lon':t_c['lon'] , 'lat':t_c['lat'], 'alt':t_c['alt']}
     return jsonify({'info':ret})
 
