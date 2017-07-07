@@ -18,11 +18,11 @@ def get_status_fpga():
       @apiSuccess {String} hostname Hostname of the RPI
       @apiSuccess {String} timestamp UTC Timestamp
       @apiSuccess {Object} AQ_STREAM AQ_STREAM
-          "data": 0
+      @apiSuccess {Number} AQ_STREAM.data Acquisition data register value
       @apiSuccess {Object} AQ_SYSTEM AQ_SYSTEM
-          "512Mb": 1,
-          "SDRAM ready": 1,
-          "enabled": 1,
+      @apiSuccess {Number=0,1} AQ_SYSTEM.512Mb Report flag if firmware is compiled for 512Mb SDRAM
+      @apiSuccess {Number=0,1} AQ_SYSTEM.SDRAM%20ready Report flag for SDRAM
+      @apiSuccess {Number=0,1} AQ_SYSTEM.enabled Report flag for Acquisition system beeing enabled.
           "error": 1,
           "overflow": 1,
           "state": 7
@@ -162,16 +162,28 @@ def protected():
     return jsonify({'current_identity' : curr_id, 'message': 'This is secret!!!'})
 
 @app.route('/mode/<mode>', methods=['POST',])
+@jwt_required()
 def set_mode(mode):
     """
     @api {post} /mode/<mode> Set telescope operating mode
     @apiGroup mode
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
     @apiName set_mode
-    @apiParam {String ="off","diag","raw","vis","cal","rt_syn_img"} mode Telescope operation mode.
-    @apiSuccess {String} mode Current mode of the telescope.
+    @apiParam {String ="off","diag","raw","vis","vis_save","cal","rt_syn_img"} mode Telescope operation mode.
+
+    @apiHeaderExample {String} Authorization Header Example
+        Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGl0eSI6MSwiaWF0IjoxNDk5Mzg2ODE3LCJuYmYiOjE0OTkzODY4MTcsImV4cCI6MTQ5OTM4NzExN30.q7k0HmcDCMHIGOqc6wACh08B1abBZ4GApXF0ap5zJFs
+    
+    @apiSuccess (200) {String} mode Current mode of the telescope.
+
+    @apiSuccess (401) {Object} message Error Information
+    @apiSuccess (401) {String} message.description Request does not contain an access token
+    @apiSuccess (401) {String} message.error Authorization Required
+    @apiSuccess (401) {Numbe} message.status_code Status Code
 
     """
+
     runtime_config = get_config()
     if mode in runtime_config['modes_available']:
       runtime_config['mode'] = mode
@@ -249,13 +261,13 @@ def get_imaging_timestamp():
     @apiGroup imaging
 
     @apiName get_imaging_timestamp
-    @apiSuccess {Object[]} timestamp Get timestamp.
+    @apiSuccess {String} timestamp Get timestamp of latest visibilities in isoformat.
     """
     runtime_config = get_config()
     if runtime_config.has_key('vis_timestamp'):
-        return jsonify(runtime_config['vis_timestamp'])
+        return runtime_config['vis_timestamp'].isoformat()
     else:
-        return jsonify({})
+        return ''
 
 
 @app.route('/acquire/raw/save/<int:flag>', methods=['POST','GET'])
@@ -276,6 +288,31 @@ def set_raw_save_flag(flag):
     r['save'] = flag
     runtime_config['raw'] = r
     return jsonify({'save':runtime_config['raw']['save']})
+
+@app.route('/info', methods=['GET',])
+def get_info():
+    """
+    @api {get} /info Request telescopes available operating modes
+    @apiGroup info
+
+    @apiName get_info
+    @apiSuccess {Object} info General site and telescope information.
+    @apiSuccess {Number[]} info.location Lon, Lat, Altitude.
+
+    """
+    runtime_config = get_config()
+    t_c = runtime_config['telescope_config']
+    ret = {}
+    ret['name'] = t_c['name']
+    ret['operating_frequency'] = t_c['frequency']
+    ret['L0_frequency'] = t_c['L0_frequency']
+    ret['baseband_frequency'] = t_c['baseband_frequency']
+    ret['sampling_frequency'] = t_c['sampling_frequency']
+    ret['bandwidth'] = t_c['bandwidth'] 
+    ret['num_antenna'] = t_c['num_antenna'] 
+    ret['location'] = {'lon':t_c['lon'] , 'lat':t_c['lat'], 'alt':t_c['alt']}
+    return jsonify({'info':ret})
+
 
 
 # Example to serve an image without creating a file.
