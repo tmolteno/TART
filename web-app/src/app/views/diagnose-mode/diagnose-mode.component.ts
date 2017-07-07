@@ -40,7 +40,6 @@ export class DiagnoseModeComponent implements OnInit {
                 this.router.navigateByUrl('/');
             }
         });
-        // TODO: switch mode
     }
 
     setDiagnoseMode() {

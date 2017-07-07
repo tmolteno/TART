@@ -21,7 +21,7 @@ export class ImagingComponent {
     // number of bins picker settings
     numBins: number = 9;
     minNumBins: number = 5;
-    maxNumBins: number = 12; // TODO: be careful :)
+    maxNumBins: number = 10;
     numBinsStep: number = 1;
     numBinsLabel: string = "Number of bins (2**n)";
     // number of waves settings

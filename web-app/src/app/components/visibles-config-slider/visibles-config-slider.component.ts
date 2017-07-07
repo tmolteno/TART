@@ -23,7 +23,11 @@ export class VisiblesConfigSliderComponent {
     labelText: any;
 
     @Output()
+    slideEnd = new EventEmitter();
+
+    @Output()
     valueChanged = new EventEmitter();
+
     sliderValue: number;
     labelValue: number;
 
@@ -31,17 +35,16 @@ export class VisiblesConfigSliderComponent {
     }
 
     ngOnInit() {
-        console.log("OnInit");
-        console.log(this.startValue);
         this.sliderValue = this.startValue;
         this.labelValue = this.startValue;
     }
 
     onSliderSlide(value) {
         this.labelValue = value;
+        this.valueChanged.emit(value);
     }
 
     onSliderEnd(value) {
-        this.valueChanged.emit(value);
+        this.slideEnd.emit(value);
     }
 }

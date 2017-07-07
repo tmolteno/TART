@@ -36,7 +36,6 @@ export class OffModeComponent implements OnInit {
     setOffMode() {
         this.modeService.setOperatingMode('off')
             .subscribe(res => {
-                console.log('set off mode!');
                 if (res.mode !== 'off') {
                     this.setOffMode();
                 }

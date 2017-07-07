@@ -1,8 +1,10 @@
 #main-container {
     flex: 1 0 auto;
     display:flex;
+    -webkit-align-items: center;
     align-items: center;
     justify-content: center;
     -webkit-justify-content: center;
-    padding: 8px;
+    padding: 8px;    
+    overflow-x: hidden;
 }

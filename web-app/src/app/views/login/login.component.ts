@@ -45,7 +45,6 @@ export class LoginComponent implements OnInit {
 
         this.modeService.getOperatingMode()
             .subscribe(mode => {
-                console.log("mode get " + mode);
                 switch(mode) {
                     case 'off':
                         this.router.navigateByUrl('off-mode');
