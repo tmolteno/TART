@@ -9,7 +9,7 @@ The TART telescope consists of three major components.
 ## Radio Front End
 
 
-The radio front end is a low-noise radio that digitizes the incoming signal at a sample rate of 16.368 MHz. An external clock input is used to synchronize the sampling. A full tart telescope consists of 24 radio front end modules arranged into four 'Tiles'
+The radio front end is a low-noise [radio](https://datasheets.maximintegrated.com/en/ds/MAX2769B.pdf) that digitizes the incoming signal at a sample rate of 16.368 MHz. An external clock input is used to synchronize the sampling. A full tart telescope consists of 24 radio front end modules arranged into four 'Tiles'
 
 -> ![TART GPS L1 radio front end][radio_front_end_image] <-
 
@@ -46,4 +46,4 @@ The Data storage and upload are managed by a raspberry pi computer running Linux
 
 [radio_front_end_image]: https://github.com/tmolteno/TART/blob/master/doc/img/front_end.jpg "TART Radio Module"
 [radio_hub_image]: https://github.com/tmolteno/TART/blob/master/doc/img/radio_hub_photo.jpg "TART Radio Hub"
-[basestation_image]: https://github.com/tmolteno/TART/blob/master/doc/img/control_board_photo.jpg "TART Basestation"
+[basestation_image]: https://github.com/tmolteno/TART/blob/master/doc/img/control_board_photo.png "TART Basestation"
