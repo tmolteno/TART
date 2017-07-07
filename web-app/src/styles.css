@@ -7,3 +7,18 @@ body, app-root {
    -webkit-flex-direction: column;
    flex-direction: column;
 }
+
+#loading-container {
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    min-height: 100vh;
+    min-width: 100vw;
+}
+
+.fill-parent {
+    min-width: 100vw;
+    min-height: 80vh;
+}

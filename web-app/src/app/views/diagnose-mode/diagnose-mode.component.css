@@ -23,3 +23,11 @@
 .display-none {
     display: none;
 }
+
+#status-report-header {
+    margin-bottom: 40px;
+}
+
+#fpga-output-container, #channel-output-container {
+    overflow-x: hidden;
+}
