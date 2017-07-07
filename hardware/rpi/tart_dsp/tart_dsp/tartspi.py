@@ -133,14 +133,7 @@ class TartSPI:
   def read_status(self, noisy=False):
     '''Read back the status registers of the hardware.'''
     vals = []
-    regs = [self.TC_CENTRE, self.TC_STATUS, self.TC_DEBUG, self.TC_SYSTEM,
-            self.NEWLINE,
-            self.AQ_STREAM,                                self.AQ_SYSTEM,
-            self.NEWLINE,
-            self.VX_STREAM, self.VX_STATUS, self.VX_DEBUG, self.VX_SYSTEM,
-            self.NEWLINE,
-            self.SYS_STATS, self.SPI_STATS] #, self.SPI_RESET]
-    for reg in regs:
+    for reg in self.regs:
       val = self.getbyte(reg)
       vals.append(val)
       if noisy:
@@ -187,7 +180,7 @@ class TartSPI:
   def extract(self,vals):
     unpack = lambda x: np.unpackbits(np.array([x,],dtype=np.uint8))[::-1]
     extractors = {
-	    self.TC_CENTRE:  lambda val: dict(zip(['centre','drift','invert','delay'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
+        self.TC_CENTRE:  lambda val: dict(zip(['centre','drift','invert','delay'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
         self.TC_STATUS:  lambda val: dict(zip(['delta','phase'], [(val >>4) & 0x0f, val & 0x0f])),
         self.TC_DEBUG:   lambda val: dict(zip(['debug','count','shift','numantenna'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
         self.TC_SYSTEM:  lambda val: dict(zip(['enabled','error','locked','source'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
@@ -207,10 +200,9 @@ class TartSPI:
     }
     ret = {}
     for reg,reg_s,val in zip(self.regs, self.regs_s, vals):
-      if extractors.has_key(reg):
-        ret[reg_s] = extractors[reg](val)
+        if extractors.has_key(reg):
+            ret[reg_s] = extractors[reg](val)
     return ret
-
 
 
   ##--------------------------------------------------------------------------
@@ -396,7 +388,7 @@ class TartSPI:
     val = self.vis_convert(res)
     if noisy:
       tim = time.time()
-      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[pp]-int(2**(self.blocksize-1)), sum(val))
+      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val))
     return val
 
   def vis_ready(self, noisy=False):
@@ -406,8 +398,7 @@ class TartSPI:
     return rdy
 
   def vis_read(self, noisy=False):
-#     while not self.vis_ready(noisy):
-    while not self.vis_ready(False):
+    while not self.vis_ready(noisy):
       self.pause()
     vis = self.read_visibilities(noisy)
     return vis

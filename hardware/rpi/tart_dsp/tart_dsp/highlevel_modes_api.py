@@ -50,7 +50,6 @@ def get_status_json(tart_instance):
   vals = tart_instance.read_status(False)
   d = tart_instance.extract(vals)
   d['timestamp (UTC)'] = datetime.datetime.utcnow().isoformat()
-  d['hostname'] = socket.gethostname()
   d_json = json.dumps(d)
   return d, d_json
 

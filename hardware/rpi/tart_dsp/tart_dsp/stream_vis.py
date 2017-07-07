@@ -16,6 +16,7 @@ from tart.imaging import visibility
 from tart.imaging import calibration
 from tart.util import angle
 
+from highlevel_modes_api import get_status_json
 
 def get_corr(xor_sum, n_samples):
     return 1. - 2*xor_sum/float(n_samples)
@@ -50,7 +51,6 @@ def get_data(tart):
     return viz[tart.perm]
 
 def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
-
     tart.reset()
     tart.read_status(True)
     permutation = tart.load_permute()
@@ -58,20 +58,19 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
     tart.read_status(True)
     tart.capture(on=True, noisy=False)
     tart.set_sample_delay(runtime_config['sample_delay'])
-    tart.centre(runtime_config['centre'], noisy=runtime_config['verbose'])
     tart.start(runtime_config['blocksize'], True)
 
     active = 1
     while active:
         try:
-            time.sleep(0.01)
             if (cmd_queue.empty() == False):
                 cmd = cmd_queue.get()
                 if cmd == 'stop':
                     active = 0
-                    #break
             # Add the data to the process queue
             data = get_data(tart)
+            d, d_json = get_status_json(tart)
+            runtime_config['status'] = d
             process_queue.put(data)
             print  'Capture Loop: Acquired', data[0]
         except Exception, e:
