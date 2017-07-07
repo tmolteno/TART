@@ -13,6 +13,7 @@ import { ModeService } from './services/mode.service';
 import { AuthService } from './services/auth.service';
 import { TartService } from './services/tart.service';
 import { ImagingService } from './services/imaging.service';
+import { InfoService } from './services/info.service';
 
 import { AppComponent } from './app.component';
 /** Views */
@@ -108,7 +109,8 @@ const appRoutes = [
       TartService,
       AuthService,
       ModeService,
-      ImagingService
+      ImagingService,
+      InfoService
   ],
   bootstrap: [AppComponent]
 })

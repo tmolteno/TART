@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
+import { InfoService } from '../../services/info.service';
 
 @Component({
   selector: 'app-nav-bar',
@@ -13,10 +14,16 @@ import { AuthService } from '../../services/auth.service';
 })
 export class NavBarComponent implements OnInit {
 
-  isLoggedIn: boolean = false;
+    isLoggedIn: boolean = false;
+
+    name: string;
+    lat: number;
+    lng: number;
+    alt: number;
 
     constructor(
         private authService: AuthService,
+        private infoService: InfoService,
         private router: Router
     ) { }
 
@@ -24,6 +31,12 @@ export class NavBarComponent implements OnInit {
         this.authService.login$.subscribe(loginStatus => {
             this.isLoggedIn = loginStatus;
         });
+        this.infoService.getInfo().subscribe(info => {
+            this.name = info.name;
+            this.lat = info.location.lat;
+            this.lng = info.location.lon;
+            this.alt = info.location.alt;
+        })
         this.authService.load();
     }
 
