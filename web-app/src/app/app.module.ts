@@ -32,6 +32,7 @@ import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { ImagingComponent } from './components/imaging/imaging.component';
 import { VisiblesConfigSliderComponent } from './components/visibles-config-slider/visibles-config-slider.component';
+import { InfoComponent } from './components/info/info.component';
 /** Routes */
 
 const appRoutes = [
@@ -91,7 +92,8 @@ const appRoutes = [
     HdImgModeComponent,
     HomeComponent,
     ImagingComponent,
-    VisiblesConfigSliderComponent
+    VisiblesConfigSliderComponent,
+    InfoComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),

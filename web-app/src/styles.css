@@ -22,3 +22,7 @@ body, app-root {
     min-width: 100vw;
     min-height: 80vh;
 }
+
+.bg-light-grey {
+    background-color: #e0e0e0 !important;
+}

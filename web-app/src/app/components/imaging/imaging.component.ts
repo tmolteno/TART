@@ -42,6 +42,11 @@ export class ImagingComponent {
     // timer
     updateImageTimer: any;
     timerSubscription: any;
+    // draw data
+    antennaPositions: any;
+    visData: any;
+
+    timeStamp: string = null;
 
     constructor(private imagingService: ImagingService) { }
 
@@ -63,7 +68,11 @@ export class ImagingComponent {
     }
 
     ngAfterViewInit() {
-        this.startUpdateImageTimer();
+        this.imagingService.getAntennaPositions()
+            .subscribe(positions => {
+                this.antennaPositions = positions;
+                this.startUpdateImageTimer();
+            })
     }
 
     startUpdateImageTimer() {
@@ -78,44 +87,48 @@ export class ImagingComponent {
 
     onRefreshTimerTick(tick) {
         if (!this.blockRefresh) {
-            this.drawImage();
+            Observable.forkJoin([
+                this.imagingService.getVis(),
+                this.imagingService.getTimestamp()
+            ]).subscribe(result => {
+                this.visData = result[0];
+                let imageTime = new Date(result[1]);
+                this.timeStamp = imageTime.toString();
+                //imageTime.toLocaleDateString() + ' ' + imageTime.toLocaleTimeString();
+                this.drawImage();
+
+            }, err => {
+                this.blockRefresh = false;
+            });
         }
     }
 
     drawImage() {
-        this.blockRefresh = true;
-        Observable.forkJoin([
-            this.imagingService.getVis(),
-            this.imagingService.getAntennaPositions()
-        ]).subscribe(result => {
-
-            let visData = result[0];
-            let antennaPos = result[1];
-            let genImg = visImaging.gen_image(visData, antennaPos, this.waves,
-                Math.pow(2, this.numBins));
-
-            let img = new Image();
-            img.onload = () => {
-                let ctx = this.imagingCanvas.nativeElement.getContext('2d');
-                let widthScale = this.imagingCanvas.nativeElement.width / genImg.width;
-                let heightScale = this.imagingCanvas.nativeElement.height / genImg.height;
-                ctx.save();
-                ctx.scale(widthScale, heightScale);
-                ctx.drawImage(img, 0, 0);
-                ctx.restore();
-                this.blockRefresh = false;
-            };
-            img.src = genImg.toDataURL();
-        }, err => {
+        if (!this.visData || !this.antennaPositions) {
             this.blockRefresh = false;
-        });
-        // call draw jpg code, then display jpg in window
-        // TODO: more important to redraw current data than get new data
+            return;
+        }
+        let genImg = visImaging.gen_image(this.visData, this.antennaPositions,
+            this.waves, Math.pow(2, this.numBins));
+
+        let img = new Image();
+        img.onload = () => {
+            let ctx = this.imagingCanvas.nativeElement.getContext('2d');
+            let widthScale = this.imagingCanvas.nativeElement.width / genImg.width;
+            let heightScale = this.imagingCanvas.nativeElement.height / genImg.height;
+            ctx.save();
+            ctx.scale(widthScale, heightScale);
+            ctx.drawImage(img, 0, 0);
+            ctx.restore();
+            this.blockRefresh = false;
+        };
+        img.src = genImg.toDataURL();
     }
 
     onNumBinsChanged(value) {
         if (value !== this.numBins) {
             this.numBins = value;
+            this.blockRefresh = true;
             this.drawImage();
         }
     }
@@ -123,13 +136,14 @@ export class ImagingComponent {
     onNumWavesChanged(value) {
         if (value !== this.waves) {
             this.waves = value;
+            this.blockRefresh = true;
             this.drawImage();
         }
     }
 
     onRefreshTimerChanged(value) {
         if (value !== this.refreshTime) {
-            this.updateImageTimer.unsubscribe();
+            this.timerSubscription.unsubscribe();
             this.refreshTime = value;
             this.startUpdateImageTimer();
         }
