@@ -1,24 +1,26 @@
-<div class="bg-light-grey container-fluid">
-    <!--h5>TART Information</h5-->
-</div>
+<div id="info-container" class="bg-light-grey container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <strong>Mode:</strong> {{mode}}
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+            <strong>L0 frequency [GHz]:</strong> {{l0Freq | number: '.8-8'}}
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+            <strong>Operating Frequency [GHz]:</strong> {{operationFreq | number: '.8-8'}}
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+            <strong>Number of Antennae:</strong> {{numAntenna}}
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+            <strong>Bandwidth [MHz]:</strong> {{bandwidth | number: '.5-5'}}
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+            <strong>Baseband Frequency [MHz]:</strong> {{basebandFreq | number: '.5-5'}}
+        </div>
 
-<!--
- /info returns
- {
-  "info": {
-    "L0_frequency": 1571328000.0,
-    "bandwidth": 2500000.0,
-    "baseband_frequency": 4092000.0,
-    "location": {
-      "alt": 270.0,
-      "lat": -45.85177,
-      "lon": 170.5456
-    },
-    "name": "Signal Hill - Dunedin",
-    "num_antenna": 24,
-    "operating_frequency": 1575420000.0,
-    "sampling_frequency": 16368000.0
-  }
-}
- 1.5f
--->
+        <div class="col-12 col-sm-6 col-md-4">
+            <strong>Sampling Frequency [MHz]:</strong> {{samplingFreq | number: '.5-5'}}
+        </div>
+    </div>
+</div>

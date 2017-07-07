@@ -6,6 +6,7 @@ import { HttpModule } from '@angular/http';
 import { NgLoadingBarModule } from 'ng-loading-bar';
 import { PopoverModule } from 'ngx-popover';
 import { KeysPipe } from './keys-pipe';
+import { DecimalPipe } from '@angular/common';
 import { NouisliderModule } from 'ng2-nouislider';
 
 /** Services */

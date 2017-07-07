@@ -11,6 +11,7 @@
     align-content: space-between;
     -webkit-align-content: space-between;
     width: 80vw;
+    margin: 0 auto;
 }
 #imaging-canvas {
     -webkit-order: 1;
