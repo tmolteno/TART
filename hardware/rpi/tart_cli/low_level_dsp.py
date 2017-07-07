@@ -105,14 +105,16 @@ if __name__ == '__main__':
       tart.read_status(True)
 
     print "Monitoring visibilities:"
+    import time
+    ts =  time.time()
     while True:
       if args.verbose:
         tart.vis_read(True)
         tart.read_status(True)
       else:
         viz = tart.vis_read(False)
-        #print " Reordered (   permuted) visibilities (@t = %g):\n%s (sum = %d)" % (tim, viz[pp], sum(viz))
-        #print " Reordered (non permuted) visibilities (@t = %g):\n%s (sum = %d)" % (tim, viz, sum(viz))
+        ts_now = time.time() - ts
+        print " Reordered (   permuted) visibilities (@t = %g):\n%s (sum = %d)" % (ts_now, viz[pp], sum(viz))
       if args.correlate:
         tart.close()
         exit(0)

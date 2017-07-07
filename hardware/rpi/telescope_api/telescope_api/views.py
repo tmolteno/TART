@@ -72,7 +72,9 @@ def get_status_fpga():
     """
     runtime_config = get_config()
     if runtime_config.has_key("status"):
-      return jsonify(runtime_config["status"])
+      ret = runtime_config["status"]
+      ret['hostname'] = runtime_config['hostname']
+      return jsonify(ret)
     else:
       return jsonify({})
 

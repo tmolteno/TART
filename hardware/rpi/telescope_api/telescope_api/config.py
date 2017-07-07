@@ -1,4 +1,5 @@
 import json
+import socket
 
 def init_config(manager):
     runtime_config = manager.dict()
@@ -29,4 +30,5 @@ def init_config(manager):
     runtime_config['realtime_image_path'] = '/var/www/html/assets/img/image.png'
     runtime_config['chunksize'] = 50
     runtime_config['vis_prefix'] = './fpga'
+    runtime_config['hostname'] = socket.gethostname()
     return runtime_config
