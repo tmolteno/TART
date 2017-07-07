@@ -1,7 +1,10 @@
 {
-    "name": "TART Site: Farm",
+    "name": "Signal Hill - Dunedin",
     "frequency": 1.57542e9,
-    "bandwidth": 2.0e6,
+    "L0_frequency": 1.571328e9,
+    "baseband_frequency": 4.092e6,
+    "sampling_frequency": 16.368e6,
+    "bandwidth": 2.5e6,
     "lat" : -45.85177,
     "lon" : 170.5456,
     "alt" : 270.0,
