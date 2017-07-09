@@ -189,6 +189,7 @@ def set_loop_mode(loop_mode):
     """
     @api {post} /loop/<loop_mode> Set telescopes loop mode.
     @apiGroup Operation
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
     @apiName set_loop_mode
     @apiParam {String ="loop","single","loop_n"} mode Telescopes loop mode. Perform single, loop n times or loop indefinit in selected mode before returning to offline mode.
@@ -208,6 +209,7 @@ def set_loop_n(loop_n):
     """
     @api {post} /loop/<loop_n> Set telescopes loop mode.
     @apiGroup Operation
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
     @apiName set_loop_mode
     @apiParam {int =0-100} loop_n Number of loops in selected mode before returning to offline mode.
@@ -270,6 +272,7 @@ def set_raw_save_flag(flag):
     """
     @api {post} /acquire/raw/save/<flag> Set save_flag for raw data acquisition.
     @apiGroup Acquisition
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
     @apiName set_raw_save_flag
     @apiParam {Number =0-1} flag Default 0. To enable saving after acquistion set to 1.
@@ -290,6 +293,7 @@ def set_raw_num_samples_exp(exp):
     """
     @api {post} /acquire/raw/num_samples_exp/<exp> Set exponent `exp` for number of samples for raw data acquisition (2**exp). 
     @apiGroup Acquisition
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
     @apiName set_raw_num_samples_exp
     @apiParam {Number = 16-24} exp Default 22.
