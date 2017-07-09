@@ -5,16 +5,12 @@ from flask_jwt import jwt_required, current_identity
 
 from telescope_api import app, get_config
 
-@app.route('/', methods=['GET',])
-def get_index():
-    return render_template('index.html')
-
 @app.route('/status/fpga', methods=['GET',])
 def get_status_fpga():
     """
       @api {get} /status/fpga Request fpga information
       @apiName get_status_fpga
-      @apiGroup status
+      @apiGroup Status
       @apiSuccess {String} hostname Hostname of the RPI
       @apiSuccess {String} timestamp UTC Timestamp
       @apiSuccess {Object} AQ_STREAM AQ_STREAM
@@ -82,7 +78,7 @@ def get_status_fpga():
 def get_status_channel_all():
     """
     @api {get} /status/channel Request telescope all channel information.
-    @apiGroup status
+    @apiGroup Status
 
     @apiName get_status_channel_all
     @apiSuccess {Object[]} Array of channel information.
@@ -98,7 +94,7 @@ def get_status_channel_all():
 def get_status_channel_i(channel_idx):
     """
     @api {get} /status/channel/:channel_idx Request specific channel information.
-    @apiGroup status
+    @apiGroup Status
     @apiParam {Number{0-23}} channel_idx Channel index
 
     @apiName get_status_channel_i
@@ -136,7 +132,7 @@ def get_status_channel_i(channel_idx):
 def get_current_mode():
     """
     @api {get} /mode/current Request current telescope operating mode
-    @apiGroup mode
+    @apiGroup Operation
 
     @apiName get_current_mode
     @apiSuccess {String} mode Current mode of the telescope.
@@ -148,7 +144,7 @@ def get_current_mode():
 def get_mode():
     """
     @api {get} /mode Request telescopes available operating modes
-    @apiGroup mode
+    @apiGroup Operation
 
     @apiName get_mode
     @apiSuccess {String[]} modes Available operating modes.
@@ -157,18 +153,12 @@ def get_mode():
     return jsonify({'modes':runtime_config['modes_available']})
 
 
-@app.route('/protected')
-@jwt_required()
-def protected():
-    curr_id ='%s' % current_identity
-    return jsonify({'current_identity' : curr_id, 'message': 'This is secret!!!'})
-
 @app.route('/mode/<mode>', methods=['POST',])
 @jwt_required()
 def set_mode(mode):
     """
     @api {post} /mode/<mode> Set telescope operating mode
-    @apiGroup mode
+    @apiGroup Operation
     @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
     @apiName set_mode
@@ -194,10 +184,11 @@ def set_mode(mode):
 
 
 @app.route('/loop/<loop_mode>', methods=['POST',])
+@jwt_required()
 def set_loop_mode(loop_mode):
     """
     @api {post} /loop/<loop_mode> Set telescopes loop mode.
-    @apiGroup loop_mode
+    @apiGroup Operation
 
     @apiName set_loop_mode
     @apiParam {String ="loop","single","loop_n"} mode Telescopes loop mode. Perform single, loop n times or loop indefinit in selected mode before returning to offline mode.
@@ -212,10 +203,11 @@ def set_loop_mode(loop_mode):
 
 
 @app.route('/loop/<int:loop_n>', methods=['POST',])
+@jwt_required()
 def set_loop_n(loop_n):
     """
     @api {post} /loop/<loop_n> Set telescopes loop mode.
-    @apiGroup loop_mode
+    @apiGroup Operation
 
     @apiName set_loop_mode
     @apiParam {int =0-100} loop_n Number of loops in selected mode before returning to offline mode.
@@ -230,7 +222,7 @@ def set_loop_n(loop_n):
 def get_latest_vis():
     """
     @api {get} /imaging/vis Request latest visibilities.
-    @apiGroup imaging
+    @apiGroup Imaging
 
     @apiName get_latest_vis
     @apiSuccess {Object[]} vis Get visibilities.
@@ -245,7 +237,7 @@ def get_latest_vis():
 def get_imaging_antenna_positions():
     """
     @api {get} /imaging/antenna_positions Request antenna_positions.
-    @apiGroup imaging
+    @apiGroup Imaging
 
     @apiName get_imaging_antenna_positions
     @apiSuccess {Object[]} antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
@@ -260,7 +252,7 @@ def get_imaging_antenna_positions():
 def get_imaging_timestamp():
     """
     @api {get} /imaging/timestamp Request timestamp.
-    @apiGroup imaging
+    @apiGroup Imaging
 
     @apiName get_imaging_timestamp
     @apiSuccess {String} timestamp Get timestamp of latest visibilities in isoformat.
@@ -272,14 +264,15 @@ def get_imaging_timestamp():
         return ''
 
 
-@app.route('/acquire/raw/save/<int:flag>', methods=['POST','GET'])
+@app.route('/acquire/raw/save/<int:flag>', methods=['POST'])
+@jwt_required()
 def set_raw_save_flag(flag):
     """
     @api {post} /acquire/raw/save/<flag> Set save_flag for raw data acquisition.
     @apiGroup Acquisition
 
     @apiName set_raw_save_flag
-    @apiParam {int =0-1} flag Default 0. To enable saving after acquistion set to 1.
+    @apiParam {Number =0-1} flag Default 0. To enable saving after acquistion set to 1.
     @apiSuccess {String} loop_mode Current mode of the telescope.
 
     """
@@ -291,11 +284,33 @@ def set_raw_save_flag(flag):
     runtime_config['raw'] = r
     return jsonify({'save':runtime_config['raw']['save']})
 
+@app.route('/acquire/raw/num_samples_exp/<int:exp>', methods=['POST'])
+@jwt_required()
+def set_raw_num_samples_exp(exp):
+    """
+    @api {post} /acquire/raw/num_samples_exp/<exp> Set exponent `exp` for number of samples for raw data acquisition (2**exp). 
+    @apiGroup Acquisition
+
+    @apiName set_raw_num_samples_exp
+    @apiParam {Number = 16-24} exp Default 22.
+    @apiSuccess {Number} exp Current exponent of number of samples.
+
+    """
+    runtime_config = get_config()
+    # Assign dict. update value. reassign updated dict to runtime config.
+    # This makes sure the multiprossing manager updates the resource across the other processes.
+    if ((exp>=16) & (exp<=24)):
+        r = runtime_config['raw']
+        r['N_samples_exp'] = blocksize
+        runtime_config['raw'] = r
+    return jsonify({'save':runtime_config['raw']['N_samples_exp']})
+
+
 @app.route('/info', methods=['GET',])
 def get_info():
     """
     @api {get} /info Request telescopes available operating modes
-    @apiGroup info
+    @apiGroup Info
 
     @apiName get_info
     @apiSuccess {Object} info General site and telescope information.
