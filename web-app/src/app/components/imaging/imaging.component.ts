@@ -28,14 +28,14 @@ export class ImagingComponent {
     waves: number = 36;
     minWaves: number = 10;
     maxWaves: number = 100;
-    wavesStep: number = 1;
-    wavesLabel: string = "UV-Plane Extend [# wavelengths]"
+    wavesStep: number = 5;
+    wavesLabel: string = "UV-Plane Extent [wavelengths]"
     // refresh time settings
     refreshTime: number = 5;
     minRefreshTime: number = 5;
     maxRefreshTime: number = 60;
     refreshTimeStep: number = 5;
-    refreshTimeLabel: string = "Refresh timer (seconds)";
+    refreshTimeLabel: string = "Refresh timer [seconds]";
 
     // flag to block refresh image update
     blockRefresh: boolean = false;
