@@ -23,6 +23,7 @@
     "@angular/platform-browser-dynamic": "^2.3.1",
     "@angular/router": "^3.3.1",
     "core-js": "^2.4.1",
+    "moment": "^2.18.1",
     "ng-loading-bar": "0.0.8",
     "ng2-nouislider": "^1.6.1",
     "ngx-popover": "0.0.16",

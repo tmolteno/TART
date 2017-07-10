@@ -3,6 +3,7 @@ import { Component, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
+import * as moment from 'moment/moment';
 import 'rxjs/add/observable/forkJoin';
 
 @Component({
@@ -92,15 +93,18 @@ export class ImagingComponent {
                 this.imagingService.getTimestamp()
             ]).subscribe(result => {
                 this.visData = result[0];
-                let imageTime = new Date(result[1]);
-                this.timeStamp = imageTime.toString();
-                //imageTime.toLocaleDateString() + ' ' + imageTime.toLocaleTimeString();
+                this.timeStamp = this.getImageTime(result[1]);
                 this.drawImage();
-
             }, err => {
                 this.blockRefresh = false;
             });
         }
+    }
+
+    getImageTime(isoFormat: string) {
+        let gmtDateTime = moment.utc(isoFormat);
+        let localDateTime = gmtDateTime.local().format("ddd MMM DD YYYY HH:mm:ss");
+        return localDateTime;
     }
 
     drawImage() {
