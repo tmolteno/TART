@@ -26,3 +26,7 @@ body, app-root {
 .bg-light-grey {
     background-color: #e0e0e0 !important;
 }
+
+.display-none {
+    display: none;
+}

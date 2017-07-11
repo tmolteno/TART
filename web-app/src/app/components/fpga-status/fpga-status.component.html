@@ -1,0 +1,22 @@
+<div id="fpga-output-container" class="container-fluid">
+    <app-status-row-header
+        [headerTitle]="'FGPA Status'"
+        [contentVisible]="showFpgaStatus"
+        (toggleVisible)="toggleFpgaStatus($event)">
+    </app-status-row-header>
+    <div [class.display-none]="!showFpgaStatus">
+        <div id="status-container" class="row status-row" *ngFor="let statusKey of fpgaStatus | keys">
+            <div class="col-sm-12">
+                <h5>{{statusKey}}</h5>
+            </div>
+            <div class="row col-sm-12" *ngIf='getType(fpgaStatus[statusKey]) === "object"'>
+                <div class="col-sm-2 col-lg-1 status-content" *ngFor='let key of fpgaStatus[statusKey] | keys'>
+                    <span class="btn btn-outline-info btn-sm inline-btn">{{key}}</span><span class="object-value"> {{fpgaStatus[statusKey][key]}}</span>
+                </div>
+            </div>
+            <div *ngIf='getType(fpgaStatus[statusKey]) === "string"'>
+                <span class="string-value">{{fpgaStatus[statusKey]}}</span>
+            </div>
+        </div>
+    </div>
+</div>

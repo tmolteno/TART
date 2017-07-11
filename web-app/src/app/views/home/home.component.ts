@@ -13,6 +13,8 @@ export class HomeComponent implements OnInit {
 
     private currentMode: string = '';
 
+    private showFpga: boolean = true;
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,

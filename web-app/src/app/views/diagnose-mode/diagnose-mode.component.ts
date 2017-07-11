@@ -12,10 +12,7 @@ import { ModeService } from '../../services/mode.service';
 })
 export class DiagnoseModeComponent implements OnInit {
 
-    fpgaStatus: Object = {};
     channelsStatus: Object[] = [];
-
-    fpgaStatusVisible: boolean = true;
     channelsVisible: boolean = true;
 
     constructor(
@@ -61,24 +58,12 @@ export class DiagnoseModeComponent implements OnInit {
     }
 
     displayMode() {
-        this.getFpgaStatus();
         this.getChannelStatus();
     }
 
-    toggleFpgaStatus(event) {
-        this.fpgaStatusVisible = !this.fpgaStatusVisible;
-    }
 
     toggleChannelStatus(event) {
         this.channelsVisible = !this.channelsVisible;
-    }
-
-    getFpgaStatus() {
-        this.tartService.getFpgaStatus()
-            .subscribe(result => {
-                this.fpgaStatus = result;
-                this.ref.detectChanges();
-            });
     }
 
     getChannelStatus() {
