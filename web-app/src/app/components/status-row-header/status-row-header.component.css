@@ -1,26 +1,24 @@
 .title-row {
-    position: relative;
+    display: -webkit-flex;
+    display:flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
     margin-bottom: 8px;
 }
 
 .title-row-header {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
-.title-row-toggle {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    padding-bottom: 2px;
+.title-row-content-div {
+    display: -webkit-flex;
+    display: flex;
 }
 
 .visibility-toggle {
+    margin-top:auto;
     color: #5bc0de;
     cursor: pointer;
-}
-
-@media(max-width: 575px) {
-    .title-row-header {
-        margin-bottom: 24px;
-    }
 }

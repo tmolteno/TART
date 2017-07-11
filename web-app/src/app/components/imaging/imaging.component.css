@@ -12,6 +12,7 @@
     -webkit-align-content: space-between;
     width: 80vw;
     margin: 0 auto;
+    margin-bottom: 8px;
 }
 #imaging-canvas {
     -webkit-order: 1;
