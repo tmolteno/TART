@@ -199,7 +199,6 @@ def set_loop_mode(loop_mode):
     if loop_mode in runtime_config['loop_mode_available']:
       runtime_config['loop_mode'] = loop_mode
       return jsonify({'loop_mode':runtime_config['loop_mode']})
-    return jsonify({})
 
 
 @app.route('/loop/<int:loop_n>', methods=['POST',])
@@ -246,8 +245,6 @@ def get_imaging_antenna_positions():
     runtime_config = get_config()
     if runtime_config.has_key('vis_antenna_positions'):
         return jsonify(runtime_config['vis_antenna_positions'])
-    else:
-        return jsonify({})
 
 @app.route('/imaging/timestamp')
 def get_imaging_timestamp():
@@ -261,8 +258,6 @@ def get_imaging_timestamp():
     runtime_config = get_config()
     if runtime_config.has_key('vis_timestamp'):
         return runtime_config['vis_timestamp'].isoformat()[:-3]+'Z'
-    else:
-        return ''
 
 @app.route('/info', methods=['GET',])
 def get_info():
