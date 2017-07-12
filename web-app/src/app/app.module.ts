@@ -5,7 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { NgLoadingBarModule } from 'ng-loading-bar';
 import { PopoverModule } from 'ngx-popover';
-import { KeysPipe } from './keys-pipe';
+import { IsoTimestampDisplay } from './pipes/display-timestamp-pipe';
+import { KeysPipe } from './pipes/keys-pipe';
 import { DecimalPipe } from '@angular/common';
 import { NouisliderModule } from 'ng2-nouislider';
 /** Services */
@@ -79,6 +80,7 @@ const appRoutes = [
   declarations: [
     AppComponent,
     KeysPipe,
+    IsoTimestampDisplay,
     StatusRowHeaderComponent,
     NavBarComponent,
     LoginComponent,

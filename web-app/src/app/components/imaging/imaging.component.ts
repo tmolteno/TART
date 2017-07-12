@@ -32,7 +32,7 @@ export class ImagingComponent {
     wavesStep: number = 5;
     wavesLabel: string = "UV-Plane Extent [wavelengths]"
     // refresh time settings
-    refreshTime: number = 5;
+    refreshTime: number = 15;
     minRefreshTime: number = 5;
     maxRefreshTime: number = 60;
     refreshTimeStep: number = 5;
@@ -47,7 +47,7 @@ export class ImagingComponent {
     antennaPositions: any;
     visData: any;
 
-    timeStamp: string = null;
+    timestamp: string = null;
 
     constructor(private imagingService: ImagingService) { }
 
@@ -99,18 +99,12 @@ export class ImagingComponent {
                 this.imagingService.getTimestamp()
             ]).subscribe(result => {
                 this.visData = result[0];
-                this.timeStamp = this.getImageTime(result[1]);
+                this.timestamp = result[1];
                 this.drawImage();
             }, err => {
                 this.blockRefresh = false;
             });
         }
-    }
-
-    getImageTime(isoFormat: string) {
-        let gmtDateTime = moment.utc(isoFormat);
-        let localDateTime = gmtDateTime.local().format("ddd MMM DD YYYY HH:mm:ss");
-        return localDateTime;
     }
 
     drawImage() {
@@ -157,6 +151,21 @@ export class ImagingComponent {
             this.refreshTime = value;
             this.startUpdateImageTimer();
         }
+    }
+
+    onSaveImageBtnClick(event) {
+        let image = this.imagingCanvas.nativeElement.toDataURL("image/png");
+        let downloadLink = document.createElement('a');
+        downloadLink.download = this.generateImageFilename(this.timestamp);
+        downloadLink.href = image;
+        downloadLink.click();
+
+    }
+
+    generateImageFilename(timestamp: string) {
+        let gmtDateTime = moment.utc(timestamp);
+        let localDateTime = gmtDateTime.local().format("YYYY_MM_DD_HH_mm_ss");
+        return `radio_image_${localDateTime}`;
     }
 
     onResize(event) {

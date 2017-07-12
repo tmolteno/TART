@@ -3,7 +3,6 @@
     <canvas #imagingCanvas id='imaging-canvas'>
         Loading
     </canvas>
-
     <div id="imaging-config-container">
         <h3>Synthesis Parameters</h3>
         <!-- number of bins slider -->
@@ -33,6 +32,14 @@
             [labelText]="refreshTimeLabel"
             (slideEnd)="onRefreshTimerChanged($event)">
         </app-visibles-config-slider>
-        <div>Recorded: {{timeStamp}}</div>
+        <div>
+            <span>Recorded: {{ timestamp | isoFormatTransform }}</span>
+            <button
+                id="save-img-btn"
+                class="btn btn-primary"
+                (click)="onSaveImageBtnClick($event)">
+                Download Image
+            </button>
+        </div>
     </div>
 </div>

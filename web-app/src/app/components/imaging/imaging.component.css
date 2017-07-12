@@ -44,3 +44,7 @@
         margin-left: auto;
     }
 }
+
+#save-img-btn {
+    float: right;
+}
