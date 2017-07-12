@@ -305,7 +305,7 @@ def set_raw_num_samples_exp(exp):
     # This makes sure the multiprossing manager updates the resource across the other processes.
     if ((exp>=16) & (exp<=24)):
         r = runtime_config['raw']
-        r['N_samples_exp'] = blocksize
+        r['N_samples_exp'] = exp
         runtime_config['raw'] = r
     return jsonify({'save':runtime_config['raw']['N_samples_exp']})
 

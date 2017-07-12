@@ -76,7 +76,7 @@ def run_diagnostic(tart, runtime_config):
       tart.reset()
       tart.capture(on=True, source=src, noisy=runtime_config['verbose'])
       tart.centre(runtime_config['centre'], noisy=runtime_config['verbose'])
-      tart.start(runtime_config['blocksize'], True)
+      tart.start(runtime_config['diagnostic']['N_samples_exp'], True)
       k=0
       measured_phases = []
       while k<N_samples:

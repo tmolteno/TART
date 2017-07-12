@@ -74,11 +74,6 @@ def tart_p():
       elif runtime_config['mode'] == 'vis':
           get_sample_delay(telescope_instance, runtime_config)
           runtime_config['acquire'] = False
-          vis_to_dict(telescope_instance, runtime_config)
-      
-      elif runtime_config['mode'] == 'vis_save':
-          get_sample_delay(telescope_instance, runtime_config)
-          runtime_config['acquire'] = False
           vis_to_disc(telescope_instance, runtime_config)
 
       elif runtime_config['mode'] == 'rt_syn_img':
