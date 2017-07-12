@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { TartService } from '../../services/tart.service';
@@ -12,31 +12,25 @@ import { ModeService } from '../../services/mode.service';
 })
 export class DiagnoseModeComponent implements OnInit {
 
-    channelsStatus: Object[] = [];
-    channelsVisible: boolean = true;
-
     constructor(
-        private tartService: TartService,
         private authService: AuthService,
         private modeService: ModeService,
-        private ref: ChangeDetectorRef,
         private router: Router
     ) { }
 
     ngOnInit() {
+        /* TODO: this is stubbed out so I can check changes made to UI without being in diag mode
         let isTokenValid = this.authService.isTokenValid();
         if (!isTokenValid && this.router.url === '/diag-mode') {
             this.router.navigateByUrl('/');
         } else if (isTokenValid) {
             this.setDiagnoseMode();
-        } else {
-            this.displayMode();
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/diag-mode') {
                 this.router.navigateByUrl('/');
             }
-        });
+        });*/
     }
 
     setDiagnoseMode() {
@@ -51,27 +45,8 @@ export class DiagnoseModeComponent implements OnInit {
             .subscribe(mode => {
                 if (mode !== 'diag') {
                     this.setDiagnoseMode();
-                } else {
-                    this.displayMode();
                 }
             })
-    }
-
-    displayMode() {
-        this.getChannelStatus();
-    }
-
-
-    toggleChannelStatus(event) {
-        this.channelsVisible = !this.channelsVisible;
-    }
-
-    getChannelStatus() {
-        this.tartService.getChannelStatus()
-            .subscribe(result => {
-                this.channelsStatus = result;
-                this.ref.detectChanges();
-            });
     }
 
     getType(item) {
