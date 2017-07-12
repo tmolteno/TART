@@ -4,11 +4,11 @@ from flask_jwt import jwt_required, current_identity
 
 from telescope_api import app, get_config
 
-@app.route('/acquire/raw/save/<int:flag>', methods=['POST'])
+@app.route('/acquire/raw/save/<int:flag>', methods=['PUT'])
 @jwt_required()
 def set_raw_save_flag(flag):
     """
-    @api {post} /acquire/raw/save/<flag> Set save_flag for raw data acquisition.
+    @api {put} /acquire/raw/save/<flag> Set save_flag for raw data acquisition.
     @apiGroup Acquisition
     @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
@@ -23,11 +23,11 @@ def set_raw_save_flag(flag):
     runtime_config['raw'] = r
     return jsonify({'save':runtime_config['raw']['save']})
 
-@app.route('/acquire/vis/save/<int:flag>', methods=['POST'])
+@app.route('/acquire/vis/save/<int:flag>', methods=['PUT'])
 @jwt_required()
 def set_vis_save_flag(flag):
     """
-    @api {post} /acquire/vis/save/<flag> Set save_flag for visibility data acquisition.
+    @api {put} /acquire/vis/save/<flag> Set save_flag for visibility data acquisition.
     @apiGroup Acquisition
     @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
@@ -42,11 +42,11 @@ def set_vis_save_flag(flag):
     runtime_config['vis'] = r
     return jsonify({'save':runtime_config['vis']['save']})
 
-@app.route('/acquire/raw/num_samples_exp/<int:exp>', methods=['POST'])
+@app.route('/acquire/raw/num_samples_exp/<int:exp>', methods=['PUT'])
 @jwt_required()
 def set_raw_num_samples_exp(exp):
     """
-    @api {post} /acquire/raw/num_samples_exp/<exp> Set exponent `exp` for number of samples for raw data acquisition (2**exp).
+    @api {put} /acquire/raw/num_samples_exp/<exp> Set exponent `exp` for number of samples for raw data acquisition (2**exp).
     @apiGroup Acquisition
     @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
@@ -62,11 +62,11 @@ def set_raw_num_samples_exp(exp):
         runtime_config['raw'] = r
     return jsonify({'N_samples_exp':runtime_config['raw']['N_samples_exp']})
 
-@app.route('/acquire/vis/num_samples_exp/<int:exp>', methods=['POST'])
+@app.route('/acquire/vis/num_samples_exp/<int:exp>', methods=['PUT'])
 @jwt_required()
 def set_vis_num_samples_exp(exp):
     """
-    @api {post} /acquire/vis/num_samples_exp/<exp> Set exponent `exp` for number of samples for vis data acquisition (2**exp).
+    @api {put} /acquire/vis/num_samples_exp/<exp> Set exponent `exp` for number of samples for vis data acquisition (2**exp).
     @apiGroup Acquisition
     @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
