@@ -69,21 +69,27 @@ export class ImagingComponent {
     }
 
     ngAfterViewInit() {
+        this.getAntennaPositions();
+    }
+
+    getAntennaPositions() {
         this.imagingService.getAntennaPositions()
             .subscribe(positions => {
                 this.antennaPositions = positions;
                 this.startUpdateImageTimer();
-            })
+            }, err => {
+                this.getAntennaPositions();
+            });
+    }
+
+    ngOnDestroy() {
+        this.timerSubscription.unsubscribe();
     }
 
     startUpdateImageTimer() {
         this.updateImageTimer = Observable.timer(0, this.refreshTime * 1000);
         this.timerSubscription = this.updateImageTimer
             .subscribe(tick => this.onRefreshTimerTick(tick));
-    }
-
-    ngOnDestroy() {
-        this.timerSubscription.unsubscribe();
     }
 
     onRefreshTimerTick(tick) {

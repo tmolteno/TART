@@ -4,18 +4,237 @@
         [contentVisible]="showFpgaStatus"
         (toggleVisible)="toggleFpgaStatus($event)">
     </app-status-row-header>
-    <div [class.display-none]="!showFpgaStatus">
-        <div id="status-container" class="row status-row" *ngFor="let statusKey of fpgaStatus | keys">
-            <div class="col-sm-12">
-                <h5>{{statusKey}}</h5>
+    <div [class.display-none]="!showFpgaStatus" *ngIf="fpgaStatus">
+        <div class="fpga-status-host-timestamp-container">
+            <div>
+                <h5>hostname</h5>
+                <span class="string-value">{{fpgaStatus.hostname}}</span>
             </div>
-            <div class="row col-sm-12" *ngIf='getType(fpgaStatus[statusKey]) === "object"'>
-                <div class="col-sm-2 col-lg-1 status-content" *ngFor='let key of fpgaStatus[statusKey] | keys'>
-                    <span class="btn btn-outline-info btn-sm inline-btn">{{key}}</span><span class="object-value"> {{fpgaStatus[statusKey][key]}}</span>
+            <div>
+                <h5>timestamp (UTC)</h5>
+                <span class="string-value">{{fpgaStatus.timestamp}}</span>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>AQ Stream</h5>
+            <div class="status-content" *ngIf="fpgaStatus.aqStream">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">data</span>
+                    <span class="object-value">
+                        {{fpgaStatus.aqStream.data}}
+                    </span>
                 </div>
             </div>
-            <div *ngIf='getType(fpgaStatus[statusKey]) === "string"'>
-                <span class="string-value">{{fpgaStatus[statusKey]}}</span>
+        </div>
+        <div class="fpga-status-section">
+            <h5>AQ System</h5>
+            <div class="status-content" *ngIf="fpgaStatus.aqSystem">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">512Mb</span>
+                    <span class="object-value">{{fpgaStatus.aqSystem['512Mb']}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">SDRam ready</span>
+                    <span class="object-value">{{fpgaStatus.aqSystem.sdram}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">enabled</span>
+                    <span class="object-value">{{fpgaStatus.aqSystem.enabled}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">error</span>
+                    <span class="object-value">{{fpgaStatus.aqSystem.error}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">overflow</span>
+                    <span class="object-value">{{fpgaStatus.aqSystem.overflow}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">state</span>
+                    <span class="object-value">{{fpgaStatus.aqSystem.state}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>SPI Stats</h5>
+            <div class="status-content" *ngIf="fpgaStatus.spiStats">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">FIFO overflow</span>
+                    <span class="object-value">{{fpgaStatus.spiStats.fifoOverflow}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">FIFO underflow</span>
+                    <span class="object-value">{{fpgaStatus.spiStats.fifoUnderflow}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">SPI busy</span>
+                    <span class="object-value">{{fpgaStatus.spiStats.spiBusy}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>SYS Stats</h5>
+            <div class="status-content" *ngIf="fpgaStatus.sysStats">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">ACQ en</span>
+                    <span class="object-value">{{fpgaStatus.sysStats.acqEn}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">cap debug</span>
+                    <span class="object-value">{{fpgaStatus.sysStats.capDebug}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">cap en</span>
+                    <span class="object-value">{{fpgaStatus.sysStats.capEn}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">state</span>
+                    <span class="object-value">{{fpgaStatus.sysStats.state}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">viz en</span>
+                    <span class="object-value">{{fpgaStatus.sysStats.vizEn}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">viz pend</span>
+                    <span class="object-value">{{fpgaStatus.sysStats.vizPend}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>TC Centre</h5>
+            <div class="status-content" *ngIf="fpgaStatus.tcCentre">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">centre</span>
+                    <span class="object-value">{{fpgaStatus.tcCentre.centre}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">delay</span>
+                    <span class="object-value">{{fpgaStatus.tcCentre.delay}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">drift</span>
+                    <span class="object-value">{{fpgaStatus.tcCentre.drift}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">invert</span>
+                    <span class="object-value">{{fpgaStatus.tcCentre.invert}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>TC Debug</h5>
+            <div class="status-content" *ngIf="fpgaStatus.tcDebug">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">count</span>
+                    <span class="object-value">{{fpgaStatus.tcDebug.count}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">debug</span>
+                    <span class="object-value">{{fpgaStatus.tcDebug.debug}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">num antenna</span>
+                    <span class="object-value">{{fpgaStatus.tcDebug.numAntenna}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">shift</span>
+                    <span class="object-value">{{fpgaStatus.tcDebug.shift}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>TC Status</h5>
+            <div class="status-content" *ngIf="fpgaStatus.tcStatus">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">delta</span>
+                    <span class="object-value">{{fpgaStatus.tcStatus.delta}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">phase</span>
+                    <span class="object-value">{{fpgaStatus.tcStatus.phase}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>TC System</h5>
+            <div class="status-content" *ngIf="fpgaStatus.tcSystem">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">enabled</span>
+                    <span class="object-value">{{fpgaStatus.tcSystem.enabled}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">error</span>
+                    <span class="object-value">{{fpgaStatus.tcSystem.error}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">locked</span>
+                    <span class="object-value">{{fpgaStatus.tcSystem.locked}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">source</span>
+                    <span class="object-value">{{fpgaStatus.tcSystem.source}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>VX Debug</h5>
+            <div class="status-content" *ngIf="fpgaStatus.vxDebug">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">limp</span>
+                    <span class="object-value">{{fpgaStatus.vxDebug.limp}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">stuck</span>
+                    <span class="object-value">{{fpgaStatus.vxDebug.stuck}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>VX Status</h5>
+            <div class="status-content" *ngIf="fpgaStatus.vxStatus">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">accessed</span>
+                    <span class="object-value">{{fpgaStatus.vxStatus.accessed}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">available</span>
+                    <span class="object-value">{{fpgaStatus.vxStatus.available}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">bank</span>
+                    <span class="object-value">{{fpgaStatus.vxStatus.bank}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">overflow</span>
+                    <span class="object-value">{{fpgaStatus.vxStatus.overflow}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>VX Stream</h5>
+            <div class="status-content" *ngIf="fpgaStatus.vxStream">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">data</span>
+                    <span class="object-value">{{fpgaStatus.vxStream.data}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="fpga-status-section">
+            <h5>VX System</h5>
+            <div class="status-content" *ngIf="fpgaStatus.vxSystem">
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">block size</span>
+                    <span class="object-value">{{fpgaStatus.vxSystem.blockSize}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">enabled</span>
+                    <span class="object-value">{{fpgaStatus.vxSystem.enabled}}</span>
+                </div>
+                <div class="attribute-container">
+                    <span class="btn btn-outline-info btn-sm inline-btn">overwrite</span>
+                    <span class="object-value">{{fpgaStatus.vxSystem.overwrite}}</span>
+                </div>
             </div>
         </div>
     </div>

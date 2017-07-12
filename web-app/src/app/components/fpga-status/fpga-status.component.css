@@ -1,3 +1,27 @@
 #fpga-output-container {
     overflow-x: hidden;
 }
+
+.fpga-status-host-timestamp-container, .status-content {
+    display: flex;
+    -webkit-display: flex;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+}
+.status-content > .attribute-container {
+    min-width: 200px;
+    margin-top: 4px;
+}
+
+.fpga-status-host-timestamp-container > div {
+    flex-grow: 1;
+    -webkit-flex-grow: 1;
+}
+.fpga-status-section {
+    margin-top: 16px;
+}
+
+.fpga-status-section > h5 {
+    margin: 0px;
+    padding-bottom: 0px;
+}

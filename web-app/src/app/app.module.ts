@@ -8,19 +8,15 @@ import { PopoverModule } from 'ngx-popover';
 import { KeysPipe } from './keys-pipe';
 import { DecimalPipe } from '@angular/common';
 import { NouisliderModule } from 'ng2-nouislider';
-
 /** Services */
 import { ModeService } from './services/mode.service';
 import { AuthService } from './services/auth.service';
 import { TartService } from './services/tart.service';
 import { ImagingService } from './services/imaging.service';
 import { InfoService } from './services/info.service';
-
-import { AppComponent } from './app.component';
 /** Views */
 import { ModeComponent } from './views/mode/mode.component';
 import { LoginComponent } from './views/login/login.component';
-
 import { OffModeComponent } from './views/off-mode/off-mode.component';
 import { DiagnoseModeComponent } from './views/diagnose-mode/diagnose-mode.component';
 import { RawModeComponent } from './views/raw-mode/raw-mode.component';
@@ -29,6 +25,7 @@ import { CalModeComponent } from './views/cal-mode/cal-mode.component';
 import { HdImgModeComponent } from './views/hd-img-mode/hd-img-mode.component';
 import { HomeComponent } from './views/home/home.component';
 /** Components */
+import { AppComponent } from './app.component';
 import { StatusRowHeaderComponent } from './components/status-row-header/status-row-header.component';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { FooterComponent } from './components/footer/footer.component';
@@ -36,8 +33,8 @@ import { ImagingComponent } from './components/imaging/imaging.component';
 import { VisiblesConfigSliderComponent } from './components/visibles-config-slider/visibles-config-slider.component';
 import { InfoComponent } from './components/info/info.component';
 import { FpgaStatusComponent } from './components/fpga-status/fpga-status.component';
-/** Routes */
 
+/** Routes */
 const appRoutes = [
     {
         path: 'home',

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 
+import { FpgaStatus } from '../../models/FpgaStatus';
 import { TartService } from '../../services/tart.service';
 
 @Component({
@@ -10,7 +11,7 @@ import { TartService } from '../../services/tart.service';
 
 export class FpgaStatusComponent {
 
-    fpgaStatus: Object = {};
+    fpgaStatus: FpgaStatus;
 
     @Input()
     showFpgaStatus: boolean;
@@ -20,6 +21,7 @@ export class FpgaStatusComponent {
     ngOnInit() {
         this.tartService.getFpgaStatus()
             .subscribe(result => {
+                console.log("fgpa status get");
                 this.fpgaStatus = result;
             });
     }
