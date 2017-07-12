@@ -344,6 +344,56 @@ def set_vis_num_samples_exp(exp):
         runtime_config['vis'] = r
     return jsonify({'N_samples_exp':runtime_config['vis']['N_samples_exp']})
 
+@app.route('/acquire/raw/save', methods=['GET'])
+def get_raw_save_flag():
+    """
+    @api {get} /acquire/raw/save Set save_flag for raw data acquisition.
+    @apiGroup Acquisition
+
+    @apiName get_raw_save_flag
+    @apiSuccess {String} save Current save flag for raw mode.
+    """
+    runtime_config = get_config()
+    return jsonify({'save':runtime_config['raw']['save']})
+
+@app.route('/acquire/vis/save', methods=['GET'])
+def get_vis_save_flag():
+    """
+    @api {get} /acquire/vis/save Set save_flag for visibility data acquisition.
+    @apiGroup Acquisition
+
+    @apiName get_vis_save_flag
+    @apiSuccess {String} save Current save flag for visibility data acquisition.
+
+    """
+    runtime_config = get_config()
+    return jsonify({'save':runtime_config['vis']['save']})
+
+@app.route('/acquire/raw/num_samples_exp', methods=['GET'])
+def get_raw_num_samples_exp():
+    """
+    @api {get} /acquire/raw/num_samples_exp Get exponent `exp` for number of samples for raw data acquisition (2**exp).
+    @apiGroup Acquisition
+
+    @apiName get_raw_num_samples_exp
+    @apiSuccess {Number} exp Current exponent of number of samples.
+
+    """
+    runtime_config = get_config()
+    return jsonify({'N_samples_exp':runtime_config['raw']['N_samples_exp']})
+
+@app.route('/acquire/vis/num_samples_exp', methods=['GET'])
+def get_vis_num_samples_exp():
+    """
+    @api {get} /acquire/vis/num_samples_exp Get exponent `exp` for number of samples for vis data acquisition (2**exp).
+    @apiGroup Acquisition
+
+    @apiName get_vis_num_samples_exp
+    @apiSuccess {Number} exp Current exponent of number of samples.
+
+    """
+    runtime_config = get_config()
+    return jsonify({'N_samples_exp':runtime_config['vis']['N_samples_exp']})
 
 @app.route('/info', methods=['GET',])
 def get_info():
