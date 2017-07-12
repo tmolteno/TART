@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
 import { PlatformLocation } from '@angular/common';
+import 'rxjs/add/operator/map';
 
 import { FpgaStatus } from  '../models/FpgaStatus';
-
-import 'rxjs/add/operator/map';
+import { ChannelStatus } from '../models/ChannelStatus';
 
 @Injectable()
 export class TartService {
@@ -29,10 +29,16 @@ export class TartService {
     getChannelStatus() {
         return this.http.get(`${this.apiUrl}/status/channel`)
             .map((res: Response) => {
-                let channels = res.json();
-                if (!Array.isArray(channels)) {
-                    channels = [];
+                let channelsJSON = res.json();
+                if (!Array.isArray(channelsJSON)) {
+                    channelsJSON = [];
                 }
+                let channels = [];
+                channelsJSON.forEach(channelJSON => {
+                    channels.push(this.createChannelStatus(channelJSON));
+                });
+                console.log("returning channel statuses");
+                console.log(JSON.stringify(channels));
                 return channels;
             });
     }
@@ -44,6 +50,25 @@ export class TartService {
             });
     }
 
+    /**
+     * Creates and returns a ChannelStatus instance from data returned
+     * in an array from the /status/channel endpoint.
+     */
+    createChannelStatus(channelJSON: any) {
+        let phase = {
+            nSamples: channelJSON.phase.N_samples,
+            measured: channelJSON.phase.measured,
+            ok: channelJSON.phase.ok,
+            stability: channelJSON.phase.stability,
+            threshold: channelJSON.phase.threshold
+        };
+        let radioMean = {
+            mean: channelJSON.radio_mean.mean,
+            ok: channelJSON.radio_mean.ok,
+            threshold: channelJSON.radio_mean.threshold
+        };
+        return new ChannelStatus(channelJSON.id, phase, radioMean);
+    }
     /**
      * Creates and returns an instance of FpgaStatus from the
      * data returned by a request to the /status/fpga endpoint.

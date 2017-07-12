@@ -35,6 +35,7 @@ import { VisiblesConfigSliderComponent } from './components/visibles-config-slid
 import { InfoComponent } from './components/info/info.component';
 import { FpgaStatusComponent } from './components/fpga-status/fpga-status.component';
 import { ChannelsStatusComponent } from './components/channels-status/channels-status.component';
+import { ChannelCardComponent } from './components/channel-card/channel-card.component';
 
 /** Routes */
 const appRoutes = [
@@ -98,7 +99,8 @@ const appRoutes = [
     VisiblesConfigSliderComponent,
     InfoComponent,
     FpgaStatusComponent,
-    ChannelsStatusComponent
+    ChannelsStatusComponent,
+    ChannelCardComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),

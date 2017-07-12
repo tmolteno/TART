@@ -19,7 +19,6 @@ export class DiagnoseModeComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        /* TODO: this is stubbed out so I can check changes made to UI without being in diag mode
         let isTokenValid = this.authService.isTokenValid();
         if (!isTokenValid && this.router.url === '/diag-mode') {
             this.router.navigateByUrl('/');
@@ -30,7 +29,7 @@ export class DiagnoseModeComponent implements OnInit {
             if (!loginStatus && this.router.url === '/diag-mode') {
                 this.router.navigateByUrl('/');
             }
-        });*/
+        });
     }
 
     setDiagnoseMode() {

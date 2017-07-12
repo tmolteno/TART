@@ -1,3 +1,7 @@
+/**
+ * FPGA Status data model.
+ * @author Tim Miller
+ */
 export class FpgaStatus {
     hostname: string;
     timestamp: string;

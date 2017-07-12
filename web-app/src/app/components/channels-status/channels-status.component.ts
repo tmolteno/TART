@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 
+import { ChannelStatus } from '../../models/ChannelStatus';
 import { TartService } from '../../services/tart.service';
 
 @Component({
@@ -12,7 +13,7 @@ export class ChannelsStatusComponent {
     @Input()
     showChannelsStatus: boolean;
 
-    channelsStatus: Object[] = [];
+    channelsStatus: ChannelStatus[] = [];
 
     constructor(private tartService: TartService) { }
 

@@ -5,7 +5,8 @@
         (toggleVisible)="toggleChannelStatus($event)"> </app-status-row-header>
     <div class="row" [class.display-none]="!showChannelsStatus">
         <div class="col-sm-12 col-md-2" *ngFor="let channel of channelsStatus">
-            <div class="card channel-card bg-success"
+            <app-channel-card [channel]="channel"></app-channel-card>
+            <!--div class="card channel-card bg-success"
                 [class.bg-danger]="channel.phase.ok === 0 || channel.radio_mean.ok === 0">
                 <h5>{{channel.id}}</h5>
                 <div>
@@ -22,7 +23,7 @@
                     <div>ok: {{channel.radio_mean.ok}}</div>
                     <div>threshold: {{channel.radio_mean.threshold}}</div>
                 </div>
-            </div>
+            </div-->
         </div>
     </div>
 </div>

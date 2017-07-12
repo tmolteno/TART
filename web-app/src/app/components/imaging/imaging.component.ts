@@ -78,12 +78,16 @@ export class ImagingComponent {
                 this.antennaPositions = positions;
                 this.startUpdateImageTimer();
             }, err => {
-                this.getAntennaPositions();
+                setTimeout(() => {
+                    this.getAntennaPositions();
+                }, 5000);
             });
     }
 
     ngOnDestroy() {
-        this.timerSubscription.unsubscribe();
+        if (this.timerSubscription) {
+            this.timerSubscription.unsubscribe();
+        }
     }
 
     startUpdateImageTimer() {
@@ -159,7 +163,6 @@ export class ImagingComponent {
         downloadLink.download = this.generateImageFilename(this.timestamp);
         downloadLink.href = image;
         downloadLink.click();
-
     }
 
     generateImageFilename(timestamp: string) {
