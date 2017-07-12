@@ -1,5 +1,4 @@
 from flask import Flask
-
 from flask import render_template, jsonify, send_file
 from flask_jwt import jwt_required, current_identity
 
@@ -264,6 +263,8 @@ def get_imaging_timestamp():
         return runtime_config['vis_timestamp'].isoformat()[:-3]+'Z'
     else:
         return ''
+
+
 
 
 @app.route('/acquire/raw/save/<int:flag>', methods=['POST'])
