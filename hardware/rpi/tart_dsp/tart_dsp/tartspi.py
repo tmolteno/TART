@@ -186,7 +186,7 @@ class TartSPI:
         self.TC_SYSTEM:  lambda val: dict(zip(['enabled','error','locked','source'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
 
         self.AQ_STREAM:  lambda val: dict(zip(['data',], [val,])),
-        self.AQ_SYSTEM:  lambda val: dict(zip(['enabled','error','SDRAM ready','512Mb','overflow','state'],  unpack(val)[[7,6,5,4,3]].tolist()+[val & 0x07,])),
+        self.AQ_SYSTEM:  lambda val: dict(zip(['enabled','error','SDRAM_ready','512Mb','overflow','state'],  unpack(val)[[7,6,5,4,3]].tolist()+[val & 0x07,])),
 
         self.VX_STREAM:  lambda val: dict(zip(['data',], [val,])),
         self.VX_STATUS:  lambda val: dict(zip(['available','accessed','overflow','bank'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
@@ -195,7 +195,7 @@ class TartSPI:
 
         self.SYS_STATS:  lambda val: dict(zip(['viz_en','viz_pend','cap_en','cap_debug','acq_en','state'], unpack(val)[[7,6,5,4,3]].tolist() + [val & 0x07,])),
 
-        self.SPI_STATS:  lambda val: dict(zip(['FIFO overflow','FIFO underrun','spi_busy'],unpack(val)[[7,6,0]].tolist())),
+        self.SPI_STATS:  lambda val: dict(zip(['FIFO_overflow','FIFO_underrun','spi_busy'],unpack(val)[[7,6,0]].tolist())),
         self.SPI_RESET:  lambda val: dict(zip(['reset',],[unpack(val)[0],])),
     }
     ret = {}

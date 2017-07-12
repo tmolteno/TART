@@ -17,54 +17,54 @@ def get_status_fpga():
       @apiSuccess {Number} AQ_STREAM.data Acquisition data register value
       @apiSuccess {Object} AQ_SYSTEM AQ_SYSTEM
       @apiSuccess {Number=0,1} AQ_SYSTEM.512Mb Report flag if firmware is compiled for 512Mb SDRAM
-      @apiSuccess {Number=0,1} AQ_SYSTEM.SDRAM%20ready Report flag for SDRAM
+      @apiSuccess {Number=0,1} AQ_SYSTEM.SDRAM_ready Report flag for SDRAM
       @apiSuccess {Number=0,1} AQ_SYSTEM.enabled Report flag for Acquisition system beeing enabled.
-          "error": 1,
-          "overflow": 1,
-          "state": 7
+      @apiSuccess {Number=0,1} AQ_SYSTEM.error Report flag for Acquisition system beeing enabled.
+      @apiSuccess {Number=0,1} AQ_SYSTEM.overflow Report flag for Acquisition system beeing enabled.
+      @apiSuccess {Number=0,7} AQ_SYSTEM.state Report flag for Acquisition system beeing enabled.
       @apiSuccess {Object} SPI_STATS SPI_STATS
-          "FIFO overflow": 0,
-          "FIFO underrun": 0,
-          "spi_busy": 0
+      @apiSuccess {Number=0,1} SPI_STATS.FIFO_overflow Overflow flag
+      @apiSuccess {Number=0,1} SPI_STATS.FIFO_underrun Underrun flag
+      @apiSuccess {Number=0,1} SPI_STATS.spi_busy spi_busy
       @apiSuccess {Object} SYS_STATS SYS_STATS
-          "acq_en": 0,
-          "cap_debug": 0,
-          "cap_en": 0,
-          "state": 0,
-          "viz_en": 0,
-          "viz_pend": 1
-      @apiSuccess {Object} TC_CENTRE TC_CENTRE
-        "centre": 1,
-        "delay": 0,
-        "drift": 0,
-        "invert": 0
-      @apiSuccess {Object} TC_DEBUG TC_DEBUG
-        "count": 0,
-        "debug": 0,
-        "numantenna": 24,
-        "shift": 0
+      @apiSuccess {Number=0,1} SYS_STATS.acq_en Acquisition Unit enabled
+      @apiSuccess {Number=0,1} SYS_STATS.cap_debug
+      @apiSuccess {Number=0,1} SYS_STATS.cap_en
+      @apiSuccess {Number=0,1} SYS_STATS.state
+      @apiSuccess {Number=0,1} SYS_STATS.viz_en Visibility enabled
+      @apiSuccess {Number=0,1} SYS_STATS.viz_pend Visibility pending
+      @apiSuccess {Object}     TC_CENTRE TC_CENTRE
+      @apiSuccess {Number=0,1} TC_CENTRE.centre Acqusion
+      @apiSuccess {Number}     TC_CENTRE.delay Delay
+      @apiSuccess {Number=0,1} TC_CENTRE.drift Acqusion
+      @apiSuccess {Number=0,1} TC_CENTRE.invert Acqusion
+      @apiSuccess {Object}     TC_DEBUG TC_DEBUG
+      @apiSuccess {Number=0,1} TC_DEBUG.count Acqusion
+      @apiSuccess {Number=0,1} TC_DEBUG.debug Acqusion
+      @apiSuccess {Number}     TC_DEBUG.numantenna Number of antennas
+      @apiSuccess {Number=0,1} TC_DEBUG.shift Acqusion
       @apiSuccess {Object} TC_STATUS TC_STATUS
-        "delta": 1,
-        "phase": 2
+      @apiSuccess {Number} TC_STATUS.delta Acqusion
+      @apiSuccess {Number} TC_STATUS.phase Acqusion
       @apiSuccess {Object} TC_SYSTEM TC_SYSTEM
-        "enabled": 1,
-        "error": 1,
-        "locked": 0,
-        "source": 0
+      @apiSuccess {Number=0,1} TC_SYSTEM.enabled
+      @apiSuccess {Number=0,1} TC_SYSTEM.error
+      @apiSuccess {Number=0,1} TC_SYSTEM.locked
+      @apiSuccess {Number} TC_SYSTEM.source
       @apiSuccess {Object} VX_DEBUG VX_DEBUG
-        "limp": 0,
-        "stuck": 0
+      @apiSuccess {Number} VX_DEBUG.limp
+      @apiSuccess {Number} VX_DEBUG.stuck
       @apiSuccess {Object} VX_STATUS VX_STATUS
-        "accessed": 0,
-        "available": 0,
-        "bank": 0,
-        "overflow": 0
+      @apiSuccess {Number} VX_STATUS.accessed VX_STATUS
+      @apiSuccess {Number} VX_STATUS.available VX_STATUS
+      @apiSuccess {Number} VX_STATUS.bank VX_STATUS
+      @apiSuccess {Number} VX_STATUS.overflow VX_STATUS
       @apiSuccess {Object} VX_STREAM VX_STREAM
-        "data": 144
-       @apiSuccess {Object} VX_SYSTEM VX_SYSTEM
-        "blocksize": 0,
-        "enabled": 0,
-        "overwrite": 1
+      @apiSuccess {Number} VX_STREAM.data Byte of data
+      @apiSuccess {Object} VX_SYSTEM VX_SYSTEM
+      @apiSuccess {Number} VX_SYSTEM.blocksize VX_SYSTEM
+      @apiSuccess {Number} VX_SYSTEM.enabled VX_SYSTEM
+      @apiSuccess {Number} VX_SYSTEM.overwrite VX_SYSTEM
     """
     runtime_config = get_config()
     if runtime_config.has_key("status"):
@@ -257,7 +257,7 @@ def get_imaging_timestamp():
     @apiGroup Imaging
 
     @apiName get_imaging_timestamp
-    @apiSuccess {String} timestamp Get timestamp of latest visibilities in isoformat.
+    @apiSuccess {String} timestamp Get UTC timestamp  of latest visibilities in isoformat .
     """
     runtime_config = get_config()
     if runtime_config.has_key('vis_timestamp'):
@@ -276,22 +276,39 @@ def set_raw_save_flag(flag):
 
     @apiName set_raw_save_flag
     @apiParam {Number =0-1} flag Default 0. To enable saving after acquistion set to 1.
-    @apiSuccess {String} loop_mode Current mode of the telescope.
+    @apiSuccess {String} save Current save flag for raw mode.
 
     """
     runtime_config = get_config()
-    # Assign dict. update value. reassign updated dict to runtime config.
-    # This makes sure the multiprossing manager updates the resource across the other processes.
     r = runtime_config['raw']
     r['save'] = flag
     runtime_config['raw'] = r
     return jsonify({'save':runtime_config['raw']['save']})
 
+@app.route('/acquire/vis/save/<int:flag>', methods=['POST'])
+@jwt_required()
+def set_vis_save_flag(flag):
+    """
+    @api {post} /acquire/vis/save/<flag> Set save_flag for visibility data acquisition.
+    @apiGroup Acquisition
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
+
+    @apiName set_vis_save_flag
+    @apiParam {Number =0-1} flag Default 0. To enable saving after acquistion set to 1.
+    @apiSuccess {String} save Current save flag for visibility data acquisition.
+
+    """
+    runtime_config = get_config()
+    r = runtime_config['vis']
+    r['save'] = flag
+    runtime_config['vis'] = r
+    return jsonify({'save':runtime_config['vis']['save']})
+
 @app.route('/acquire/raw/num_samples_exp/<int:exp>', methods=['POST'])
 @jwt_required()
 def set_raw_num_samples_exp(exp):
     """
-    @api {post} /acquire/raw/num_samples_exp/<exp> Set exponent `exp` for number of samples for raw data acquisition (2**exp). 
+    @api {post} /acquire/raw/num_samples_exp/<exp> Set exponent `exp` for number of samples for raw data acquisition (2**exp).
     @apiGroup Acquisition
     @apiHeader (Authorization) {String} Authorization JWT authorization value.
 
@@ -301,13 +318,31 @@ def set_raw_num_samples_exp(exp):
 
     """
     runtime_config = get_config()
-    # Assign dict. update value. reassign updated dict to runtime config.
-    # This makes sure the multiprossing manager updates the resource across the other processes.
     if ((exp>=16) & (exp<=24)):
         r = runtime_config['raw']
         r['N_samples_exp'] = exp
         runtime_config['raw'] = r
-    return jsonify({'save':runtime_config['raw']['N_samples_exp']})
+    return jsonify({'N_samples_exp':runtime_config['raw']['N_samples_exp']})
+
+@app.route('/acquire/vis/num_samples_exp/<int:exp>', methods=['POST'])
+@jwt_required()
+def set_vis_num_samples_exp(exp):
+    """
+    @api {post} /acquire/vis/num_samples_exp/<exp> Set exponent `exp` for number of samples for vis data acquisition (2**exp).
+    @apiGroup Acquisition
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
+
+    @apiName set_vis_num_samples_exp
+    @apiParam {Number = 16-24} exp Default 22.
+    @apiSuccess {Number} exp Current exponent of number of samples.
+
+    """
+    runtime_config = get_config()
+    if ((exp>=16) & (exp<=24)):
+        r = runtime_config['vis']
+        r['N_samples_exp'] = exp
+        runtime_config['vis'] = r
+    return jsonify({'N_samples_exp':runtime_config['vis']['N_samples_exp']})
 
 
 @app.route('/info', methods=['GET',])
