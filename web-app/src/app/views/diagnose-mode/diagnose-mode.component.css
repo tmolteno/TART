@@ -15,15 +15,6 @@
     padding:0px;
 }
 
-.channel-card {
-    margin: 2px;
-    padding: 4px;
-}
-
 #status-report-header {
-    margin-bottom: 40px;
-}
-
-#fpga-output-container, #channel-output-container {
-    overflow-x: hidden;
+    margin: 16px 16px 40px 16px;
 }

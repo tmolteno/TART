@@ -21,16 +21,11 @@ export class FpgaStatusComponent {
     ngOnInit() {
         this.tartService.getFpgaStatus()
             .subscribe(result => {
-                console.log("fgpa status get");
                 this.fpgaStatus = result;
             });
     }
 
     toggleFpgaStatus(event) {
         this.showFpgaStatus = !this.showFpgaStatus;
-    }
-
-    getType(item) {
-        return typeof item;
     }
 }
