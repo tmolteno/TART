@@ -261,7 +261,7 @@ def get_imaging_timestamp():
     """
     runtime_config = get_config()
     if runtime_config.has_key('vis_timestamp'):
-        return runtime_config['vis_timestamp'].isoformat()
+        return runtime_config['vis_timestamp'].isoformat()[:-3]+'Z'
     else:
         return ''
 
