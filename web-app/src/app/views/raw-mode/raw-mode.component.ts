@@ -6,6 +6,9 @@ import { InfoService } from '../../services/info.service';
 import { AuthService } from '../../services/auth.service';
 import { ModeService } from '../../services/mode.service';
 
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/forkJoin';
+
 @Component({
     selector: 'app-raw-mode',
     templateUrl: './raw-mode.component.html',
@@ -13,12 +16,11 @@ import { ModeService } from '../../services/mode.service';
 })
 export class RawModeComponent implements OnInit {
 
-
     minNumSamples: number = 16;
     maxNumSamples: number = 24;
-    numSamples: number;
-    samplingFreq: number;
-    saveData: boolean;
+    numSamples: any;
+    samplingFreq: any;
+    saveData: any;
 
     constructor(
         private authService: AuthService,
@@ -35,9 +37,7 @@ export class RawModeComponent implements OnInit {
             this.router.navigateByUrl('/');
         }  else {
             this.setRawDataMode();
-            this.getNumSamples();
-            this.getSamplingFreq();
-            this.getSaveDataFlag();
+            this.getInitData();
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/raw-data-mode') {
@@ -59,7 +59,22 @@ export class RawModeComponent implements OnInit {
                 if (mode !== 'raw') {
                     this.setRawDataMode();
                 }
-            })
+            });
+    }
+
+    getInitData() {
+        Observable.forkJoin([
+            this.dataAcquisitionService.getRawNumSamplesExp(),
+            this.infoService.getInfo(),
+            this.dataAcquisitionService.getRawSaveFlag()
+        ]).subscribe(result => {
+            this.numSamples = result[0];
+            this.samplingFreq =  result[1]["sampling_frequency"];
+            this.saveData = result[2];
+        }, err => {
+            console.log("RawModeComponent.getInitData() failed");
+            console.log(err.message);
+        });
     }
 
     getNumSamples() {

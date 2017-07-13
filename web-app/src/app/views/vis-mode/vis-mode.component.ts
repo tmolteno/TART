@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { DataAcquisitionService } from '../../services/data-acquisition.service';
@@ -6,25 +6,27 @@ import { InfoService } from '../../services/info.service';
 import { AuthService } from '../../services/auth.service';
 import { ModeService } from '../../services/mode.service';
 
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/forkJoin';
+
 @Component({
     selector: 'app-vis-mode',
     templateUrl: './vis-mode.component.html',
     styleUrls: ['./vis-mode.component.css']
 })
-export class VisModeComponent implements OnInit {
+export class VisModeComponent {
 
     minNumSamples: number = 16;
     maxNumSamples: number = 24;
-    numSamples: number;
-    samplingFreq: number;
-    saveData: boolean;
+    numSamples: any;
+    samplingFreq: any;
+    saveData: any;
 
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
         private infoService: InfoService,
         private dataAcquisitionService: DataAcquisitionService,
-        private ref: ChangeDetectorRef,
         private router: Router
     ) { }
 
@@ -34,9 +36,7 @@ export class VisModeComponent implements OnInit {
             this.router.navigateByUrl('/');
         } else {
             this.setVisDataMode();
-            this.getNumSamples();
-            this.getSamplingFreq();
-            this.getSaveDataFlag();
+            this.getInitData();
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/vis-data-mode') {
@@ -58,11 +58,26 @@ export class VisModeComponent implements OnInit {
                 if (mode !== 'vis') {
                     this.setVisDataMode();
                 }
-            })
+            });
+    }
+
+    getInitData() {
+        Observable.forkJoin([
+            this.dataAcquisitionService.getVisNumSamplesExp(),
+            this.infoService.getInfo(),
+            this.dataAcquisitionService.getVisSaveFlag()
+        ]).subscribe(result => {
+            this.numSamples = result[0];
+            this.samplingFreq =  result[1]["sampling_frequency"];
+            this.saveData = result[2];
+        }, err => {
+            console.log("VisModeComponent.getInitData() failed");
+            console.log(err.message);
+        });
     }
 
     getNumSamples() {
-        this.dataAcquisitionService.getVisNumSamplesExp()
+         this.dataAcquisitionService.getVisNumSamplesExp()
             .subscribe(numSamplesExp => {
                 this.numSamples = numSamplesExp;
             }, err => {
@@ -87,7 +102,7 @@ export class VisModeComponent implements OnInit {
     }
 
     getSaveDataFlag() {
-        this.dataAcquisitionService.getVisSaveFlag()
+         this.dataAcquisitionService.getVisSaveFlag()
             .subscribe(saveDataFlag => {
                 this.saveData = saveDataFlag;
             }, err => {

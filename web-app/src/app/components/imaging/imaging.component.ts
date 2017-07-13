@@ -1,6 +1,8 @@
-const visImaging = require('vis_imaging/src/api_synthesis'); // I would use import, but it cannot find this.
 import { Component, ElementRef, ViewChild, HostListener } from '@angular/core';
+
+const visImaging = require('vis_imaging/src/api_synthesis');
 import { ImagingService } from '../../services/imaging.service';
+
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import * as moment from 'moment/moment';

@@ -1,4 +1,12 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    EventEmitter,
+    ViewChild,
+    ElementRef,
+    SimpleChanges
+} from '@angular/core';
 
 @Component({
     selector: 'app-data-acquisition-display',
@@ -14,9 +22,9 @@ export class DataAcquisitionDisplayComponent {
     @Input()
     maxNumSamplesExp: number;
     @Input()
-    numSamplesExp: number;
+    numSamplesExp: number = null;
     @Input()
-    samplingFreq: number;
+    samplingFreq: number  = null;
     @Output()
     numSamplesExpChanged = new EventEmitter();
 
@@ -30,19 +38,19 @@ export class DataAcquisitionDisplayComponent {
     constructor() { }
 
     ngOnInit() {
-        this.integrationTime = this.calculateIntegrationTime(this.numSamplesExp,
-            this.samplingFreq);
         this.saveDataToggle.nativeElement.checked = this.doSaveData;
     }
 
-    calculateIntegrationTime(numSamplesExp: number, samplingFreq: number)  {
-        return Math.pow(2, numSamplesExp) / samplingFreq;
+    ngOnChanges(changes: SimpleChanges) {
+        this.calculateIntegrationTime();
+    }
+
+    calculateIntegrationTime()  {
+        this.integrationTime = Math.pow(2, this.numSamplesExp) / this.samplingFreq;
     }
 
     onNumSamplesExpChanged(event) {
         let value = this.numSamplesExpInput.nativeElement.value;
-        this.integrationTime = this.calculateIntegrationTime(value,
-            this.samplingFreq);
         this.numSamplesExpChanged.emit(value);
     }
 

@@ -1,0 +1,13 @@
+#num-exp-row {
+    vertical-align: bottom;
+    display: flex;
+    align-items: center;
+}
+
+#num-samples-exp-label {
+    margin-bottom: 0;
+}
+
+#integration-time-row, #save-data-row {
+    margin-top:16px;
+}
