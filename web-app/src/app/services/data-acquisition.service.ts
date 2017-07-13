@@ -23,7 +23,7 @@ export class DataAcquisitionService {
     }
 
     getRawNumSamplesExp() {
-        return this.http.get(`${this.apiUrl}/raw/num_examples_exp`)
+        return this.http.get(`${this.apiUrl}/raw/num_samples_exp`)
             .map((res: Response) => {
                 return res.json()['N_samples_exp'];
             });
@@ -38,14 +38,14 @@ export class DataAcquisitionService {
         }
         let options = this.authService.getAuthRequestOptions();
 
-        return this.http.put(`${this.apiUrl}/raw/num_examples_exp/${value}`, {},
+        return this.http.put(`${this.apiUrl}/raw/num_samples_exp/${value}`, {},
             options).map((res: Response) => {
                 return res.json();
             });
     }
 
     getVisNumSamplesExp() {
-        return this.http.get(`${this.apiUrl}/vis/num_examples_exp`)
+        return this.http.get(`${this.apiUrl}/vis/num_samples_exp`)
             .map((res: Response) => {
                 return res.json()['N_samples_exp'];
             });
@@ -60,7 +60,7 @@ export class DataAcquisitionService {
         }
         let options = this.authService.getAuthRequestOptions();
 
-        return this.http.put(`${this.apiUrl}/vis/num_examples_exp/${value}`, {},
+        return this.http.put(`${this.apiUrl}/vis/num_samples_exp/${value}`, {},
             options).map((res: Response) => {
                 return res.json();
             });
