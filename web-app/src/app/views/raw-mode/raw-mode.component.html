@@ -1,3 +1,9 @@
-<p>
-  raw-mode works!
-</p>
+<app-data-acquisition-display
+    [minNumSamplesExp]="minNumSamples"
+    [maxNumSamplesExp]="maxNumSamples"
+    [numSamplesExp]="numSamples"
+    [samplingFreq]="samplingFreq"
+    (numSamplesExpChanged)="onNumSamplesExpChanged($event)"
+    [doSaveData]="saveData"
+    (doSaveDataChanged)="onSaveDataChanged($event)">
+</app-data-acquisition-display>

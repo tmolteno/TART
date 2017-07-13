@@ -11,6 +11,13 @@ import { ModeService } from '../../services/mode.service';
 })
 export class RawModeComponent implements OnInit {
 
+
+    minNumSamples: number;// = 16;
+    maxNumSamples: number;// = 24;
+    numSamples: number;// = 20;
+    samplingFreq: number;// = 1636800;
+    saveData: boolean;// = false;
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
@@ -19,7 +26,7 @@ export class RawModeComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        if (!this.authService.isTokenValid()
+        /*if (!this.authService.isTokenValid()
             && this.router.url === '/raw-data-mode') {
             this.router.navigateByUrl('/');
         }  else {
@@ -33,6 +40,14 @@ export class RawModeComponent implements OnInit {
             if (!loginStatus && this.router.url === '/raw-data-mode') {
                 this.router.navigateByUrl('/');
             }
-        });
+        });*/
+    }
+
+    onNumSamplesExpChanged(value) {
+        this.numSamples = value;
+    }
+
+    onSaveDataChanged(value) {
+        console.log("save data value changed: " + value);
     }
 }
