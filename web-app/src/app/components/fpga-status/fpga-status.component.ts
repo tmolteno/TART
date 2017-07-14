@@ -19,6 +19,10 @@ export class FpgaStatusComponent {
     constructor(private tartService: TartService) { }
 
     ngOnInit() {
+        this.updateFpgaStatus();
+    }
+
+    updateFpgaStatus() {
         this.tartService.getFpgaStatus()
             .subscribe(result => {
                 this.fpgaStatus = result;

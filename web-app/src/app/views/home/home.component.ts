@@ -1,24 +1,32 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { FpgaStatusComponent } from
+'../../components/fpga-status/fpga-status.component';
 import { ModeService } from '../../services/mode.service';
 import { AuthService } from '../../services/auth.service';
+
+import { Observable } from 'rxjs/Observable';
 
 @Component({
     selector: 'app-home',
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.css']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent {
+    @ViewChild('fpgaStatus') fpgaStatus: FpgaStatusComponent;
 
     private currentMode: string = '';
+
+    refreshFpgaTime: number = 60; //seconds
+    updateFpgaTimer: any;
+    fpgaTimerSubscription: any;
 
     private showFpga: boolean = true;
 
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
-        private ref: ChangeDetectorRef,
         private router: Router
     ) { }
 
@@ -26,11 +34,27 @@ export class HomeComponent implements OnInit {
         this.modeService.getOperatingMode()
             .subscribe(mode => {
                 this.currentMode = mode;
-                this.ref.detectChanges();
                 if (this.authService.isTokenValid()) {
                     this.redirectToModePage();
                 }
             });
+    }
+
+    ngAfterViewInit() {
+        this.startUpdateFpgaTimer();
+    }
+
+    ngOnDestroy() {
+        if (this.fpgaTimerSubscription) {
+            this.fpgaTimerSubscription.unsubscribe();
+        }
+    }
+
+    startUpdateFpgaTimer() {
+        let updateTime = this.refreshFpgaTime * 1000;
+        this.updateFpgaTimer = Observable.timer(updateTime, updateTime);
+        this.fpgaTimerSubscription = this.updateFpgaTimer
+            .subscribe(tick => this.fpgaStatus.updateFpgaStatus());
     }
 
     redirectToModePage() {

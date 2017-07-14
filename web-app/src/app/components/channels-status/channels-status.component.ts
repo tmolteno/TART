@@ -18,10 +18,10 @@ export class ChannelsStatusComponent {
     constructor(private tartService: TartService) { }
 
     ngOnInit() {
-        this.getChannelStatus();
+        this.updateChannelsStatus();
     }
 
-    getChannelStatus() {
+    updateChannelsStatus() {
         this.tartService.getChannelStatus()
             .subscribe(result => {
                 this.channelsStatus = result;

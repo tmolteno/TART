@@ -2,6 +2,12 @@
         <div id="status-report-header">
             <h1>Status Report</h1>
         </div>
-        <app-fpga-status [showFpgaStatus]="true"></app-fpga-status>
-        <app-channels-status [showChannelsStatus]="true"></app-channels-status>
+        <app-fpga-status
+            #fpgaStatus
+            [showFpgaStatus]="true">
+        </app-fpga-status>
+        <app-channels-status
+            #channelsStatus
+            [showChannelsStatus]="true">
+        </app-channels-status>
 </div>

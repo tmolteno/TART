@@ -37,8 +37,6 @@ export class TartService {
                 channelsJSON.forEach(channelJSON => {
                     channels.push(this.createChannelStatus(channelJSON));
                 });
-                console.log("returning channel statuses");
-                console.log(JSON.stringify(channels));
                 return channels;
             });
     }

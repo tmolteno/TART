@@ -1,5 +1,8 @@
 <div id="home-container">
     <app-info></app-info>
     <app-imaging></app-imaging>
-    <app-fpga-status [showFpgaStatus]="false"></app-fpga-status>
+    <app-fpga-status
+        #fpgaStatus
+        [showFpgaStatus]="false">
+    </app-fpga-status>
 </div>
