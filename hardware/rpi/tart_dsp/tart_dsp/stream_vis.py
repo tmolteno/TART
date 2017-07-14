@@ -1,4 +1,3 @@
-
 import numpy as np
 import datetime
 
@@ -10,7 +9,6 @@ import logging.config
 import yaml
 logger = logging.getLogger(__name__)
 
-
 from tart.operation import settings
 from tart.imaging import visibility
 from tart.imaging import calibration
@@ -21,10 +19,12 @@ from highlevel_modes_api import get_status_json
 def get_corr(xnor_sum, n_samples):
     return 2*xnor_sum/float(n_samples)-1
 
-def get_vis_object(data, n_samples, config):
-    num_ant = config.num_antennas
+def get_vis_object(data, n_samples):
     timestamp = datetime.datetime.utcnow()
-    vis = visibility.Visibility_From_Conf(config, timestamp, angle.from_dms(90.), angle.from_dms(0.))
+    config = settings.Settings(runtime_config['telescope_config_path'])
+    num_ant = config.get_num_antenna()
+    vis = visibility.Visibility(config, timestamp)
+    #vis = visibility.Visibility_From_Conf(config, timestamp, angle.from_dms(90.), angle.from_dms(0.))
     v = []
     baselines = []
     xnor_cos = data[0:-24:2]
@@ -86,7 +86,6 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
 def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=None):
     print_int = 0
     n_samples = 2**runtime_config['vis']['N_samples_exp']
-    config = settings.Settings(runtime_config['telescope_config_path'])
     active = 1
     while active:
         try:
@@ -103,7 +102,7 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                         print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
                         #print '!!!!!!!!!!!!!!!!!!!!!! dropping frames when displaying  !!!!!!!!!!!!!!!!!!!!!!!!!!!!'
                     data = process_queue.get()
-                    vis, means = get_vis_object(data, n_samples, config)
+                    vis, means = get_vis_object(data, n_samples)
                     #print means
                     vis_queue.put((vis, means))
                     print  'Process Loop:', vis

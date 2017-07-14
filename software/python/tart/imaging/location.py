@@ -4,17 +4,19 @@
 #
 # Copyright (c) Tim Molteno 2013. tim@elec.ac.nz
 #
+
 import math
 import numpy as np
 from tart.util import angle
 import tart_util
 
+def get_loc(Settings):
+    return location.Location(angle.from_dms(Settings.get_lat()), angle.from_dms(Settings.get_lon()), Settings.get_alt())
 
 class Location:
   R_EARTH = 6378137.0 # earth semimajor axis in meters
   F_RECIP = 1.0/298.257223563 # reciprocal flattening
   E2 = 2.0*F_RECIP - F_RECIP*F_RECIP # eccentricity squared
-
 
   def __init__(self, lat, lon, alt):
     self.lat = lat # requires init with lat and lon as angle objects (NEW)

@@ -17,6 +17,12 @@ class Visibility:
     self.config = obs.config
     self.timestamp = obs.timestamp
 
+  def __init__(self, config, timestamp):
+    self.phase_el = angle.from_dms(90.)
+    self.phase_az = angle.from_dms(0.)
+    self.config = config
+    self.timestamp = timestamp
+
   def set_visibilities(self, v, b):
     self.baselines = b
     self.v = v
@@ -86,7 +92,7 @@ class Visibility:
     return ret
 
 def Visibility_From_Conf(config, timestamp, phase_el, phase_az):
-    obs = observation.Observation(timestamp=timestamp, config=config) 
+    obs = observation.Observation(timestamp=timestamp, config=config)
     vis = Visibility(obs, phase_el, phase_az)
     return vis
 

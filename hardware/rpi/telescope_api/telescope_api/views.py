@@ -243,8 +243,8 @@ def get_imaging_antenna_positions():
     @apiSuccess {Object[]} antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
     """
     runtime_config = get_config()
-    if runtime_config.has_key('telescope_config'):
-        return jsonify(runtime_config['telescope_config']['locations'])
+    if runtime_config.has_key('antenna_positions'):
+        return jsonify(runtime_config['antenna_positions'])
 
 @app.route('/imaging/timestamp')
 def get_imaging_timestamp():
