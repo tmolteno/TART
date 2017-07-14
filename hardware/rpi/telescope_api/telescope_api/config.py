@@ -19,7 +19,6 @@ def init_config(manager):
     runtime_config['raw'] = {
         'save': 0, \
         'N_samples_exp': 22,\
-        'config'   : '24_ant_setup/telescope_config.json',\
         'base_path': '.'
     }
     runtime_config['diagnostic'] = {
@@ -37,6 +36,10 @@ def init_config(manager):
     runtime_config['telescope_config_path'] = '24_ant_setup/telescope_config.json'
     with open(runtime_config['telescope_config_path']) as t_c:
         runtime_config['telescope_config'] = json.load(t_c)
+        t_c.close()
+
+    with open('24_ant_setup/calibrated_antenna_positions.json') as t_c:
+        runtime_config['antenna_positions'] = json.load(t_c)
         t_c.close()
     runtime_config['calibration_dir'] = '24_ant_setup/'
     runtime_config['realtime_image_path'] = '/var/www/html/assets/img/image.png'

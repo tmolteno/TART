@@ -83,7 +83,7 @@ class CalibratedVisibility(object):
     def get_gain(self, i):
         return self.gain[i]
 
-    def to_json(self, filename='calibration.json'):
+    def to_json(self, filename='gain_calibration.json'):
         calib_dict = {}
         calib_dict['gain'] = self.gain.tolist()
         calib_dict['phase_offset'] = self.phase_offset.tolist()
@@ -104,11 +104,10 @@ def from_JSON(vis, json_str):
     calib_dict = json.loads(json_str)
     return from_dict(vis, calib_dict)
 
-def from_JSON_file(vis, filename='calibration.json'):
+def from_JSON_file(vis, filename='gain_calibration.json'):
     with open(filename) as data_file:
       calib_dict = json.load(data_file)
     return from_dict(vis, calib_dict)
-
 
 import argparse
 

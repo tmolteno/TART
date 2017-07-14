@@ -27,19 +27,8 @@ class Observation:
 
   def save(self, filename):
 
-    configdict = {}
-    configdict['name'] = self.config.name
-    configdict['array_orientation'] = self.config.array_orientation
-    configdict['locations'] = self.config.locations
-    configdict['num_antennas'] = self.config.num_antennas
-    configdict['num_baselines'] = self.config.num_baselines
-    configdict['geo'] = [self.config.get_lat(), self.config.get_lon(), self.config.get_alt()]
-    configdict['ant_positions'] = self.config.ant_positions
-    configdict['frequency'] = self.config.frequency
-    configdict['bandwidth'] = self.config.bandwidth
-
     d = {}
-    d['config'] = configdict
+    d['config'] = self.config.Dict
     d['timestamp']= self.timestamp
 
     if (self.savedata is None):
@@ -59,18 +48,17 @@ class Observation:
   def get_means(self):
     '''Calculate and return means of antenna data'''
     ret = []
-    for i in range(self.config.num_antennas):
+    for i in range(self.config.get_num_antennas()):
       ret.append(boolean_mean(self.data[i]))
     return np.array(ret)
 
   def get_antenna(self, ant_num):
-    if (ant_num >= self.config.num_antennas):
+    if (ant_num >= self.config.get_num_antennas()):
       raise "Antenna %d doesn't exist" % ant_num
     return self.data[ant_num]*2-1. # Return to bipolar binary
 
   def get_sampling_rate(self):
-    ref_freq = 16.368e6  # See the Max 2769 data sheet. We operate in one of the predefined modes
-    return ref_freq
+    return self.config.get_sampling_frequency()  # See the Max 2769 data sheet. We operate in one of the predefined modes
 
   def get_julian_date(self):
     return tart_util.get_julian_date(self.timestamp)
