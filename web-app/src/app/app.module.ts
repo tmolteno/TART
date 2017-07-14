@@ -38,7 +38,7 @@ import { FpgaStatusComponent } from './components/fpga-status/fpga-status.compon
 import { ChannelsStatusComponent } from './components/channels-status/channels-status.component';
 import { ChannelCardComponent } from './components/channel-card/channel-card.component';
 import { DataAcquisitionDisplayComponent } from './components/data-acquisition-display/data-acquisition-display.component';
-
+import { StatusMapComponent } from './components/status-map/status-map.component';
 /** Routes */
 const appRoutes = [
     {
@@ -103,7 +103,8 @@ const appRoutes = [
     FpgaStatusComponent,
     ChannelsStatusComponent,
     ChannelCardComponent,
-    DataAcquisitionDisplayComponent
+    DataAcquisitionDisplayComponent,
+    StatusMapComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
