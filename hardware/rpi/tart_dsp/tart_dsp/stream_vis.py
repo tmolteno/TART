@@ -19,9 +19,10 @@ from highlevel_modes_api import get_status_json
 def get_corr(xnor_sum, n_samples):
     return 2*xnor_sum/float(n_samples)-1
 
-def get_vis_object(data, n_samples):
+def get_vis_object(data, runtime_config):
+    n_samples = 2**runtime_config['vis']['N_samples_exp']
     timestamp = datetime.datetime.utcnow()
-    config = settings.Settings(runtime_config['telescope_config_path'])
+    config = settings.from_file(runtime_config['telescope_config_path'])
     num_ant = config.get_num_antenna()
     vis = visibility.Visibility(config, timestamp)
     #vis = visibility.Visibility_From_Conf(config, timestamp, angle.from_dms(90.), angle.from_dms(0.))
@@ -85,7 +86,6 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
 
 def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=None):
     print_int = 0
-    n_samples = 2**runtime_config['vis']['N_samples_exp']
     active = 1
     while active:
         try:
@@ -102,7 +102,7 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                         print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
                         #print '!!!!!!!!!!!!!!!!!!!!!! dropping frames when displaying  !!!!!!!!!!!!!!!!!!!!!!!!!!!!'
                     data = process_queue.get()
-                    vis, means = get_vis_object(data, n_samples)
+                    vis, means = get_vis_object(data, runtime_config)
                     #print means
                     vis_queue.put((vis, means))
                     print  'Process Loop:', vis
@@ -229,7 +229,6 @@ def vis_to_disc(tart_instance, runtime_config,):
                     visibility.Visibility_Save(vislist, fname)
                     print 'saved ', vis, ' to', fname
                 vislist = []
-
             if vis is not None:
                 d = {}
                 for (b, v) in zip(vis.baselines, vis.v):
@@ -237,7 +236,6 @@ def vis_to_disc(tart_instance, runtime_config,):
                     d[key] = (v.real, v.imag)
                 print 'updating latest visibilities in runtime dict.'
                 runtime_config['vis_current'] = d
-                runtime_config['vis_antenna_positions'] = vis.config.ant_positions
                 runtime_config['vis_timestamp'] = vis.timestamp
 
             if runtime_config.has_key('loop_mode'):
