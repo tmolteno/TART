@@ -170,7 +170,7 @@ def run_acquire_raw(tart, runtime_config):
     if runtime_config['raw']['save']:
         from tart.operation import observation
         from tart.operation import settings
-        config = settings.Settings(runtime_config['telescope_config_path'])
+        config = settings.from_file(runtime_config['telescope_config_path'])
         filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.pkl'
         print 'create observation object'
         obs = observation.Observation(t_stmp, config, savedata=ant_data)
