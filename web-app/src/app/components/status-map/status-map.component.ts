@@ -1,6 +1,8 @@
-import { Component, ElementRef, ViewChild} from '@angular/core';
+import { Component, Input, ElementRef, ViewChild} from '@angular/core';
 
-import { TartService } from '../../services/tart.service';
+import { TartService } from '../../services/tart.service'; // TODO: delete when receiving data from parent component
+import { Antenna } from '../../models/Antenna';
+import { ChannelStatus } from '../../models/ChannelStatus';
 
 @Component({
     selector: 'app-status-map',
@@ -19,20 +21,46 @@ export class StatusMapComponent {
     canvasPaddingX: number = 12;
     canvasPaddingY: number = 12;
 
+    @Input()
+    channelsStatus: ChannelStatus[] = [];
+
+    @Input()
+    antennaPositions: any[] = [];
+
+    canvasAntennas: Antenna[] = [];
+
     constructor(private tartService: TartService) { }
 
     ngAfterViewInit() {
-        let antennaPos = this.getAntennaPositions();
-        this.drawAntennaPositions(antennaPos);
+        let antennasPos = this.getAntennaPositions();
+        let channelsStatus = this.getChannelsStatus();
+        this.canvasAntennas = this.createAntennas(antennasPos, channelsStatus);
+        this.drawAntennaPositions(this.canvasAntennas);
     }
 
-    drawAntennaPositions(antennaPositions) {
-        /**
-         * First thing to do is to draw the smallest possible thing at
-         * each antenna position
-         */
+    createAntennas(antennaPositions, channelStatuses:  ChannelStatus[]) {
+        let antennas = [];
+
+        let drawPositionMods = this.getAntennaDrawPositionModifiers(antennaPositions);
+        // TODO:  antenna xyz coordinate indexes should be defined by the service that supplies the antenna positions.
+        channelStatuses.forEach(channelStatus => {
+            console.log("make antenna instance...");
+            let antennaPos = antennaPositions[channelStatus.id];
+            // calculate draw position of antenna
+            let drawX = (drawPositionMods[0] * antennaPos[0])
+                + this.mapZeroXCanvasPosition;
+            let drawY = (drawPositionMods[1] * antennaPos[1])
+                + this.mapZeroYCanvasPosition;
+            // create new antenna and add to antennas
+            let antenna = new Antenna(antennaPos[0], antennaPos[1], antennaPos[2],
+                drawX, drawY, this.antennaRadius, channelStatus);
+            antennas.push(antenna);
+        })
+        return antennas;
+    }
+
+    getAntennaDrawPositionModifiers(antennaPositions) {
         let drawCanvas = this.statusMapCanvas.nativeElement;
-        let ctx = drawCanvas.getContext('2d');
         let xCoordIndex = 0;
         let yCoordIndex = 1;
         let numAntennaPos = antennaPositions.length;
@@ -72,18 +100,22 @@ export class StatusMapComponent {
         let xMod = xBounds / (maxX);
         let yMod = yBounds / (maxY);
 
-        antennaPositions.forEach(antenna => {
-            let xPos = (xMod * antenna[xCoordIndex]) + this.mapZeroXCanvasPosition;
-            let yPos = (yMod * antenna[yCoordIndex]) + this.mapZeroYCanvasPosition;
+        return [xMod, yMod];
+    }
 
+    drawAntennaPositions(antennas: Antenna[]) {
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+
+        antennas.forEach(antenna => {
             ctx.beginPath();
             ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
-            ctx.ellipse(xPos , yPos, this.antennaRadius, this.antennaRadius,
-                Math.PI / 180, 0, 2 * Math.PI);
+            ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
+                antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(xPos , yPos, this.antennaRadius, this.antennaRadius,
-                Math.PI / 180, 0, 2 * Math.PI);
+            ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
+                antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
             ctx.stroke();
         });
     }
@@ -482,7 +514,8 @@ export class StatusMapComponent {
         ];
         let serviceResponse = [];
         apiResponse.forEach(channel => {
-            this.tartService.createChannelStatus(channel);
+            let channelInstance = this.tartService.createChannelStatus(channel);
+            serviceResponse.push(channelInstance);
         });
         return serviceResponse;
     }
