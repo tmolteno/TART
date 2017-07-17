@@ -4,8 +4,8 @@ from tart.util import angle
 
 import numpy as np
 
-import pyfftw
-from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
+#import pyfftw
+#from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
 #from scipy.fftpack import hilbert as fftw_hilbert
 # from tart.util.hilbert import hilbert_fftw as fftw_hilbert
 import time
@@ -38,6 +38,10 @@ class Correlator:
       ant_i = obs.get_antenna(i)
       mean_i = np.mean(ant_i)
       data.append(ant_i-mean_i)
+
+    if 'fftw' in mode:
+      import pyfftw
+      from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
 
     for i, d in enumerate(data):
       if mode=='roll':

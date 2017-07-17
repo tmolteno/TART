@@ -39,8 +39,8 @@ def get_vis_object(data, runtime_config):
             baselines.append([i,j])
             #v_real = correlator.van_vleck_correction( -means[i]*means[j] + corr_cos[idx] )
             #v_imag = correlator.van_vleck_correction( -means[i]*means[j] + corr_sin[idx] )
-            v_real = (-means[i]*means[j]) + corr_cos_cos_ij[idx]
-            v_imag = (-means[i]*means[j]) + corr_cos_sin_ij[idx]
+            v_real = (-means[i]*means[j]) + corr_cos_i_cos_j[idx]
+            v_imag = (-means[i]*means[j]) + corr_cos_i_sin_j[idx]
             v_com = correlator.combine_real_imag(v_real,v_imag)
             v.append(v_com)
     vis = visibility.Visibility(config, timestamp)
@@ -84,15 +84,17 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
     return 1
 
 def update_means(means,ts,runtime_config):
-    channels = runtime_config['channels']
-    for i in range(num_ant):
+    channels = []
+    for i in range(runtime_config['telescope_config']['num_antenna']):
+        channel = {}
+        for key in runtime_config['channels'][i]:
+            channel[key] = runtime_config['channels'][i][key]
         channel['radio_mean'] = means[i]
+        channels.append(channel)
     runtime_config['channels'] = channels
     runtime_config['channels_timestamp'] = ts
 
-
 def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=None):
-    print_int = 0
     active = 1
     while active:
         try:
@@ -103,22 +105,17 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                     active = 0
                     #break
             if (process_queue.empty() == False):
-                    print_int += 1
-                    if print_int >10:
-                        print_int = 0
-                        print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
-                        #print '!!!!!!!!!!!!!!!!!!!!!! dropping frames when displaying  !!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-                    data = process_queue.get()
-                    vis, means, timestamp = get_vis_object(data, runtime_config)
-                    update_means(means, timestamp, runtime_config)
-
-                    #print means
-                    vis_queue.put((vis, means))
-                    print  'Process Loop:', vis
+                print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
+                data = process_queue.get()
+                vis, means, timestamp = get_vis_object(data, runtime_config)
+                #print vis, means, timestamp
+                #update_means(means, timestamp, runtime_config)
+                #print means
+                vis_queue.put((vis, means))
+                print  'Process Loop:', vis
         except Exception, e:
             logger.error( "Processing Error %s" % str(e))
             logger.error(traceback.format_exc())
-            #finally:
 
     print 'process_loop finished'
     return 1
@@ -227,7 +224,6 @@ def vis_to_disc(tart_instance, runtime_config,):
     vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
     vislist = []
     while (runtime_config['mode'] =='vis'):
-        #time.sleep(0.05)
         while vis_q.qsize()>0:
             vis, means = vis_q.get()
             vislist.append(vis)
@@ -256,8 +252,7 @@ def vis_to_disc(tart_instance, runtime_config,):
                         runtime_config['mode'] = 'off'
                 if runtime_config['loop_mode']=='single':
 		    runtime_config['mode'] = 'off'
-        else:
-          time.sleep(0.01)
+        time.sleep(0.01)
     print 'stopping'
     capture_cmd_q.put('stop')
     vis_calc_cmd_q.put('stop')
