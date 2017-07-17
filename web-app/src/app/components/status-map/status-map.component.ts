@@ -107,6 +107,8 @@ export class StatusMapComponent {
         }
         this.canvasAntennas = this.createAntennas(this.antennaPositions,
             this.channelsStatus);
+        this.drawMeterLength(this.antennaPositions);
+        //this.drawCompass();
         this.drawAntennaPositions(this.canvasAntennas);
     }
 
@@ -116,14 +118,14 @@ export class StatusMapComponent {
             return antennas;
         }
 
-        let drawPositionMods = this.getAntennaDrawPositionModifiers(antennaPositions);
+        let drawPositionMod = this.getAntennaDrawPositionModifier(antennaPositions);
         // TODO:  antenna xyz coordinate indexes should be defined by the service that supplies the antenna positions.
         channelStatuses.forEach(channelStatus => {
             let antennaPos = antennaPositions[channelStatus.id];
             // calculate draw position of antenna
-            let drawX = (drawPositionMods[0] * antennaPos[0])
+            let drawX = (drawPositionMod * antennaPos[0])
                 + this.mapZeroXCanvasPosition;
-            let drawY = (drawPositionMods[1] * antennaPos[1] * -1)
+            let drawY = (drawPositionMod * antennaPos[1] * -1)
                 + this.mapZeroYCanvasPosition;
             // create new antenna and add to antennas
             let antenna = new Antenna(antennaPos[0], antennaPos[1], antennaPos[2],
@@ -133,7 +135,7 @@ export class StatusMapComponent {
         return antennas;
     }
 
-    getAntennaDrawPositionModifiers(antennaPositions) {
+    getAntennaDrawPositionModifier(antennaPositions) {
         let drawCanvas = this.statusMapCanvas.nativeElement;
         let xCoordIndex = 0;
         let yCoordIndex = 1;
@@ -170,17 +172,17 @@ export class StatusMapComponent {
             minY *= -1;
             maxY = Math.max(minY, maxY);
         }
-        // calculate x and y position modifiers (I think I go maxUsableArea / maxX)
+
         let xMod = xBounds / (maxX);
         let yMod = yBounds / (maxY);
-
-        return [xMod, yMod];
+        let smallestMod = xMod > yMod? yMod : xMod;
+        return smallestMod;
     }
 
     drawAntennaPositions(antennas: Antenna[]) {
         let drawCanvas = this.statusMapCanvas.nativeElement;
         let ctx = drawCanvas.getContext('2d');
-
+        // draw each antenna
         antennas.forEach(antenna => {
             ctx.beginPath();
             // fill antenna
@@ -202,6 +204,68 @@ export class StatusMapComponent {
                 antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
             ctx.stroke();
         });
+    }
+
+    drawMeterLength(antennaPositions) {
+        if(antennaPositions.length < 1) {
+            return;
+        }
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.translate(0.5, 0.5);    // otherwise lines appear blurry
+
+        let drawMod = this.getAntennaDrawPositionModifier(antennaPositions);
+        let meterStartX =  this.canvasPaddingX;
+        let meterEndX = Math.floor(meterStartX + drawMod);
+        // draw meter line
+        ctx.beginPath();
+        ctx.moveTo(meterStartX, 480)
+        ctx.lineTo(meterEndX, 480);
+        ctx.stroke();
+        //draw end lines
+        ctx.beginPath();
+        ctx.moveTo(meterStartX, 470);
+        ctx.lineTo(meterStartX, 490);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(meterEndX, 470);
+        ctx.lineTo(meterEndX, 490);
+        ctx.stroke();
+        // draw trianges
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.moveTo(meterStartX, 480);
+        ctx.lineTo(meterStartX + 8, 470);
+        ctx.lineTo(meterStartX + 8, 490);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(meterEndX, 480);
+        ctx.lineTo(meterEndX - 8, 470);
+        ctx.lineTo(meterEndX - 8, 490);
+        ctx.fill();
+        // write 1m
+        ctx.font = "1em arial";
+        let textDrawX = Math.floor(meterEndX / 2);
+        let textDrawY = 475;
+        ctx.fillText("1m", textDrawX, textDrawY);
+        ctx.restore();
+    }
+
+    drawCompass() {
+        // TODO: this isn't ready yet...
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.translate(0.5, 0.5);    // otherwise lines appear blurry
+
+        ctx.beginPath();
+        ctx.moveTo(450, 20);
+        ctx.lineTo(450, 100);
+        ctx.stroke();
+        ctx.restore();
     }
 
     getAntennaDrawColour(antenna: Antenna) {

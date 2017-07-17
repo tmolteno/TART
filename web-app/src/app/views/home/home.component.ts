@@ -33,7 +33,6 @@ export class HomeComponent {
         private authService: AuthService,
         private modeService: ModeService,
         private tartService: TartService,
-        private imagingService: ImagingService,
         private router: Router
     ) { }
 
@@ -49,16 +48,6 @@ export class HomeComponent {
 
     ngAfterViewInit() {
         this.startUpdateFpgaTimer();
-
-        this.tartService.getChannelStatus()
-            .subscribe(channelsStatus => {
-                this.channelsStatus = channelsStatus;
-            });
-
-        this.imagingService.getAntennaPositions()
-            .subscribe(antennaPositions => {
-                this.antennaPositions = antennaPositions;                
-            });
     }
 
     ngOnDestroy() {
