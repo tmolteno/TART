@@ -58,11 +58,11 @@ def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl
   baselines = []
   # noise = np.random.uniform(0.,np.sqrt(noise_lvl),config.num_antennas) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antennas))
   if noise_lvl.__gt__(0.).all():
-    noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., config.num_antennas))
+    noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., config.get_num_antenna()))
   else:
-    noise = np.zeros(config.num_antennas)
-  for i in range(0, config.num_antennas):
-    for j in range(i+1, config.num_antennas):
+    noise = np.zeros(config.get_num_antenna())
+  for i in range(0, config.get_num_antenna()):
+    for j in range(i+1, config.get_num_antenna()):
       vi = noise[i]+noise[j]
       # print vi
       for src in sources:
@@ -78,8 +78,7 @@ def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl
         vi = 1.*vi/np.abs(vi)
       vis.append(vi)
       baselines.append([i, j])
-  obs = observation.Observation(utc_date, config, data=np.zeros(1))
-  vis_o = visibility.Visibility(obs, angle.from_dms(90.), angle.from_dms(0.))
+  vis_o = visibility.Visibility(config, utc_date)
   vis_o.set_visibilities(vis, baselines)
   return vis_o
 

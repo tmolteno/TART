@@ -11,7 +11,7 @@ from tart.util import angle
 import tart_util
 
 def get_loc(Settings):
-    return location.Location(angle.from_dms(Settings.get_lat()), angle.from_dms(Settings.get_lon()), Settings.get_alt())
+    return Location(angle.from_dms(Settings.get_lat()), angle.from_dms(Settings.get_lon()), Settings.get_alt())
 
 class Location:
   R_EARTH = 6378137.0 # earth semimajor axis in meters

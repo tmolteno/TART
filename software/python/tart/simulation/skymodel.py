@@ -5,6 +5,7 @@ from tart.util import angle
 from tart.imaging import sun
 from tart.imaging import radio_source
 from tart.imaging import gps_satellite
+from tart.imaging import location
 
 from tart.simulation import simulation_source
 
@@ -47,9 +48,9 @@ class Skymodel(object):
   def gen_beam(self, utc_date_init, utc_date_obs, config, radio,  az_deg = 20., el_deg = 80.):
     ''' Generate point source with constant at RA and DEC according to given az and el at time utc_date_init'''
     sources = []
-    ra, dec = config.get_loc().horizontal_to_equatorial(utc_date_init, angle.from_dms(el_deg), angle.from_dms(az_deg))
+    ra, dec = location.get_loc(config).horizontal_to_equatorial(utc_date_init, angle.from_dms(el_deg), angle.from_dms(az_deg))
     src = radio_source.CosmicSource(ra, dec)
-    el, az = src.to_horizontal(config.get_loc(), utc_date_obs)
+    el, az = src.to_horizontal(location.get_loc(config), utc_date_obs)
     sources.append(simulation_source.SimulationSource(amplitude = 1., azimuth = az, elevation = el, \
       sample_duration = radio.n_samples/radio.ref_freq))
     return sources
@@ -69,12 +70,12 @@ class Skymodel(object):
     ''' Generate n_samp photons per source'''
     sources = []
     #for src in self.known_objects:
-    for src in self.get_src_objects(config.get_loc(), utc_date):
+    for src in self.get_src_objects(location.get_loc(config), utc_date):
       ra, declination = src.radec(utc_date)
       dx, dy = np.random.multivariate_normal([0., 0.], np.identity(2)*np.power(src.width, 2.), n_samp).T
 
       for j in range(n_samp):
-        el, az = config.get_loc().equatorial_to_horizontal(utc_date, \
+        el, az = location.get_loc(config).equatorial_to_horizontal(utc_date, \
           ra + angle.from_dms(dx[j]), declination + angle.from_dms(dy[j]))
         sources.append(simulation_source.SimulationSource(\
           amplitude = src.jansky(utc_date)/self.get_int_src_flux(utc_date)*1./n_samp, \
@@ -98,7 +99,7 @@ class Skymodel(object):
       dx, dy = np.random.multivariate_normal([0., 0.], np.identity(2)*np.power(src.width, 2.), count).T
       ra, declination = src.radec(utc_date)
       for j in range(count):
-        el, az = config.get_loc().equatorial_to_horizontal(utc_date, ra\
+        el, az = location.get_loc(config).equatorial_to_horizontal(utc_date, ra\
           + angle.from_dms(dx[j]), declination + angle.from_dms(dy[j]))
         ret.append(simulation_source.SimulationSource(amplitude = 1./n, \
             azimuth = az, elevation = el, sample_duration = radio.n_samples/radio.ref_freq))

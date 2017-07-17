@@ -8,8 +8,8 @@ class CalibratedVisibility(object):
     def __init__(self, vis):
         self.vis = vis
         self.flagged_baselines = []
-        self.phase_offset = np.zeros(self.get_config().num_antennas)
-        self.gain = np.ones(self.get_config().num_antennas)
+        self.phase_offset = np.zeros(self.get_config().get_num_antenna())
+        self.gain = np.ones(self.get_config().get_num_antenna())
 
     def set_config(self, config):
         self.vis.config = config

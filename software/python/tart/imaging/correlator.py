@@ -4,8 +4,8 @@ from tart.util import angle
 
 import numpy as np
 
-#import pyfftw
-#from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
+import pyfftw
+from pyfftw.interfaces.scipy_fftpack import hilbert as fftw_hilbert
 #from scipy.fftpack import hilbert as fftw_hilbert
 # from tart.util.hilbert import hilbert_fftw as fftw_hilbert
 import time
@@ -13,63 +13,81 @@ import time
 def van_vleck_correction(R):
   return np.sin(np.pi/2. * R)
 
-def V(x,y,yhilb):
-  real = van_vleck_correction(np.dot(x,y)*1./len(x)/2.)
-  imag = van_vleck_correction(np.dot(x,yhilb)*1./len(x)/2.)
-  return real-1.j*imag
+def combine_real_imag(v_real, v_imag):
+  return v_real-1j*v_imag
 
 class Correlator:
+  def __init__(self, van_vleck_corr=False):
+    self.vv = van_vleck_corr
 
-  def correlate(self, obs, debug=False):
-    vis = visibility.Visibility(obs, angle.from_dms(90.), angle.from_dms(0.))
-    visibilities, baselines = self.compute_complex_vis(obs, debug=debug)
+  def correlate(self, obs, debug=False, mode='roll'):
+    visibilities, baselines = self.compute_complex_vis(obs, debug=debug, mode=mode)
+    vis = visibility.Visibility(obs.config, obs.timestamp)
     vis.set_visibilities(visibilities, baselines)
     return vis
-
-  def compute_complex_vis(self, obs, debug=False):
+  
+  
+  def compute_complex_vis(self, obs, debug=False, mode='roll'):
     '''Return an array of baselines and visibilities from this observation'''
     v = []
     baselines = []
     data = []
     data_hilb = []
-    for i in range(obs.config.num_antennas):
+    num_antenna = obs.config.get_num_antenna()
+    for i in range(num_antenna):
       ant_i = obs.get_antenna(i)
       mean_i = np.mean(ant_i)
       data.append(ant_i-mean_i)
 
     for i, d in enumerate(data):
-      #print float(i)/obs.config.num_antennas
-      #h_i = -np.sign(fftw_hilbert(d))
-      #print type(h_i[0])
-      #data_hilb.append(h_i)
-      data_hilb.append(np.roll(d,1))
+      if mode=='roll':
+        data_hilb.append(np.roll(d,1))
+      elif mode == 'fftw_hilbert':
+        h_i = -fftw_hilbert(d)
+        data_hilb.append(h_i)
+      elif mode == 'fftw_hilbert_sign':
+        h_i = -np.sign(fftw_hilbert(d))
+        data_hilb.append(h_i)
 
-    for i in range(0, obs.config.num_antennas):
-      for j in range(i+1, obs.config.num_antennas):
+    for i in range(0, num_antenna):
+      for j in range(i+1, num_antenna):
         print len(baselines)
-        v.append(V(data[i],data[j],data_hilb[j]))
+        v.append(self.V(data[i],data[j],data_hilb[j]))
         baselines.append([i,j])
     return v, baselines
 
+  def V(self, x,y,yhilb):
+    v_real = np.dot(x,y)*1./float(len(x))
+    v_imag = np.dot(x,yhilb)*1./float(len(x))
+    if self.vv:
+        v_real = van_vleck_correction(v_real)
+        v_imag = van_vleck_correction(v_imag)
+    return combine_real_imag(v_real, v_imag)
+
   def correlate_roll(self, obs, debug=False):
-    vis = visibility.Visibility(obs, angle.from_dms(90.), angle.from_dms(0.))
     v = []
     baselines = []
-    data = []
-    num_ant = obs.config.num_antennas
+    num_ant = obs.config.get_num_antenna()
     data = obs.data # use obs.data[i] instead of get_antenna to keep mem usage low
     means = obs.get_means()
     for i in range(0, num_ant):
       for j in range(i+1, num_ant):
-        progress = len(baselines)
-        if (progress%10==0):
-          print progress
-        v_real = van_vleck_correction( -means[i]*means[j] + corr_b(data[i], data[j])       )
-        v_imag = van_vleck_correction( -means[i]*means[j] + corr_b(data[i], fast_roll_1(data[j])))
-        #v_imag = van_vleck_correction(np.dot(data[i],np.roll(data[j],1))*1./len(data[i])/2.)
-        v_com = v_real-1.j*v_imag
+        if debug:
+          progress = len(baselines)
+          if (progress%10==0):
+            print progress
+        cos_i = data[i][1:]
+        cos_j = data[j][1:]
+        sin_j = data[j][:-1]
+        v_real =  -means[i]*means[j] + corr_b(cos_i, cos_j)
+        v_imag =  -means[i]*means[j] + corr_b(cos_i, sin_j)
+        if self.vv:
+          v_real = van_vleck_correction(v_real)
+          v_imag = van_vleck_correction(v_imag)
+        v_com = combine_real_imag(v_real,v_imag)
         v.append(v_com)
         baselines.append([i,j])
+    vis = visibility.Visibility(obs.config, obs.timestamp)
     vis.set_visibilities(v, baselines)
     return vis
 
@@ -77,11 +95,13 @@ def corr_b(x, y):
   num_not_same = (x ^ y).sum()
   n = len(x)
   ret = 1 - 2*num_not_same/float(n)
-  #ret = 0.5 - num_not_same/float(n)
   return ret
 
-def fast_roll_1(d):
-  return np.concatenate(([d[-1],],d[:-1]))
+def corr_b_pat(x, y):
+  n = len(x)
+  num_same = (x ^ (1-y)).sum()
+  ret = 2*num_same/float(n) -1
+  return ret
 
 from tart.util import constants
 
@@ -117,7 +137,6 @@ class FxCorrelator(Correlator):
     vis.set_visibilities(visibilities, baselines)
     return vis
 
-
   '''TODO this is not working yet.
      this should return the maximum field of view possible before fringes get washed
      out by the bandwidth of the signal.'''
@@ -126,9 +145,3 @@ class FxCorrelator(Correlator):
     if (x >= 1.0):
       x = 1.0
     return angle.asin(x)
-
-if __name__ == '__main__':
-
-  fxc = FxCorrelator(2e6, 2e3)
-  print fxc.get_linewidth()
-  print fxc.angular_resolution(10.)

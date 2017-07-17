@@ -53,18 +53,23 @@ class Settings:
       design_antenna_positions_file = 'design_antenna_positions.json'):
     ant_pos = {}
     try:
-      with open(cal_ant_positions_file,r) as fr:
-        ant_pos['calibrated'] = fr.read()
+      with open(cal_ant_positions_file,'r') as fr:
+        ant_pos['calibrated'] = json.loads(fr.read())
         fr.close()
     except:
-      print 'could not load' + cal_ant_positions_file
+        print 'could not load ' + cal_ant_positions_file
     try:
-      with open(design_antenna_positions_file,r) as fr:
-        ant_pos['design'] = fr.read()
+      with open(design_antenna_positions_file,'r') as fr:
+        ant_pos['design'] = json.loads(fr.read())
         fr.close()
     except:
-      print 'could not load' + design_antenna_positions_file
-    ret.Dict['antenna_positions'] = ant_pos
+      print 'could not load ' + design_antenna_positions_file
+    self.Dict['antenna_positions'] = ant_pos
+  
+  def get_antenna_positions(self, key='calibrated'):
+    if self.Dict.has_key('antenna_positions'):
+      if self.Dict['antenna_positions'].has_key(key):
+        return self.Dict['antenna_positions'][key]
 
   def save(self, fname):
     f=open(fname,"w")

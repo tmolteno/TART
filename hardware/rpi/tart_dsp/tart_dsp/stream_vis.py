@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 from tart.operation import settings
 from tart.imaging import visibility
 from tart.imaging import calibration
+from tart.imaging import correlator
 from tart.util import angle
 
 from highlevel_modes_api import get_status_json
@@ -24,14 +25,12 @@ def get_vis_object(data, runtime_config):
     timestamp = datetime.datetime.utcnow()
     config = settings.from_file(runtime_config['telescope_config_path'])
     num_ant = config.get_num_antenna()
-    vis = visibility.Visibility(config, timestamp)
-    #vis = visibility.Visibility_From_Conf(config, timestamp, angle.from_dms(90.), angle.from_dms(0.))
     v = []
     baselines = []
     xnor_cos = data[0:-24:2]
     xnor_sin = data[1:-24:2]
-    corr_cos = get_corr(xnor_cos, n_samples)
-    corr_sin = get_corr(xnor_sin, n_samples)
+    corr_cos_i_cos_j = get_corr(xnor_cos, n_samples)
+    corr_cos_i_sin_j = get_corr(xnor_sin, n_samples)
     means = (data[-24:])/float(n_samples)*2.-1
     #print means
     for i in range(0, num_ant):
@@ -40,12 +39,13 @@ def get_vis_object(data, runtime_config):
             baselines.append([i,j])
             #v_real = correlator.van_vleck_correction( -means[i]*means[j] + corr_cos[idx] )
             #v_imag = correlator.van_vleck_correction( -means[i]*means[j] + corr_sin[idx] )
-            v_real = -means[i]*means[j] + corr_cos[idx]
-            v_imag = -means[i]*means[j] + corr_sin[idx]
-            v_com = v_real-1.j*v_imag
+            v_real = (-means[i]*means[j]) + corr_cos_cos_ij[idx]
+            v_imag = (-means[i]*means[j]) + corr_cos_sin_ij[idx]
+            v_com = correlator.combine_real_imag(v_real,v_imag)
             v.append(v_com)
+    vis = visibility.Visibility(config, timestamp)
     vis.set_visibilities(v, baselines)
-    return vis, means
+    return vis, means, timestamp
 
 def get_data(tart):
     viz = tart.vis_read(False)
@@ -83,6 +83,13 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
     print 'capture_loop finished'
     return 1
 
+def update_means(means,ts,runtime_config):
+    channels = runtime_config['channels']
+    for i in range(num_ant):
+        channel['radio_mean'] = means[i]
+    runtime_config['channels'] = channels
+    runtime_config['channels_timestamp'] = ts
+
 
 def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=None):
     print_int = 0
@@ -102,7 +109,9 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                         print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
                         #print '!!!!!!!!!!!!!!!!!!!!!! dropping frames when displaying  !!!!!!!!!!!!!!!!!!!!!!!!!!!!'
                     data = process_queue.get()
-                    vis, means = get_vis_object(data, runtime_config)
+                    vis, means, timestamp = get_vis_object(data, runtime_config)
+                    update_means(means, timestamp, runtime_config)
+
                     #print means
                     vis_queue.put((vis, means))
                     print  'Process Loop:', vis
