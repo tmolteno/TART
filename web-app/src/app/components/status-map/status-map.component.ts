@@ -14,8 +14,14 @@ export class StatusMapComponent {
     @ViewChild('statusMapCanvas') statusMapCanvas: ElementRef;
     private canvasElement: Node;
 
+    //=======================
+    // Canvas draw constants
+    //=======================
+    fontColour: string = 'black';
     antennaPopupId: string = 'antenna-popup';
-    canvasFontStyle: string = '0.8em arial';
+    antennaIdFontStyle: string = '0.8em arial';
+    antennaTextXOffsetModSmallNumber: number = 3;
+    antennaTextXOffsetModBigNumber: number = 1.5;
     // Antenna colours
     antennaOkColour: string = "rgba(92, 184, 92, 0.8)";
     antennaErrorColor: string = "rgba(217, 83, 79, 0.8)";
@@ -28,6 +34,24 @@ export class StatusMapComponent {
     // canvas padding
     canvasPaddingX: number = 14;
     canvasPaddingY: number = 14;
+    // 1 metre display constants
+    meterLineYAxis: number = 480;
+    meterArrowXAxisOffset: number = 8;
+    meterLengthLabel: string = "1m";
+    meterLengthTextPositionY: number = 475;
+    meterLengthFontStyle: string = "1em arial";
+    meterLengthEndYAxisStart: number = 470;
+    meterLengthEndYAxisEnd: number = 490;
+
+    //=====================
+    // Antenna popup style
+    //=====================
+    antennaPopupFontSize: string = '0.8em';
+    antennaPopupBorderStyle: string = '1px solid black';
+    antennaPopupPadding: string = '4px';
+    antennaPopupCursor: string = 'default';
+    antennaPopupBgColour: string = 'white';
+    antennaPopupPosition: string  = 'absolute';
 
     @Input()
     channelsStatus: ChannelStatus[] = [];
@@ -86,24 +110,23 @@ export class StatusMapComponent {
         let antennaPopup = this.renderer.createElement(this.canvasElement, 'div');
         this.renderer.createText(antennaPopup, popupText);
         this.renderer.setElementAttribute(antennaPopup, 'id', this.antennaPopupId);
-        this.renderer.setElementStyle(antennaPopup, 'position', 'absolute');
+        this.renderer.setElementStyle(antennaPopup, 'position', this.antennaPopupPosition);
         this.renderer.setElementStyle(antennaPopup, 'left', `${absolutePositionX}px`);
         this.renderer.setElementStyle(antennaPopup, 'top', `${absolutePositionY}px`);
-        this.renderer.setElementStyle(antennaPopup, 'background-color', 'white');
-        this.renderer.setElementStyle(antennaPopup, 'cursor', 'default');
-        this.renderer.setElementStyle(antennaPopup, 'padding', '4px');
-        this.renderer.setElementStyle(antennaPopup, 'border', '1px solid black');
-        this.renderer.setElementStyle(antennaPopup, 'font-size', '0.8em');
+        this.renderer.setElementStyle(antennaPopup, 'background-color', this.antennaPopupBgColour);
+        this.renderer.setElementStyle(antennaPopup, 'cursor', this.antennaPopupCursor);
+        this.renderer.setElementStyle(antennaPopup, 'padding', this.antennaPopupPadding);
+        this.renderer.setElementStyle(antennaPopup, 'border', this.antennaPopupBorderStyle);
+        this.renderer.setElementStyle(antennaPopup, 'font-size', this.antennaPopupFontSize);
     }
-
 
     ngOnChanges(changes: SimpleChanges) {
         if (!this.antennaPositions || !this.channelsStatus) {
             return;
         }
         this.canvasAntennas = this.createAntennas(this.antennaPositions, this.channelsStatus);
+        this.clearCanvas();
         this.drawMeterLength(this.antennaPositions);
-        //this.drawCompass();
         this.drawAntennaPositions(this.canvasAntennas);
     }
 
@@ -128,6 +151,13 @@ export class StatusMapComponent {
             antennas.push(antenna);
         })
         return antennas;
+    }
+
+    clearCanvas() {
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
     }
 
     getAntennaDrawPositionModifier(antennaPositions) {
@@ -177,6 +207,8 @@ export class StatusMapComponent {
     drawAntennaPositions(antennas: Antenna[]) {
         let drawCanvas = this.statusMapCanvas.nativeElement;
         let ctx = drawCanvas.getContext('2d');
+        ctx.save();
+        ctx.translate(0.5, 0.5);
         // draw each antenna
         antennas.forEach(antenna => {
             ctx.beginPath();
@@ -186,11 +218,13 @@ export class StatusMapComponent {
                 antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
             ctx.fill();
             // write antenna id
-            ctx.font = this.canvasFontStyle;
-            ctx.fillStyle= 'black';
+            ctx.font = this.antennaIdFontStyle;
+            ctx.fillStyle= this.fontColour;
             let textDrawX = antenna.antennaStatus.id < 10 ?
-                antenna.drawX - (antenna.drawRadius / 3) :
-                antenna.drawX - (antenna.drawRadius / 1.5);
+                antenna.drawX - (antenna.drawRadius /
+                    this.antennaTextXOffsetModSmallNumber) :
+                antenna.drawX - (antenna.drawRadius /
+                    this.antennaTextXOffsetModBigNumber);
             let textDrawY = antenna.drawY + (antenna.drawRadius / 2);
             ctx.fillText(antenna.antennaStatus.id, textDrawX, textDrawY);
             // draw antenna border
@@ -199,6 +233,7 @@ export class StatusMapComponent {
                 antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
             ctx.stroke();
         });
+        ctx.restore();
     }
 
     drawMeterLength(antennaPositions) {
@@ -208,58 +243,47 @@ export class StatusMapComponent {
         let drawCanvas = this.statusMapCanvas.nativeElement;
         let ctx = drawCanvas.getContext('2d');
         ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.translate(0.5, 0.5);    // otherwise lines appear blurry
+        ctx.strokeStyle = this.fontColour;
+        ctx.translate(0.5, 0.5);
 
         let drawMod = this.getAntennaDrawPositionModifier(antennaPositions);
         let meterStartX =  this.canvasPaddingX;
         let meterEndX = Math.floor(meterStartX + drawMod);
         // draw meter line
         ctx.beginPath();
-        ctx.moveTo(meterStartX, 480)
-        ctx.lineTo(meterEndX, 480);
+        ctx.moveTo(meterStartX, this.meterLineYAxis)
+        ctx.lineTo(meterEndX, this.meterLineYAxis);
         ctx.stroke();
         //draw end lines
         ctx.beginPath();
-        ctx.moveTo(meterStartX, 470);
-        ctx.lineTo(meterStartX, 490);
+        ctx.moveTo(meterStartX, this.meterLengthEndYAxisStart);
+        ctx.lineTo(meterStartX, this.meterLengthEndYAxisEnd);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(meterEndX, 470);
-        ctx.lineTo(meterEndX, 490);
+        ctx.moveTo(meterEndX, this.meterLengthEndYAxisStart);
+        ctx.lineTo(meterEndX, this.meterLengthEndYAxisEnd);
         ctx.stroke();
         // draw trianges
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = this.fontColour;
         ctx.beginPath();
-        ctx.moveTo(meterStartX, 480);
-        ctx.lineTo(meterStartX + 8, 470);
-        ctx.lineTo(meterStartX + 8, 490);
+        ctx.moveTo(meterStartX, this.meterLineYAxis);
+        ctx.lineTo(meterStartX + this.meterArrowXAxisOffset,
+            this.meterLengthEndYAxisStart);
+        ctx.lineTo(meterStartX + this.meterArrowXAxisOffset,
+            this.meterLengthEndYAxisEnd);
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(meterEndX, 480);
-        ctx.lineTo(meterEndX - 8, 470);
-        ctx.lineTo(meterEndX - 8, 490);
+        ctx.moveTo(meterEndX, this.meterLineYAxis);
+        ctx.lineTo(meterEndX - this.meterArrowXAxisOffset,
+            this.meterLengthEndYAxisStart);
+        ctx.lineTo(meterEndX - this.meterArrowXAxisOffset,
+            this.meterLengthEndYAxisEnd);
         ctx.fill();
         // write 1m
-        ctx.font = "1em arial";
+        ctx.font = this.meterLengthFontStyle;
         let textDrawX = Math.floor(meterEndX / 2);
-        let textDrawY = 475;
-        ctx.fillText("1m", textDrawX, textDrawY);
-        ctx.restore();
-    }
-
-    drawCompass() {
-        // TODO: this isn't ready yet...
-        let drawCanvas = this.statusMapCanvas.nativeElement;
-        let ctx = drawCanvas.getContext('2d');
-        ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.translate(0.5, 0.5);    // otherwise lines appear blurry
-
-        ctx.beginPath();
-        ctx.moveTo(450, 20);
-        ctx.lineTo(450, 100);
-        ctx.stroke();
+        let textDrawY = this.meterLengthTextPositionY;
+        ctx.fillText(this.meterLengthLabel, textDrawX, textDrawY);
         ctx.restore();
     }
 
