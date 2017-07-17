@@ -1,6 +1,5 @@
-import { Component, Input, ElementRef, ViewChild} from '@angular/core';
+import { Component, Input, ElementRef, ViewChild, Renderer, Directive } from '@angular/core';
 
-import { TartService } from '../../services/tart.service'; // TODO: delete when receiving data from parent component
 import { Antenna } from '../../models/Antenna';
 import { ChannelStatus } from '../../models/ChannelStatus';
 
@@ -9,17 +8,28 @@ import { ChannelStatus } from '../../models/ChannelStatus';
     templateUrl: './status-map.component.html',
     styleUrls: ['./status-map.component.css']
 })
+
+@Directive({
+    selector: '[canvasRenderer]'
+})
 export class StatusMapComponent {
     @ViewChild('statusMapCanvas') statusMapCanvas: ElementRef;
+    private canvasElement: Node;
+
+    antennaPopupId: string = 'antenna-popup';
+    canvasFontStyle: string = '0.8em arial';
+    // Antenna colours
+    antennaOkColour: string = "rgba(92, 184, 92, 0.8)";
+    antennaErrorColor: string = "rgba(217, 83, 79, 0.8)";
 
     // position on canvas that translates to the 0 position in antennaPositions
     mapZeroXCanvasPosition: number = 250;
     mapZeroYCanvasPosition: number = 250;
     // radius of antenna marker
-    antennaRadius: number = 8;
+    antennaRadius: number = 10;
     // canvas padding
-    canvasPaddingX: number = 12;
-    canvasPaddingY: number = 12;
+    canvasPaddingX: number = 14;
+    canvasPaddingY: number = 14;
 
     @Input()
     channelsStatus: ChannelStatus[] = [];
@@ -29,27 +39,91 @@ export class StatusMapComponent {
 
     canvasAntennas: Antenna[] = [];
 
-    constructor(private tartService: TartService) { }
+    constructor(
+        private renderer: Renderer,
+        private element: ElementRef) {
 
-    ngAfterViewInit() {
-        let antennasPos = this.getAntennaPositions();
-        let channelsStatus = this.getChannelsStatus();
-        this.canvasAntennas = this.createAntennas(antennasPos, channelsStatus);
+        this.canvasElement = element.nativeElement;
+    }
+
+    ngOnInit() {
+        this.initMapCanvasClickListener();
+    }
+
+    initMapCanvasClickListener() {
+        this.statusMapCanvas.nativeElement.addEventListener('click', event => {
+            let x = event.pageX - this.statusMapCanvas.nativeElement.offsetLeft;
+            let y = event.pageY - this.statusMapCanvas.nativeElement.offsetTop;
+
+            let oldPopup = document.getElementById(this.antennaPopupId);
+            if (oldPopup) {
+                oldPopup.remove();
+            }
+
+            this.canvasAntennas.forEach(antenna => {
+                if (antenna.isClicked(x, y)) {
+                    if (antenna.antennaStatus.radioMean.ok === 0 ||
+                        antenna.antennaStatus.phase.ok === 0) {
+                        this.displayAntennaPopup(event.pageX, event.pageY, antenna);
+                    }
+                }
+            });
+        })
+    }
+
+    displayAntennaPopup(absolutePositionX: number, absolutePositionY: number,
+        antenna: Antenna) {
+        let antennaStatus = antenna.antennaStatus;
+        let popupText = '';
+
+        if (antennaStatus.radioMean.ok === 0) {
+            popupText = popupText + 'Radio Mean: ' + antennaStatus.radioMean.mean;
+        }
+
+        if (antennaStatus.phase.ok === 0) {
+            if (popupText.length > 0) {
+                popupText = popupText + '\n';
+            }
+            popupText = popupText + 'Phase Stability: ' + antennaStatus.phase.stability;
+        }
+
+        let antennaPopup = this.renderer.createElement(this.canvasElement, 'div');
+        this.renderer.createText(antennaPopup, popupText);
+        this.renderer.setElementAttribute(antennaPopup, 'id', this.antennaPopupId);
+        this.renderer.setElementStyle(antennaPopup, 'position', 'absolute');
+        this.renderer.setElementStyle(antennaPopup, 'left', `${absolutePositionX}px`);
+        this.renderer.setElementStyle(antennaPopup, 'top', `${absolutePositionY}px`);
+        this.renderer.setElementStyle(antennaPopup, 'background-color', 'white');
+        this.renderer.setElementStyle(antennaPopup, 'cursor', 'default');
+        this.renderer.setElementStyle(antennaPopup, 'padding', '4px');
+        this.renderer.setElementStyle(antennaPopup, 'border', '1px solid black');
+        this.renderer.setElementStyle(antennaPopup, 'font-size', '0.8em');
+    }
+
+
+    ngOnChanges() {
+        if (!this.antennaPositions || !this.channelsStatus) {
+            return;
+        }
+        this.canvasAntennas = this.createAntennas(this.antennaPositions,
+            this.channelsStatus);
         this.drawAntennaPositions(this.canvasAntennas);
     }
 
     createAntennas(antennaPositions, channelStatuses:  ChannelStatus[]) {
         let antennas = [];
+        if (antennaPositions.length < 1 || channelStatuses.length < 1) {
+            return antennas;
+        }
 
         let drawPositionMods = this.getAntennaDrawPositionModifiers(antennaPositions);
         // TODO:  antenna xyz coordinate indexes should be defined by the service that supplies the antenna positions.
         channelStatuses.forEach(channelStatus => {
-            console.log("make antenna instance...");
             let antennaPos = antennaPositions[channelStatus.id];
             // calculate draw position of antenna
             let drawX = (drawPositionMods[0] * antennaPos[0])
                 + this.mapZeroXCanvasPosition;
-            let drawY = (drawPositionMods[1] * antennaPos[1])
+            let drawY = (drawPositionMods[1] * antennaPos[1] * -1)
                 + this.mapZeroYCanvasPosition;
             // create new antenna and add to antennas
             let antenna = new Antenna(antennaPos[0], antennaPos[1], antennaPos[2],
@@ -109,10 +183,20 @@ export class StatusMapComponent {
 
         antennas.forEach(antenna => {
             ctx.beginPath();
-            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+            // fill antenna
+            ctx.fillStyle = this.getAntennaDrawColour(antenna);
             ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
                 antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
             ctx.fill();
+            // write antenna id
+            ctx.font = this.canvasFontStyle;
+            ctx.fillStyle= 'black';
+            let textDrawX = antenna.antennaStatus.id < 10 ?
+                antenna.drawX - (antenna.drawRadius / 3) :
+                antenna.drawX - (antenna.drawRadius / 1.5);
+            let textDrawY = antenna.drawY + (antenna.drawRadius / 2);
+            ctx.fillText(antenna.antennaStatus.id, textDrawX, textDrawY);
+            // draw antenna border
             ctx.beginPath();
             ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
                 antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
@@ -120,403 +204,11 @@ export class StatusMapComponent {
         });
     }
 
-    getAntennaPositions() {
-        return [
-            [-0.29, 0.79, 0.0],
-            [0.03, 0.81, 0.0],
-            [-0.4, 0.64, 0.0],
-            [0.39, 1.31, 0.0],
-            [-0.34, 1.37, 0.0],
-            [0.12, 1.4, 0.0],
-            [1.06, -0.36, 0.0],
-            [1.2, -0.07, 0.0],
-            [1.13, -0.53, 0.0],
-            [0.95, 0.49, 0.0],
-            [0.53, -0.11, 0.0],
-            [0.73, 0.3, 0.0],
-            [-0.36, -1.06, 0.0],
-            [-0.07, -1.2, 0.0],
-            [-0.53, -1.13, 0.0],
-            [0.49, -0.95, 0.0],
-            [-0.11, -0.53, 0.0],
-            [0.3, -0.73, 0.0],
-            [-0.87, 0.34, 0.0],
-            [-1.14, 0.16, 0.0],
-            [-0.85, 0.52, 0.0],
-            [-1.2, -0.45, 0.0],
-            [-0.54, -0.14, 0.0],
-            [-0.92, -0.4, 0.0]
-        ];
-    }
-
-    getChannelsStatus() {
-        let apiResponse = [
-          {
-            "id": 0,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.999,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4594,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 1,
-            "phase": {
-              "N_samples": 150,
-              "measured": 5,
-              "ok": 1,
-              "stability": 0.999,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4995,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 2,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.971,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4943,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 3,
-            "phase": {
-              "N_samples": 150,
-              "measured": 3,
-              "ok": 1,
-              "stability": 0.976,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4948,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 4,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.982,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5881,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 5,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.984,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5803,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 6,
-            "phase": {
-              "N_samples": 150,
-              "measured": 6,
-              "ok": 1,
-              "stability": 0.991,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5126,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 7,
-            "phase": {
-              "N_samples": 150,
-              "measured": 5,
-              "ok": 1,
-              "stability": 0.994,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4926,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 8,
-            "phase": {
-              "N_samples": 150,
-              "measured": 5,
-              "ok": 1,
-              "stability": 0.999,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5061,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 9,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.969,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.6018,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 10,
-            "phase": {
-              "N_samples": 150,
-              "measured": 5,
-              "ok": 1,
-              "stability": 0.997,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4873,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 11,
-            "phase": {
-              "N_samples": 150,
-              "measured": 6,
-              "ok": 1,
-              "stability": 0.977,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.477,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 12,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.998,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4831,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 13,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.993,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5559,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 14,
-            "phase": {
-              "N_samples": 150,
-              "measured": 3,
-              "ok": 1,
-              "stability": 0.966,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5053,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 15,
-            "phase": {
-              "N_samples": 150,
-              "measured": 3,
-              "ok": 1,
-              "stability": 0.999,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.5295,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 16,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.993,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4885,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 17,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.966,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.7368,
-              "ok": 0,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 18,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.975,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.6191,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 19,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.966,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.729,
-              "ok": 0,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 20,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.999,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4963,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 21,
-            "phase": {
-              "N_samples": 150,
-              "measured": 3,
-              "ok": 1,
-              "stability": 1.0,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.4858,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 22,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.974,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.7407,
-              "ok": 0,
-              "threshold": 0.2
-            }
-          },
-          {
-            "id": 23,
-            "phase": {
-              "N_samples": 150,
-              "measured": 4,
-              "ok": 1,
-              "stability": 0.971,
-              "threshold": 0.95
-            },
-            "radio_mean": {
-              "mean": 0.6325,
-              "ok": 1,
-              "threshold": 0.2
-            }
-          }
-        ];
-        let serviceResponse = [];
-        apiResponse.forEach(channel => {
-            let channelInstance = this.tartService.createChannelStatus(channel);
-            serviceResponse.push(channelInstance);
-        });
-        return serviceResponse;
+    getAntennaDrawColour(antenna: Antenna) {
+        let status = antenna.antennaStatus;
+        if (status.phase.ok === 0 || status.radioMean.ok === 0) {
+            return this.antennaErrorColor;
+        }
+        return this.antennaOkColour;
     }
 }

@@ -5,6 +5,8 @@ import { FpgaStatusComponent } from
 '../../components/fpga-status/fpga-status.component';
 import { ModeService } from '../../services/mode.service';
 import { AuthService } from '../../services/auth.service';
+import { TartService } from '../../services/tart.service';
+import { ImagingService } from '../../services/imaging.service';
 
 import { Observable } from 'rxjs/Observable';
 
@@ -15,6 +17,9 @@ import { Observable } from 'rxjs/Observable';
 })
 export class HomeComponent {
     @ViewChild('fpgaStatus') fpgaStatus: FpgaStatusComponent;
+
+    channelsStatus: any[] = [];
+    antennaPositions: any[] = [];
 
     private currentMode: string = '';
 
@@ -27,6 +32,8 @@ export class HomeComponent {
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
+        private tartService: TartService,
+        private imagingService: ImagingService,
         private router: Router
     ) { }
 
@@ -42,6 +49,16 @@ export class HomeComponent {
 
     ngAfterViewInit() {
         this.startUpdateFpgaTimer();
+
+        this.tartService.getChannelStatus()
+            .subscribe(channelsStatus => {
+                this.channelsStatus = channelsStatus;
+            });
+
+        this.imagingService.getAntennaPositions()
+            .subscribe(antennaPositions => {
+                this.antennaPositions = antennaPositions;                
+            });
     }
 
     ngOnDestroy() {
