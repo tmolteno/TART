@@ -96,7 +96,7 @@ export class DataAcquisitionService {
             return Observable.throw(new Error('token expired'));
         }
         let options = this.authService.getAuthRequestOptions();
-        return this.http.put(`${this.apiUrl}/raw/save/${doSave ? 1 : 0}`, {},
+        return this.http.put(`${this.apiUrl}/vis/save/${doSave ? 1 : 0}`, {},
             options).map((res: Response) => {
                 return res.json();
             });

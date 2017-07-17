@@ -1,4 +1,5 @@
-import { Component, Input, ElementRef, ViewChild, Renderer, Directive } from '@angular/core';
+import { Component, Input, ElementRef, ViewChild, Renderer, Directive,
+    SimpleChanges } from '@angular/core';
 
 import { Antenna } from '../../models/Antenna';
 import { ChannelStatus } from '../../models/ChannelStatus';
@@ -9,9 +10,6 @@ import { ChannelStatus } from '../../models/ChannelStatus';
     styleUrls: ['./status-map.component.css']
 })
 
-@Directive({
-    selector: '[canvasRenderer]'
-})
 export class StatusMapComponent {
     @ViewChild('statusMapCanvas') statusMapCanvas: ElementRef;
     private canvasElement: Node;
@@ -33,7 +31,6 @@ export class StatusMapComponent {
 
     @Input()
     channelsStatus: ChannelStatus[] = [];
-
     @Input()
     antennaPositions: any[] = [];
 
@@ -42,7 +39,6 @@ export class StatusMapComponent {
     constructor(
         private renderer: Renderer,
         private element: ElementRef) {
-
         this.canvasElement = element.nativeElement;
     }
 
@@ -101,12 +97,11 @@ export class StatusMapComponent {
     }
 
 
-    ngOnChanges() {
+    ngOnChanges(changes: SimpleChanges) {
         if (!this.antennaPositions || !this.channelsStatus) {
             return;
         }
-        this.canvasAntennas = this.createAntennas(this.antennaPositions,
-            this.channelsStatus);
+        this.canvasAntennas = this.createAntennas(this.antennaPositions, this.channelsStatus);
         this.drawMeterLength(this.antennaPositions);
         //this.drawCompass();
         this.drawAntennaPositions(this.canvasAntennas);
