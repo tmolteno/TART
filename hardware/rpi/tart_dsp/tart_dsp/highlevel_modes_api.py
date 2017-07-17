@@ -1,4 +1,5 @@
 import numpy as np
+import datetime
 
 '''
 Helper functions
@@ -30,7 +31,6 @@ def mkdir_p(path): # Emulate mkdir -p functionality in python
     else: raise
 
 def create_timestamp_and_path(base_path):
-  import datetime
   ts = datetime.datetime.utcnow()   # Timestamp information for directory structure
   # Create a meaningful directory structure to organize recorded data
   p = base_path + '/' + str(ts.year) +'/' + str(ts.month) + '/' + str(ts.day) + '/'
@@ -130,6 +130,7 @@ def run_diagnostic(tart, runtime_config):
       channels.append(channel)
 
     runtime_config['channels'] = channels
+    runtime_config['channels_timestamp'] = datetime.datetime.utcnow()
     runtime_config['status'] = d
 
     print "\nDone."

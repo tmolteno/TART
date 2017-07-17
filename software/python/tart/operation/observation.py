@@ -4,7 +4,7 @@ import cPickle
 import math
 import gzip
 
-from tart.imaging import tart_util  #FIXME
+from tart.imaging import tart_util
 from tart.imaging import location
 
 from tart.operation import settings
@@ -48,12 +48,12 @@ class Observation:
   def get_means(self):
     '''Calculate and return means of antenna data'''
     ret = []
-    for i in range(self.config.get_num_antennas()):
+    for i in range(self.config.get_num_antenna()):
       ret.append(boolean_mean(self.data[i]))
     return np.array(ret)
 
   def get_antenna(self, ant_num):
-    if (ant_num >= self.config.get_num_antennas()):
+    if (ant_num >= self.config.get_num_antenna()):
       raise "Antenna %d doesn't exist" % ant_num
     return self.data[ant_num]*2-1. # Return to bipolar binary
 

@@ -1,5 +1,7 @@
 from tart.imaging import uvfitsgenerator
 from tart.imaging import radio_source
+from tart.imaging import location
+
 from tart.simulation import antennas
 from tart.util import skyloc
 from tart.util import constants
@@ -58,7 +60,7 @@ class Synthesis_Imaging(object):
     # vt = self.vis_list[int(len(self.vis_list)/2)]
     vt = self.cal_vis_list[0]
     # print vt.config
-    ra, dec = vt.get_config().get_loc().horizontal_to_equatorial(vt.get_timestamp(), angle.from_dms(90.), angle.from_dms(90.))
+    ra, dec = location.get_loc(vt.get_config()).horizontal_to_equatorial(vt.get_timestamp(), angle.from_dms(90.), angle.from_dms(90.))
     # ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
     # dec = angle.from_dms(-90.00)
     # print 'phasecenter:', ra, dec
@@ -174,8 +176,8 @@ class Synthesis_Imaging(object):
       ts = cal_vis.get_timestamp()
       ra, dec = self.phase_center.radec(ts)
       c = cal_vis.get_config()
-      ant_p = np.array(c.ant_positions)
-      loc = c.get_loc()
+      ant_p = np.array(c.get_antenna_positions())
+      loc = location.get_loc(c)
       bls = cal_vis.get_baselines()
       for bl in bls:
         ant_i, ant_j = bl
