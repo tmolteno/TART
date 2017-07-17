@@ -8,6 +8,7 @@ import { ChannelsStatusComponent } from
 import { TartService } from '../../services/tart.service';
 import { AuthService } from '../../services/auth.service';
 import { ModeService } from '../../services/mode.service';
+import { ImagingService } from '../../services/imaging.service';
 
 import { Observable } from 'rxjs/Observable';
 
@@ -24,9 +25,14 @@ export class DiagnoseModeComponent {
     updateStatusTimer: any;
     timerSubscription: any;
 
+    statusMapChannels: any[] = [];
+    antennaPositions: any[] = [];
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
+        private tartService: TartService,
+        private imagingService: ImagingService,
         private router: Router
     ) { }
 
@@ -46,6 +52,7 @@ export class DiagnoseModeComponent {
 
     ngAfterViewInit() {
         this.startUpdateTimer();
+        this.updateStatusMap();
     }
 
     ngOnDestroy() {
@@ -64,6 +71,19 @@ export class DiagnoseModeComponent {
     updateStatus() {
         this.fpgaStatus.updateFpgaStatus();
         this.channelsStatus.updateChannelsStatus();
+        this.updateStatusMap();
+    }
+
+    updateStatusMap() {
+        this.tartService.getChannelStatus()
+            .subscribe(channelsStatus => {
+                this.statusMapChannels = channelsStatus;
+            });
+
+        this.imagingService.getAntennaPositions()
+            .subscribe(antennaPositions => {
+                this.antennaPositions = antennaPositions;
+            });
     }
 
     setDiagnoseMode() {

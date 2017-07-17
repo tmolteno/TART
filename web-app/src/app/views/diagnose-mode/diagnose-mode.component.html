@@ -2,9 +2,10 @@
         <div id="status-report-header">
             <h1>Status Report</h1>
         </div>
-        <div>
-            <app-status-map></app-status-map>
-        </div>
+        <app-status-map
+            [channelsStatus]="statusMapChannels"
+            [antennaPositions]="antennaPositions">
+        </app-status-map>
         <app-fpga-status
             #fpgaStatus
             [showFpgaStatus]="true">
