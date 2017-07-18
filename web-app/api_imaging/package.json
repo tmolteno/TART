@@ -10,6 +10,7 @@
     "ndarray-fft": "^1.0.3",
     "request": "^2.81.0",
     "save-pixels": "^2.3.4",
+    "scale-color-perceptual": "^1.1.2",
     "zeros": "^1.0.0"
   },
   "devDependencies": {

@@ -8,11 +8,24 @@ var calib = fake_data.calib;
 var nw = 30; // Number of wavelengths
 var num_bin = 2**9; // bins in the fft
 
+const scale = require('scale-color-perceptual')
+const hex2rgb = require('scale-color-perceptual/utils/hex2rgb')
+
+
 window.onload = function() {
   var dummyCanvas = api_synthesis.gen_image(vis, ant_pos, calib, nw, num_bin);
   var dummyImageData = dummyCanvas.getContext('2d').getImageData(0,0,dummyCanvas.width,dummyCanvas.height);
   var myCanvas = document.getElementById('my-canvas');
   var ctx = myCanvas.getContext('2d');
+
+  var end = dummyImageData.data.length;
+  for (var i=0; i<end; i+=4) {
+    val = hex2rgb(scale.viridis(dummyImageData.data[i]/255.))
+    dummyImageData.data[i]   = val.r*255;
+    dummyImageData.data[i+1] = val.g*255;
+    dummyImageData.data[i+2] = val.b*255;
+  }
+
   ctx.putImageData(dummyImageData, 0, 0);
 }
 
