@@ -112,5 +112,7 @@ def create_app():
 
 app = create_app()
 
+
 import telescope_api.views
 import telescope_api.views_acquisition
+import telescope_api.views_log
