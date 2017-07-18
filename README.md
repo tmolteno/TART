@@ -11,6 +11,8 @@ licensed under the GPL v3.
 The authors of the first version of the TART are Tim Molteno, Charles Shaw, Max 
 Scheel and Phil Brown. Enquries about the TART should be addressed to Tim Molteno (tim@elec.ac.nz). 
 
+[Connect to our development radio telescope here](https://tart.elec.ac.nz "Online Telescopes")
+
 ## Hardware
 
 The TART hardware is designed using a combination of KiCAD (newest boards) and
