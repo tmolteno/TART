@@ -63,7 +63,8 @@ function abs(real, imag){
 }
 
 
-var gen_image = function(vis, ant_pos, nw, num_bin){
+var gen_image = function(vis, ant_pos, calib, nw, num_bin){
+
     var L1_WAVELENGTH = 0.1905; // meter
     var uu_a = [];
     var vv_a = [];
@@ -74,7 +75,11 @@ var gen_image = function(vis, ant_pos, nw, num_bin){
       uu_a.push((ant_pos[a[0]][0] - ant_pos[a[1]][0])/L1_WAVELENGTH);
       vv_a.push((ant_pos[a[0]][1] - ant_pos[a[1]][1])/L1_WAVELENGTH);
       ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
-      vis_l.push(vis[key]);
+      var gain_corr_real_part =   calib.gain[a[0]] * calib.gain[a[1]] * Math.cos(calib.phase_offset[a[0]] - calib.phase_offset[a[1]]);
+      var gain_corr_imag_part = - calib.gain[a[0]] * calib.gain[a[1]] * Math.sin(calib.phase_offset[a[0]] - calib.phase_offset[a[1]]);
+      var vis_cal_real = vis[key][0] * gain_corr_real_part;
+      var vis_cal_imag = vis[key][1] * gain_corr_imag_part;
+      vis_l.push([vis_cal_real, vis_cal_imag]);
     }
 
     var uu_edges = linspace(-nw, nw, num_bin+1);
@@ -117,7 +122,6 @@ var gen_image = function(vis, ant_pos, nw, num_bin){
 
 //     console.log(SAbs_scaled);
     return savePixels(SAbs_scaled, 'CANVAS');
-
 };
 
 
