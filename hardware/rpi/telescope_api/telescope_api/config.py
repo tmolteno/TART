@@ -29,7 +29,7 @@ def init_config(manager):
     }
     runtime_config['vis'] = {
         'save' : 0, \
-        'chunksize' : 50,\
+        'chunksize' : 5,\
         'N_samples_exp' : 22,\
         'vis_prefix' : './fpga',
     }
