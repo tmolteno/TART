@@ -19,13 +19,6 @@ export class TartService {
         this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
     }
 
-    getStatus() {
-        return this.http.get(`${this.apiUrl}/status`)
-            .map((res: Response) => {
-                return res.json();
-            });
-    }
-
     getChannelStatus() {
         return this.http.get(`${this.apiUrl}/status/channel`)
             .map((res: Response) => {

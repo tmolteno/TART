@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild, HostListener } from '@angular/core';
 
 const visImaging = require('vis_imaging/src/api_synthesis');
 import { ImagingService } from '../../services/imaging.service';
+import { CalibrationService } from '../../services/calibration.service';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -48,10 +49,13 @@ export class ImagingComponent {
     // draw data
     antennaPositions: any;
     visData: any;
-
+    calibrationData: any;
     timestamp: string = null;
 
-    constructor(private imagingService: ImagingService) { }
+    constructor(
+        private imagingService: ImagingService,
+        private calibrationService: CalibrationService
+    ) { }
 
     ngOnInit() {
         this.setCanvasSize();
@@ -102,10 +106,12 @@ export class ImagingComponent {
         if (!this.blockRefresh) {
             Observable.forkJoin([
                 this.imagingService.getVis(),
+                this.calibrationService.getGain(),
                 this.imagingService.getTimestamp()
             ]).subscribe(result => {
                 this.visData = result[0];
-                this.timestamp = result[1];
+                this.calibrationData = result[1];
+                this.timestamp = result[2];
                 this.drawImage();
             }, err => {
                 this.blockRefresh = false;
@@ -119,7 +125,7 @@ export class ImagingComponent {
             return;
         }
         let genImg = visImaging.gen_image(this.visData, this.antennaPositions,
-            this.waves, Math.pow(2, this.numBins));
+            this.calibrationData, this.waves, Math.pow(2, this.numBins));
 
         let img = new Image();
         img.onload = () => {
