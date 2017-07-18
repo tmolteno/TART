@@ -17,6 +17,7 @@ export class StatusMapComponent {
     //=======================
     // Canvas draw constants
     //=======================
+    defaultCanvasSize: number = 500;
     fontColour: string = 'black';
     antennaPopupId: string = 'antenna-popup';
     antennaIdFontStyle: string = '0.8em arial';
@@ -34,6 +35,8 @@ export class StatusMapComponent {
     // canvas padding
     canvasPaddingX: number = 14;
     canvasPaddingY: number = 14;
+    // canvas margin on devices < 500px wide
+    smallDeviceCanvasMargin: number = 16;
     // 1 metre display constants
     meterLineYAxis: number = 480;
     meterArrowXAxisOffset: number = 8;
@@ -67,7 +70,43 @@ export class StatusMapComponent {
     }
 
     ngOnInit() {
+        this.setCanvasSize();
         this.initMapCanvasClickListener();
+    }
+
+    setCanvasSize() {
+        let viewWidth = window.innerWidth;
+        if (viewWidth > this.defaultCanvasSize) {
+            this.statusMapCanvas.nativeElement.width = this.defaultCanvasSize;
+            this.statusMapCanvas.nativeElement.height = this.defaultCanvasSize;
+        }
+        else {
+            let canvasSize = viewWidth - (this.smallDeviceCanvasMargin * 2);
+            let resizeMod = canvasSize / this.defaultCanvasSize;
+            // resize canvas
+            this.statusMapCanvas.nativeElement.width = canvasSize;
+            this.statusMapCanvas.nativeElement.height = canvasSize;
+            // resize canvas elements
+            this.mapZeroXCanvasPosition = Math.floor(
+                this.mapZeroXCanvasPosition * resizeMod);
+            this.mapZeroYCanvasPosition = Math.floor(
+                this.mapZeroYCanvasPosition * resizeMod);
+            this.antennaRadius = Math.floor(
+                this.antennaRadius * resizeMod);
+            this.canvasPaddingX = Math.floor(
+                this.canvasPaddingX * resizeMod);
+            this.canvasPaddingY = Math.floor(
+                this.canvasPaddingY * resizeMod);
+            this.meterLineYAxis = Math.floor(this.meterLineYAxis * resizeMod);
+            this.meterArrowXAxisOffset = Math.floor(
+                this.meterArrowXAxisOffset * resizeMod);
+            this.meterLengthTextPositionY = Math.floor(
+                this.meterLengthTextPositionY * resizeMod);
+            this.meterLengthEndYAxisStart = Math.floor(
+                this.meterLengthEndYAxisStart * resizeMod);
+            this.meterLengthEndYAxisEnd = Math.floor(
+                this.meterLengthEndYAxisEnd * resizeMod);
+        }
     }
 
     initMapCanvasClickListener() {
