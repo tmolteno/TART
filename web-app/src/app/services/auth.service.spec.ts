@@ -1,16 +1,28 @@
 /* tslint:disable:no-unused-variable */
 
-import { TestBed, async, inject } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing';
+import {
+     HttpModule,
+     Http,
+     Response,
+     ResponseOptions,
+     XHRBackend
+} from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AuthService]
+      imports: [HttpModule],
+      providers: [
+        {provide: XHRBackend, useClass: MockBackend},
+        AuthService
+      ]
     });
   });
 
-  it('should ...', inject([AuthService], (service: AuthService) => {
+  it('should be created', inject([AuthService], (service: AuthService) => {
     expect(service).toBeTruthy();
   }));
 });

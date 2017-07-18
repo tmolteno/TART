@@ -1,11 +1,22 @@
 import { TestBed, inject } from '@angular/core/testing';
-
+import {
+     HttpModule,
+     Http,
+     Response,
+     ResponseOptions,
+     XHRBackend
+} from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
 import { CalibrationService } from './calibration.service';
 
 describe('CalibrationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CalibrationService]
+      imports: [HttpModule],
+      providers: [
+        {provide: XHRBackend, useClass: MockBackend},
+        CalibrationService
+      ]
     });
   });
 
