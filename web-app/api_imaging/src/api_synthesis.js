@@ -77,8 +77,8 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin){
       ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
       var gain_corr_real_part =   calib.gain[a[0]] * calib.gain[a[1]] * Math.cos(calib.phase_offset[a[0]] - calib.phase_offset[a[1]]);
       var gain_corr_imag_part = - calib.gain[a[0]] * calib.gain[a[1]] * Math.sin(calib.phase_offset[a[0]] - calib.phase_offset[a[1]]);
-      var vis_cal_real = vis[key][0] * gain_corr_real_part;
-      var vis_cal_imag = vis[key][1] * gain_corr_imag_part;
+      var vis_cal_real = vis[key][0] * gain_corr_real_part - vis[key][1]*gain_corr_imag_part;
+      var vis_cal_imag = vis[key][0] * gain_corr_imag_part + vis[key][1]*gain_corr_real_part;
       vis_l.push([vis_cal_real, vis_cal_imag]);
     }
 
