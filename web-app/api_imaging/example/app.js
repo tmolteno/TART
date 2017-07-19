@@ -6,7 +6,7 @@ var ant_pos = fake_data.ant_pos;
 var calib = fake_data.calib;
 
 var nw = 30; // Number of wavelengths
-var num_bin = 2**9; // bins in the fft
+var num_bin = Math.pow(2,9); // bins in the fft
 
 const scale = require('scale-color-perceptual')
 const hex2rgb = require('scale-color-perceptual/utils/hex2rgb')
