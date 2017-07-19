@@ -5,7 +5,8 @@ Provide visibilities and antenna positions as well as imaging parameters to this
 ## Install
 
 ```
-npm install webpack -g
+sudo apt-get install nodejs-legacy
+sudo npm install npm -g
 npm install
 ```
 
