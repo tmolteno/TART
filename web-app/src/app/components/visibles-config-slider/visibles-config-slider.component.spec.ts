@@ -3,6 +3,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 
+import { NouisliderModule } from 'ng2-nouislider';
 import { VisiblesConfigSliderComponent } from './visibles-config-slider.component';
 
 describe('VisiblesConfigSliderComponent', () => {
@@ -11,7 +12,8 @@ describe('VisiblesConfigSliderComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ VisiblesConfigSliderComponent ]
+        imports: [NouisliderModule],
+        declarations: [VisiblesConfigSliderComponent]
     })
     .compileComponents();
   }));

@@ -1,5 +1,9 @@
-import { Component, ElementRef, ViewChild, HostListener } from '@angular/core';
-
+import {
+    Component,
+    ElementRef,
+    ViewChild,
+    HostListener,
+} from '@angular/core';
 const visImaging = require('vis_imaging/src/api_synthesis');
 import { ImagingService } from '../../services/imaging.service';
 import { CalibrationService } from '../../services/calibration.service';

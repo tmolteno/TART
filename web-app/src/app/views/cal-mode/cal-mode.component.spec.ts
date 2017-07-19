@@ -13,6 +13,7 @@ import {
 import { MockBackend } from '@angular/http/testing';
 
 import { CalModeComponent } from './cal-mode.component';
+
 import { AuthService } from '../../services/auth.service';
 import { MockAuthService } from '../../testing/mock.auth.service';
 import { ModeService } from '../../services/mode.service';
