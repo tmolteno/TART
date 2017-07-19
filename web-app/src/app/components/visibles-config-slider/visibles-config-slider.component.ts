@@ -13,19 +13,22 @@ import {
 export class VisiblesConfigSliderComponent {
 
     @Input()
-    startValue: number;
+    startValue: number = 2;
 
     @Input()
-    minValue: number;
+    minValue: number = 1;
 
     @Input()
-    maxValue: number;
+    maxValue: number = 3;
 
     @Input()
-    stepSize: number;
+    stepSize: number = 1;
 
     @Input()
     labelText: any;
+
+    @Output()
+    sliderStart = new EventEmitter();
 
     @Output()
     slideEnd = new EventEmitter();
@@ -33,7 +36,7 @@ export class VisiblesConfigSliderComponent {
     @Output()
     valueChanged = new EventEmitter();
 
-    sliderValue: number;
+    sliderValue: number = 2;
     labelValue: number;
 
     constructor() {
@@ -47,6 +50,10 @@ export class VisiblesConfigSliderComponent {
     onSliderSlide(value) {
         this.labelValue = value;
         this.valueChanged.emit(value);
+    }
+
+    onSliderStart(value) {
+        this.sliderStart.emit(value);
     }
 
     onSliderEnd(value) {
