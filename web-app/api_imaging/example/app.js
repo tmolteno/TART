@@ -71,7 +71,7 @@ function draw_src(ctx, el, az, label, nw, num_bin) {
   ctx.fillText(label, x_s+r+1, y_s+r+1);
 }
 
-function draw_grid(ctx,nw, num_bin){
+function overlay_grid(ctx,nw, num_bin){
   ctx.beginPath();
   ctx.lineWidth = 2;
   ctx.moveTo(num_bin/2, 0);
@@ -79,18 +79,17 @@ function draw_grid(ctx,nw, num_bin){
   ctx.moveTo(0,num_bin/2);
   ctx.lineTo(num_bin, num_bin/2);
   ctx.stroke();
-
   var const_el = [80,70,60,50,40,30,0];
   for (i=0; i< const_el.length;i++){
     draw_circ(ctx, 90-const_el[i],nw,num_bin)
   }
-  for (i in sat){
-    console.log(s);
-    var s = sat[i];
+}
+
+function overlay_satellites(ctx, sat_list, nw, num_bin, ){
+  for (i in sat_list){
+    var s = sat_list[i];
     draw_src(ctx, s.el, s.az, s.PRN, nw, num_bin);
-
   }
-
 }
 
 window.onload = function() {
@@ -100,6 +99,8 @@ window.onload = function() {
   var ctx = myCanvas.getContext('2d');
   apply_colormap(dummyImageData);
   ctx.putImageData(dummyImageData, 0, 0);
-  draw_grid(ctx,nw, num_bin);
+  overlay_grid(ctx,nw, num_bin);
+  overlay_satellites(ctx,sat, nw, num_bin);
+
 }
 
