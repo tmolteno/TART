@@ -253,8 +253,9 @@ export class StatusMapComponent {
             ctx.beginPath();
             // fill antenna
             ctx.fillStyle = this.getAntennaDrawColour(antenna);
-            ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
-                antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
+            ctx.arc(antenna.drawX, antenna.drawY, antenna.drawRadius, 0, 2 * Math.PI);
+            /*ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
+                antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);*/
             ctx.fill();
             // write antenna id
             ctx.font = this.antennaIdFontStyle;
@@ -268,8 +269,9 @@ export class StatusMapComponent {
             ctx.fillText(antenna.antennaStatus.id, textDrawX, textDrawY);
             // draw antenna border
             ctx.beginPath();
-            ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
-                antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);
+            ctx.arc(antenna.drawX, antenna.drawY, antenna.drawRadius, 0, 2 * Math.PI);
+            /*ctx.ellipse(antenna.drawX , antenna.drawY, antenna.drawRadius,
+                antenna.drawRadius, Math.PI / 180, 0, 2 * Math.PI);*/
             ctx.stroke();
         });
         ctx.restore();
