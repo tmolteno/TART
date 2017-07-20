@@ -71,7 +71,7 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
     var ww_a = [];
     var vis_l = [];
     for(key in vis){
-      var a = eval(key)
+      var a = JSON.parse(key);
       uu_a.push((ant_pos[a[0]][0] - ant_pos[a[1]][0])/L1_WAVELENGTH);
       vv_a.push((ant_pos[a[0]][1] - ant_pos[a[1]][1])/L1_WAVELENGTH);
       ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
@@ -120,7 +120,6 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
     SAbs_scaled = scale(SAbs);
 
-    
     if (!!colourmap) {
       coloured = require("apply-colormap")(SAbs_scaled,{colormap:colourmap});
       canvas = savePixels(coloured,'CANVAS');
