@@ -105,14 +105,14 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                     active = 0
                     #break
             if (process_queue.empty() == False):
-                print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
+                #print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
                 data = process_queue.get()
                 vis, means, timestamp = get_vis_object(data, runtime_config)
                 #print vis, means, timestamp
                 #update_means(means, timestamp, runtime_config)
                 #print means
                 vis_queue.put((vis, means))
-                print  'Process Loop:', vis
+                #print  'Process Loop:', # vis
         except Exception, e:
             logger.error( "Processing Error %s" % str(e))
             logger.error(traceback.format_exc())

@@ -24,7 +24,6 @@ def connect_to_db():
 def setup_db():
   con, c = connect_to_db()
   c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
-  c.execute("DROP TABLE channels;")
   c.execute("CREATE TABLE IF NOT EXISTS channels (channel_id INTEGER, enabled BOOLEAN)")
   c.execute('SELECT * FROM channels;')
   con.commit()

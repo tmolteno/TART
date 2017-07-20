@@ -16,6 +16,6 @@ def set_channel(channel_idx,enable):
 
 @app.route('/channel', methods=['GET',])
 def get_all_channels():
-  get_manual_channel_status()
+  ret = get_manual_channel_status()
   return jsonify(ret)
 
