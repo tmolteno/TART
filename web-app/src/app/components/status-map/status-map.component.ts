@@ -121,10 +121,11 @@ export class StatusMapComponent {
 
             this.canvasAntennas.forEach(antenna => {
                 if (antenna.isClicked(x, y)) {
-                    if (antenna.antennaStatus.radioMean.ok === 0 ||
+                    this.displayAntennaPopup(event.pageX, event.pageY, antenna);
+                    /*if (antenna.antennaStatus.radioMean.ok === 0 ||
                         antenna.antennaStatus.phase.ok === 0) {
                         this.displayAntennaPopup(event.pageX, event.pageY, antenna);
-                    }
+                    }*/
                 }
             });
         })
@@ -133,21 +134,21 @@ export class StatusMapComponent {
     displayAntennaPopup(absolutePositionX: number, absolutePositionY: number,
         antenna: Antenna) {
         let antennaStatus = antenna.antennaStatus;
-        let popupText = '';
+        let popupText = 'Radio Mean: ' + antennaStatus.radioMean.mean +
+            'Phase Stability: ' + antennaStatus.phase.stability;
 
-        if (antennaStatus.radioMean.ok === 0) {
-            popupText = popupText + 'Radio Mean: ' + antennaStatus.radioMean.mean;
-        }
-
-        if (antennaStatus.phase.ok === 0) {
-            if (popupText.length > 0) {
-                popupText = popupText + '\n';
-            }
-            popupText = popupText + 'Phase Stability: ' + antennaStatus.phase.stability;
-        }
 
         let antennaPopup = this.renderer.createElement(this.canvasElement, 'div');
-        this.renderer.createText(antennaPopup, popupText);
+        let meanDisplay = this.renderer.createElement(antennaPopup, 'div');
+        this.renderer.createText(meanDisplay, 'Radio Mean: ' + antennaStatus.radioMean.mean);
+        let stabilityDisplay = this.renderer.createElement(antennaPopup, 'div');
+        this.renderer.createText(stabilityDisplay, 'Phase Stability: ' + antennaStatus.phase.stability);
+        //let popupBtn = this.renderer.createElement(antennaPopup, 'button');
+        //this.renderer.createText(popupBtn, 'Toggle');
+        //popupBtn.classList.add('btn');
+        //popupBtn.classList.add('btn-primary');
+        //popupBtn.addEventListener('click', this.toggleAntennaEnabled(antenna));
+        //this.renderer.createText(antennaPopup, popupText);
         this.renderer.setElementAttribute(antennaPopup, 'id', this.antennaPopupId);
         this.renderer.setElementStyle(antennaPopup, 'position', this.antennaPopupPosition);
         this.renderer.setElementStyle(antennaPopup, 'left', `${absolutePositionX}px`);
@@ -157,6 +158,18 @@ export class StatusMapComponent {
         this.renderer.setElementStyle(antennaPopup, 'padding', this.antennaPopupPadding);
         this.renderer.setElementStyle(antennaPopup, 'border', this.antennaPopupBorderStyle);
         this.renderer.setElementStyle(antennaPopup, 'font-size', this.antennaPopupFontSize);
+    }
+
+    toggleAntennaEnabled(antenna: Antenna) {
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+        ctx.save();
+        ctx.translate(0.5, 0.5);
+        ctx.strokeStyle = 'black';
+        ctx.moveTo(antenna.drawX - antenna.drawRadius, antenna.drawY - antenna.drawRadius)
+        ctx.lineTo(antenna.drawX + antenna.drawRadius, antenna.drawY + antenna.drawRadius);
+        ctx.stroke();
+        ctx.restore();
     }
 
     ngOnChanges(changes: SimpleChanges) {

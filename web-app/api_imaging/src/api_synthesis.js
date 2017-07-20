@@ -63,7 +63,7 @@ function abs(real, imag){
 }
 
 
-var gen_image = function(vis, ant_pos, calib, nw, num_bin){
+var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
     var L1_WAVELENGTH = 0.1905; // meter
     var uu_a = [];
@@ -71,7 +71,7 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin){
     var ww_a = [];
     var vis_l = [];
     for(key in vis){
-      var a = eval(key)
+      var a = JSON.parse(key);
       uu_a.push((ant_pos[a[0]][0] - ant_pos[a[1]][0])/L1_WAVELENGTH);
       vv_a.push((ant_pos[a[0]][1] - ant_pos[a[1]][1])/L1_WAVELENGTH);
       ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
@@ -120,8 +120,14 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin){
 
     SAbs_scaled = scale(SAbs);
 
-//     console.log(SAbs_scaled);
-    return savePixels(SAbs_scaled, 'CANVAS');
+    if (!!colourmap) {
+      coloured = require("apply-colormap")(SAbs_scaled,{colormap:colourmap});
+      canvas = savePixels(coloured,'CANVAS');
+    }
+    else {
+       canvas = savePixels(SAbs_scaled,'CANVAS');
+    }
+    return canvas;
 };
 
 
