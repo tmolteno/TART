@@ -5,6 +5,7 @@ import {
     HostListener,
 } from '@angular/core';
 const visImaging = require('vis_imaging/src/api_synthesis');
+const gifshot = require('gifshot/build/gifshot');
 import { ImagingService } from '../../services/imaging.service';
 import { CalibrationService } from '../../services/calibration.service';
 
@@ -55,6 +56,7 @@ export class ImagingComponent {
     visData: any;
     calibrationData: any;
     timestamp: string = null;
+    gifSrc: any[] = [];
 
     constructor(
         private imagingService: ImagingService,
@@ -141,6 +143,7 @@ export class ImagingComponent {
             ctx.drawImage(img, 0, 0);
             ctx.restore();
             this.blockRefresh = false;
+            this.gifSrc.push(img);
         };
         img.src = genImg.toDataURL();
     }
@@ -175,6 +178,21 @@ export class ImagingComponent {
         downloadLink.download = this.generateImageFilename(this.timestamp);
         downloadLink.href = image;
         downloadLink.click();
+    }
+
+    onSaveGifClick(event) {
+        gifshot.createGIF({ images: this.gifSrc }, (obj) => {
+            if (!obj.error) {
+                let image = obj.image;
+                let animatedImage = document.createElement('img');
+                animatedImage.width = 500;
+                animatedImage.height = 500;
+	            animatedImage.src = image;
+		        document.body.appendChild(animatedImage);
+            } else {
+                console.log("Failed with: " + obj.error);
+            }
+        });
     }
 
     generateImageFilename(timestamp: string) {
