@@ -14,7 +14,7 @@ def set_channel(channel_idx,enable):
   con.commit()
   return jsonify({channel_idx:enable})
 
-@app.route('/channel/', methods=['GET',])
+@app.route('/channel', methods=['GET',])
 def get_all_channels():
   get_manual_channel_status()
   return jsonify(ret)
