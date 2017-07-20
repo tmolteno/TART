@@ -58,6 +58,8 @@ export class ImagingComponent {
     timestamp: string = null;
 
     gifSrc: any[] = [];
+    numFrames: number = 0;
+    isRecordingGif: boolean = false;
 
     constructor(
         private imagingService: ImagingService,
@@ -145,7 +147,11 @@ export class ImagingComponent {
             ctx.drawImage(img, 0, 0);
             ctx.restore();
             this.blockRefresh = false;
-            this.gifSrc.push(img);
+
+            if (this.isRecordingGif) {
+                this.gifSrc.push(img);
+                this.numFrames = this.gifSrc.length;
+            }
         };
         img.src = genImg.toDataURL();
     }
@@ -182,19 +188,27 @@ export class ImagingComponent {
         downloadLink.click();
     }
 
-    onSaveGifClick(event) {
-        gifshot.createGIF({ images: this.gifSrc }, (obj) => {
-            if (!obj.error) {
-                let image = obj.image;
-                let animatedImage = document.createElement('img');
-                animatedImage.width = 500;
-                animatedImage.height = 500;
-	            animatedImage.src = image;
-		        document.body.appendChild(animatedImage);
-            } else {
-                console.log("Failed with: " + obj.error);
-            }
-        });
+    clickedGifRecorderStart(event) {
+        this.isRecordingGif = true;
+        // get canvas image
+        let canvasImage = this.getCanvasImage();
+        this.gifSrc.push(canvasImage);
+        this.numFrames = this.gifSrc.length;
+    }
+
+    clickedGifRecorderStop(event) {
+        this.isRecordingGif = false;
+    }
+
+    clickedGifRecorderReset(event) {
+        this.gifSrc = [];
+        this.numFrames = 0;
+    }
+
+    getCanvasImage() {
+        let image = new Image();
+        image.src = this.imagingCanvas.nativeElement.toDataURL();
+        return image;
     }
 
     generateImageFilename(timestamp: string) {

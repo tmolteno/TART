@@ -1,4 +1,11 @@
-import { Component, Input, ViewChild, ElementRef } from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    ViewChild,
+    ElementRef,
+    EventEmitter
+} from '@angular/core';
 const gifshot = require('gifshot/build/gifshot');
 
 @Component({
@@ -12,7 +19,35 @@ export class GifRecorderComponent {
     @Input()
     dataSource: any[] = [];
 
+    @Input()
+    numFrames: number = 0;
+
+    @Output()
+    clickedStart = new EventEmitter();
+
+    @Output()
+    clickedStop = new EventEmitter();
+
+    @Output()
+    clickedReset = new EventEmitter();
+
+    isRecording: boolean = false;
+
     constructor() { }
+
+    onStartClick(event) {
+        this.isRecording = true;
+        this.clickedStart.emit(event);
+    }
+
+    onStopClick(event) {
+        this.isRecording = false;
+        this.clickedStop.emit(event);
+    }
+
+    onClickedReset(event) {
+        this.clickedReset.emit(event);
+    }
 
     onSaveGifClick(event) {
         gifshot.createGIF({ images: this.dataSource }, (obj) => {

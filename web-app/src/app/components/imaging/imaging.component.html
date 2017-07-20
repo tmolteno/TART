@@ -42,7 +42,13 @@
             </button>
         </div>
         <div id="gif-recorder-container">
-            <app-gif-recorder [dataSource]='gifSrc'></app-gif-recorder>
+            <app-gif-recorder
+                [dataSource]='gifSrc'
+                [numFrames]='numFrames'
+                (clickedStart)='clickedGifRecorderStart($event)'
+                (clickedStop)='clickedGifRecorderStop($event)'
+                (clickedReset)='clickedGifRecorderReset($event)'>
+            </app-gif-recorder>
         </div>
     </div>
 </div>

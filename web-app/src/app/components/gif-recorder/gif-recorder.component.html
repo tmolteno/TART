@@ -1,29 +1,33 @@
 <div>
     <h3>Imaging Recorder</h3>
-    <strong>Number of frames:</strong> 4
+    <strong>Number of frames:</strong> {{numFrames}}
     <img #gifDisplay id="gif-display" width="250px" height="250px" />
     <div id="btn-container">
         <button
             id="start-record-btn"
             class="btn btn-primary"
-            (click)="onSaveGifClick($event)">
+            [disabled]="isRecording"
+            (click)="onStartClick($event)">
             Start
         </button>
         <button
             id="stop-record-btn"
             class="btn btn-primary"
-            (click)="onSaveGifClick($event)">
+            [disabled]="!isRecording"
+            (click)="onStopClick($event)">
             Stop
         </button>
         <button
             id="reset-record-btn"
             class="btn btn-primary"
-            (click)="onSaveGifClick($event)">
+            [disabled]="numFrames < 1"
+            (click)="onClickedReset($event)">
             Reset
         </button>
         <button
             id="create-gif-btn"
             class="btn btn-primary"
+            [disabled]="numFrames < 1"
             (click)="onSaveGifClick($event)">
             Display Gif
         </button>
