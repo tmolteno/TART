@@ -1,0 +1,14 @@
+#create-gif-btn {
+    margin-left: auto;
+}
+#btn-container {
+    display:flex;
+    -webkit-display: flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+}
+#gif-display {
+    display: block;
+}

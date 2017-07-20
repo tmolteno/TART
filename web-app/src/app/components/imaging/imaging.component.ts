@@ -56,6 +56,7 @@ export class ImagingComponent {
     visData: any;
     calibrationData: any;
     timestamp: string = null;
+
     gifSrc: any[] = [];
 
     constructor(
@@ -76,6 +77,7 @@ export class ImagingComponent {
         } else {
             baseSize = viewWidth * this.canvasSizeModifierPortrait;
         }
+
         this.imagingCanvas.nativeElement.width = baseSize;
         this.imagingCanvas.nativeElement.height = baseSize;
     }

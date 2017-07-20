@@ -17,12 +17,20 @@
 #imaging-canvas {
     -webkit-order: 1;
     order: 1;
+    -webkit-align-self: flex-start;
+    align-self: flex-start;
 }
 
 #gif-output {
     border: 1px solid black;
     -webkit-order: 3;
     order: 3;
+}
+
+#gif-recorder-container {
+    margin-top: 20px;
+    padding: 8px;
+    border: 1px solid black;
 }
 
 #imaging-config-container {

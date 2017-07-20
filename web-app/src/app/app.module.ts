@@ -40,6 +40,7 @@ import { ChannelsStatusComponent } from './components/channels-status/channels-s
 import { ChannelCardComponent } from './components/channel-card/channel-card.component';
 import { DataAcquisitionDisplayComponent } from './components/data-acquisition-display/data-acquisition-display.component';
 import { StatusMapComponent } from './components/status-map/status-map.component';
+import { GifRecorderComponent } from './components/gif-recorder/gif-recorder.component';
 /** Routes */
 const appRoutes = [
     {
@@ -105,7 +106,8 @@ const appRoutes = [
     ChannelsStatusComponent,
     ChannelCardComponent,
     DataAcquisitionDisplayComponent,
-    StatusMapComponent
+    StatusMapComponent,
+    GifRecorderComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
