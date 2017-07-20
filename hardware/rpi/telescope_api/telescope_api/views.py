@@ -2,8 +2,7 @@ from flask import Flask
 from flask import render_template, jsonify, send_file
 from flask_jwt import jwt_required, current_identity
 
-from telescope_api import app, get_config
-
+from telescope_api import app, get_config, get_manual_channel_status
 @app.route('/status/fpga', methods=['GET',])
 def get_status_fpga():
     """
@@ -227,11 +226,19 @@ def get_latest_vis():
     @apiName get_latest_vis
     @apiSuccess {Object[]} vis Get visibilities.
     """
+    import ast
+
     runtime_config = get_config()
+    ret = {}
     if runtime_config.has_key('vis_current'):
-        return jsonify(runtime_config['vis_current'])
-    else:
-        return jsonify({})
+      resp = runtime_config['vis_current']
+      channel_list = get_manual_channel_status()
+      channel_dict = {ch['channel_id']:ch['enabled'] for ch in channel_list}
+      for vis_key in resp:
+        bl = ast.literal_eval(vis_key)
+        if (channel_dict[bl[0]] and channel_dict[bl[0]])
+          ret[vis_key] = resp[vis_key]
+    return jsonify(ret)
 
 @app.route('/imaging/antenna_positions')
 def get_imaging_antenna_positions():
