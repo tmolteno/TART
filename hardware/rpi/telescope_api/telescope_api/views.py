@@ -236,7 +236,7 @@ def get_latest_vis():
       channel_dict = {ch['channel_id']:ch['enabled'] for ch in channel_list}
       for vis_key in resp:
         bl = ast.literal_eval(vis_key)
-        if (channel_dict[bl[0]] and channel_dict[bl[0]])
+        if (channel_dict[bl[0]] and channel_dict[bl[1]]):
           ret[vis_key] = resp[vis_key]
     return jsonify(ret)
 

@@ -37,7 +37,6 @@ def get_manual_channel_status():
   con, c = connect_to_db()
   c.execute('SELECT * FROM channels;')
   rows = c.fetchall()
-  print rows
   ret = [{'channel_id':row[0],'enabled':row[1]} for row in rows]
   return ret
 
