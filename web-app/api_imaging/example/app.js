@@ -12,7 +12,7 @@ var num_bin = Math.pow(2,9); // bins in the fft
 
 function get_max_ang(nw, num_bin){
   var max_ang = (num_bin/(4*nw) * 180/Math.PI);
-  console.log(max_ang)
+//   console.log(max_ang)
   return max_ang;
 }
 
@@ -39,7 +39,6 @@ function draw_circ(ctx, ang, nw, num_bin) {
   ctx.beginPath();
   ctx.arc(x_0, y_0, r, 0, 2 * Math.PI);
   ctx.stroke();
-
 }
 
 function draw_src(ctx, el, az, label, nw, num_bin) {
