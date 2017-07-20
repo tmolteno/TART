@@ -4,13 +4,13 @@
   "description": "Synthesis Imaging from visibilities provided by the TART.",
   "main": "./src/api_synthesis.js",
   "dependencies": {
+    "apply-colormap": "^1.0.1",
     "jpeg-js": "^0.3.3",
     "json": "^9.0.6",
     "linspace": "^1.0.0",
     "ndarray-fft": "^1.0.3",
     "request": "^2.81.0",
     "save-pixels": "^2.3.4",
-    "scale-color-perceptual": "^1.1.2",
     "zeros": "^1.0.0"
   },
   "devDependencies": {
