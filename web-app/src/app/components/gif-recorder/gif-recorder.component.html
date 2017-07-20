@@ -25,11 +25,18 @@
             Reset
         </button>
         <button
+            id="download-gif-btn"
+            class="btn btn-primary"
+            [disabled]="!hasGif"
+            (click)='onClickedDownloadBtn($event)'>
+            Download Gif
+        </button>
+        <button
             id="create-gif-btn"
             class="btn btn-primary"
             [disabled]="numFrames < 1"
             (click)="onSaveGifClick($event)">
-            Display Gif
+            Generate Gif
         </button>
     </div>
 </div>
