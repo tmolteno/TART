@@ -37,8 +37,7 @@ function draw_circ(ctx, ang, nw, num_bin) {
   var x_0 = ang_2_pos(0, nw, num_bin);
   var y_0 = ang_2_pos(0, nw, num_bin);
   ctx.beginPath();
-  ctx.moveTo(x_0+r, y_0);
-  ctx.ellipse(x_0, y_0, r, r, 0, 0, 2 * Math.PI);
+  ctx.arc(x_0, y_0, r, 0, 2 * Math.PI);
   ctx.stroke();
 
 }
@@ -49,9 +48,8 @@ function draw_src(ctx, el, az, label, nw, num_bin) {
   var x_s = ang_2_pos((90-el)*Math.sin(az*Math.PI/180), nw, num_bin);
   var y_s = num_bin-ang_2_pos((90-el)*Math.cos(az*Math.PI/180), nw, num_bin);
   ctx.beginPath();
-  ctx.moveTo(x_s+r, y_s);
   ctx.fillStyle = 'white';
-  ctx.ellipse(x_s, y_s, r, r, 0, 0, 2 * Math.PI);
+  ctx.arc(x_s, y_s, r, 0, 2 * Math.PI);
   ctx.fill()
   ctx.stroke();
   ctx.font = 'Bold 14px sans';
