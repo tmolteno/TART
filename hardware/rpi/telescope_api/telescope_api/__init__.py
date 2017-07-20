@@ -9,6 +9,42 @@ from flask_cors import CORS, cross_origin
 from flask_jwt import JWT
 from werkzeug.security import safe_str_cmp
 
+import sqlite3
+
+def connect_to_db():
+  try:
+    con = sqlite3.connect('24_ant_setup/gains.db')
+    c = con.cursor()
+  except Exception as e:
+    print type(e)     # the exception instance
+    print e.args      # arguments stored in .args
+    print e
+  return con, c
+
+def setup_db():
+  con, c = connect_to_db()
+  c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
+  c.execute("DROP TABLE channels;")
+  c.execute("CREATE TABLE IF NOT EXISTS channels (channel_id INTEGER, enabled BOOLEAN)")
+  c.execute('SELECT * FROM channels;')
+  con.commit()
+  if len(c.fetchall())==0:
+    ch = [(i,1) for i in range(24)]
+    con.executemany("INSERT INTO channels(channel_id, enabled) values (?, ?)", ch)
+  con.commit()
+  con.close()
+
+def get_manual_channel_status():
+  con, c = connect_to_db()
+  c.execute('SELECT * FROM channels;')
+  rows = c.fetchall()
+  print rows
+  ret = [{'channel_id':row[0],'enabled':row[1]} for row in rows]
+  return ret
+
+
+
+
 # Add authentication to app
 class User(object):
     def __init__(self, id, username, password):
@@ -92,6 +128,9 @@ def tart_p():
             runtime_config['loop_idx'] = 0
             runtime_config['mode'] = 'off'
 
+
+setup_db()
+
 import multiprocessing
 from multiprocessing import Manager
 
@@ -117,3 +156,4 @@ import telescope_api.views
 import telescope_api.views_acquisition
 import telescope_api.views_cal
 import telescope_api.views_log
+import telescope_api.views_channel
