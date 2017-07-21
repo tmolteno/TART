@@ -3,44 +3,46 @@
     <canvas #imagingCanvas id='imaging-canvas'>
         Loading
     </canvas>
-    <div id="imaging-config-container">
-        <h3>Synthesis Parameters</h3>
-        <!-- number of bins slider -->
-        <app-visibles-config-slider
-            [startValue]="numBins"
-            [minValue]="minNumBins"
-            [maxValue]="maxNumBins"
-            [stepSize]="numBinsStep"
-            [labelText]="numBinsLabel"
-            (valueChanged)="onNumBinsChanged($event)">
-        </app-visibles-config-slider>
-        <!-- number of waves slider -->
-        <app-visibles-config-slider
-            [startValue]="waves"
-            [minValue]="minWaves"
-            [maxValue]="maxWaves"
-            [stepSize]="wavesStep"
-            [labelText]="wavesLabel"
-            (valueChanged)="onNumWavesChanged($event)">
-        </app-visibles-config-slider>
-        <!-- update image timer slider -->
-        <app-visibles-config-slider
-            [startValue]="refreshTime"
-            [minValue]="minRefreshTime"
-            [maxValue]="maxRefreshTime"
-            [stepSize]="refreshTimeStep"
-            [labelText]="refreshTimeLabel"
-            (slideEnd)="onRefreshTimerChanged($event)">
-        </app-visibles-config-slider>
-        <div>
-            <span>Recorded: {{ timestamp | isoFormatTransform }}</span>
-            <button
-                id="save-img-btn"
-                class="btn btn-primary"
-                (click)="onSaveImageBtnClick($event)">
-                Download Image
-            </button>
-        </div>
+    <div id="imaging-inputs-container">
+        <div id="imaging-config-container">
+            <h3>Synthesis Parameters</h3>
+            <!-- number of bins slider -->
+            <app-visibles-config-slider
+                [startValue]="numBins"
+                [minValue]="minNumBins"
+                [maxValue]="maxNumBins"
+                [stepSize]="numBinsStep"
+                [labelText]="numBinsLabel"
+                (valueChanged)="onNumBinsChanged($event)">
+            </app-visibles-config-slider>
+            <!-- number of waves slider -->
+            <app-visibles-config-slider
+                [startValue]="waves"
+                [minValue]="minWaves"
+                [maxValue]="maxWaves"
+                [stepSize]="wavesStep"
+                [labelText]="wavesLabel"
+                (valueChanged)="onNumWavesChanged($event)">
+            </app-visibles-config-slider>
+            <!-- update image timer slider -->
+            <app-visibles-config-slider
+                [startValue]="refreshTime"
+                [minValue]="minRefreshTime"
+                [maxValue]="maxRefreshTime"
+                [stepSize]="refreshTimeStep"
+                [labelText]="refreshTimeLabel"
+                (slideEnd)="onRefreshTimerChanged($event)">
+            </app-visibles-config-slider>
+            <div>
+                <span>Recorded: {{ timestamp | isoFormatTransform }}</span>
+                <button
+                    id="save-img-btn"
+                    class="btn btn-primary"
+                    (click)="onSaveImageBtnClick($event)">
+                    Download Image
+                </button>
+            </div>
+        </div><!-- ./#imaging-config-container -->
         <div id="gif-recorder-container">
             <app-gif-recorder
                 [dataSource]='gifSrc'
@@ -50,5 +52,5 @@
                 (clickedReset)='clickedGifRecorderReset($event)'>
             </app-gif-recorder>
         </div>
-    </div>
+    </div><!-- ./#imaging-inputs-container -->
 </div>

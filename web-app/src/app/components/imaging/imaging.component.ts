@@ -2,7 +2,7 @@ import {
     Component,
     ElementRef,
     ViewChild,
-    HostListener,
+    HostListener
 } from '@angular/core';
 const visImaging = require('vis_imaging/src/api_synthesis');
 import { ImagingService } from '../../services/imaging.service';
@@ -24,7 +24,7 @@ import 'rxjs/add/observable/forkJoin';
 export class ImagingComponent {
     @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
 
-    canvasSizeModifierLandscape: number = 0.6;
+    canvasSizeModifierLandscape: number = 0.79;
     canvasSizeModifierPortrait: number = 0.8;
     // number of bins picker settings
     numBins: number = 9;

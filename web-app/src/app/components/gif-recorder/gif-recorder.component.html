@@ -1,42 +1,60 @@
-<div>
+<div id="imaging-recorder-container">
     <h3>Imaging Recorder</h3>
-    <strong>Number of frames:</strong> {{numFrames}}
-    <img #gifDisplay id="gif-display" width="250px" height="250px" />
-    <div id="btn-container">
-        <button
-            id="start-record-btn"
-            class="btn btn-primary"
-            [disabled]="isRecording"
-            (click)="onStartClick($event)">
-            Start
-        </button>
-        <button
-            id="stop-record-btn"
-            class="btn btn-primary"
-            [disabled]="!isRecording"
-            (click)="onStopClick($event)">
-            Stop
-        </button>
-        <button
-            id="reset-record-btn"
-            class="btn btn-primary"
-            [disabled]="numFrames < 1"
-            (click)="onClickedReset($event)">
-            Reset
-        </button>
-        <button
-            id="download-gif-btn"
-            class="btn btn-primary"
-            [disabled]="!hasGif"
-            (click)='onClickedDownloadBtn($event)'>
-            Download Gif
-        </button>
-        <button
-            id="create-gif-btn"
-            class="btn btn-primary"
-            [disabled]="numFrames < 1"
-            (click)="onSaveGifClick($event)">
-            Generate Gif
-        </button>
+    <div class="imaging-recorder-info-row">
+        <strong>Number of Frames: </strong>
+        <span class="imaging-recorder-info-output">
+            {{numFrames}}
+        </span>
     </div>
-</div>
+    <div  class="imaging-recorder-info-row">
+        <strong>Recording Status: </strong>
+        <span class="imaging-recorder-info-output" *ngIf="isRecording">
+            Recording
+        </span>
+        <span class="imaging-recorder-info-output" *ngIf="!isRecording">
+            Paused
+        </span>
+    </div>
+    <div id="imaging-recorder-content">
+        <div id="imaging-recorder-display-container">
+            <img #gifDisplay id="gif-display"/>
+        </div>
+        <div id="imaging-recorder-btn-container">
+            <button
+                id="start-record-btn"
+                class="btn btn-success"
+                [disabled]="isRecording"
+                (click)="onStartClick($event)">
+                Start
+            </button>
+            <button
+                id="stop-record-btn"
+                class="btn btn-danger"
+                [disabled]="!isRecording"
+                (click)="onStopClick($event)">
+                Stop
+            </button>
+            <button
+                id="reset-record-btn"
+                class="btn btn-link"
+                [disabled]="numFrames < 1"
+                (click)="onClickedReset($event)">
+                Reset
+            </button>
+            <button
+                id="create-gif-btn"
+                class="btn btn-primary"
+                [disabled]="numFrames < 1"
+                (click)="onSaveGifClick($event)">
+                Generate Gif
+            </button>
+            <button
+                id="download-gif-btn"
+                class="btn btn-primary"
+                [disabled]="!hasGif"
+                (click)='onClickedDownloadBtn($event)'>
+                Download Gif
+            </button>
+        </div><!-- ./#btn-container -->
+    </div><!-- ./#imaging-recorder-content -->
+</div><!-- ./#imaging-recorder-container -->

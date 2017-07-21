@@ -1,14 +1,57 @@
-#create-gif-btn {
-    margin-left: auto;
+#imaging-recorder-container {
+    display: flex;
+    -webkit-display: flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    height: 100%;
 }
-#btn-container {
+
+#imaging-recorder-content {
     display:flex;
     -webkit-display: flex;
     flex-direction: row;
     -webkit-flex-direction: row;
     flex-wrap: wrap;
     -webkit-flex-wrap: wrap;
+    flex-grow: 1;
+    -webkit-flex-grow: 1;
 }
+
+#imaging-recorder-display-container {
+    /*background-color: aquamarine;*/
+    flex-grow: 1;
+    -webkit-flex-grow: 1;
+}
+
 #gif-display {
-    display: block;
+    height: 100%;
+    /*background-color: red;*/
+}
+
+#imaging-recorder-btn-container {
+    display:flex;
+    -webkit-display: flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    justify-content: flex-end;
+    -webkit-justify-content: flex-end;
+    margin-left: 8px;
+}
+#imaging-recorder-btn-container > button {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.imaging-recorder-info-row {
+    display: flex;
+    -webkit-display: flex;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    justify-content:flex-start;
+}
+
+.imaging-recorder-info-output {
+    margin-left: 4px;
 }

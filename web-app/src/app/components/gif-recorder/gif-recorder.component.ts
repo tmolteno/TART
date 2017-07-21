@@ -4,7 +4,8 @@ import {
     Output,
     ViewChild,
     ElementRef,
-    EventEmitter
+    EventEmitter,
+    HostListener
 } from '@angular/core';
 const gifshot = require('gifshot/build/gifshot');
 import * as moment from 'moment/moment';
@@ -12,7 +13,10 @@ import * as moment from 'moment/moment';
 @Component({
     selector: 'app-gif-recorder',
     templateUrl: './gif-recorder.component.html',
-    styleUrls: ['./gif-recorder.component.css']
+    styleUrls: ['./gif-recorder.component.css'],
+    host: {
+        '(window:resize)': 'onResize($event)'
+    }
 })
 export class GifRecorderComponent {
     @ViewChild('gifDisplay') gifDisplay: ElementRef;
@@ -37,6 +41,10 @@ export class GifRecorderComponent {
 
     constructor() { }
 
+    ngAfterViewInit() {
+        this.gifDisplay.nativeElement.width = this.gifDisplay.nativeElement.height;
+    }
+
     onStartClick(event) {
         this.isRecording = true;
         this.clickedStart.emit(event);
@@ -58,9 +66,9 @@ export class GifRecorderComponent {
             if (!obj.error) {
                 let image = obj.image;
                 this.gifDisplay.nativeElement.src = image;
-                this.hasGif = true;
             }
-      });
+        });
+        this.hasGif = true;
     }
 
     onClickedDownloadBtn(event) {
@@ -76,5 +84,10 @@ export class GifRecorderComponent {
         let gmtDateTime = moment.utc(timestamp);
         let localDateTime = gmtDateTime.local().format("YYYY_MM_DD_HH_mm_ss");
         return `radio_gif_${localDateTime}`;
+    }
+
+    onResize(event) {
+        console.log("resized");
+        this.gifDisplay.nativeElement.width = this.gifDisplay.nativeElement.height;
     }
 }
