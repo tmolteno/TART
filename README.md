@@ -1,11 +1,11 @@
 # Transient Array Radio Telescope
 
-The Transient Array Radio Telescope (TART) is a low-cost aperture synthesis array
-developed by the elec research group at the University of Otago
+The Transient Array Radio Telescope (TART) is a low-cost 24-element aperture synthesis array
+developed by the [Elec research group](http://elec.ac.nz) at the University of Otago
 
  ![All-sky image from a TART telescope][tart_image] 
 
-The tart software and hardware designs are released as open-source designs and are
+The TART software and hardware designs are released as open-source designs and are
 licensed under the GPL v3.
 
 The authors of the first version of the TART are Tim Molteno, Charles Shaw, Max 
