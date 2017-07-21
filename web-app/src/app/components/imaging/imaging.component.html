@@ -34,7 +34,7 @@
                 (slideEnd)="onRefreshTimerChanged($event)">
             </app-visibles-config-slider>
             <div>
-                <span>Recorded: {{ timestamp | isoFormatTransform }}</span>
+                <span id="image-recorded-timestamp">Recorded: {{ timestamp | isoFormatTransform }}</span>
                 <button
                     id="save-img-btn"
                     class="btn btn-primary"

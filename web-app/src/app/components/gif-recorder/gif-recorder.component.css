@@ -18,14 +18,14 @@
 }
 
 #imaging-recorder-display-container {
-    /*background-color: aquamarine;*/
     flex-grow: 1;
     -webkit-flex-grow: 1;
 }
 
 #gif-display {
+    min-height: 250px;
+    min-width: 250px;
     height: 100%;
-    /*background-color: red;*/
 }
 
 #imaging-recorder-btn-container {
@@ -54,4 +54,11 @@
 
 .imaging-recorder-info-output {
     margin-left: 4px;
+}
+
+@media (max-width: 427px) {
+    #gif-display {
+        display: block;
+        margin: 0 auto;
+    }
 }

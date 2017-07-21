@@ -42,6 +42,10 @@ export class GifRecorderComponent {
     constructor() { }
 
     ngAfterViewInit() {
+        this.setGifOutputSize();
+    }
+
+    setGifOutputSize() {
         this.gifDisplay.nativeElement.width = this.gifDisplay.nativeElement.height;
     }
 
@@ -87,7 +91,6 @@ export class GifRecorderComponent {
     }
 
     onResize(event) {
-        console.log("resized");
-        this.gifDisplay.nativeElement.width = this.gifDisplay.nativeElement.height;
+        this.setGifOutputSize();
     }
 }

@@ -24,13 +24,13 @@
 #gif-recorder-container, #imaging-config-container {
     padding: 8px;
     border: 1px solid black;
+    width: 100%;
 }
 
 #gif-recorder-container {
     margin-top: 8px;
     align-self: stretch;
     -webkit-align-self: stretch;
-    width: 100%;
     height: 100%;
 }
 #imaging-inputs-container {
@@ -53,6 +53,20 @@
     margin-left: 16px;
 }
 
+#save-img-btn {
+    float: right;
+}
+
+@media (max-width: 479px) {
+    #image-recorded-timestamp {
+        display: block;
+    }
+    #save-img-btn {
+        margin-top: 8px;
+        float: left;
+    }
+}
+
 @media (max-width: 991px) {
     #big-space {
         margin-top:60px;
@@ -65,8 +79,4 @@
         margin-top: 20px;
         margin-left: auto;
     }
-}
-
-#save-img-btn {
-    float: right;
 }
