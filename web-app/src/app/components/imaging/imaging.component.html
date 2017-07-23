@@ -33,6 +33,19 @@
                 [labelText]="refreshTimeLabel"
                 (slideEnd)="onRefreshTimerChanged($event)">
             </app-visibles-config-slider>
+            <div class="form-group">
+                <label for="color-select">Colour scheme:</label>
+                <select id="colour-select"
+                    class="form-control"
+                    (change)="onColourChange($event)"
+                    [(ngModel)]="defaultImagingColour">
+                    <option
+                        *ngFor='let colour of imagingColours'
+                        [ngValue]="colour.value">
+                        {{colour.name}}
+                    </option>
+                </select>
+            </div>
             <div>
                 <span id="image-recorded-timestamp">Recorded: {{ timestamp | isoFormatTransform }}</span>
                 <button

@@ -5,8 +5,11 @@ import {
     HostListener
 } from '@angular/core';
 const visImaging = require('vis_imaging/src/api_synthesis');
+
+import { ImageColour } from  '../../models/ImageColour';
 import { ImagingService } from '../../services/imaging.service';
 import { CalibrationService } from '../../services/calibration.service';
+import { ColourService } from '../../services/colour.service';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -60,14 +63,22 @@ export class ImagingComponent {
     numFrames: number = 0;
     isRecordingGif: boolean = false;
 
+    defaultImagingColour: string;
+    imagingColours: ImageColour[];
+
     constructor(
         private imagingService: ImagingService,
-        private calibrationService: CalibrationService
+        private calibrationService: CalibrationService,
+        private colourService: ColourService
     ) { }
 
     ngOnInit() {
         this.setCanvasSize();
+        this.defaultImagingColour = this.colourService.getColoursMap()
+            .default.value;
+        this.imagingColours = this.colourService.getColoursArray();
     }
+
 
     setCanvasSize() {
         let baseSize = 0;
@@ -134,7 +145,7 @@ export class ImagingComponent {
             return;
         }
         let genImg = visImaging.gen_image(this.visData, this.antennaPositions,
-            this.calibrationData, this.waves, Math.pow(2, this.numBins));
+            this.calibrationData, this.waves, Math.pow(2, this.numBins), this.defaultImagingColour);
 
         let img = new Image();
         img.onload = () => {
@@ -177,6 +188,12 @@ export class ImagingComponent {
             this.refreshTime = value;
             this.startUpdateImageTimer();
         }
+    }
+
+    onColourChange(value) {
+        console.log("on colour change called");
+        this.blockRefresh = true;
+        this.drawImage();
     }
 
     onSaveImageBtnClick(event) {
