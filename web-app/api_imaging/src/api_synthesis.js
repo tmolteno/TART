@@ -136,7 +136,7 @@ function get_max_ang(nw, num_bin){
   return max_ang;
 }
 
-function ang_2_pos(ang, nw, num_bin, ){
+function ang_2_pos(ang, nw, num_bin) {
   var max_ang = get_max_ang(nw, num_bin);
   //   -max_ang  0
   //   0         num_bin/2
