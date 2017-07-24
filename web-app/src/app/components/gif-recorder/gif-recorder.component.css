@@ -44,6 +44,10 @@
     width: 100%;
 }
 
+#hidden-gif-downloader {
+    display: hidden;
+}
+
 .imaging-recorder-info-row {
     display: flex;
     -webkit-display: flex;

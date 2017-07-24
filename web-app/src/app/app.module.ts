@@ -18,6 +18,7 @@ import { InfoService } from './services/info.service';
 import { DataAcquisitionService } from './services/data-acquisition.service';
 import { CalibrationService } from './services/calibration.service';
 import { ColourService } from './services/colour.service';
+import { CatalogService } from './services/catalog.service';
 /** Views */
 import { ModeComponent } from './views/mode/mode.component';
 import { LoginComponent } from './views/login/login.component';
@@ -127,7 +128,8 @@ const appRoutes = [
       InfoService,
       DataAcquisitionService,
       CalibrationService,
-      ColourService
+      ColourService,
+      CatalogService
   ],
   bootstrap: [AppComponent]
 })

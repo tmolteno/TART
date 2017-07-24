@@ -10,6 +10,7 @@ import { ImageColour } from  '../../models/ImageColour';
 import { ImagingService } from '../../services/imaging.service';
 import { CalibrationService } from '../../services/calibration.service';
 import { ColourService } from '../../services/colour.service';
+import { CatalogService } from '../../services/catalog.service';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -26,6 +27,7 @@ import 'rxjs/add/observable/forkJoin';
 })
 export class ImagingComponent {
     @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
+    @ViewChild('hiddenImageDownloader') hiddenImageDownloader: ElementRef;
 
     canvasSizeModifierLandscape: number = 0.79;
     canvasSizeModifierPortrait: number = 0.8;
@@ -69,7 +71,8 @@ export class ImagingComponent {
     constructor(
         private imagingService: ImagingService,
         private calibrationService: CalibrationService,
-        private colourService: ColourService
+        private colourService: ColourService,
+        private catalogService: CatalogService
     ) { }
 
     ngOnInit() {
@@ -125,11 +128,13 @@ export class ImagingComponent {
             Observable.forkJoin([
                 this.imagingService.getVis(),
                 this.calibrationService.getGain(),
-                this.imagingService.getTimestamp()
+                this.imagingService.getTimestamp()/*,
+                this.catalogService.getSatellites()*/
             ]).subscribe(result => {
                 this.visData = result[0];
                 this.calibrationData = result[1];
                 this.timestamp = result[2];
+                //console.log("got from catalog service: " + JSON.stringify(result[3]))
                 this.drawImage();
             }, err => {
                 this.blockRefresh = false;
@@ -196,10 +201,10 @@ export class ImagingComponent {
 
     onSaveImageBtnClick(event) {
         let image = this.imagingCanvas.nativeElement.toDataURL("image/png");
-        let downloadLink = document.createElement('a');
-        downloadLink.download = this.generateImageFilename(this.timestamp);
-        downloadLink.href = image;
-        downloadLink.click();
+        this.hiddenImageDownloader.nativeElement.download =
+            this.generateImageFilename(this.timestamp);
+        this.hiddenImageDownloader.nativeElement.href = image;
+        this.hiddenImageDownloader.nativeElement.click();
     }
 
     clickedGifRecorderStart(event) {

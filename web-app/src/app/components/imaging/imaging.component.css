@@ -57,6 +57,10 @@
     float: right;
 }
 
+#hidden-image-downloader {
+    display:none;
+}
+
 @media (max-width: 479px) {
     #image-recorded-timestamp {
         display: block;
