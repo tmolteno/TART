@@ -135,5 +135,4 @@ export class ColourService {
     setSelectedColour(value: string) {
         localStorage.setItem(this.selectedColourKey, value);
     }
-
 }
