@@ -32,8 +32,7 @@ export class ColourService {
             portland: new ImageColour('Portland', 'portland'),
             blackbody: new ImageColour('Blackbody', 'blackbody'),
             earth: new ImageColour('Earth', 'earth'),
-            electric: new ImageColour('Electric', 'electric')
-            /*alpha: new ImageColour('Alpha', 'alpha'),
+            electric: new ImageColour('Electric', 'electric'),
             viridis: new ImageColour('Viridis', 'viridis'),
             inferno: new ImageColour('Inferno', 'inferno'),
             magma: new ImageColour('Magma', 'magma'),
@@ -54,7 +53,7 @@ export class ColourService {
             turbidity: new ImageColour('Turbidity', 'turbidity'),
             velocityBlue: new ImageColour('Velocity Blue', 'velocity-blue'),
             velocityGreen: new ImageColour('Velocity Green', 'velocity-green'),
-            cubehelix: new ImageColour('Cubehelix', 'cubehelix')*/
+            cubehelix: new ImageColour('Cubehelix', 'cubehelix')
         };
     }
 
@@ -81,8 +80,7 @@ export class ColourService {
             this._defaultColours.portland,
             this._defaultColours.blackbody,
             this._defaultColours.earth,
-            this._defaultColours.electric
-            /*this._defaultColours.alpha,
+            this._defaultColours.electric,
             this._defaultColours.viridis,
             this._defaultColours.inferno,
             this._defaultColours.magma,
@@ -103,7 +101,7 @@ export class ColourService {
             this._defaultColours.turbidity,
             this._defaultColours.velocityBlue,
             this._defaultColours.velocityGreen,
-            this._defaultColours.cubehelix*/
+            this._defaultColours.cubehelix
         ];
     }
 
