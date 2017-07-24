@@ -38,7 +38,7 @@
                 <select id="colour-select"
                     class="form-control"
                     (change)="onColourChange($event)"
-                    [(ngModel)]="defaultImagingColour">
+                    [(ngModel)]="imagingColour">
                     <option
                         *ngFor='let colour of imagingColours'
                         [ngValue]="colour.value">

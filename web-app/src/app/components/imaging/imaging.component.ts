@@ -40,7 +40,7 @@ export class ImagingComponent {
     minWaves: number = 10;
     maxWaves: number = 100;
     wavesStep: number = 5;
-    wavesLabel: string = "UV-Plane Extent [wavelengths]"
+    wavesLabel: string = "UV-Plane Extent [wavelengths]";
     // refresh time settings
     refreshTime: number = 15;
     minRefreshTime: number = 5;
@@ -63,7 +63,7 @@ export class ImagingComponent {
     numFrames: number = 0;
     isRecordingGif: boolean = false;
 
-    defaultImagingColour: string;
+    imagingColour: string;
     imagingColours: ImageColour[];
 
     constructor(
@@ -74,11 +74,9 @@ export class ImagingComponent {
 
     ngOnInit() {
         this.setCanvasSize();
-        this.defaultImagingColour = this.colourService.getColoursMap()
-            .default.value;
+        this.imagingColour = this.colourService.getSelectedColour();
         this.imagingColours = this.colourService.getColoursArray();
     }
-
 
     setCanvasSize() {
         let baseSize = 0;
@@ -145,7 +143,7 @@ export class ImagingComponent {
             return;
         }
         let genImg = visImaging.gen_image(this.visData, this.antennaPositions,
-            this.calibrationData, this.waves, Math.pow(2, this.numBins), this.defaultImagingColour);
+            this.calibrationData, this.waves, Math.pow(2, this.numBins), this.imagingColour);
 
         let img = new Image();
         img.onload = () => {
@@ -190,8 +188,8 @@ export class ImagingComponent {
         }
     }
 
-    onColourChange(value) {
-        console.log("on colour change called");
+    onColourChange(event) {
+        this.colourService.setSelectedColour(this.imagingColour);
         this.blockRefresh = true;
         this.drawImage();
     }
