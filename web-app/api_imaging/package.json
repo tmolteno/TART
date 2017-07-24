@@ -5,7 +5,6 @@
   "main": "./src/api_synthesis.js",
   "dependencies": {
     "apply-colormap": "^1.0.1",
-    "colormap": "^2.2.0",
     "jpeg-js": "^0.3.3",
     "json": "^9.0.6",
     "linspace": "^1.0.0",

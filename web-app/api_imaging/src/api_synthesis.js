@@ -144,7 +144,7 @@ function ang_2_pos(ang, nw, num_bin) {
   return Math.floor((ang + max_ang)/(2*max_ang) * num_bin)
 }
 
-function ang_2_px(ang, nw, num_bin, ){
+function ang_2_px(ang, nw, num_bin){
   var max_ang = get_max_ang(nw, num_bin);
   //   -max_ang  0
   //   0         num_bin/2
@@ -193,7 +193,7 @@ function overlay_grid(ctx, nw, num_bin){
 }
 
 
-function overlay_satellites(ctx, sat_list, nw, num_bin, ){
+function overlay_satellites(ctx, sat_list, nw, num_bin){
   for (i in sat_list){
     var s = sat_list[i];
     draw_src(ctx, s.el, s.az, s.name, nw, num_bin);
