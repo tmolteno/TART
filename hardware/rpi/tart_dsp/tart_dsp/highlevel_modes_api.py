@@ -4,9 +4,9 @@ import datetime
 '''
 Helper functions
 '''
-def rr(n,prec=3):
-  f=10.**prec
-  return int(n*f)/f
+#def rr(n,prec=3):
+  #f=10.**prec
+  #return int(n*f)/f
 
 def ph_stats(vals, stable_threshold, N_samples):
   expval = np.exp(1j*np.asarray(vals)*np.pi/6.)
@@ -15,11 +15,13 @@ def ph_stats(vals, stable_threshold, N_samples):
   if m<0:
     m += 2*np.pi
   mean_rounded = np.int(np.round(m/(2*np.pi)*12))
-  return [mean_rounded, rr(s,3), stable_threshold, N_samples, int(s>stable_threshold)]
+  #s = rr(s,3)
+  return [mean_rounded, s, stable_threshold, N_samples, int(s>stable_threshold)]
 
 def mean_stats(vals,mean_threshold):
   m = np.mean(vals)
-  return [rr(m,4), mean_threshold, int(abs(m-0.5)<mean_threshold)]
+  #m = rr(m,4)
+  return [m, mean_threshold, int(abs(m-0.5)<mean_threshold)]
 
 def mkdir_p(path): # Emulate mkdir -p functionality in python
   import os, errno
@@ -54,6 +56,10 @@ def get_status_json(tart_instance):
   return d, d_json
 
 
+from matplotlib import mlab
+def get_psd(d, fs, nfft):
+  power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
+  return power, freq
 '''
 RUN TART in diagnose mode
 '''
@@ -110,15 +116,17 @@ def run_diagnostic(tart, runtime_config):
       tart.pause(duration=0.005, noisy=True)
     print '\nAcquisition complete, beginning read-back.'
     #tart.capture(on=False, noisy=runtime_config['verbose'])
-
-    data = tart.read_data(num_words=2**12)
+    print runtime_config['diagnostic']['spectre']['N_samples_exp']
+    data = tart.read_data(num_words=2**runtime_config['diagnostic']['spectre']['N_samples_exp'])
     data = np.asarray(data,dtype=np.uint8)
     ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
-
+    print ant_data[:,:10]
     radio_means = []
     mean_threshold = 0.2
     for i in range(num_ant):
       radio_means.append(dict(zip(['mean','threshold','ok'],mean_stats(ant_data[i],mean_threshold))))
+
+    ant_data = np.asarray(ant_data,dtype=np.float16)*2-1.
 
     channels = []
 
@@ -127,11 +135,17 @@ def run_diagnostic(tart, runtime_config):
       channel['id'] = i
       channel['phase'] = phases[i]
       channel['radio_mean'] =radio_means[i]
+      power, freq = get_psd(ant_data[i]-ant_data[i].mean(),16e6,runtime_config['diagnostic']['spectre']['NFFT'])
+      power_db = 10.*np.log10(power)
+      power_db= np.nan_to_num(power_db)
+      channel['power'] = power_db.tolist()
+      channel['freq'] = (freq/1e6).tolist()
       channels.append(channel)
 
     runtime_config['channels'] = channels
     runtime_config['channels_timestamp'] = datetime.datetime.utcnow()
     runtime_config['status'] = d
+
 
     print "\nDone."
 

@@ -25,7 +25,9 @@ def init_config(manager):
         'num_ant': 24,\
         'N_samples' : 150,\
         'stable_threshold' : 0.95,\
-        'N_samples_exp' : 22,
+        'N_samples_exp' : 22,\
+        'spectre': {'NFFT': 256, 'N_samples_exp': 18}
+
     }
     runtime_config['vis'] = {
         'save' : 0, \
