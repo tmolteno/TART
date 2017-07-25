@@ -16,6 +16,8 @@ def init_config(manager):
     runtime_config['loop_n'] = 5
     runtime_config['loop_idx'] = 0
 
+    runtime_config['optimisation'] = 'idle'
+
     runtime_config['raw'] = {
         'save': 0, \
         'N_samples_exp': 22,\

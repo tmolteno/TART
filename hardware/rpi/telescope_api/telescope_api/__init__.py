@@ -153,5 +153,5 @@ app = create_app()
 import telescope_api.views
 import telescope_api.views_acquisition
 import telescope_api.views_cal
-import telescope_api.views_log
+#import telescope_api.views_log
 import telescope_api.views_channel

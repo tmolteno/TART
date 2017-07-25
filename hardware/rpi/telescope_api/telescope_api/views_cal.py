@@ -27,7 +27,7 @@ def get_gain():
     c.execute('SELECT * FROM calibration WHERE antenna = '+str(i)+' ORDER BY date DESC LIMIT 1;')
     row = c.fetchall()[0]
     rows_dict[row[1]] = row
-  
+
   ret_gain = [rows_dict[i][2] for i in range(24)]
   ret_ph = [rows_dict[i][3] for i in range(24)]
 
@@ -36,4 +36,26 @@ def get_gain():
     "flagged_baselines": []
   }
   return jsonify(ret_dict)
+
+
+from telescope_api import service
+import threading
+minimize_thread = []
+
+@app.route('/calibrate', methods=['POST',])
+def post_calibration_from_vis():
+  runtime_config = get_config()
+  if runtime_config['optimisation'] == 'idle':
+    cal_measurements = request.get_json(silent=False)
+    print cal_measurements
+    global minimize_thread
+    minimize_thread = threading.Thread(target=service.calibrate_from_vis, args=(cal_measurements, runtime_config))
+    runtime_config['optimisation'] = 'running'
+    minimize_thread.start()
+  return jsonify({'status':runtime_config['optimisation']})
+
+@app.route('/calibrate', methods=['GET',])
+def get_calibrate_status():
+  runtime_config = get_config()
+  return jsonify({'status':runtime_config['optimisation']})
 

@@ -43,7 +43,9 @@ When done boot up raspberry pi.
     sudo apt-get aptitude
 
     sudo apt-get install python-setuptools ntp python-dev autossh git
-  
+    sudo apt-get install python-astropy python-psycopg2 python-setuptools ntp python-dev autossh git python-jsonrpclib
+    sudo pip install healpy
+
     sudo apt-get install npm 
     sudo npm cache clean -f
     sudo npm install -g n
