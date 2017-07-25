@@ -153,18 +153,23 @@ function ang_2_px(ang, nw, num_bin){
 }
 
 
-function draw_src(ctx, el, az, label, nw, num_bin) {
+function horizontal_2_px(el, az, nw, num_bin){
   var max_ang = get_max_ang(nw, num_bin);
+  var x = ang_2_pos((90-el)*Math.sin(az*Math.PI/180), nw, num_bin);
+  var y = num_bin-ang_2_pos((90-el)*Math.cos(az*Math.PI/180), nw, num_bin);
+  return {x:x, y:y};
+}
+
+function draw_src(ctx, el, az, label, nw, num_bin) {
   var r = ang_2_px(2, nw, num_bin);
-  var x_s = ang_2_pos((90-el)*Math.sin(az*Math.PI/180), nw, num_bin);
-  var y_s = num_bin-ang_2_pos((90-el)*Math.cos(az*Math.PI/180), nw, num_bin);
+  var pos = horizontal_2_px(el, az, nw, num_bin)
   ctx.beginPath();
   ctx.fillStyle = 'white';
-  ctx.arc(x_s, y_s, r, 0, 2 * Math.PI);
+  ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
   ctx.fill()
   ctx.stroke();
   ctx.font = 'Bold 14px sans';
-  ctx.fillText(label, x_s+r+1, y_s+r+1);
+  ctx.fillText(label, pos.x+r+1, pos.y+r+1);
 }
 
 
@@ -190,6 +195,18 @@ function overlay_grid(ctx, nw, num_bin){
   for (i=0; i< const_el.length;i++){
     draw_circ(ctx, 90-const_el[i],nw,num_bin)
   }
+  ctx.font = 'Bold 14px sans';
+  var pos_n = horizontal_2_px(0  , 0, nw, num_bin)
+  var pos_e = horizontal_2_px(0 , 90, nw, num_bin)
+  var pos_s = horizontal_2_px(0, 180, nw, num_bin)
+  var pos_w = horizontal_2_px(0, 270, nw, num_bin)
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('N', pos_n.x, pos_n.y);
+  ctx.fillText('E', pos_e.x, pos_e.y);
+  ctx.fillText('S', pos_s.x, pos_s.y);
+  ctx.fillText('W', pos_w.x, pos_w.y);
 }
 
 
