@@ -4,6 +4,9 @@
     -webkit-flex-flow: row wrap;
     flex-flow: row wrap;
 }
+.slider-input-container {
+    padding: 0 16px;
+}
 
 .slider-label-key {
     margin-bottom: 0px;

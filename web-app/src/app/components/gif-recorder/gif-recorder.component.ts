@@ -78,10 +78,6 @@ export class GifRecorderComponent {
 
     onClickedDownloadBtn(event) {
         let image = this.gifDisplay.nativeElement.src;
-        //let downloadLink = document.createElement('a')
-        //downloadLink.download = this.generateGifFilename();
-        //downloadLink.href = image;
-        //downloadLink.click();
         this.hiddenGifDownloader.nativeElement.download = this.generateGifFilename();
         this.hiddenGifDownloader.nativeElement.href = image;
         this.hiddenGifDownloader.nativeElement.click();

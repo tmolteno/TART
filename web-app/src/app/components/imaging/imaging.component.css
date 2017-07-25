@@ -22,7 +22,7 @@
 }
 
 #gif-recorder-container, #imaging-config-container {
-    padding: 8px;
+    padding:  8px;
     border: 1px solid black;
     width: 100%;
 }

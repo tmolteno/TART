@@ -11,6 +11,7 @@ import { ImagingService } from '../../services/imaging.service';
 import { CalibrationService } from '../../services/calibration.service';
 import { ColourService } from '../../services/colour.service';
 import { CatalogService } from '../../services/catalog.service';
+import { InfoService } from '../../services/info.service';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -38,7 +39,7 @@ export class ImagingComponent {
     numBinsStep: number = 1;
     numBinsLabel: string = "Number of bins (2**n)";
     // number of waves settings
-    waves: number = 36;
+    waves: number = 70;
     minWaves: number = 10;
     maxWaves: number = 100;
     wavesStep: number = 5;
@@ -68,10 +69,14 @@ export class ImagingComponent {
     imagingColour: string;
     imagingColours: ImageColour[];
 
+    lat: number;
+    lon: number;
+
     constructor(
         private imagingService: ImagingService,
         private calibrationService: CalibrationService,
         private colourService: ColourService,
+        private infoService: InfoService,
         private catalogService: CatalogService
     ) { }
 
@@ -79,6 +84,10 @@ export class ImagingComponent {
         this.setCanvasSize();
         this.imagingColour = this.colourService.getSelectedColour();
         this.imagingColours = this.colourService.getColoursArray();
+        this.infoService.getInfo().subscribe(info => {
+            this.lat = info.location.lat;
+            this.lon = info.location.lon;
+        })
     }
 
     setCanvasSize() {
@@ -122,19 +131,19 @@ export class ImagingComponent {
         this.timerSubscription = this.updateImageTimer
             .subscribe(tick => this.onRefreshTimerTick(tick));
     }
-
+    catalogData: any;
     onRefreshTimerTick(tick) {
         if (!this.blockRefresh) {
             Observable.forkJoin([
                 this.imagingService.getVis(),
                 this.calibrationService.getGain(),
-                this.imagingService.getTimestamp()/*,
-                this.catalogService.getSatellites()*/
+                this.imagingService.getTimestamp(),
+                this.catalogService.getSatellites(this.lat, this.lon)
             ]).subscribe(result => {
                 this.visData = result[0];
                 this.calibrationData = result[1];
                 this.timestamp = result[2];
-                //console.log("got from catalog service: " + JSON.stringify(result[3]))
+                this.catalogData = result[3];
                 this.drawImage();
             }, err => {
                 this.blockRefresh = false;
@@ -147,14 +156,18 @@ export class ImagingComponent {
             this.blockRefresh = false;
             return;
         }
-        let genImg = visImaging.gen_image(this.visData, this.antennaPositions,
-            this.calibrationData, this.waves, Math.pow(2, this.numBins), this.imagingColour);
-
+        let totalNumBins = Math.pow(2, this.numBins);
+        let imgCanvas = visImaging.gen_image(this.visData, this.antennaPositions,
+            this.calibrationData, this.waves, totalNumBins,this.imagingColour);
+        let ctx = imgCanvas.getContext('2d');
+        visImaging.overlay_grid(ctx, this.waves, totalNumBins);
+        visImaging.overlay_satellites(ctx, this.catalogData, this.waves, totalNumBins);
         let img = new Image();
-        img.onload = () => {
+
+        img.onload  = () => {
             let ctx = this.imagingCanvas.nativeElement.getContext('2d');
-            let widthScale = this.imagingCanvas.nativeElement.width / genImg.width;
-            let heightScale = this.imagingCanvas.nativeElement.height / genImg.height;
+            let widthScale = this.imagingCanvas.nativeElement.width / imgCanvas.width;
+            let heightScale = this.imagingCanvas.nativeElement.height / imgCanvas.height;
             ctx.save();
             ctx.scale(widthScale, heightScale);
             ctx.drawImage(img, 0, 0);
@@ -166,7 +179,7 @@ export class ImagingComponent {
                 this.numFrames = this.gifSrc.length;
             }
         };
-        img.src = genImg.toDataURL();
+        img.src = imgCanvas.toDataURL();
     }
 
     onNumBinsChanged(value) {
