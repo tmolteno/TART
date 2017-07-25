@@ -4,7 +4,8 @@
         </div>
         <app-status-map
             [channelsStatus]="statusMapChannels"
-            [antennaPositions]="antennaPositions">
+            [antennaPositions]="antennaPositions"
+            (antennaEnabledChange)="onAntennaEnabledChanged($event)">
         </app-status-map>
         <app-fpga-status
             #fpgaStatus

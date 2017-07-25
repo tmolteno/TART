@@ -49,7 +49,7 @@ export class TartService {
             return Observable.throw(new Error('token expired'));
         }
         let options = this.authService.getAuthRequestOptions();
-        return this.http.put(`${this.apiUrl}/status/channel/${id}/${doEnable? 1 : 0}`,
+        return this.http.put(`${this.apiUrl}/channel/${id}/${doEnable? 1 : 0}`,
             {}, options).map((res: Response) => {
                 return res.json();
             });
@@ -79,7 +79,8 @@ export class TartService {
             ok: channelJSON.radio_mean.ok,
             threshold: channelJSON.radio_mean.threshold
         };
-        return new ChannelStatus(channelJSON.id, phase, radioMean);
+        return new ChannelStatus(channelJSON.id, !!channelJSON.enabled, phase,
+            radioMean);
     }
     /**
      * Creates and returns an instance of FpgaStatus from the

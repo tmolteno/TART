@@ -102,6 +102,12 @@ export class DiagnoseModeComponent {
             })
     }
 
+    onAntennaEnabledChanged(event) {
+        console.log("id: " + event.id);
+        console.log("enabled: " + event.enabled);
+        this.tartService.setChannelEnabled(event.id, event.enabled);
+    }
+
     getType(item) {
         return typeof item;
     }

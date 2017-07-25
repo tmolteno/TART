@@ -1,5 +1,13 @@
-import { Component, Input, ElementRef, ViewChild, Renderer, Directive,
-    SimpleChanges } from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    ElementRef,
+    ViewChild,
+    Renderer,
+    Directive,
+    SimpleChanges,
+    EventEmitter } from '@angular/core';
 
 import { Antenna } from '../../models/Antenna';
 import { ChannelStatus } from '../../models/ChannelStatus';
@@ -19,6 +27,7 @@ export class StatusMapComponent {
     //=======================
     defaultCanvasSize: number = 500;
     fontColour: string = 'black';
+    backgroundColor: string = 'white';
     antennaPopupId: string = 'antenna-popup';
     antennaIdFontStyle: string = '0.8em arial';
     antennaTextXOffsetModSmallNumber: number = 3;
@@ -58,8 +67,13 @@ export class StatusMapComponent {
 
     @Input()
     channelsStatus: ChannelStatus[] = [];
+
     @Input()
     antennaPositions: any[] = [];
+    // TODO: watch this for change, redraw when it changes (and delete the redraw call in toggleAntennaEnabled)
+
+    @Output()
+    antennaEnabledChange = new EventEmitter();
 
     canvasAntennas: Antenna[] = [];
 
@@ -122,10 +136,6 @@ export class StatusMapComponent {
             this.canvasAntennas.forEach(antenna => {
                 if (antenna.isClicked(x, y)) {
                     this.displayAntennaPopup(event.pageX, event.pageY, antenna);
-                    /*if (antenna.antennaStatus.radioMean.ok === 0 ||
-                        antenna.antennaStatus.phase.ok === 0) {
-                        this.displayAntennaPopup(event.pageX, event.pageY, antenna);
-                    }*/
                 }
             });
         })
@@ -143,12 +153,13 @@ export class StatusMapComponent {
         this.renderer.createText(meanDisplay, 'Radio Mean: ' + antennaStatus.radioMean.mean);
         let stabilityDisplay = this.renderer.createElement(antennaPopup, 'div');
         this.renderer.createText(stabilityDisplay, 'Phase Stability: ' + antennaStatus.phase.stability);
-        //let popupBtn = this.renderer.createElement(antennaPopup, 'button');
-        //this.renderer.createText(popupBtn, 'Toggle');
-        //popupBtn.classList.add('btn');
-        //popupBtn.classList.add('btn-primary');
-        //popupBtn.addEventListener('click', this.toggleAntennaEnabled(antenna));
-        //this.renderer.createText(antennaPopup, popupText);
+        let popupBtn = this.renderer.createElement(antennaPopup, 'button');
+        this.renderer.createText(popupBtn,
+            antennaStatus.enabled? 'Disable' : 'Enable');
+        popupBtn.classList.add('btn');
+        popupBtn.classList.add(antennaStatus.enabled? 'btn-danger' : 'btn-primary');
+        popupBtn.classList.add('btn-sm');
+        popupBtn.addEventListener('click', this.createPopupButtonEventListener(antenna));
         this.renderer.setElementAttribute(antennaPopup, 'id', this.antennaPopupId);
         this.renderer.setElementStyle(antennaPopup, 'position', this.antennaPopupPosition);
         this.renderer.setElementStyle(antennaPopup, 'left', `${absolutePositionX}px`);
@@ -160,16 +171,15 @@ export class StatusMapComponent {
         this.renderer.setElementStyle(antennaPopup, 'font-size', this.antennaPopupFontSize);
     }
 
-    toggleAntennaEnabled(antenna: Antenna) {
-        let drawCanvas = this.statusMapCanvas.nativeElement;
-        let ctx = drawCanvas.getContext('2d');
-        ctx.save();
-        ctx.translate(0.5, 0.5);
-        ctx.strokeStyle = 'black';
-        ctx.moveTo(antenna.drawX - antenna.drawRadius, antenna.drawY - antenna.drawRadius)
-        ctx.lineTo(antenna.drawX + antenna.drawRadius, antenna.drawY + antenna.drawRadius);
-        ctx.stroke();
-        ctx.restore();
+    createPopupButtonEventListener(antenna: Antenna) {
+        let eventListener = () => {
+            antenna.antennaStatus.enabled = !antenna.antennaStatus.enabled;
+            this.antennaEnabledChange.emit({id: antenna.antennaStatus.id,
+                enabled: antenna.antennaStatus.enabled});
+            this.drawAntennas(this.canvasAntennas);
+            // TODO: rerender antenna popup button
+        };
+        return eventListener;
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -179,8 +189,9 @@ export class StatusMapComponent {
         this.canvasAntennas = this.createAntennas(this.antennaPositions, this.channelsStatus);
         this.clearCanvas();
         this.drawMeterLength(this.antennaPositions);
-        this.drawAntennaPositions(this.canvasAntennas);
+        this.drawAntennas(this.canvasAntennas);
     }
+
 
     createAntennas(antennaPositions, channelStatuses:  ChannelStatus[]) {
         let antennas = [];
@@ -256,33 +267,63 @@ export class StatusMapComponent {
         return smallestMod;
     }
 
-    drawAntennaPositions(antennas: Antenna[]) {
+    drawAntennas(antennas: Antenna[]) {
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+        // draw each antenna
+        antennas.forEach(antenna => {
+            this.drawAntenna(antenna);
+            if (!antenna.antennaStatus.enabled) {
+                this.strikeoutAntenna(antenna);
+            }
+        });
+    }
+
+    drawAntenna(antenna: Antenna) {
         let drawCanvas = this.statusMapCanvas.nativeElement;
         let ctx = drawCanvas.getContext('2d');
         ctx.save();
         ctx.translate(0.5, 0.5);
-        // draw each antenna
-        antennas.forEach(antenna => {
-            ctx.beginPath();
-            // fill antenna
-            ctx.fillStyle = this.getAntennaDrawColour(antenna);
-            ctx.arc(antenna.drawX, antenna.drawY, antenna.drawRadius, 0, 2 * Math.PI);
-            ctx.fill();
-            // write antenna id
-            ctx.font = this.antennaIdFontStyle;
-            ctx.fillStyle= this.fontColour;
-            let textDrawX = antenna.antennaStatus.id < 10 ?
-                antenna.drawX - (antenna.drawRadius /
-                    this.antennaTextXOffsetModSmallNumber) :
-                antenna.drawX - (antenna.drawRadius /
-                    this.antennaTextXOffsetModBigNumber);
-            let textDrawY = antenna.drawY + (antenna.drawRadius / 2);
-            ctx.fillText(antenna.antennaStatus.id, textDrawX, textDrawY);
-            // draw antenna border
-            ctx.beginPath();
-            ctx.arc(antenna.drawX, antenna.drawY, antenna.drawRadius, 0, 2 * Math.PI);
-            ctx.stroke();
-        });
+
+        ctx.beginPath();
+        // fill antenna
+        ctx.fillStyle = this.getAntennaDrawColour(antenna);
+        ctx.arc(antenna.drawX, antenna.drawY, antenna.drawRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        // write antenna id
+        ctx.font = this.antennaIdFontStyle;
+        ctx.fillStyle= this.fontColour;
+        let textDrawX = antenna.antennaStatus.id < 10 ?
+            antenna.drawX - (antenna.drawRadius /
+                this.antennaTextXOffsetModSmallNumber) :
+            antenna.drawX - (antenna.drawRadius /
+                this.antennaTextXOffsetModBigNumber);
+        let textDrawY = antenna.drawY + (antenna.drawRadius / 2);
+        ctx.fillText(antenna.antennaStatus.id, textDrawX, textDrawY);
+        // draw antenna border
+        ctx.beginPath();
+        ctx.arc(antenna.drawX, antenna.drawY, antenna.drawRadius, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+
+    strikeoutAntenna(antenna: Antenna) {
+        let drawCanvas = this.statusMapCanvas.nativeElement;
+        let ctx = drawCanvas.getContext('2d');
+        ctx.save();
+        ctx.translate(0.5, 0.5);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        let startX = Math.cos(45 * (Math.PI / 180)) * antenna.drawRadius + antenna.drawX;
+        let startY = Math.sin(45 * (Math.PI / 180)) * antenna.drawRadius + antenna.drawY;
+        let endX = Math.cos(225 * (Math.PI / 180)) * antenna.drawRadius + antenna.drawX;
+        let endY = Math.sin(225 * (Math.PI / 180)) * antenna.drawRadius + antenna.drawY;
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
         ctx.restore();
     }
 
