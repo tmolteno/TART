@@ -22,7 +22,7 @@ export class ChannelsStatusComponent {
     }
 
     updateChannelsStatus() {
-        this.tartService.getChannelStatus()
+        this.tartService.getChannelsStatus()
             .subscribe(result => {
                 this.channelsStatus = result;
             });

@@ -75,7 +75,7 @@ export class DiagnoseModeComponent {
     }
 
     updateStatusMap() {
-        this.tartService.getChannelStatus()
+        this.tartService.getChannelsStatus()
             .subscribe(channelsStatus => {
                 this.statusMapChannels = channelsStatus;
             });

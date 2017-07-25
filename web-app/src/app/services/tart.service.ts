@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
 import { PlatformLocation } from '@angular/common';
+import { Observable } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 
 import { FpgaStatus } from  '../models/FpgaStatus';
 import { ChannelStatus } from '../models/ChannelStatus';
 
+import { AuthService } from './auth.service';
+// TODO: this service should be split into channel service and fpga service (confirm this is OK)
 @Injectable()
 export class TartService {
 
@@ -13,13 +16,13 @@ export class TartService {
 
     constructor(
         private http: Http,
+        private authService: AuthService,
         private platformLocation: PlatformLocation
-
     ) {
         this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
     }
 
-    getChannelStatus() {
+    getChannelsStatus() {
         return this.http.get(`${this.apiUrl}/status/channel`)
             .map((res: Response) => {
                 let channelsJSON = res.json();
@@ -31,6 +34,24 @@ export class TartService {
                     channels.push(this.createChannelStatus(channelJSON));
                 });
                 return channels;
+            });
+    }
+
+    getChannelStatus(id: number) {
+        return this.http.get(`${this.apiUrl}/status/channel/${id}`)
+            .map((res: Response) => {
+                return this.createChannelStatus(res.json());
+            });
+    }
+
+    setChannelEnabled(id: number, doEnable: boolean) {
+        if (!this.authService.isTokenValid()) {
+            return Observable.throw(new Error('token expired'));
+        }
+        let options = this.authService.getAuthRequestOptions();
+        return this.http.put(`${this.apiUrl}/status/channel/${id}/${doEnable? 1 : 0}`,
+            {}, options).map((res: Response) => {
+                return res.json();
             });
     }
 
