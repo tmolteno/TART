@@ -81,10 +81,14 @@ def get_status_channel_all():
     @apiName get_status_channel_all
     @apiSuccess {Object[]} Array of channel information.
     """
-
+    
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
-      return jsonify(runtime_config["channels"])
+      channel_list = get_manual_channel_status()
+      ret = runtime_config["channels"]
+      for ch in ret: 
+        ch['enabled'] = channel_list[ch['id']]['enabled']
+      return jsonify(ret)
     else:
       return jsonify({})
 
@@ -113,13 +117,19 @@ def get_status_channel_i(channel_idx):
           "mean": 1.0,
           "ok": 0,
           "threshold": 0.2
+        },
+        "freq": [...],
+        "power": [...]
         }
       }
     """
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
       if ((channel_idx<24) and (channel_idx>-1)):
-          return jsonify(runtime_config["channels"][channel_idx])
+          channel_list = get_manual_channel_status()
+          ret = runtime_config["channels"][channel_idx]
+          ret['enabled'] = channel_list[channel_idx]['enabled']
+          return jsonify(ret)
       else:
         return jsonify({})
     else:
