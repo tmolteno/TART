@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 def connect_to_db():
   try:
@@ -12,6 +13,7 @@ def connect_to_db():
 
 def setup_db():
   con, c = connect_to_db()
+  c.execute("CREATE TABLE IF NOT EXISTS calibration_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
   c.execute("CREATE TABLE IF NOT EXISTS sample_delay (date timestamp, delay REAL)")
   c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
   c.execute("CREATE TABLE IF NOT EXISTS channels (channel_id INTEGER, enabled BOOLEAN)")
@@ -20,6 +22,11 @@ def setup_db():
   if len(c.fetchall())==0:
     ch = [(i,1) for i in range(24)]
     con.executemany("INSERT INTO channels(channel_id, enabled) values (?, ?)", ch)
+  con.commit()
+  c.execute('SELECT * FROM calibration_process;')
+  con.commit()
+  if len(c.fetchall())==0:
+    c.execute("INSERT INTO calibration_process(date, state) values (?, ?)", (datetime.datetime.utcnow(),'idle'))
   con.commit()
   con.close()
 
@@ -66,3 +73,21 @@ def get_gain():
     row = c.fetchall()[0]
     rows_dict[row[1]] = row
   return rows_dict
+
+def update_calibration_process_state(state):
+  con, c = connect_to_db()
+  c.execute('UPDATE calibration_process SET state = ? WHERE Id = ?', (state, 1))
+  con.commit()
+
+def get_calibration_process_state():
+  con, c = connect_to_db()
+  c.execute('SELECT * FROM calibration_process')
+  rows = c.fetchall()
+  if len(rows) == 0:
+    ret = 'Error'
+  else:
+    ret = rows[0][2]
+    print rows
+  return ret
+
+

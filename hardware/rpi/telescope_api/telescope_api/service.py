@@ -28,9 +28,10 @@ from tart.simulation.simulator import get_vis_parallel, get_vis
 
 msd_vis = []
 sim_vis = []
+N_IT = 0
 
 def optimize_phaseNgain(opt_parameters):
-  global msd_vis, sim_vis
+  global msd_vis, sim_vis, N_IT
   gains, phase_offsets = opt_parameters[:23], opt_parameters[23:]
   """Set phase offsets in list of calibrated visibility objects. Calculate and return likelihood"""
   for key in msd_vis.keys():
@@ -42,7 +43,10 @@ def optimize_phaseNgain(opt_parameters):
     msd_vis[key].set_phase_offset(ant_idxs, phase_offsets)
     msd_vis[key].set_gain(ant_idxs, gains)
   ret = likelihood_vis_dicts(msd_vis, sim_vis, debug=False)
-  print ret#, phase_offsets, gains
+  N_IT += 1
+  if (N_IT%20==0):
+    db.update_calibration_process_state(str(ret))
+    print ret#, phase_offsets, gains
   return ret
 
 def vis_diff(vis1, vis2, ant_a, ant_b):
@@ -121,6 +125,6 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     gains = msd_vis.values()[0].get_gain(np.arange(24))
     #content =  msd_vis.values()[0].to_json(filename='/dev/null')
     db.insert_gain(utc_date, gains, phases)
-    runtime_config['optimisation'] = 'idle'
+    db.update_calibration_process_state('idle')
     return {}
 

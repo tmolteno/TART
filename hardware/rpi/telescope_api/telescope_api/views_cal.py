@@ -72,17 +72,16 @@ def post_calibration_from_vis():
   @apiParam {Object[]} body.data.timestamp Timestamp of measurement.
   @apiSuccess {String} status Status of optimisation process.
   """
-
+  state = db.get_calibration_process_state()
   runtime_config = get_config()
-  if runtime_config['optimisation'] == 'idle':
-    runtime_config['optimisation'] = 'preparing'
+  if state == 'idle':
+    db.update_calibration_process_state('preparing')
     cal_measurements = request.get_json(silent=False)
-    print cal_measurements
     global minimize_process
-    runtime_config['optimisation'] = 'running'
     minimize_process = multiprocessing.Process(target=service.calibrate_from_vis, args=(cal_measurements, runtime_config))
     minimize_process.start()
-  return jsonify({'status':runtime_config['optimisation']})
+    state = db.get_calibration_process_state()
+  return jsonify({'status':state})
 
 @app.route('/calibrate', methods=['GET',])
 def get_calibrate_status():
@@ -93,6 +92,6 @@ def get_calibrate_status():
 
   @apiSuccess {String} status Status of optimisation process.
   """
-  runtime_config = get_config()
-  return jsonify({'status':runtime_config['optimisation']})
+  state = db.get_calibration_process_state()
+  return jsonify({'status':state})
 
