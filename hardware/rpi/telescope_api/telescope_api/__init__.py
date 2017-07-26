@@ -9,39 +9,7 @@ from flask_cors import CORS, cross_origin
 from flask_jwt import JWT
 from werkzeug.security import safe_str_cmp
 
-import sqlite3
-
-def connect_to_db():
-  try:
-    con = sqlite3.connect('24_ant_setup/gains.db')
-    c = con.cursor()
-  except Exception as e:
-    print type(e)     # the exception instance
-    print e.args      # arguments stored in .args
-    print e
-  return con, c
-
-def setup_db():
-  con, c = connect_to_db()
-  c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
-  c.execute("CREATE TABLE IF NOT EXISTS channels (channel_id INTEGER, enabled BOOLEAN)")
-  c.execute('SELECT * FROM channels;')
-  con.commit()
-  if len(c.fetchall())==0:
-    ch = [(i,1) for i in range(24)]
-    con.executemany("INSERT INTO channels(channel_id, enabled) values (?, ?)", ch)
-  con.commit()
-  con.close()
-
-def get_manual_channel_status():
-  con, c = connect_to_db()
-  c.execute('SELECT * FROM channels;')
-  rows = c.fetchall()
-  ret = [{'channel_id':row[0],'enabled':row[1]} for row in rows]
-  return ret
-
-
-
+import database as db
 
 # Add authentication to app
 class User(object):
@@ -69,18 +37,11 @@ def get_config():
   global runtime_config
   return runtime_config
 
-def get_sample_delay(tart, runtime_config):
-  if not runtime_config.has_key('sample_delay'):
-    print 'no sample_delay determinded yet. running diagnostic'
-    run_diagnostic(tart, runtime_config)
-
-
 def tart_p():
   try:
       telescope_instance = TartSPI(speed=runtime_config['spi_speed'])
   except:
       print 'no spi found, just serving api'
-
 
   active = 1
   prev_mode = 'off'
@@ -97,19 +58,17 @@ def tart_p():
       elif runtime_config['mode'] == 'diag':
           runtime_config['acquire'] = False
           run_diagnostic(telescope_instance, runtime_config)
+          db.insert_sample_delay(runtime_config['channels_timestamp'], runtime_config['sample_delay'])
 
       elif runtime_config['mode'] == 'raw':
-          get_sample_delay(telescope_instance, runtime_config)
           runtime_config['acquire'] = True
           run_acquire_raw(telescope_instance, runtime_config)
 
       elif runtime_config['mode'] == 'vis':
-          get_sample_delay(telescope_instance, runtime_config)
           runtime_config['acquire'] = False
           vis_to_disc(telescope_instance, runtime_config)
 
       elif runtime_config['mode'] == 'rt_syn_img':
-          get_sample_delay(telescope_instance, runtime_config)
           runtime_config['acquire'] = False
           vis_to_latest_image(telescope_instance, runtime_config)
       else:
@@ -127,7 +86,7 @@ def tart_p():
             runtime_config['mode'] = 'off'
 
 
-setup_db()
+db.setup_db()
 
 import multiprocessing
 from multiprocessing import Manager
@@ -136,7 +95,7 @@ m = Manager()
 
 from config import init_config
 runtime_config = init_config(m)
-
+runtime_config['sample_delay'] = db.get_sample_delay()
 tart_process = multiprocessing.Process(target=tart_p, args=())
 tart_process.start()
 

@@ -2,7 +2,10 @@ from flask import Flask
 from flask import render_template, jsonify, send_file
 from flask_jwt import jwt_required, current_identity
 
-from telescope_api import app, get_config, get_manual_channel_status
+from telescope_api import app, get_config
+
+import database as db
+
 @app.route('/status/fpga', methods=['GET',])
 def get_status_fpga():
     """
@@ -81,12 +84,12 @@ def get_status_channel_all():
     @apiName get_status_channel_all
     @apiSuccess {Object[]} Array of channel information.
     """
-    
+
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
-      channel_list = get_manual_channel_status()
+      channel_list = db.get_manual_channel_status()
       ret = runtime_config["channels"]
-      for ch in ret: 
+      for ch in ret:
         ch['enabled'] = channel_list[ch['id']]['enabled']
       return jsonify(ret)
     else:
@@ -126,7 +129,7 @@ def get_status_channel_i(channel_idx):
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
       if ((channel_idx<24) and (channel_idx>-1)):
-          channel_list = get_manual_channel_status()
+          channel_list = db.get_manual_channel_status()
           ret = runtime_config["channels"][channel_idx]
           ret['enabled'] = channel_list[channel_idx]['enabled']
           return jsonify(ret)
@@ -242,7 +245,7 @@ def get_latest_vis():
     ret = {}
     if runtime_config.has_key('vis_current'):
       resp = runtime_config['vis_current']
-      channel_list = get_manual_channel_status()
+      channel_list = db.get_manual_channel_status()
       channel_dict = {ch['channel_id']:ch['enabled'] for ch in channel_list}
       for vis_key in resp:
         bl = ast.literal_eval(vis_key)

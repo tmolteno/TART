@@ -71,7 +71,6 @@ def run_diagnostic(tart, runtime_config):
     tart.debug(on=not runtime_config['acquire'] , shift=runtime_config['shifter'], count=runtime_config['counter'], noisy=runtime_config['verbose'])
     print "Setting capture registers:"
 
-
     num_ant = runtime_config['diagnostic']['num_ant']
     N_samples = runtime_config['diagnostic']['N_samples']       # Number of samples for each antenna
     stable_threshold= runtime_config['diagnostic']['stable_threshold'] # 95% in same direction

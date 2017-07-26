@@ -1,5 +1,6 @@
 
-from telescope_api import connect_to_db
+import database as db
+
 
 import datetime
 import dateutil.parser
@@ -40,7 +41,7 @@ def optimize_phaseNgain(opt_parameters):
         phase_offsets[i] += np.pi
     msd_vis[key].set_phase_offset(ant_idxs, phase_offsets)
     msd_vis[key].set_gain(ant_idxs, gains)
-  ret = likelihood_vis_dicts(msd_vis, sim_vis, debug=True)
+  ret = likelihood_vis_dicts(msd_vis, sim_vis, debug=False)
   print ret#, phase_offsets, gains
   return ret
 
@@ -115,15 +116,11 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     # Run optimisation
     RES = minimize(optimize_phaseNgain, opt_param)
 
+    utc_date = datetime.datetime.utcnow()
     phases = msd_vis.values()[0].get_phase_offset(np.arange(24))
     gains = msd_vis.values()[0].get_gain(np.arange(24))
     #content =  msd_vis.values()[0].to_json(filename='/dev/null')
-
-    con, c = connect_to_db()
-    utc_date = datetime.datetime.utcnow()
-    for ant_i in range(len(gains)):
-      c.execute("INSERT INTO calibration VALUES (?,?,?,?,?)", (utc_date, ant_i, gains[ant_i],phases[ant_i],0) )
-    con.commit()
+    db.insert_gain(utc_date, gains, phases)
     runtime_config['optimisation'] = 'idle'
     return {}
 

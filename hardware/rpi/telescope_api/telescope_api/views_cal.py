@@ -2,60 +2,97 @@ from flask import Flask, request
 from flask import render_template, jsonify, send_file
 from flask_jwt import jwt_required, current_identity
 
-from telescope_api import app, get_config, connect_to_db
+from telescope_api import app, get_config
+import database as db
 
 import datetime
+from telescope_api import service
+import multiprocessing
 
+minimize_process = None
+
+@jwt_required()
 @app.route('/calibration/gain', methods=['POST',])
 def set_gain():
-  con, c = connect_to_db()
+  """
+  @api {POST} /calibration/gain Set channel based complex gains.
+  @apiName set_gain
+  @apiGroup Calibration
+
+  @apiHeader (Authorization) {String} Authorization JWT authorization value.
+
+  @apiParam {Object}   body
+  @apiParam {Number[]} body.gain List of channel gains
+  @apiParam {Number[]} body.phase_offset List of channel phase offset
+  """
+  g = content['gain']
+  ph = content['phase_offset']
+
   utc_date = datetime.datetime.utcnow()
   content = request.get_json(silent=False)
   g = content['gain']
   ph = content['phase_offset']
-  fl = content['flagged_baselines']
-  for ant_i in range(len(g)):
-    c.execute("INSERT INTO calibration VALUES (?,?,?,?,?)", (utc_date, ant_i, g[ant_i],ph[ant_i],0) )
-  con.commit()
-  return '1'
+  db.insert_gain(utc_date, g, ph)
+  return jsonify({})
 
 @app.route('/calibration/gain', methods=['GET',])
 def get_gain():
-  con, c = connect_to_db()
-  rows_dict = {}
-  for i in range(24):
-    c.execute('SELECT * FROM calibration WHERE antenna = '+str(i)+' ORDER BY date DESC LIMIT 1;')
-    row = c.fetchall()[0]
-    rows_dict[row[1]] = row
+  """
+  @api {GET} /calibration/gain Get channel based complex gains.
+  @apiName get_gain
+  @apiGroup Calibration
 
+  @apiSuccess {Object}  body
+  @apiSuccess {Number[]} body.gain List of channel gains
+  @apiSuccess {Number[]} body.phase_offset List of channel phase offset
+  """
+  rows_dict =  db.get_gain()
   ret_gain = [rows_dict[i][2] for i in range(24)]
   ret_ph = [rows_dict[i][3] for i in range(24)]
-
   ret_dict = {"gain": ret_gain,\
-    "phase_offset": ret_ph,\
-    "flagged_baselines": []
+    "phase_offset": ret_ph
   }
   return jsonify(ret_dict)
 
-
-from telescope_api import service
-import threading
-minimize_thread = []
-
+@jwt_required()
 @app.route('/calibrate', methods=['POST',])
 def post_calibration_from_vis():
+  """
+  @api {POST} /calibrate Start minimisation process by providing calibration measurements.
+  @apiName post_calibration_from_vis
+  @apiGroup Calibration
+
+  @apiHeader (Authorization) {String} Authorization JWT authorization value.
+
+  @apiParam {Object[]} body
+  @apiParam {Number} body.el Elevation in decimal degree.
+  @apiParam {Number} body.az Azimuth in decimal degree.
+  @apiParam {Object[]} body.data Calibration data.
+  @apiParam {Object[]} body.data.vis Visibilities from point source at specified elevation and azimuth.
+  @apiParam {Object[]} body.data.timestamp Timestamp of measurement.
+  @apiSuccess {String} status Status of optimisation process.
+  """
+
   runtime_config = get_config()
   if runtime_config['optimisation'] == 'idle':
+    runtime_config['optimisation'] = 'preparing'
     cal_measurements = request.get_json(silent=False)
     print cal_measurements
-    global minimize_thread
-    minimize_thread = threading.Thread(target=service.calibrate_from_vis, args=(cal_measurements, runtime_config))
+    global minimize_process
     runtime_config['optimisation'] = 'running'
-    minimize_thread.start()
+    minimize_process = multiprocessing.Process(target=service.calibrate_from_vis, args=(cal_measurements, runtime_config))
+    minimize_process.start()
   return jsonify({'status':runtime_config['optimisation']})
 
 @app.route('/calibrate', methods=['GET',])
 def get_calibrate_status():
+  """
+  @api {GET} /calibrate Get optimisation status.
+  @apiName get_calibrate_status
+  @apiGroup Calibration
+
+  @apiSuccess {String} status Status of optimisation process.
+  """
   runtime_config = get_config()
   return jsonify({'status':runtime_config['optimisation']})
 
