@@ -10,6 +10,7 @@ import {
 } from '@angular/http';
 import { MockBackend } from '@angular/http/testing';
 import { TartService } from './tart.service';
+import { AuthService } from './auth.service';
 
 describe('TartServiceService', () => {
   beforeEach(() => {
@@ -17,7 +18,8 @@ describe('TartServiceService', () => {
           imports: [HttpModule],
           providers: [
               {provide: XHRBackend, useClass: MockBackend},
-              TartService
+              TartService,
+              AuthService
           ]
       });
   });
@@ -36,7 +38,7 @@ describe('TartServiceService', () => {
           })));
       })
 
-      tartService.getChannelStatus().subscribe(result => {
+      tartService.getChannelsStatus().subscribe(result => {
          let jsonResponse = _mockChannelStatusResponse();
          expect(result.length).toEqual(2);
 

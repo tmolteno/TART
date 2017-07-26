@@ -1,10 +1,13 @@
-<app-imaging></app-imaging>
-<app-data-acquisition-display
-    [minNumSamplesExp]="minNumSamples"
-    [maxNumSamplesExp]="maxNumSamples"
-    [numSamplesExp]="numSamples"
-    [samplingFreq]="samplingFreq"
-    (numSamplesExpChanged)="onNumSamplesExpChanged($event)"
-    [doSaveData]="saveData"
-    (doSaveDataChanged)="onSaveDataChanged($event)">
-</app-data-acquisition-display>
+<div id="vis-mode-container" class="view-container">
+    <app-data-acquisition-display
+        [minNumSamplesExp]="minNumSamples"
+        [maxNumSamplesExp]="maxNumSamples"
+        [numSamplesExp]="numSamples"
+        [samplingFreq]="samplingFreq"
+        (numSamplesExpChanged)="onNumSamplesExpChanged($event)"
+        [doSaveData]="saveData"
+        (doSaveDataChanged)="onSaveDataChanged($event)">
+    </app-data-acquisition-display>
+    <app-imaging></app-imaging>
+    <app-vis-calibration></app-vis-calibration>
+</div>

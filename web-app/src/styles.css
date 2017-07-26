@@ -30,3 +30,8 @@ body, app-root {
 .display-none {
     display: none;
 }
+
+
+.view-container {
+    min-width: 98vw;
+}

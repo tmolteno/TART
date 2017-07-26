@@ -87,7 +87,7 @@ export class ImagingComponent {
         this.infoService.getInfo().subscribe(info => {
             this.lat = info.location.lat;
             this.lon = info.location.lon;
-        })
+        });
     }
 
     setCanvasSize() {
