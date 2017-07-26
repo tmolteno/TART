@@ -118,11 +118,10 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
     // Absolute value from real and imag part
     SAbs = abs(real_part,imag_part);
 
-    SAbs_scaled = scale(SAbs);
+    var SAbs_scaled = scale(SAbs);
 
     if (!!colourmap) {
-      coloured = require("apply-colormap")(SAbs_scaled,{colormap:colourmap});
-      canvas = savePixels(coloured,'CANVAS');
+      canvas = apply_colormap(SAbs_scaled, colourmap)
     }
     else {
        canvas = savePixels(SAbs_scaled,'CANVAS');
@@ -130,6 +129,24 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
     return canvas;
 };
 
+function apply_colormap(ndarray, colourmap){
+  var cm = require("colormap")({
+    colormap: colourmap,   // pick a builtin colormap or add your own
+    nshades: 256,       // how many divisions
+    format: 'rgb',     // "hex" or "rgb" or "rgbaString"
+      alpha: 0           // set an alpha value or a linear alpha mapping [start, end]
+  })
+  var canvas = savePixels(ndarray,'CANVAS');
+  var ImageData = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height)
+  for(var i=0; i<ImageData.data.length; i=i+4) {
+    var gray_c = ImageData.data[i]
+    ImageData.data[i+0] = cm[gray_c][0];
+    ImageData.data[i+1] = cm[gray_c][1];
+    ImageData.data[i+2] = cm[gray_c][2];
+  }
+  canvas.getContext('2d').putImageData(ImageData, 0, 0);
+  return canvas
+}
 
 function get_max_ang(nw, num_bin){
   var max_ang = (num_bin/(4*nw) * 180/Math.PI);
