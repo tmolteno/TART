@@ -5,7 +5,9 @@
         (toggleVisible)="toggleChannelStatus($event)"> </app-status-row-header>
     <div class="row" [class.display-none]="!showChannelsStatus">
         <div class="col-sm-12 col-md-2" *ngFor="let channel of channelsStatus">
-            <app-channel-card [channel]="channel"></app-channel-card>
+            <app-channel-card
+                [channel]="channel"
+                (antennaEnabledChange)="onChannelEnabledChange($event)"></app-channel-card>
         </div>
     </div>
 </div>

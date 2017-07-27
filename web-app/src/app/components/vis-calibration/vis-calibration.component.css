@@ -1,8 +1,3 @@
-.pre-scrollable {
-    height: 340px;
-    overflow-y: scroll;
-}
-
 .header-fixed {
     width: 100%
 }

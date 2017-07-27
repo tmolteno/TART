@@ -52,7 +52,6 @@ export class DiagnoseModeComponent {
 
     ngAfterViewInit() {
         this.startUpdateTimer();
-        this.updateStatusMap();
     }
 
     ngOnDestroy() {
@@ -63,23 +62,25 @@ export class DiagnoseModeComponent {
 
     startUpdateTimer() {
         let updateTime = this.refreshTime * 1000;
-        this.updateStatusTimer = Observable.timer(updateTime, updateTime);
+        this.updateStatusTimer = Observable.timer(0, updateTime);
         this.timerSubscription = this.updateStatusTimer
             .subscribe(tick => this.updateStatus());
     }
 
     updateStatus() {
         this.fpgaStatus.updateFpgaStatus();
-        this.channelsStatus.updateChannelsStatus();
-        this.updateStatusMap();
+        this.updateChannelsStatus();
+        this.updateAntennaPositions();
     }
 
-    updateStatusMap() {
+    updateChannelsStatus() {
         this.tartService.getChannelsStatus()
             .subscribe(channelsStatus => {
                 this.statusMapChannels = channelsStatus;
             });
+    }
 
+    updateAntennaPositions() {
         this.imagingService.getAntennaPositions()
             .subscribe(antennaPositions => {
                 this.antennaPositions = antennaPositions;
@@ -103,9 +104,10 @@ export class DiagnoseModeComponent {
     }
 
     onAntennaEnabledChanged(event) {
-        console.log("id: " + event.id);
-        console.log("enabled: " + event.enabled);
-        this.tartService.setChannelEnabled(event.id, event.enabled);
+        this.tartService.setChannelEnabled(event.id, event.enabled)
+            .subscribe(response => {
+                this.updateChannelsStatus();
+            });
     }
 
     getType(item) {

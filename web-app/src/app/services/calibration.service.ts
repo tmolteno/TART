@@ -23,7 +23,6 @@ export class CalibrationService {
     }
 
     startCalibration(calibrationConfig: any) {
-        //console.log("do calibration with " + JSON.stringify(calibrationConfig));
         return this.http.post(`${this.apiUrl}/calibrate`, calibrationConfig)
             .map((res: Response) => {
                 return res.json();

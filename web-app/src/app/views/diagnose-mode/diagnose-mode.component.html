@@ -1,18 +1,20 @@
 <div class="fill-parent">
-        <div id="status-report-header">
-            <h1>Status Report</h1>
-        </div>
-        <app-status-map
-            [channelsStatus]="statusMapChannels"
-            [antennaPositions]="antennaPositions"
-            (antennaEnabledChange)="onAntennaEnabledChanged($event)">
-        </app-status-map>
-        <app-fpga-status
-            #fpgaStatus
-            [showFpgaStatus]="true">
-        </app-fpga-status>
-        <app-channels-status
-            #channelsStatus
-            [showChannelsStatus]="true">
-        </app-channels-status>
+    <div id="status-report-header">
+        <h1>Status Report</h1>
+    </div>
+    <app-status-map
+        [channelsStatus]="statusMapChannels"
+        [antennaPositions]="antennaPositions"
+        (antennaEnabledChange)="onAntennaEnabledChanged($event)">
+    </app-status-map>
+    <app-fpga-status
+        #fpgaStatus
+        [showFpgaStatus]="true">
+    </app-fpga-status>
+    <app-channels-status
+        #channelsStatus
+        [channelsStatus]="statusMapChannels"
+        [showChannelsStatus]="true"
+        (antennaEnabledChange)="onAntennaEnabledChanged($event)">
+    </app-channels-status>
 </div>

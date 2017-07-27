@@ -1,56 +1,53 @@
 <div id="vis-calibration-container">
-
-        <h3>Calibration from Visbilities</h3>
-        <div style="width: 49%; display: inline-block;">
-            <app-visibles-config-slider
-                [labelText]="elevationSliderLabel"
-                [minValue]="elevationSliderMin"
-                [maxValue]="elevationSliderMax"
-                [startValue]="elevationSliderValue"
-                [stepSize]="elevationSliderStepSize"
-                (slideEnd)="onElevationChanged($event)">
-            </app-visibles-config-slider>
-        </div>
-        <div style="width: 49%; display: inline-block;">
-            <app-visibles-config-slider
-                [labelText]="azimuthSliderLabel"
-                [minValue]="azimuthSliderMin"
-                [maxValue]="azimuthSliderMax"
-                [startValue]="azimuthSliderValue"
-                [stepSize]="azimuthSliderStepSize"
-                (slideEnd)="onAzimuthChanged($event)">
-            </app-visibles-config-slider>
-        </div>
-        <button class="btn btn-default" (click)="onAddCalClicked($event)">
-            Add Measurement
-        </button>
-        <!--div class="pre-scrollable"-->
-            <table class="table table-sm header-fixed">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>El</th>
-                        <th>Az</th>
-                        <th>Time</th>
-                        <th><span></span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let cal of calMeasurements">
-                        <td>{{cal.no}}</td>
-                        <td>{{cal.el}}</td>
-                        <td>{{cal.az}}</td>
-                        <td>{{cal.data.timestamp}}</td>
-                        <td>
-                            <button class="button btn-danger btn-sm" (click)="onRemoveCalClicked(cal.no)">
-                                Remove
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        <!--/div-->
-        <button class="btn btn-default" (click)="onExportCalClicked($event)">
-            Start Calibation
-        </button>
+    <h3>Calibration from Visbilities</h3>
+    <div style="width: 49%; display: inline-block;">
+        <app-visibles-config-slider
+            [labelText]="elevationSliderLabel"
+            [minValue]="elevationSliderMin"
+            [maxValue]="elevationSliderMax"
+            [startValue]="elevationSliderValue"
+            [stepSize]="elevationSliderStepSize"
+            (slideEnd)="onElevationChanged($event)">
+        </app-visibles-config-slider>
+    </div>
+    <div style="width: 49%; display: inline-block;">
+        <app-visibles-config-slider
+            [labelText]="azimuthSliderLabel"
+            [minValue]="azimuthSliderMin"
+            [maxValue]="azimuthSliderMax"
+            [startValue]="azimuthSliderValue"
+            [stepSize]="azimuthSliderStepSize"
+            (slideEnd)="onAzimuthChanged($event)">
+        </app-visibles-config-slider>
+    </div>
+    <button class="btn btn-default" (click)="onAddCalClicked($event)">
+        Add Measurement
+    </button>
+    <table class="table table-sm header-fixed">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>El</th>
+                <th>Az</th>
+                <th>Time</th>
+                <th><span></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let cal of calMeasurements">
+                <td>{{cal.no}}</td>
+                <td>{{cal.el}}</td>
+                <td>{{cal.az}}</td>
+                <td>{{cal.data.timestamp}}</td>
+                <td>
+                    <button class="button btn-danger btn-sm" (click)="onRemoveCalClicked(cal.no)">
+                        Remove
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <button class="btn btn-default" (click)="onExportCalClicked($event)">
+        Start Calibation
+    </button>
 </div>

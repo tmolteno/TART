@@ -1,6 +1,15 @@
 <div class="card channel-card bg-success" *ngIf="channel"
     [class.bg-danger]="channel.phase.ok === 0 || channel.radioMean.ok === 0">
     <h5>{{channel.id}}</h5>
+    <label class="form-check-label">
+        <input
+            #channelCardCheckbox
+            [attr.id]="'channel-card-' + channel.id + '-enabled'"
+            class="form-check-input"
+            type='checkbox'
+            (change)="onChannelEnabledChanged($event)">
+        Enabled
+    </label>
     <div *ngIf="channel.phase">
         <h5>phase</h5>
         <div>N samples: {{channel.phase.nSamples}}</div>

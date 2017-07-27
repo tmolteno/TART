@@ -147,7 +147,6 @@ export class StatusMapComponent {
         let popupText = 'Radio Mean: ' + antennaStatus.radioMean.mean +
             'Phase Stability: ' + antennaStatus.phase.stability;
 
-
         let antennaPopup = this.renderer.createElement(this.canvasElement, 'div');
         let meanDisplay = this.renderer.createElement(antennaPopup, 'div');
         this.renderer.createText(meanDisplay, 'Radio Mean: ' + antennaStatus.radioMean.mean);
@@ -177,7 +176,6 @@ export class StatusMapComponent {
             this.antennaEnabledChange.emit({id: antenna.antennaStatus.id,
                 enabled: antenna.antennaStatus.enabled});
             this.drawAntennas(this.canvasAntennas);
-            // TODO: rerender antenna popup button
         };
         return eventListener;
     }

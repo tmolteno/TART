@@ -1,7 +1,11 @@
-import { Component, Input } from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    EventEmitter
+} from '@angular/core';
 
 import { ChannelStatus } from '../../models/ChannelStatus';
-import { TartService } from '../../services/tart.service';
 
 @Component({
     selector: 'app-channels-status',
@@ -13,22 +17,18 @@ export class ChannelsStatusComponent {
     @Input()
     showChannelsStatus: boolean;
 
+    @Input()
     channelsStatus: ChannelStatus[] = [];
 
-    constructor(private tartService: TartService) { }
-
-    ngOnInit() {
-        this.updateChannelsStatus();
-    }
-
-    updateChannelsStatus() {
-        this.tartService.getChannelsStatus()
-            .subscribe(result => {
-                this.channelsStatus = result;
-            });
-    }
+    @Output()
+    antennaEnabledChange = new EventEmitter();
 
     toggleChannelStatus(event) {
         this.showChannelsStatus = !this.showChannelsStatus;
+    }
+
+    onChannelEnabledChange(event) {
+        this.antennaEnabledChange.emit({id: event.id,
+            enabled: event.enabled});
     }
 }

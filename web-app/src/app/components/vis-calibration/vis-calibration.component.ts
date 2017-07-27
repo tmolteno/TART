@@ -26,7 +26,6 @@ export class VisCalibrationComponent {
     azimuthSliderStepSize: number = 45;
     azimuthSliderValue: number = 0;
 
-
     calMeasurementCounter: number = 1;
     calMeasurements: any[] = [];
 
