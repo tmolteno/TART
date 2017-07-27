@@ -120,7 +120,7 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
     var SAbs_scaled = scale(SAbs);
 
-    var colourmap = colourmap | 'viridis';
+    var colourmap = colourmap || 'viridis';
     canvas = apply_colormap(SAbs_scaled, colourmap)
     return canvas;
 };
@@ -128,7 +128,6 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
 function handleData(array, data, frame) {
   if (array.shape.length === 2) {
-    console.log('handledata', array.shape, array.shape.length)
     ops.assign(
       ndarray(data,
               [array.shape[0], array.shape[1], 3],
@@ -170,7 +169,6 @@ function apply_colormap(ndarray, colourmap){
       alpha: 0           // set an alpha value or a linear alpha mapping [start, end]
   })
   var canvas = gen_canvas(ndarray);
-
   var ImageData = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height)
   for(var i=0; i<ImageData.data.length; i=i+4) {
     var gray_c = ImageData.data[i]
