@@ -1,8 +1,8 @@
 
 var zeros = require("zeros")
 var ndarray = require("ndarray")
+var ops = require('ndarray-ops')
 var fft = require("ndarray-fft")
-var savePixels = require("save-pixels")
 var linspace = require('linspace');
 
 function number_of_bins_lt_x(array, x){
@@ -120,14 +120,47 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
     var SAbs_scaled = scale(SAbs);
 
-    if (!!colourmap) {
-      canvas = apply_colormap(SAbs_scaled, colourmap)
-    }
-    else {
-       canvas = savePixels(SAbs_scaled,'CANVAS');
-    }
+    var colourmap = colourmap | 'viridis';
+    canvas = apply_colormap(SAbs_scaled, colourmap)
     return canvas;
 };
+
+
+function handleData(array, data, frame) {
+  if (array.shape.length === 2) {
+    console.log('handledata', array.shape, array.shape.length)
+    ops.assign(
+      ndarray(data,
+              [array.shape[0], array.shape[1], 3],
+              [4, 4 * array.shape[0], 1]),
+               ndarray(array.data,
+                       [array.shape[0], array.shape[1], 3],
+                       [array.stride[0], array.stride[1], 0],
+                       array.offset))
+    ops.assigns(
+      ndarray(data,
+              [array.shape[0] * array.shape[1]],
+              [4],
+              3),
+              255)
+  } else {
+    return new Error('Incompatible array shape')
+  }
+  return data
+}
+
+function gen_canvas(array){
+  var canvas = document.createElement('canvas')
+  var context = canvas.getContext('2d')
+  canvas.width = array.shape[0]
+  canvas.height = array.shape[1]
+  var imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+  var data = imageData.data
+  data = handleData(array, data)
+  if (typeof data === 'Error') return haderror(data)
+    context.putImageData(imageData, 0, 0)
+    return canvas
+}
 
 function apply_colormap(ndarray, colourmap){
   var cm = require("colormap")({
@@ -136,7 +169,8 @@ function apply_colormap(ndarray, colourmap){
     format: 'rgb',     // "hex" or "rgb" or "rgbaString"
       alpha: 0           // set an alpha value or a linear alpha mapping [start, end]
   })
-  var canvas = savePixels(ndarray,'CANVAS');
+  var canvas = gen_canvas(ndarray);
+
   var ImageData = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height)
   for(var i=0; i<ImageData.data.length; i=i+4) {
     var gray_c = ImageData.data[i]

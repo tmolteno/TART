@@ -5,12 +5,11 @@
   "main": "./src/api_synthesis.js",
   "dependencies": {
     "colormap": "^2.2.0",
-    "jpeg-js": "^0.3.3",
     "json": "^9.0.6",
     "linspace": "^1.0.0",
     "ndarray-fft": "^1.0.3",
+    "ndarray-ops": "^1.2.2",
     "request": "^2.81.0",
-    "save-pixels": "^2.3.4",
     "zeros": "^1.0.0"
   },
   "devDependencies": {
@@ -18,7 +17,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-example": "webpack ./example/app.js ./example/app.bundle.js"
+    "build-example": "webpack --optimize-minimize ./example/app.js ./example/app.bundle.js"
   },
   "author": "Max Scheel, Tim Miller, Tim Molteno",
   "license": "GPLv3"
