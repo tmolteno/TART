@@ -152,6 +152,16 @@ def run_diagnostic(tart, runtime_config):
 RUN TART in raw data acquisition mode
 '''
 
+import hashlib
+import sys
+
+def sha256_checksum(filename, block_size=65536):
+    sha256 = hashlib.sha256()
+    with open(filename, 'rb') as f:
+        for block in iter(lambda: f.read(block_size), b''):
+            sha256.update(block)
+    return sha256.hexdigest()
+
 def run_acquire_raw(tart, runtime_config):
 
     tart.reset()
@@ -190,6 +200,7 @@ def run_acquire_raw(tart, runtime_config):
         obs = observation.Observation(t_stmp, config, savedata=ant_data)
         obs.save(filename)
         print 'saved to: ', filename
-
+        return {'filename':filename, 'sha256':sha256_checksum(filename)}
+    return {}
     print '\nDone.'
 

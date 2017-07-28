@@ -10,6 +10,8 @@ from flask_jwt import JWT
 from werkzeug.security import safe_str_cmp
 
 import database as db
+from service import cleanup_observation_cache
+
 
 # Add authentication to app
 class User(object):
@@ -62,7 +64,9 @@ def tart_p():
 
       elif runtime_config['mode'] == 'raw':
           runtime_config['acquire'] = True
-          run_acquire_raw(telescope_instance, runtime_config)
+          ret = run_acquire_raw(telescope_instance, runtime_config)
+          if ret.has_key('filename'):
+              db.insert_raw_file_handle(ret['filename'], ret['sha256'])
 
       elif runtime_config['mode'] == 'vis':
           runtime_config['acquire'] = False
@@ -85,7 +89,6 @@ def tart_p():
             runtime_config['loop_idx'] = 0
             runtime_config['mode'] = 'off'
 
-
 db.setup_db()
 
 import multiprocessing
@@ -96,6 +99,11 @@ m = Manager()
 from config import init_config
 runtime_config = init_config(m)
 runtime_config['sample_delay'] = db.get_sample_delay()
+
+observation_cache_process = multiprocessing.Process(target=cleanup_observation_cache, args=())
+observation_cache_process.start()
+
+
 tart_process = multiprocessing.Process(target=tart_p, args=())
 tart_process.start()
 
@@ -112,5 +120,6 @@ app = create_app()
 import telescope_api.views
 import telescope_api.views_acquisition
 import telescope_api.views_cal
+import telescope_api.views_obs
 #import telescope_api.views_log
 import telescope_api.views_channel

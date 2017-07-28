@@ -128,3 +128,21 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     db.update_calibration_process_state('idle')
     return {}
 
+
+
+def cleanup_observation_cache():
+    while True:
+        resp = db.get_raw_file_handle()
+        if len(resp)>10:
+            for entry in resp[10:]:
+                try:
+                    os.remove(entry['filename'])
+                    db.remove_raw_file_handle_by_Id(entry['Id'])
+                    print 'removed', entry['Id'], entry['filename'], entry['checksum']
+                except:
+                    print 'something went wrong..'
+                    pass
+        else:
+            print 'nothing to remove'
+        time.sleep(5)
+
