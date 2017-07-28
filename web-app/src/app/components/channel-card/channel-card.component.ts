@@ -23,7 +23,22 @@ export class ChannelCardComponent {
     @Output()
     antennaEnabledChange = new EventEmitter();
 
-    constructor() { }
+    public lineChartData: Array<any> = [];
+    public lineChartLabels: any[] = [];
+    public lineChartColors: Array<any> = [
+        { // grey
+             backgroundColor: 'rgba(148,159,177,0.2)',
+             borderColor: 'rgba(148,159,177,1)',
+             pointBackgroundColor: 'rgba(148,159,177,1)',
+             pointBorderColor: '#fff',
+             pointHoverBackgroundColor: '#fff',
+             pointHoverBorderColor: 'rgba(148,159,177,0.8)'
+         }
+    ];
+
+    ngOnInit() {
+        this.generateChannelChart(); // TODO:this should also be called after each update
+    }
 
     ngAfterViewInit() {
         this.channelCardCheckbox.nativeElement.checked = this.channel.enabled;
@@ -33,5 +48,11 @@ export class ChannelCardComponent {
         this.channel.enabled = this.channelCardCheckbox.nativeElement.checked;
         this.antennaEnabledChange.emit({id: this.channel.id,
             enabled: this.channel.enabled});
+    }
+
+    generateChannelChart() {
+        this.lineChartLabels = this.channel.freq;
+        this.lineChartData = [{ data: this.channel.power, pointRadius: 0 }];
+
     }
 }

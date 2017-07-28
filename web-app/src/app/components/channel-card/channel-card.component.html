@@ -10,6 +10,15 @@
             (change)="onChannelEnabledChanged($event)">
         Enabled
     </label>
+        <canvas baseChart
+            class="channel-chart-display"
+            [chartType]="'line'"
+            [datasets]="lineChartData"
+            [colors]="lineChartColors"
+            [legend]="false"
+            [labels]="lineChartLabels">
+            Loadinging chart...
+        </canvas>
     <div *ngIf="channel.phase">
         <h5>phase</h5>
         <div>N samples: {{channel.phase.nSamples}}</div>

@@ -2,3 +2,8 @@
     margin: 2px;
     padding: 4px;
 }
+
+.channel-chart-display {
+    width: 200px; /* should be 100% */
+    height: 200px;
+}

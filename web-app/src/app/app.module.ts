@@ -9,6 +9,7 @@ import { IsoTimestampDisplay } from './pipes/display-timestamp-pipe';
 import { KeysPipe } from './pipes/keys-pipe';
 import { DecimalPipe } from '@angular/common';
 import { NouisliderModule } from 'ng2-nouislider';
+import { ChartsModule } from 'ng2-charts/ng2-charts';
 /** Services */
 import { ModeService } from './services/mode.service';
 import { AuthService } from './services/auth.service';
@@ -120,7 +121,8 @@ const appRoutes = [
     FormsModule,
     HttpModule,
     PopoverModule,
-    NouisliderModule
+    NouisliderModule,
+    ChartsModule
   ],
   providers: [
       TartService,

@@ -80,7 +80,7 @@ export class TartService {
             threshold: channelJSON.radio_mean.threshold
         };
         return new ChannelStatus(channelJSON.id, !!channelJSON.enabled, phase,
-            radioMean);
+            radioMean, channelJSON.freq, channelJSON.power);
     }
     /**
      * Creates and returns an instance of FpgaStatus from the
