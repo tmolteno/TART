@@ -38,7 +38,8 @@ When done boot up raspberry pi.
 ```
 ## Create RAM disc for raw data storage to avoid SDCARD writes
 ```
-    sudo echo 'tmpfs           /tmp            tmpfs   size=200M,noatime 0       0' >> /etc/fstab
+    sudo echo 'tmpfs	/var/www/html/raw	tmpfs	size=200M,noatime	0 0' >> /etc/fstab
+    sudo echo 'tmpfs	/var/www/html/vis	tmpfs	size=100M,noatime	0 0' >> /etc/fstab
     sudo reboot
 ```
 
