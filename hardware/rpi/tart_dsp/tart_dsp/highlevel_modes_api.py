@@ -152,7 +152,7 @@ RUN TART in raw data acquisition mode
 '''
 
 def run_acquire_raw(tart, runtime_config):
-
+    runtime_config['acquire'] = 1
     tart.reset()
     tart.debug(on=not runtime_config['acquire'], \
                 shift=runtime_config['shifter'], \

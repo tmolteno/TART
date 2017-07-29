@@ -21,7 +21,7 @@ def init_config(manager):
     runtime_config['raw'] = {
         'save': 1, \
         'N_samples_exp': 20,\
-        'base_path': '/tmp/raw'
+        'base_path': '/var/www/html/raw'
     }
     runtime_config['diagnostic'] = {
         'num_ant': 24,\
@@ -35,7 +35,7 @@ def init_config(manager):
         'save' : 0, \
         'chunksize' : 5,\
         'N_samples_exp' : 22,\
-        'vis_prefix' : './fpga',
+        'vis_prefix' : '/var/www/html/vis/fpga',
     }
     runtime_config['telescope_config_path'] = '24_ant_setup/telescope_config.json'
     with open(runtime_config['telescope_config_path']) as t_c:
