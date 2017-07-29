@@ -1,12 +1,28 @@
 import numpy as np
 import datetime
+import json
+import socket
+import datetime
+import hashlib
+import sys
+from matplotlib import mlab
+
 
 '''
 Helper functions
 '''
-#def rr(n,prec=3):
-  #f=10.**prec
-  #return int(n*f)/f
+
+def get_psd(d, fs, nfft):
+  power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
+  return power, freq
+
+
+def sha256_checksum(filename, block_size=65536):
+    sha256 = hashlib.sha256()
+    with open(filename, 'rb') as f:
+        for block in iter(lambda: f.read(block_size), b''):
+            sha256.update(block)
+    return sha256.hexdigest()
 
 def ph_stats(vals, stable_threshold, N_samples):
   expval = np.exp(1j*np.asarray(vals)*np.pi/6.)
@@ -15,12 +31,10 @@ def ph_stats(vals, stable_threshold, N_samples):
   if m<0:
     m += 2*np.pi
   mean_rounded = np.int(np.round(m/(2*np.pi)*12))
-  #s = rr(s,3)
   return [mean_rounded, s, stable_threshold, N_samples, int(s>stable_threshold)]
 
 def mean_stats(vals,mean_threshold):
   m = np.mean(vals)
-  #m = rr(m,4)
   return [m, mean_threshold, int(abs(m-0.5)<mean_threshold)]
 
 def mkdir_p(path): # Emulate mkdir -p functionality in python
@@ -41,12 +55,6 @@ def create_timestamp_and_path(base_path):
   ts = datetime.datetime.utcnow()
   return ts, p
 
-
-
-import json
-import socket
-import datetime
-
 def get_status_json(tart_instance):
   '''Generate JSON from status'''
   vals = tart_instance.read_status(False)
@@ -55,14 +63,6 @@ def get_status_json(tart_instance):
   d_json = json.dumps(d)
   return d, d_json
 
-
-from matplotlib import mlab
-def get_psd(d, fs, nfft):
-  power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
-  return power, freq
-'''
-RUN TART in diagnose mode
-'''
 
 def run_diagnostic(tart, runtime_config):
 
@@ -147,20 +147,9 @@ def run_diagnostic(tart, runtime_config):
 
 
     print "\nDone."
-
 '''
 RUN TART in raw data acquisition mode
 '''
-
-import hashlib
-import sys
-
-def sha256_checksum(filename, block_size=65536):
-    sha256 = hashlib.sha256()
-    with open(filename, 'rb') as f:
-        for block in iter(lambda: f.read(block_size), b''):
-            sha256.update(block)
-    return sha256.hexdigest()
 
 def run_acquire_raw(tart, runtime_config):
 

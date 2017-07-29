@@ -78,7 +78,6 @@ def vis_object_from_response(vis, ts, SETTINGS):
   ret.set_visibilities(v_order, bl)
   return ret
 
-
 def calibrate_from_vis(cal_measurements, runtime_config):
     MODE = 'mini'
     #simp (use only when noise present)\
@@ -128,8 +127,6 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     db.update_calibration_process_state('idle')
     return {}
 
-
-
 def cleanup_observation_cache():
     while True:
         resp = db.get_raw_file_handle()
@@ -137,12 +134,105 @@ def cleanup_observation_cache():
             for entry in resp[10:]:
                 try:
                     os.remove(entry['filename'])
+                except:
+                    print 'couldnt remove file'
+                    pass
+                try:
                     db.remove_raw_file_handle_by_Id(entry['Id'])
                     print 'removed', entry['Id'], entry['filename'], entry['checksum']
                 except:
-                    print 'something went wrong..'
+                    print 'couldnt remove handle from database'
                     pass
         else:
-            print 'nothing to remove'
-        time.sleep(5)
+            db.update_observation_cache_process_state('OK')
+        time.sleep(60)
+
+from tart_dsp.tartspi import TartSPI
+from tart_dsp.highlevel_modes_api import *
+from tart_dsp.stream_vis import *
+
+class TartControl():
+    ''' High Level TART Interface'''
+    def __init__(self, runtime_config):
+        self.TartSPI = TartSPI()
+        self.config = runtime_config
+        self.state = 'off'
+        self.queue_vis = None
+        self.process_vis_calc = None
+        self.cmd_queue_vis_calc = None
+        self.process_capture = None
+        self.cmd_queue_capture = None
+
+    def run(self):
+        if self.state == 'diag':
+            run_diagnostic(self.TartSPI, self.config)
+            db.insert_sample_delay(self.config['channels_timestamp'], self.config['sample_delay'])
+
+        elif self.state == 'raw':
+            ret = run_acquire_raw(self.TartSPI, self.config)
+            if ret.has_key('filename'):
+                db.insert_raw_file_handle(ret['filename'], ret['sha256'])
+
+        elif self.state == 'vis':
+            if (self.queue_vis is None):
+                self.vis_stream_setup()
+            else:
+                self.vis_stream_acquire()
+                time.sleep(0.005)
+
+        elif self.state == 'off':
+            time.sleep(0.5)
+        else:
+            print 'unknown state'
+
+    def set_state(self, new_state):
+        if (new_state == self.state):
+            return
+        else:
+            ''' State Transition '''
+            if (self.state == 'vis'):
+                '''Cleanup vis acquisition queues and processes'''
+                self.vis_stream_finish()
+            self.state = new_state
+
+    def vis_stream_setup(self):
+        self.queue_vis,\
+        self.process_vis_calc,\
+        self.process_capture,\
+        self.cmd_queue_vis_calc,\
+        self.cmd_queue_capture,\
+        = stream_vis_to_queue(self.TartSPI, self.config)
+
+    def vis_stream_acquire(self):
+        ''' Get all available visibities'''
+        vislist = []
+        while self.queue_vis.qsize()>0:
+            vis, means = self.queue_vis.get()
+            vislist.append(vis)
+
+            if len(vislist)==self.config['vis']['chunksize']:
+                if self.config['vis']['save']:
+                    fname = self.config['vis']['vis_prefix'] + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
+                    visibility.Visibility_Save(vislist, fname)
+                    print 'saved ', vis, ' to', fname
+                vislist = []
+            if vis is not None:
+                d = {}
+                for (b, v) in zip(vis.baselines, vis.v):
+                    key = str(b)
+                    d[key] = (v.real, v.imag)
+                print 'updating latest visibilities in runtime dict.'
+                self.config['vis_current'] = d
+                self.config['vis_timestamp'] = vis.timestamp
+
+    def vis_stream_finish(self):
+        self.cmd_queue_capture.put('stop')
+        self.cmd_queue_vis_calc.put('stop')
+        self.process_capture.join()
+        self.process_vis_calc.join()
+        self.queue_vis = None
+        print 'Stop visibility acquisition processes.'
+
+    def vis_stream_reconfigure(self):
+        self.vis_stream_finish()
 

@@ -14,6 +14,7 @@ def connect_to_db():
 def setup_db():
   con, c = connect_to_db()
   c.execute("CREATE TABLE IF NOT EXISTS raw_data (Id INTEGER PRIMARY KEY, date timestamp, filename TEXT, checksum TEXT)")
+  c.execute("CREATE TABLE IF NOT EXISTS observation_cache_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
   c.execute("CREATE TABLE IF NOT EXISTS calibration_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
   c.execute("CREATE TABLE IF NOT EXISTS sample_delay (date timestamp, delay REAL)")
   c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
@@ -88,9 +89,7 @@ def get_calibration_process_state():
     ret = 'Error'
   else:
     ret = rows[0][2]
-    print rows
   return ret
-
 
 def insert_raw_file_handle(filename , checksum):
   con, c = connect_to_db()
@@ -103,11 +102,26 @@ def remove_raw_file_handle_by_Id(Id):
   c.execute("DELETE FROM raw_data WHERE Id=?", (Id,))
   con.commit()
 
-
 def get_raw_file_handle():
   con, c = connect_to_db()
   c.execute("SELECT * FROM raw_data ORDER BY date DESC")
   rows = c.fetchall()
   ret = [{'filename':row[2],'timestamp':row[1],'checksum':row[3],'Id':row[0]} for row in rows]
+  return ret
+
+def update_observation_cache_process_state(state):
+  con, c = connect_to_db()
+  ts = datetime.datetime.utcnow()
+  c.execute('UPDATE observation_cache_process SET state = ?, date = ? WHERE Id = ?', (state, ts, 1))
+  con.commit()
+
+def get_observation_cache_process_state():
+  con, c = connect_to_db()
+  c.execute('SELECT * FROM observation_cache_process')
+  rows = c.fetchall()
+  if len(rows) == 0:
+    ret = 'Error'
+  else:
+    ret = {'state':rows[0][2], 'timestamp':rows[0][1]}
   return ret
 
