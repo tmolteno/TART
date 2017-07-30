@@ -16,6 +16,8 @@ import 'rxjs/add/observable/forkJoin';
 })
 export class RawModeComponent implements OnInit {
 
+    modeSubscription: any;
+
     minNumSamples: number = 16;
     maxNumSamples: number = 24;
     numSamples: any;
@@ -46,20 +48,13 @@ export class RawModeComponent implements OnInit {
         });
     }
 
-    setRawDataMode() {
-        this.modeService.setOperatingMode('raw')
-            .subscribe(res => {
-                this.checkCorrectMode();
-            });
+    ngOnDestroy() {
+        this.modeSubscription.unsubscribe();
     }
 
-    checkCorrectMode() {
-        this.modeService.getOperatingMode()
-            .subscribe(mode => {
-                if (mode !== 'raw') {
-                    this.setRawDataMode();
-                }
-            });
+    setRawDataMode() {
+        this.modeSubscription = this.modeService.setOperatingMode('raw')
+            .subscribe();
     }
 
     getInitData() {

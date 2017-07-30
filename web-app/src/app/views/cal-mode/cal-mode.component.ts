@@ -11,6 +11,8 @@ import { ModeService } from '../../services/mode.service';
 })
 export class CalModeComponent implements OnInit {
 
+    modeSubscription: any;
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
@@ -23,16 +25,17 @@ export class CalModeComponent implements OnInit {
             && this.router.url === '/calibrate-mode') {
             this.router.navigateByUrl('/');
         } else {
-            this.modeService.setOperatingMode('cal')
-                .subscribe(res => {
-                    console.log('set calibrate mode!');
-                    // TODO: get and display data for this mode
-                });
+            this.modeSubscription = this.modeService.setOperatingMode('cal')
+                .subscribe();
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/calibrate-mode') {
                 this.router.navigateByUrl('/');
             }
         });
+    }
+
+    ngOnDestroy() {
+        this.modeSubscription.unsubscribe();
     }
 }

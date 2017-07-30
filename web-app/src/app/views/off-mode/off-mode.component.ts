@@ -11,6 +11,8 @@ import { ModeService } from '../../services/mode.service';
 })
 export class OffModeComponent implements OnInit {
 
+    modeSubscription: any;
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
@@ -33,21 +35,12 @@ export class OffModeComponent implements OnInit {
         });
     }
 
-    setOffMode() {
-        this.modeService.setOperatingMode('off')
-            .subscribe(res => {
-                if (res.mode !== 'off') {
-                    this.setOffMode();
-                }
-            });
+    ngOnDestroy() {
+        this.modeSubscription.unsubscribe();
     }
 
-    checkCorrectMode() {
-        this.modeService.getOperatingMode()
-            .subscribe(mode => {
-                if (mode !== 'off') {
-                    this.setOffMode();
-                }
-            })
+    setOffMode() {
+        this.modeSubscription = this.modeService.setOperatingMode('off')
+            .subscribe();
     }
 }

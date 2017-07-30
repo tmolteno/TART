@@ -11,6 +11,8 @@ import { ModeService } from '../../services/mode.service';
 })
 export class HdImgModeComponent implements OnInit {
 
+    modeSubscription: any;
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
@@ -23,15 +25,8 @@ export class HdImgModeComponent implements OnInit {
             && this.router.url === '/hd-img-mode') {
             this.router.navigateByUrl('/');
         } else {
-            this.modeService.setOperatingMode('hd_img')
-                .subscribe(
-                res => {
-                    console.log('set hd img mode!');
-                    // TODO: get and display data for this mode
-                },
-                err => {
-                    console.log('it failed :(');
-                });
+            this.modeSubscription = this.modeService.setOperatingMode('hd_img')
+                .subscribe();
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/hd-img-mode') {
@@ -39,5 +34,9 @@ export class HdImgModeComponent implements OnInit {
             }
         });
         // TODO: swtch mode
-  }
+    }
+
+    ngOnDestroy() {
+        this.modeSubscription.unsubscribe();
+    }
 }

@@ -16,6 +16,8 @@ import 'rxjs/add/observable/forkJoin';
 })
 export class VisModeComponent {
 
+    modeSubscription: any;
+
     minNumSamples: number = 16;
     maxNumSamples: number = 24;
     numSamples: any;
@@ -45,20 +47,13 @@ export class VisModeComponent {
         });
     }
 
-    setVisDataMode() {
-        this.modeService.setOperatingMode('vis')
-            .subscribe(res => {
-                this.checkCorrectMode();
-            });
+    ngOnDestroy() {
+        this.modeSubscription.unsubscribe();
     }
 
-    checkCorrectMode() {
-        this.modeService.getOperatingMode()
-            .subscribe(mode => {
-                if (mode !== 'vis') {
-                    this.setVisDataMode();
-                }
-            });
+    setVisDataMode() {
+        this.modeSubscription = this.modeService.setOperatingMode('vis')
+            .subscribe();
     }
 
     getInitData() {

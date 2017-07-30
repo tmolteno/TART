@@ -21,6 +21,8 @@ export class DiagnoseModeComponent {
     @ViewChild('fpgaStatus') fpgaStatus: FpgaStatusComponent;
     @ViewChild('channelsStatus') channelsStatus: ChannelsStatusComponent;
 
+    modeSubscription: any;
+
     refreshTime: number = 60; //seconds
     updateStatusTimer: any;
     timerSubscription: any;
@@ -55,6 +57,8 @@ export class DiagnoseModeComponent {
     }
 
     ngOnDestroy() {
+        this.modeSubscription.unsubscribe();
+
         if (this.timerSubscription) {
             this.timerSubscription.unsubscribe();
         }
@@ -88,19 +92,8 @@ export class DiagnoseModeComponent {
     }
 
     setDiagnoseMode() {
-        this.modeService.setOperatingMode('diag')
-            .subscribe(() => {
-                this.checkCorrectMode();
-            });
-    }
-
-    checkCorrectMode() {
-        this.modeService.getOperatingMode()
-            .subscribe(mode => {
-                if (mode !== 'diag') {
-                    this.setDiagnoseMode();
-                }
-            })
+        this.modeSubscription = this.modeService.setOperatingMode('diag')
+            .subscribe();
     }
 
     onAntennaEnabledChanged(event) {
