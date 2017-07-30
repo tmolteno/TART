@@ -37,6 +37,8 @@ export class HdImgModeComponent implements OnInit {
     }
 
     ngOnDestroy() {
-        this.modeSubscription.unsubscribe();
+        if (this.modeSubscription) {
+            this.modeSubscription.unsubscribe();
+        }
     }
 }

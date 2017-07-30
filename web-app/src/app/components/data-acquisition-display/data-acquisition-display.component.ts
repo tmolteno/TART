@@ -42,6 +42,7 @@ export class DataAcquisitionDisplayComponent {
     }
 
     ngOnChanges(changes: SimpleChanges) {
+        this.saveDataToggle.nativeElement.checked = this.doSaveData;
         this.calculateIntegrationTime();
     }
 

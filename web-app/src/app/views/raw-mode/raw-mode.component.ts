@@ -49,7 +49,9 @@ export class RawModeComponent implements OnInit {
     }
 
     ngOnDestroy() {
-        this.modeSubscription.unsubscribe();
+        if (this.modeSubscription) {
+            this.modeSubscription.unsubscribe();
+        }
     }
 
     setRawDataMode() {

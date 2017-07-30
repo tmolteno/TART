@@ -48,7 +48,9 @@ export class VisModeComponent {
     }
 
     ngOnDestroy() {
-        this.modeSubscription.unsubscribe();
+        if (this.modeSubscription) {
+            this.modeSubscription.unsubscribe();
+        }
     }
 
     setVisDataMode() {

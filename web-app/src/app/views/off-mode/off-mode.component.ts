@@ -36,7 +36,9 @@ export class OffModeComponent implements OnInit {
     }
 
     ngOnDestroy() {
-        this.modeSubscription.unsubscribe();
+        if (this.modeSubscription) {
+            this.modeSubscription.unsubscribe();
+        }
     }
 
     setOffMode() {

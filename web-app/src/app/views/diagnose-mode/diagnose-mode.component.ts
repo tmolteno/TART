@@ -57,7 +57,9 @@ export class DiagnoseModeComponent {
     }
 
     ngOnDestroy() {
-        this.modeSubscription.unsubscribe();
+        if (this.modeSubscription) {
+            this.modeSubscription.unsubscribe();
+        }
 
         if (this.timerSubscription) {
             this.timerSubscription.unsubscribe();
