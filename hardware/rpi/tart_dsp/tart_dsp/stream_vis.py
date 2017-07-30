@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 from tart.operation import settings
 from tart.imaging import visibility
-from tart.imaging import calibration
 from tart.imaging import correlator
 from tart.util import angle
 
@@ -60,7 +59,6 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
     tart.capture(on=True, noisy=False)
     tart.set_sample_delay(runtime_config['sample_delay'])
     tart.start(runtime_config['vis']['N_samples_exp'], True)
-
     active = 1
     while active:
         try:
@@ -77,10 +75,7 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
         except Exception, e:
             logger.error( "Capture Loop Error %s" % str(e))
             logger.error(traceback.format_exc())
-
-        #finally:
-    #print 'Done acquisition. Closing Capture.'
-    print 'capture_loop finished'
+    print 'Done acquisition. Closing Capture Loop.'
     return 1
 
 def update_means(means,ts,runtime_config):
@@ -103,7 +98,6 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                 cmd = cmd_queue.get()
                 if cmd == 'stop':
                     active = 0
-                    #break
             if (process_queue.empty() == False):
                 #print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
                 data = process_queue.get()
@@ -111,14 +105,36 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                 #print vis, means, timestamp
                 #update_means(means, timestamp, runtime_config)
                 #print means
-                vis_queue.put((vis, means))
                 #print  'Process Loop:', # vis
+                vis_queue.put((vis, means))
         except Exception, e:
             logger.error( "Processing Error %s" % str(e))
             logger.error(traceback.format_exc())
-
     print 'process_loop finished'
     return 1
+
+def stream_vis_to_queue(tart, runtime_config):
+    # tart
+    # >> [2x visibility and mean readout]
+    # >> raw_data_queue >> [visibility assembly]
+    # >> vis_queue
+
+    # Send data to each process
+    raw_data_queue = multiprocessing.Queue()
+    vis_queue = multiprocessing.Queue()
+
+    # Send commands to each process
+    capture_cmd_queue = multiprocessing.Queue()
+    vis_calc_cmd_queue = multiprocessing.Queue()
+
+    capture_process = multiprocessing.Process(target=capture_loop,\
+      args=(tart, raw_data_queue, capture_cmd_queue, runtime_config, logger))
+    vis_calc_process = multiprocessing.Process(target=process_loop,\
+      args=(raw_data_queue, vis_queue, vis_calc_cmd_queue, runtime_config, logger))
+
+    vis_calc_process.start()
+    capture_process.start()
+    return vis_queue, vis_calc_process, capture_process, vis_calc_cmd_queue, capture_cmd_queue
 
 
 from PIL import Image
@@ -160,103 +176,20 @@ def gen_calib_image(vislist, calibration_dir):
     CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift_simp(nw=20, num_bin=2**7)
     return CAL_IFT, CAL_EXTENT
 
-def stream_vis_to_queue(tart, runtime_config):
-    # tart
-    # >> [2x visibility and mean readout]
-    # >> raw_data_queue >> [visibility assembly]
-    # >> vis_queue
-
-    # Send data to each process
-    raw_data_queue = multiprocessing.Queue()
-    vis_queue = multiprocessing.Queue()
-
-    # Send commands to each process
-    capture_cmd_queue = multiprocessing.Queue()
-    vis_calc_cmd_queue = multiprocessing.Queue()
-
-    capture_process = multiprocessing.Process(target=capture_loop,\
-      args=(tart, raw_data_queue, capture_cmd_queue, runtime_config, logger))
-    vis_calc_process = multiprocessing.Process(target=process_loop,\
-      args=(raw_data_queue, vis_queue, vis_calc_cmd_queue, runtime_config, logger))
-
-    vis_calc_process.start()
-    capture_process.start()
-    return vis_queue, vis_calc_process, capture_process, vis_calc_cmd_queue, capture_cmd_queue
-
 
 def vis_to_latest_image(tart_instance, runtime_config,):
     '''take vis off queue and synthesize and image'''
     vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
-    while (runtime_config['mode'] =='rt_syn_img'):
-        vis = None
-        time.sleep(0.05)
-        while vis_q.qsize()>0:
-            vis, means = vis_q.get()
-            #print 'here', vis
-        if vis is not None:
-            res, ex = gen_calib_image([vis,], runtime_config['calibration_dir'])
-            res = np.abs(res)
-            rescaled = (255.0 / res.max() * (res - res.min())).astype(np.uint8)
-            print rescaled, 'shape', np.shape(rescaled)
-            im = Image.fromarray(rescaled)
-            im.save(runtime_config['realtime_image_path'])
-            print 'saved file'
-
-            if runtime_config.has_key('loop_mode'):
-                if runtime_config['loop_mode']=='loop_n':
-                    runtime_config['loop_idx'] += 1
-                    print runtime_config['loop_idx']
-                    if runtime_config['loop_idx'] == runtime_config['loop_n']:
-                        runtime_config['loop_idx'] = 0
-                        runtime_config['mode'] = 'off'
-
-        else:
-          time.sleep(0.05)
-    print 'stopping'
-    capture_cmd_q.put('stop')
-    vis_calc_cmd_q.put('stop')
-    vis_calc_p.join()
-    capture_p.join()
-    print 'stopped'
-
-def vis_to_disc(tart_instance, runtime_config,):
-    '''take vis off queue and save them in chuncks'''
-    vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
-    vislist = []
-    while (runtime_config['mode'] =='vis'):
-        while vis_q.qsize()>0:
-            vis, means = vis_q.get()
-            vislist.append(vis)
-
-            if len(vislist)==runtime_config['vis']['chunksize']:
-                if runtime_config['vis']['save']:
-                    fname = runtime_config['vis']['vis_prefix'] + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
-                    visibility.Visibility_Save(vislist, fname)
-                    print 'saved ', vis, ' to', fname
-                vislist = []
-            if vis is not None:
-                d = {}
-                for (b, v) in zip(vis.baselines, vis.v):
-                    key = str(b)
-                    d[key] = (v.real, v.imag)
-                print 'updating latest visibilities in runtime dict.'
-                runtime_config['vis_current'] = d
-                runtime_config['vis_timestamp'] = vis.timestamp
-
-            if runtime_config.has_key('loop_mode'):
-                if runtime_config['loop_mode']=='loop_n':
-                    runtime_config['loop_idx'] += 1
-                    print runtime_config['loop_idx']
-                    if runtime_config['loop_idx'] == runtime_config['loop_n']:
-                        runtime_config['loop_idx'] = 0
-                        runtime_config['mode'] = 'off'
-                if runtime_config['loop_mode']=='single':
-		    runtime_config['mode'] = 'off'
-        time.sleep(0.01)
-    print 'stopping'
-    capture_cmd_q.put('stop')
-    vis_calc_cmd_q.put('stop')
-    vis_calc_p.join()
-    capture_p.join()
-    print 'stopped'
-
+    vis = None
+    time.sleep(0.05)
+    while vis_q.qsize()>0:
+        vis, means = vis_q.get()
+        #print 'here', vis
+    if vis is not None:
+        res, ex = gen_calib_image([vis,], runtime_config['calibration_dir'])
+        res = np.abs(res)
+        rescaled = (255.0 / res.max() * (res - res.min())).astype(np.uint8)
+        print rescaled, 'shape', np.shape(rescaled)
+        im = Image.fromarray(rescaled)
+        im.save(runtime_config['realtime_image_path'])
+        print 'saved file'

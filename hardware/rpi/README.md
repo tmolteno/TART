@@ -36,6 +36,13 @@ When done boot up raspberry pi.
     sudo mkdir -p /var/www/html/doc
     chown -R pi:pi /var/www/html/
 ```
+## Create RAM disc for raw data storage to avoid SDCARD writes
+```
+    sudo echo 'tmpfs	/var/www/html/raw	tmpfs	size=200M,noatime	0 0' >> /etc/fstab
+    sudo echo 'tmpfs	/var/www/html/vis	tmpfs	size=100M,noatime	0 0' >> /etc/fstab
+    sudo reboot
+```
+
 ## Update to latest firmware
 ```
     sudo apt-get update
