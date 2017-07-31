@@ -6,6 +6,7 @@ import { HttpModule } from '@angular/http';
 import { NgLoadingBarModule } from 'ng-loading-bar';
 import { PopoverModule } from 'ngx-popover';
 import { IsoTimestampDisplay } from './pipes/display-timestamp-pipe';
+import { FileNameParser } from './pipes/parse-file-pipe';
 import { KeysPipe } from './pipes/keys-pipe';
 import { DecimalPipe } from '@angular/common';
 import { NouisliderModule } from 'ng2-nouislider';
@@ -92,6 +93,7 @@ const appRoutes = [
     AppComponent,
     KeysPipe,
     IsoTimestampDisplay,
+    FileNameParser,
     StatusRowHeaderComponent,
     NavBarComponent,
     LoginComponent,

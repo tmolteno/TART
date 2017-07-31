@@ -1,9 +1,14 @@
 <div id="home-container">
-    <app-file-download [filePaths]="filePaths"> </app-file-download>
     <app-info></app-info>
     <app-imaging></app-imaging>
     <app-fpga-status
         #fpgaStatus
         [showFpgaStatus]="false">
     </app-fpga-status>
+    <br/>
+    <h3>Raw Data Files</h3>
+    <app-file-download [filePaths]="rawFilePaths"> </app-file-download>
+
+    <h3>Visibles Data Files</h3>
+    <app-file-download [filePaths]="visFilePaths"> </app-file-download>
 </div>

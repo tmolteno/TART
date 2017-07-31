@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { PlatformLocation } from '@angular/common';
 
 @Component({
     selector: 'app-file-download',
@@ -9,4 +10,6 @@ export class FileDownloadComponent {
 
     @Input()
     filePaths: any[] = [];
+
+    baseLocation: string = window.location.host;
 }

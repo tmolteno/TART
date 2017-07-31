@@ -30,20 +30,8 @@ export class HomeComponent {
 
     private showFpga: boolean = true;
 
-    filePaths: any[] = [
-      {
-        "Id": 1170,
-        "checksum": "9587a59b6a46faf6570a7b0df8d39265326062c3d93844a6feb78e49265b7151",
-        "filename": "raw/2017/7/31/02_04_36.890779_data.pkl",
-        "timestamp": "2017-07-31 02:04:44.391875"
-      },
-      {
-        "Id": 1169,
-        "checksum": "bff7d16e0507dcf17096408abc23a971a97b72f4b1c35b7158247f58fade8039",
-        "filename": "raw/2017/7/31/02_04_29.310015_data.pkl",
-        "timestamp": "2017-07-31 02:04:36.855546"
-      }
-  ];
+    rawFilePaths: any[] = [];
+    visFilePaths: any[] = [];
 
     constructor(
         private authService: AuthService,
@@ -63,8 +51,12 @@ export class HomeComponent {
             });
         this.dataAcquisitionService.getRawFilePaths()
             .subscribe(result => {
-                console.log("got raw data paths");
-                this.filePaths = result;
+                this.rawFilePaths = result;
+            });
+
+        this.dataAcquisitionService.getVisFilePaths()
+            .subscribe(result => {
+                this.visFilePaths = result;
             })
     }
 

@@ -73,6 +73,13 @@ export class DataAcquisitionService {
             });
     }
 
+    getVisFilePaths() {
+        return this.http.get(`${this.apiUrl}/vis/data`)
+            .map((res: Response) => {
+                return res.json();
+            });
+    }
+
     getRawSaveFlag() {
         return this.http.get(`${this.apiUrl}/acquire/raw/save`)
             .map((res: Response) => {
