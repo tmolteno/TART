@@ -133,12 +133,12 @@ To exit the screen
 ```
 
 
-## Data storage formats
-Currently data is stored as pickled measurement objects in files using a directory structure that
-consists of yyyy/mm/dd/h_m_s.pkl. See the measurement object for more details
+## RAW Data storage format
+Currently data is stored as pickled observation objects in files using a directory structure that
+consists of yyyy/mm/dd/h_m_s.pkl. See the Observation object for more details
 
 ```
-    ls /data
+    ls /var/www/html/raw/yyyy/mm/dd/h_m_s.pkl
 ```
 
 
@@ -150,29 +150,12 @@ Each TART node forwards a DIFFERENT port.
 If a TART node were forwarding 2222, then after logging in to the remote machine (tart.elec.ac.nz)
 the following commands would connect back to the TART (wherever it was in the world)
 
-ssh -p 2222 localhost
+ssh -p 2222 pi@localhost
 
 
 ## Network setup
 
 TBA
-
     ssh-keygen
-    ssh-copy-id tim@tart.elec.ac.nz
-
-## Data sync script
-
-Add the following line to crontab:
-
-    crontab -e
-    5 * * * * sh /home/pi/TART/rpi/software/copy_data_remote.sh
-
-Add SSH credentials to electron (where the data will be sent),
-the password is the usual.
-
-    ssh-copy-id tart@electron.otago.ac.nz
-
-Login to electron to check:
-
-    ssh tart@electron.otago.ac.nz
+    ssh-copy-id tart@tart.elec.ac.nz
 
