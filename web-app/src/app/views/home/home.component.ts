@@ -7,6 +7,7 @@ import { ModeService } from '../../services/mode.service';
 import { AuthService } from '../../services/auth.service';
 import { TartService } from '../../services/tart.service';
 import { ImagingService } from '../../services/imaging.service';
+import { DataAcquisitionService } from '../../services/data-acquisition.service';
 
 import { Observable } from 'rxjs/Observable';
 
@@ -29,10 +30,14 @@ export class HomeComponent {
 
     private showFpga: boolean = true;
 
+    rawFilePaths: any[] = [];
+    visFilePaths: any[] = [];
+
     constructor(
         private authService: AuthService,
         private modeService: ModeService,
         private tartService: TartService,
+        private dataAcquisitionService: DataAcquisitionService,
         private router: Router
     ) { }
 
@@ -44,6 +49,15 @@ export class HomeComponent {
                     this.redirectToModePage();
                 }
             });
+        this.dataAcquisitionService.getRawFilePaths()
+            .subscribe(result => {
+                this.rawFilePaths = result;
+            });
+
+        this.dataAcquisitionService.getVisFilePaths()
+            .subscribe(result => {
+                this.visFilePaths = result;
+            })
     }
 
     ngAfterViewInit() {

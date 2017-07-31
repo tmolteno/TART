@@ -19,11 +19,11 @@ export class DataAcquisitionService {
         private authService: AuthService,
         private platformLocation: PlatformLocation
     ) {
-        this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1/acquire';
+        this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
     }
 
     getRawNumSamplesExp() {
-        return this.http.get(`${this.apiUrl}/raw/num_samples_exp`)
+        return this.http.get(`${this.apiUrl}/acquire/raw/num_samples_exp`)
             .map((res: Response) => {
                 return res.json()['N_samples_exp'];
             });
@@ -38,14 +38,14 @@ export class DataAcquisitionService {
         }
         let options = this.authService.getAuthRequestOptions();
 
-        return this.http.put(`${this.apiUrl}/raw/num_samples_exp/${value}`, {},
+        return this.http.put(`${this.apiUrl}/acquire/raw/num_samples_exp/${value}`, {},
             options).map((res: Response) => {
                 return res.json();
             });
     }
 
     getVisNumSamplesExp() {
-        return this.http.get(`${this.apiUrl}/vis/num_samples_exp`)
+        return this.http.get(`${this.apiUrl}/acquire/vis/num_samples_exp`)
             .map((res: Response) => {
                 return res.json()['N_samples_exp'];
             });
@@ -60,14 +60,28 @@ export class DataAcquisitionService {
         }
         let options = this.authService.getAuthRequestOptions();
 
-        return this.http.put(`${this.apiUrl}/vis/num_samples_exp/${value}`, {},
+        return this.http.put(`${this.apiUrl}/acquire/vis/num_samples_exp/${value}`, {},
             options).map((res: Response) => {
                 return res.json();
             });
     }
 
+    getRawFilePaths() {
+        return this.http.get(`${this.apiUrl}/raw/data`)
+            .map((res: Response) => {
+                return res.json();
+            });
+    }
+
+    getVisFilePaths() {
+        return this.http.get(`${this.apiUrl}/vis/data`)
+            .map((res: Response) => {
+                return res.json();
+            });
+    }
+
     getRawSaveFlag() {
-        return this.http.get(`${this.apiUrl}/raw/save`)
+        return this.http.get(`${this.apiUrl}/acquire/raw/save`)
             .map((res: Response) => {
                 return !!res.json().save;
             });
@@ -78,14 +92,14 @@ export class DataAcquisitionService {
             return Observable.throw(new Error('token expired'));
         }
         let options = this.authService.getAuthRequestOptions();
-        return this.http.put(`${this.apiUrl}/raw/save/${doSave ? 1 : 0}`, {},
+        return this.http.put(`${this.apiUrl}/acquire/raw/save/${doSave ? 1 : 0}`, {},
             options).map((res: Response) => {
                 return res.json();
             });
     }
 
     getVisSaveFlag() {
-        return this.http.get(`${this.apiUrl}/vis/save`)
+        return this.http.get(`${this.apiUrl}/acquire/vis/save`)
             .map((res: Response) => {
                 return !!res.json().save;
             });
@@ -96,7 +110,7 @@ export class DataAcquisitionService {
             return Observable.throw(new Error('token expired'));
         }
         let options = this.authService.getAuthRequestOptions();
-        return this.http.put(`${this.apiUrl}/vis/save/${doSave ? 1 : 0}`, {},
+        return this.http.put(`${this.apiUrl}/acquire/vis/save/${doSave ? 1 : 0}`, {},
             options).map((res: Response) => {
                 return res.json();
             });
