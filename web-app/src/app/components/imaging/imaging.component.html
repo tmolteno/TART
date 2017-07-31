@@ -7,45 +7,73 @@
         <div id="imaging-config-container">
             <h3>Synthesis Parameters</h3>
             <!-- number of bins slider -->
-            <app-visibles-config-slider
-                [startValue]="numBins"
-                [minValue]="minNumBins"
-                [maxValue]="maxNumBins"
-                [stepSize]="numBinsStep"
-                [labelText]="numBinsLabel"
-                (valueChanged)="onNumBinsChanged($event)">
-            </app-visibles-config-slider>
-            <!-- number of waves slider -->
-            <app-visibles-config-slider
-                [startValue]="waves"
-                [minValue]="minWaves"
-                [maxValue]="maxWaves"
-                [stepSize]="wavesStep"
-                [labelText]="wavesLabel"
-                (valueChanged)="onNumWavesChanged($event)">
-            </app-visibles-config-slider>
-            <!-- update image timer slider -->
-            <app-visibles-config-slider
-                [startValue]="refreshTime"
-                [minValue]="minRefreshTime"
-                [maxValue]="maxRefreshTime"
-                [stepSize]="refreshTimeStep"
-                [labelText]="refreshTimeLabel"
-                (slideEnd)="onRefreshTimerChanged($event)">
-            </app-visibles-config-slider>
-            <div class="form-group">
-                <label for="color-select">Colour scheme:</label>
-                <select id="colour-select"
-                    class="form-control"
-                    (change)="onColourChange($event)"
-                    [(ngModel)]="imagingColour">
-                    <option
-                        *ngFor='let colour of imagingColours'
-                        [ngValue]="colour.value">
-                        {{colour.name}}
-                    </option>
-                </select>
-            </div>
+            <div id="imaging-settings-container">
+                <div id="synthesis-settings-container">
+                    <app-visibles-config-slider
+                        [startValue]="numBins"
+                        [minValue]="minNumBins"
+                        [maxValue]="maxNumBins"
+                        [stepSize]="numBinsStep"
+                        [labelText]="numBinsLabel"
+                        (valueChanged)="onNumBinsChanged($event)">
+                    </app-visibles-config-slider>
+                    <!-- number of waves slider -->
+                    <app-visibles-config-slider
+                        [startValue]="waves"
+                        [minValue]="minWaves"
+                        [maxValue]="maxWaves"
+                        [stepSize]="wavesStep"
+                        [labelText]="wavesLabel"
+                        (valueChanged)="onNumWavesChanged($event)">
+                    </app-visibles-config-slider>
+                    <!-- update image timer slider -->
+                    <app-visibles-config-slider
+                        [startValue]="refreshTime"
+                        [minValue]="minRefreshTime"
+                        [maxValue]="maxRefreshTime"
+                        [stepSize]="refreshTimeStep"
+                        [labelText]="refreshTimeLabel"
+                        (slideEnd)="onRefreshTimerChanged($event)">
+                    </app-visibles-config-slider>
+                </div><!-- ./#synthesis-settings -->
+                <div id="display-settings-container">
+                    <div class="form-group">
+                        <label for="color-select">Colour scheme:</label>
+                        <select id="colour-select"
+                            class="form-control"
+                            (change)="onColourChange($event)"
+                            [(ngModel)]="imagingColour">
+                            <option
+                                *ngFor='let colour of imagingColours'
+                                [ngValue]="colour.value">
+                                {{colour.name}}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label  class="form-check-label" for="show-grid-select">
+                            <input
+                                #displayGridCheckbox
+                                id="show-grid-select"
+                                class="form-check-input"
+                                type="checkbox"
+                                (change)="onShowGridChanged($event)">
+                            Show grid
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label  class="form-check-label" for="show-satellites-select">
+                            <input
+                                #displaySatsCheckbox
+                                id="show-satellites-select"
+                                class="form-check-input"
+                                type="checkbox"
+                                (change)="onShowSatsChanged($event)">
+                            Show satellites
+                        </label>
+                    </div>
+                </div><!-- ./#display-settings -->
+            </div><!-- ./#imaging-settings-container -->
             <div>
                 <span id="image-recorded-timestamp">Recorded: {{ timestamp | isoFormatTransform }}</span>
                 <button
