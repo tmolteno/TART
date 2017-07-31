@@ -14,6 +14,30 @@
     margin: 0 auto;
     margin-bottom: 8px;
 }
+#imaging-settings-container {
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    justify-content: space-between;
+    -webkit-justify-content: space-between;
+}
+#synthesis-settings-container, #display-settings-container {
+    -webkit-flex-grow: 1;
+    flex-grow: 1;
+}
+
+#display-settings-container {
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    justify-content: space-between;
+    -webkit-justify-content: space-between;
+}
+
 #imaging-canvas {
     -webkit-order: 1;
     order: 1;
