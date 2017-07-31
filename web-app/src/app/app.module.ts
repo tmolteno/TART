@@ -45,6 +45,7 @@ import { DataAcquisitionDisplayComponent } from './components/data-acquisition-d
 import { StatusMapComponent } from './components/status-map/status-map.component';
 import { GifRecorderComponent } from './components/gif-recorder/gif-recorder.component';
 import { VisCalibrationComponent } from './components/vis-calibration/vis-calibration.component';
+import { FileDownloadComponent } from './components/file-download/file-download.component';
 /** Routes */
 const appRoutes = [
     {
@@ -112,7 +113,8 @@ const appRoutes = [
     DataAcquisitionDisplayComponent,
     StatusMapComponent,
     GifRecorderComponent,
-    VisCalibrationComponent
+    VisCalibrationComponent,
+    FileDownloadComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
