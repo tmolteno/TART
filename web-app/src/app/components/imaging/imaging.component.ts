@@ -28,6 +28,8 @@ import * as moment from 'moment/moment';
 export class ImagingComponent {
     @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
     @ViewChild('hiddenImageDownloader') hiddenImageDownloader: ElementRef;
+    @ViewChild('displayGridCheckbox') displayGridCheckbox: ElementRef;
+    @ViewChild('displaySatsCheckbox') displaySatsCheckbox: ElementRef;
 
     canvasSizeModifierLandscape: number = 0.79;
     canvasSizeModifierPortrait: number = 0.8;
@@ -88,6 +90,8 @@ export class ImagingComponent {
             this.lat = info.location.lat;
             this.lon = info.location.lon;
         });
+        this.displayGridCheckbox.nativeElement.checked = true;
+        this.displaySatsCheckbox.nativeElement.checked = true;
     }
 
     setCanvasSize() {
@@ -172,8 +176,13 @@ export class ImagingComponent {
         let imgCanvas = visImaging.gen_image(this.visData, this.antennaPositions,
             this.calibrationData, this.waves, totalNumBins,this.imagingColour);
         let ctx = imgCanvas.getContext('2d');
-        visImaging.overlay_grid(ctx, this.waves, totalNumBins);
-        visImaging.overlay_satellites(ctx, this.catalogData, this.waves, totalNumBins);
+
+        if (this.displayGridCheckbox.nativeElement.checked) {
+            visImaging.overlay_grid(ctx, this.waves, totalNumBins);
+        }
+        if (this.displaySatsCheckbox.nativeElement.checked) {
+            visImaging.overlay_satellites(ctx, this.catalogData, this.waves, totalNumBins);
+        }
         let img = new Image();
 
         img.onload  = () => {
@@ -220,6 +229,16 @@ export class ImagingComponent {
 
     onColourChange(event) {
         this.colourService.setSelectedColour(this.imagingColour);
+        this.blockRefresh = true;
+        this.drawImage();
+    }
+
+    onShowGridChanged(event) {
+        this.blockRefresh = true;
+        this.drawImage();
+    }
+
+    onShowSatsChanged(event) {
         this.blockRefresh = true;
         this.drawImage();
     }

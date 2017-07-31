@@ -53,19 +53,23 @@
                     <div class="form-group">
                         <label  class="form-check-label" for="show-grid-select">
                             <input
+                                #displayGridCheckbox
                                 id="show-grid-select"
                                 class="form-check-input"
-                                type="checkbox">
+                                type="checkbox"
+                                (change)="onShowGridChanged($event)">
                             Show grid
                         </label>
                     </div>
                     <div class="form-group">
                         <label  class="form-check-label" for="show-satellites-select">
                             <input
+                                #displaySatsCheckbox
                                 id="show-satellites-select"
                                 class="form-check-input"
-                                type="checkbox">
-                            Show satellites                            
+                                type="checkbox"
+                                (change)="onShowSatsChanged($event)">
+                            Show satellites
                         </label>
                     </div>
                 </div><!-- ./#display-settings -->
