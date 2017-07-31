@@ -26,18 +26,42 @@ export class ChannelCardComponent {
     public lineChartData: Array<any> = [];
     public lineChartLabels: any[] = [];
     public lineChartColors: Array<any> = [
-        { // grey
-             backgroundColor: 'rgba(148,159,177,0.2)',
-             borderColor: 'rgba(148,159,177,1)',
-             pointBackgroundColor: 'rgba(148,159,177,1)',
+        {
+             backgroundColor: 'rgba(66, 139, 202, 0.5)',
+             borderColor: 'rgba(66, 139, 202, 1)',
+             pointBackgroundColor: 'rgba(148, 159, 177, 1)',
              pointBorderColor: '#fff',
              pointHoverBackgroundColor: '#fff',
-             pointHoverBorderColor: 'rgba(148,159,177,0.8)'
+             pointHoverBorderColor: 'rgba(148, 159, 177, 0.8)'
          }
     ];
+    public chartOptions: any = {
+        scales: {
+            yAxes:[{
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Magnitude [dB/Hz]',
+                    fontColor: '#000'
+                },
+                ticks: {
+                    fontColor: '#000'
+                }
+            }],
+            xAxes:[{
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Frequency [MHz]',
+                    fontColor: '#000'
+                },
+                ticks: {
+                    fontColor: '#000'
+                }
+            }]
+        }
+    };
 
     ngOnInit() {
-        this.generateChannelChart(); // TODO:this should also be called after each update
+        this.generateChannelChart();
     }
 
     ngAfterViewInit() {
