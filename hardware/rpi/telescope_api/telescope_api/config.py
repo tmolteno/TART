@@ -32,8 +32,8 @@ def init_config(manager):
 
     }
     runtime_config['vis'] = {
-        'save' : 0, \
-        'chunksize' : 5,\
+        'save' : 1, \
+        'chunksize' : 60,\
         'N_samples_exp' : 22,\
         'vis_prefix' : '/var/www/html/vis/fpga',
     }

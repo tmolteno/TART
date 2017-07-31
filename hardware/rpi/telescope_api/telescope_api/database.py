@@ -15,6 +15,8 @@ def setup_db():
   con, c = connect_to_db()
   c.execute("CREATE TABLE IF NOT EXISTS raw_data (Id INTEGER PRIMARY KEY, date timestamp, filename TEXT, checksum TEXT)")
   c.execute("CREATE TABLE IF NOT EXISTS observation_cache_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
+  c.execute("CREATE TABLE IF NOT EXISTS vis_data (Id INTEGER PRIMARY KEY, date timestamp, filename TEXT, checksum TEXT)")
+  c.execute("CREATE TABLE IF NOT EXISTS vis_cache_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
   c.execute("CREATE TABLE IF NOT EXISTS calibration_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
   c.execute("CREATE TABLE IF NOT EXISTS sample_delay (date timestamp, delay REAL)")
   c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
@@ -61,6 +63,10 @@ def insert_sample_delay(timestamp, sample_delay):
   con.commit()
   return 1
 
+##################
+#  Antenna Gain  #
+##################
+
 def insert_gain(utc_date, g, ph):
   con, c = connect_to_db()
   for ant_i in range(len(g)):
@@ -75,6 +81,10 @@ def get_gain():
     row = c.fetchall()[0]
     rows_dict[row[1]] = row
   return rows_dict
+
+#########################
+#  Calibration Process  #
+#########################
 
 def update_calibration_process_state(state):
   con, c = connect_to_db()
@@ -91,7 +101,11 @@ def get_calibration_process_state():
     ret = rows[0][2]
   return ret
 
-def insert_raw_file_handle(filename , checksum):
+####################
+#  Raw Data Cache  #
+####################
+
+def insert_raw_file_handle(filename, checksum):
   con, c = connect_to_db()
   timestamp = datetime.datetime.utcnow()
   c.execute("INSERT INTO raw_data(date, filename, checksum) VALUES (?,?,?)", (timestamp, filename , checksum))
@@ -124,4 +138,44 @@ def get_observation_cache_process_state():
   else:
     ret = {'state':rows[0][2], 'timestamp':rows[0][1]}
   return ret
+
+###########################
+#  Visibility Data Cache  #
+###########################
+
+def insert_vis_file_handle(filename, checksum):
+  con, c = connect_to_db()
+  timestamp = datetime.datetime.utcnow()
+  c.execute("INSERT INTO vis_data(date, filename, checksum) VALUES (?,?,?)", (timestamp, filename , checksum))
+  con.commit()
+
+def remove_vis_file_handle_by_Id(Id):
+  con, c = connect_to_db()
+  c.execute("DELETE FROM vis_data WHERE Id=?", (Id,))
+  con.commit()
+
+def get_vis_file_handle():
+  con, c = connect_to_db()
+  c.execute("SELECT * FROM vis_data ORDER BY date DESC")
+  rows = c.fetchall()
+  ret = [{'filename':row[2],'timestamp':row[1],'checksum':row[3],'Id':row[0]} for row in rows]
+  return ret
+
+def update_vis_cache_process_state(state):
+  con, c = connect_to_db()
+  ts = datetime.datetime.utcnow()
+  c.execute('UPDATE vis_cache_process SET state = ?, date = ? WHERE Id = ?', (state, ts, 1))
+  con.commit()
+
+def get_vis_cache_process_state():
+  con, c = connect_to_db()
+  c.execute('SELECT * FROM vis_cache_process')
+  rows = c.fetchall()
+  if len(rows) == 0:
+    ret = 'Error'
+  else:
+    ret = {'state':rows[0][2], 'timestamp':rows[0][1]}
+  return ret
+
+
 

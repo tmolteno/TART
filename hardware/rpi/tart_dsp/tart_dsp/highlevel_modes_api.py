@@ -16,7 +16,6 @@ def get_psd(d, fs, nfft):
   power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
   return power, freq
 
-
 def sha256_checksum(filename, block_size=65536):
     sha256 = hashlib.sha256()
     with open(filename, 'rb') as f:

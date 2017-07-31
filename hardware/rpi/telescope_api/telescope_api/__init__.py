@@ -8,7 +8,7 @@ from flask_cors import CORS, cross_origin
 import multiprocessing
 from multiprocessing import Manager
 
-from service import cleanup_observation_cache, TartControl
+from service import cleanup_observation_cache, cleanup_visibility_cache, TartControl
 from auth import authenticate, identity
 from config import init_config
 import database as db
@@ -31,6 +31,10 @@ def tart_p():
 
 observation_cache_process = multiprocessing.Process(target=cleanup_observation_cache, args=())
 observation_cache_process.start()
+
+visibility_cache_process = multiprocessing.Process(target=cleanup_visibility_cache, args=())
+visibility_cache_process.start()
+
 
 tart_process = multiprocessing.Process(target=tart_p, args=())
 tart_process.start()

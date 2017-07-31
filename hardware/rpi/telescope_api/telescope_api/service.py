@@ -147,6 +147,27 @@ def cleanup_observation_cache():
             db.update_observation_cache_process_state('OK')
         time.sleep(60)
 
+def cleanup_visibility_cache():
+    while True:
+        resp = db.get_vis_file_handle()
+        if len(resp)>10:
+            for entry in resp[10:]:
+                try:
+                    os.remove(entry['filename'])
+                except:
+                    print 'couldnt remove file'
+                    pass
+                try:
+                    db.remove_vis_file_handle_by_Id(entry['Id'])
+                    print 'removed', entry['Id'], entry['filename'], entry['checksum']
+                except:
+                    print 'couldnt remove handle from database'
+                    pass
+        else:
+            db.update_vis_cache_process_state('OK')
+        time.sleep(60)
+
+
 from tart_dsp.tartspi import TartSPI
 from tart_dsp.highlevel_modes_api import *
 from tart_dsp.stream_vis import *
@@ -162,6 +183,8 @@ class TartControl():
         self.cmd_queue_vis_calc = None
         self.process_capture = None
         self.cmd_queue_capture = None
+        self.vislist = []
+
 
     def run(self):
         if self.state == 'diag':
@@ -177,9 +200,10 @@ class TartControl():
             if (self.queue_vis is None):
                 self.vis_stream_setup()
             else:
-                self.vis_stream_acquire()
+                ret = self.vis_stream_acquire()
+                if ret.has_key('filename'):
+                    db.insert_vis_file_handle(ret['filename'], ret['sha256'])
                 time.sleep(0.005)
-
         elif self.state == 'off':
             time.sleep(0.5)
         else:
@@ -205,25 +229,30 @@ class TartControl():
 
     def vis_stream_acquire(self):
         ''' Get all available visibities'''
-        vislist = []
+        ret = {}
         while self.queue_vis.qsize()>0:
             vis, means = self.queue_vis.get()
-            vislist.append(vis)
 
-            if len(vislist)==self.config['vis']['chunksize']:
-                if self.config['vis']['save']:
-                    fname = self.config['vis']['vis_prefix'] + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
-                    visibility.Visibility_Save(vislist, fname)
-                    print 'saved ', vis, ' to', fname
-                vislist = []
             if vis is not None:
-                d = {}
+                vis_dict = {}
                 for (b, v) in zip(vis.baselines, vis.v):
                     key = str(b)
-                    d[key] = (v.real, v.imag)
+                    vis_dict[key] = (v.real, v.imag)
                 print 'updating latest visibilities in runtime dict.'
-                self.config['vis_current'] = d
+                self.config['vis_current'] = vis_dict
                 self.config['vis_timestamp'] = vis.timestamp
+                self.vislist.append(vis)
+                if len(self.vislist)==self.config['vis']['chunksize']:
+                    print 'reached chunksize'
+                    if self.config['vis']['save']:
+                        fname = self.config['vis']['vis_prefix'] + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
+                        visibility.Visibility_Save(self.vislist, fname)
+                        print 'saved ', vis, ' to', fname
+                        ret['filename'] = fname
+                        ret['sha256'] = sha256_checksum(fname)
+                    self.vislist = []
+        return ret
+
 
     def vis_stream_finish(self):
         self.cmd_queue_capture.put('stop')
@@ -231,6 +260,7 @@ class TartControl():
         self.process_capture.join()
         self.process_vis_calc.join()
         self.queue_vis = None
+        self.vislist = []
         print 'Stop visibility acquisition processes.'
 
     def vis_stream_reconfigure(self):
