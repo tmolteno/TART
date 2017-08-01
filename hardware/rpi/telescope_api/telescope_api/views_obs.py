@@ -16,6 +16,7 @@ def get_raw_data_file_handles():
   ret = db.get_raw_file_handle()
   for el in ret:
     el['filename'] = el['filename'][14:]
+    el['timestamp'] = el['timestamp'][:-3]+'Z'
   return jsonify(ret)
 
 
@@ -33,4 +34,5 @@ def get_vis_data_file_handles():
   ret = db.get_vis_file_handle()
   for el in ret:
     el['filename'] = el['filename'][14:]
+    el['timestamp'] = el['timestamp'][:-3]+'Z'
   return jsonify(ret)
