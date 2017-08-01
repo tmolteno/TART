@@ -11,5 +11,5 @@ export class FileDownloadComponent {
     @Input()
     filePaths: any[] = [];
 
-    baseLocation: string = window.location.host;
+    baseLocation: string = window.location.protocol + '//' + window.location.host;
 }
