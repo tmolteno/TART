@@ -30,6 +30,7 @@ export class ImagingComponent {
     @ViewChild('hiddenImageDownloader') hiddenImageDownloader: ElementRef;
     @ViewChild('displayGridCheckbox') displayGridCheckbox: ElementRef;
     @ViewChild('displaySatsCheckbox') displaySatsCheckbox: ElementRef;
+    @ViewChild('displaySatNamesCheckbox') displaySatNamesCheckbox: ElementRef;
 
     canvasSizeModifierLandscape: number = 0.79;
     canvasSizeModifierPortrait: number = 0.8;
@@ -92,6 +93,7 @@ export class ImagingComponent {
         });
         this.displayGridCheckbox.nativeElement.checked = true;
         this.displaySatsCheckbox.nativeElement.checked = true;
+        this.displaySatNamesCheckbox.nativeElement.checked = false;
     }
 
     setCanvasSize() {
@@ -181,7 +183,10 @@ export class ImagingComponent {
             visImaging.overlay_grid(ctx, this.waves, totalNumBins);
         }
         if (this.displaySatsCheckbox.nativeElement.checked) {
-            visImaging.overlay_satellites(ctx, this.catalogData, this.waves, totalNumBins);
+            let showNames = this.displaySatNamesCheckbox.nativeElement.checked?
+                1 : 0;
+            visImaging.overlay_satellites(ctx, this.catalogData, this.waves,
+                    totalNumBins, showNames);
         }
         let img = new Image();
 
@@ -241,6 +246,13 @@ export class ImagingComponent {
     onShowSatsChanged(event) {
         this.blockRefresh = true;
         this.drawImage();
+    }
+
+    onShowSatNamesChanged(event) {
+        if (this.displaySatsCheckbox.nativeElement.checked) {
+            this.blockRefresh = true;
+            this.drawImage();
+        }
     }
 
     onSaveImageBtnClick(event) {
