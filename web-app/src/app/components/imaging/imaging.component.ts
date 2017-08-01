@@ -13,10 +13,9 @@ import { ColourService } from '../../services/colour.service';
 import { CatalogService } from '../../services/catalog.service';
 import { InfoService } from '../../services/info.service';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs/Rx';
 import { Subject } from 'rxjs/Subject';
 import * as moment from 'moment/moment';
-import 'rxjs/add/observable/forkJoin';
 
 @Component({
     selector: 'app-imaging',
@@ -29,6 +28,8 @@ import 'rxjs/add/observable/forkJoin';
 export class ImagingComponent {
     @ViewChild('imagingCanvas') imagingCanvas: ElementRef;
     @ViewChild('hiddenImageDownloader') hiddenImageDownloader: ElementRef;
+    @ViewChild('displayGridCheckbox') displayGridCheckbox: ElementRef;
+    @ViewChild('displaySatsCheckbox') displaySatsCheckbox: ElementRef;
 
     canvasSizeModifierLandscape: number = 0.79;
     canvasSizeModifierPortrait: number = 0.8;
@@ -57,10 +58,11 @@ export class ImagingComponent {
     updateImageTimer: any;
     timerSubscription: any;
     // draw data
-    antennaPositions: any;
-    visData: any;
-    calibrationData: any;
-    timestamp: string = null;
+    antennaPositions: any = [];
+    visData: any = [];
+    catalogData: any = [];
+    calibrationData: any = [];
+    timestamp: string = "";
 
     gifSrc: any[] = [];
     numFrames: number = 0;
@@ -88,6 +90,8 @@ export class ImagingComponent {
             this.lat = info.location.lat;
             this.lon = info.location.lon;
         });
+        this.displayGridCheckbox.nativeElement.checked = true;
+        this.displaySatsCheckbox.nativeElement.checked = true;
     }
 
     setCanvasSize() {
@@ -131,22 +135,34 @@ export class ImagingComponent {
         this.timerSubscription = this.updateImageTimer
             .subscribe(tick => this.onRefreshTimerTick(tick));
     }
-    catalogData: any;
+
     onRefreshTimerTick(tick) {
         if (!this.blockRefresh) {
-            Observable.forkJoin([
-                this.imagingService.getVis(),
-                this.calibrationService.getGain(),
-                this.imagingService.getTimestamp(),
-                this.catalogService.getSatellites(this.lat, this.lon)
-            ]).subscribe(result => {
-                this.visData = result[0];
-                this.calibrationData = result[1];
-                this.timestamp = result[2];
-                this.catalogData = result[3];
+            this.imagingService.getVis()
+            .catch(() => { return Observable.of({}); })
+            .flatMap(result => {
+                this.visData = result;
+                return this.calibrationService.getGain();
+            })
+            .catch(() => {
+                return Observable.of({
+                    gain: [],
+                    phase_offset: []
+                });
+            })
+            .flatMap(result => {
+                this.calibrationData = result;
+                return this.imagingService.getTimestamp();
+            })
+            .catch(() => { return Observable.of(""); })
+            .flatMap(result => {
+                this.timestamp = result;
+                return this.catalogService.getSatellites(this.lat, this.lon);
+            })
+            .catch(() => { return Observable.of([]); })
+            .subscribe(result => {
+                this.catalogData = result;
                 this.drawImage();
-            }, err => {
-                this.blockRefresh = false;
             });
         }
     }
@@ -160,8 +176,13 @@ export class ImagingComponent {
         let imgCanvas = visImaging.gen_image(this.visData, this.antennaPositions,
             this.calibrationData, this.waves, totalNumBins,this.imagingColour);
         let ctx = imgCanvas.getContext('2d');
-        visImaging.overlay_grid(ctx, this.waves, totalNumBins);
-        visImaging.overlay_satellites(ctx, this.catalogData, this.waves, totalNumBins);
+
+        if (this.displayGridCheckbox.nativeElement.checked) {
+            visImaging.overlay_grid(ctx, this.waves, totalNumBins);
+        }
+        if (this.displaySatsCheckbox.nativeElement.checked) {
+            visImaging.overlay_satellites(ctx, this.catalogData, this.waves, totalNumBins);
+        }
         let img = new Image();
 
         img.onload  = () => {
@@ -208,6 +229,16 @@ export class ImagingComponent {
 
     onColourChange(event) {
         this.colourService.setSelectedColour(this.imagingColour);
+        this.blockRefresh = true;
+        this.drawImage();
+    }
+
+    onShowGridChanged(event) {
+        this.blockRefresh = true;
+        this.drawImage();
+    }
+
+    onShowSatsChanged(event) {
         this.blockRefresh = true;
         this.drawImage();
     }

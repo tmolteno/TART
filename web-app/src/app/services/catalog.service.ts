@@ -19,8 +19,9 @@ export class CatalogService {
 
         return this.http.get(`${this.apiUrl}/catalog`, {
             search: getQuery
-        }).map((res: Response) => {
-                return res.json();
-            });
+        })
+        .map((res: Response) => {
+            return res.json();
+        });
     }
 }

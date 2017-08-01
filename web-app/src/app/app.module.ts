@@ -6,6 +6,7 @@ import { HttpModule } from '@angular/http';
 import { NgLoadingBarModule } from 'ng-loading-bar';
 import { PopoverModule } from 'ngx-popover';
 import { IsoTimestampDisplay } from './pipes/display-timestamp-pipe';
+import { FileNameParser } from './pipes/parse-file-pipe';
 import { KeysPipe } from './pipes/keys-pipe';
 import { DecimalPipe } from '@angular/common';
 import { NouisliderModule } from 'ng2-nouislider';
@@ -45,6 +46,7 @@ import { DataAcquisitionDisplayComponent } from './components/data-acquisition-d
 import { StatusMapComponent } from './components/status-map/status-map.component';
 import { GifRecorderComponent } from './components/gif-recorder/gif-recorder.component';
 import { VisCalibrationComponent } from './components/vis-calibration/vis-calibration.component';
+import { FileDownloadComponent } from './components/file-download/file-download.component';
 /** Routes */
 const appRoutes = [
     {
@@ -91,6 +93,7 @@ const appRoutes = [
     AppComponent,
     KeysPipe,
     IsoTimestampDisplay,
+    FileNameParser,
     StatusRowHeaderComponent,
     NavBarComponent,
     LoginComponent,
@@ -112,7 +115,8 @@ const appRoutes = [
     DataAcquisitionDisplayComponent,
     StatusMapComponent,
     GifRecorderComponent,
-    VisCalibrationComponent
+    VisCalibrationComponent,
+    FileDownloadComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
