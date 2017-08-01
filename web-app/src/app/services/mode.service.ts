@@ -3,6 +3,7 @@ import { Http, Response, RequestOptions, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { PlatformLocation } from '@angular/common';
 
+import { Utils } from '../utils';
 import { AuthService } from './auth.service';
 
 @Injectable()
@@ -36,12 +37,12 @@ export class ModeService {
         return this.http.get(`${this.apiUrl}/mode/current`)
             .map((res: Response) => {
                 return res.json().mode;
-            })
+            });
     }
 
     setOperatingMode(mode: string) {
         if (!this.authService.isTokenValid()) {
-            return Observable.throw(new Error('token expired'));
+            return Observable.throw(Utils.createUnauthorizedError());
         }
         mode = mode.toLowerCase();
         if (!this.operatingModes.includes(mode)) {
@@ -51,6 +52,13 @@ export class ModeService {
         return this.http.post(`${this.apiUrl}/mode/${mode}`, {}, options)
             .map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 }

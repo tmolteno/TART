@@ -8,6 +8,8 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class AuthService {
 
+    public static readonly TOKEN_EXPIRED_ERR_MSG = 'Token expired';
+
     private tokenStorageKey: string = 'token';
     private tokenGetTimeStorageKey: string = 'tokenGetTime';
     public tokenMaxAge: number = 270000; // 4 minutes 30 seconds in milleseconds
@@ -93,7 +95,7 @@ export class AuthService {
     getAuthRequestOptions() {
         let token = this.getAuthToken();
         if (token === null) {
-            throw new Error('token not found or expired');
+            throw new Error(AuthService.TOKEN_EXPIRED_ERR_MSG);
         }
         return new RequestOptions({
             headers: new Headers({

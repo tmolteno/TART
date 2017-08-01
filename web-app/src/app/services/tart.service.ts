@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
 import { PlatformLocation } from '@angular/common';
 import { Observable } from 'rxjs/Rx';
-import 'rxjs/add/operator/map';
 
 import { FpgaStatus } from  '../models/FpgaStatus';
 import { ChannelStatus } from '../models/ChannelStatus';
 
+import { Utils } from '../utils';
 import { AuthService } from './auth.service';
 // TODO: this service should be split into channel service and fpga service (confirm this is OK)
 @Injectable()
@@ -46,12 +46,19 @@ export class TartService {
 
     setChannelEnabled(id: number, doEnable: boolean) {
         if (!this.authService.isTokenValid()) {
-            return Observable.throw(new Error('token expired'));
+            return Observable.throw(Utils.createUnauthorizedError());
         }
         let options = this.authService.getAuthRequestOptions();
         return this.http.put(`${this.apiUrl}/channel/${id}/${doEnable? 1 : 0}`,
             {}, options).map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 

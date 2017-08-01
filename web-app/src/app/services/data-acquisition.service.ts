@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { Http, Response, RequestOptions, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { PlatformLocation } from '@angular/common';
-import 'rxjs/add/operator/map';
 
+import { Utils } from '../utils';
 import { AuthService } from './auth.service';
 
 @Injectable()
@@ -31,7 +31,7 @@ export class DataAcquisitionService {
 
     setRawNumSamplesExp(value: number) {
         if (!this.authService.isTokenValid()) {
-            return Observable.throw(new Error('token expired'));
+            return Observable.throw(Utils.createUnauthorizedError());
         }
         if (value < this.minNumSamplesExp || value > this.maxNumSamplesExp) {
             return Observable.throw(new RangeError('Number of samples exp is out of range'));
@@ -41,6 +41,13 @@ export class DataAcquisitionService {
         return this.http.put(`${this.apiUrl}/acquire/raw/num_samples_exp/${value}`, {},
             options).map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 
@@ -53,7 +60,7 @@ export class DataAcquisitionService {
 
     setVisNumSamplesExp(value: number) {
         if (!this.authService.isTokenValid()) {
-            return Observable.throw(new Error('token expired'));
+            return Observable.throw(Utils.createUnauthorizedError());
         }
         if (value < this.minNumSamplesExp || value > this.maxNumSamplesExp) {
             return Observable.throw(new RangeError('Number of samples exp is out of range'));
@@ -63,6 +70,13 @@ export class DataAcquisitionService {
         return this.http.put(`${this.apiUrl}/acquire/vis/num_samples_exp/${value}`, {},
             options).map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 
@@ -89,12 +103,19 @@ export class DataAcquisitionService {
 
     setRawSaveFlag(doSave: boolean) {
         if (!this.authService.isTokenValid()) {
-            return Observable.throw(new Error('token expired'));
+            return Observable.throw(Utils.createUnauthorizedError());
         }
         let options = this.authService.getAuthRequestOptions();
         return this.http.put(`${this.apiUrl}/acquire/raw/save/${doSave ? 1 : 0}`, {},
             options).map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 
@@ -107,12 +128,19 @@ export class DataAcquisitionService {
 
     setVisSaveFlag(doSave: boolean) {
         if (!this.authService.isTokenValid()) {
-            return Observable.throw(new Error('token expired'));
+            return Observable.throw(Utils.createUnauthorizedError());
         }
         let options = this.authService.getAuthRequestOptions();
         return this.http.put(`${this.apiUrl}/acquire/vis/save/${doSave ? 1 : 0}`, {},
             options).map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 }

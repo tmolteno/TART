@@ -23,6 +23,7 @@ export class CalibrationService {
     }
 
     startCalibration(calibrationConfig: any) {
+        // TODO: should probably include a token when making this request
         return this.http.post(`${this.apiUrl}/calibrate`, calibrationConfig)
             .map((res: Response) => {
                 return res.json();
