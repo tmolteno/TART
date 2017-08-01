@@ -9,7 +9,8 @@ import { TartService } from '../../services/tart.service';
 import { ImagingService } from '../../services/imaging.service';
 import { DataAcquisitionService } from '../../services/data-acquisition.service';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs/Rx';
+import * as moment from 'moment/moment';
 
 @Component({
     selector: 'app-home',
@@ -32,6 +33,8 @@ export class HomeComponent {
 
     rawFilePaths: any[] = [];
     visFilePaths: any[] = [];
+
+    timeNow: string = moment().format();
 
     constructor(
         private authService: AuthService,
@@ -73,8 +76,13 @@ export class HomeComponent {
     startUpdateFpgaTimer() {
         let updateTime = this.refreshFpgaTime * 1000;
         this.updateFpgaTimer = Observable.timer(updateTime, updateTime);
+
         this.fpgaTimerSubscription = this.updateFpgaTimer
-            .subscribe(tick => this.fpgaStatus.updateFpgaStatus());
+            .subscribe(tick => {
+
+                this.timeNow = moment().format();
+                this.fpgaStatus.updateFpgaStatus()
+            });
     }
 
     redirectToModePage() {

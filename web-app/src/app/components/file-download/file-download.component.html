@@ -1,20 +1,26 @@
-<table class="table table-sm table-responsive">
-    <thead>
-        <tr>
-            <th style="width: 33%">File</th>
-            <th style="width: 33%">Timestamp</th>
-            <th style="width: 33%">Checksum</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let file of filePaths">
-            <td style="width: 33%">
-                <a [href]="baseLocation + '/' + file.filename" download>
-                    {{file.filename | fileNameParse }}
-                </a>
-            </td>
-            <td style="width: 33%"><small>{{file.timestamp}}</small></td>
-            <td style="width: 33%"><small>{{file.checksum}}</small></td>
-        </tr>
-    </tbody>
-</table>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="download-table-cell">File</th>
+                <th class="download-table-cell">Age</th>
+                <th class="download-table-cell hidden-sm-down">Checksum (SHA-256)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let file of filePaths">
+                <td class="download-table-cell">
+                    <a [href]="baseLocation + '/' + file.filename" download>
+                        {{ file.filename | fileNameParse }}
+                    </a>
+                </td>
+                <td class="download-table-cell">
+                    <small>{{timeNow | timeElapsed:file.timestamp}}</small>
+                </td>
+                <td class="download-table-cell hidden-sm-down">
+                    <small>{{file.checksum}}</small>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

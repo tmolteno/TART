@@ -1,0 +1,12 @@
+@media only screen and (min-width: 1200px) {
+    .download-table-cell {
+        width: 33%;
+    }
+}
+.download-table-cell > small, .download-table-cell > a {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-all;
+    word-break: break-word;
+    hyphens: auto;
+}

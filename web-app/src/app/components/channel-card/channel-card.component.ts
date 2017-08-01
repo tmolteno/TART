@@ -24,7 +24,7 @@ export class ChannelCardComponent {
     antennaEnabledChange = new EventEmitter();
 
     public lineChartData: Array<any> = [];
-    public lineChartLabels: any[] = [];
+    public lineChartLabels: any[] = ['0', '4', '8'];
     public lineChartColors: Array<any> = [
         {
              backgroundColor: 'rgba(66, 139, 202, 0.5)',
@@ -54,7 +54,10 @@ export class ChannelCardComponent {
                     fontColor: '#000'
                 },
                 ticks: {
-                    fontColor: '#000'
+                    fontColor: '#000',
+                    autoSkip: false,
+                    maxRotation: 0,
+                    minRotation: 0
                 }
             }]
         }
@@ -75,8 +78,15 @@ export class ChannelCardComponent {
     }
 
     generateChannelChart() {
-        this.lineChartLabels = this.channel.freq;
-        this.lineChartData = [{ data: this.channel.power, pointRadius: 0 }];
-
+        this.lineChartLabels = this.channel.freq.map((value) => {
+            if (value % 2 === 0) {
+                return `${value}`;
+            }
+            return '';
+        });
+        this.lineChartData = [{
+            data: this.channel.power,
+            pointRadius: 0
+        }];
     }
 }

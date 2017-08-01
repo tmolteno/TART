@@ -7,8 +7,9 @@
     </app-fpga-status>
     <br/>
     <h3>Raw Data Files</h3>
-    <app-file-download [filePaths]="rawFilePaths"> </app-file-download>
-
-    <h3>Visibles Data Files</h3>
-    <app-file-download [filePaths]="visFilePaths"> </app-file-download>
+    <app-file-download [filePaths]="rawFilePaths" [timeNow]="timeNow">
+    </app-file-download>
+    <h3>Visibility Files</h3>
+    <app-file-download [filePaths]="visFilePaths" [timeNow]="timeNow">
+    </app-file-download>
 </div>
