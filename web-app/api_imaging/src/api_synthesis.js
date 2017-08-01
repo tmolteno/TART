@@ -209,7 +209,7 @@ function horizontal_2_px(el, az, nw, num_bin){
   return {x:x, y:y};
 }
 
-function draw_src(ctx, el, az, label, nw, num_bin) {
+function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
   var r = ang_2_px(2, nw, num_bin);
   var pos = horizontal_2_px(el, az, nw, num_bin)
   ctx.beginPath();
@@ -217,8 +217,12 @@ function draw_src(ctx, el, az, label, nw, num_bin) {
   ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
   ctx.fill()
   ctx.stroke();
-  ctx.font = 'Bold 14px sans';
-  ctx.fillText(label, pos.x+r+1, pos.y+r+1);
+  if (show_name){
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'Bold 14px sans';
+    ctx.fillText(label, pos.x, pos.y+2*r);
+  }
 }
 
 
@@ -259,10 +263,10 @@ function overlay_grid(ctx, nw, num_bin){
 }
 
 
-function overlay_satellites(ctx, sat_list, nw, num_bin){
+function overlay_satellites(ctx, sat_list, nw, num_bin, show_name){
   for (i in sat_list){
     var s = sat_list[i];
-    draw_src(ctx, s.el, s.az, s.name, nw, num_bin);
+    draw_src(ctx, s.el, s.az, s.name, nw, num_bin, show_name);
   }
 }
 
