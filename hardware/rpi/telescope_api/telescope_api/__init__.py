@@ -42,7 +42,8 @@ tart_process.start()
 app = Flask(__name__)
 CORS(app)
 app.config['SECRET_KEY'] = 'super-secret-cow-key-hsa'
-app.config['JWT_EXPIRATION_DELTA'] = 3600
+from datetime import timedelta as td
+app.config['JWT_EXPIRATION_DELTA'] = td(hours=1)
 JWT(app, authenticate, identity)
 
 import telescope_api.views
