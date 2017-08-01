@@ -17,7 +17,7 @@ window.onload = function() {
   var ctx = myCanvas.getContext('2d');
   ctx.putImageData(dummyImageData, 0, 0);
   api_synthesis.overlay_grid(ctx, nw, num_bin);
-  api_synthesis.overlay_satellites(ctx, sat, nw, num_bin, show_name);
+  api_synthesis.overlay_satellites(ctx, sat, nw, num_bin, 1);
 
 }
 

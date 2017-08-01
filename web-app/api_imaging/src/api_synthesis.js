@@ -217,6 +217,7 @@ function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
   ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
   ctx.fill()
   ctx.stroke();
+  var show_name = show_name !== undefined ? show_name : 1;
   if (show_name){
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
