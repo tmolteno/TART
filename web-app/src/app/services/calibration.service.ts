@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
 import { PlatformLocation } from '@angular/common';
-import 'rxjs/add/operator/map';
+import { Observable } from 'rxjs/Rx';
+
+import { Utils } from '../utils';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class CalibrationService {
@@ -10,7 +13,8 @@ export class CalibrationService {
 
     constructor(
         private http: Http,
-        private platformLocation: PlatformLocation
+        private platformLocation: PlatformLocation,
+        private authService: AuthService
     ) {
         this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
     }
@@ -23,10 +27,18 @@ export class CalibrationService {
     }
 
     startCalibration(calibrationConfig: any) {
-        // TODO: should probably include a token when making this request
-        return this.http.post(`${this.apiUrl}/calibrate`, calibrationConfig)
-            .map((res: Response) => {
+        let options = this.authService.getAuthRequestOptions();
+
+        return this.http.post(`${this.apiUrl}/calibrate`, calibrationConfig,
+            options).map((res: Response) => {
                 return res.json();
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 }
