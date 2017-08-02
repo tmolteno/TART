@@ -95,13 +95,23 @@ export class DiagnoseModeComponent {
 
     setDiagnoseMode() {
         this.modeSubscription = this.modeService.setOperatingMode('diag')
-            .subscribe();
+            .subscribe(result => {},
+            err => {
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
+            });
     }
 
     onAntennaEnabledChanged(event) {
         this.tartService.setChannelEnabled(event.id, event.enabled)
             .subscribe(response => {
                 this.updateChannelsStatus();
+            },
+            err => {
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
             });
     }
 

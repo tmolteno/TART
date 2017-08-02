@@ -12,7 +12,7 @@ export class AuthService {
 
     private tokenStorageKey: string = 'token';
     private tokenGetTimeStorageKey: string = 'tokenGetTime';
-    public tokenMaxAge: number = 270000; // 4 minutes 30 seconds in milleseconds
+    public tokenMaxAge: number = 3600000; // 1 hour in milliseconds
 
     private apiUrl: string = '';
 

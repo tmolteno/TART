@@ -56,7 +56,12 @@ export class RawModeComponent implements OnInit {
 
     setRawDataMode() {
         this.modeSubscription = this.modeService.setOperatingMode('raw')
-            .subscribe();
+            .subscribe(result => {},
+            err => {
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
+            });
     }
 
     getInitData() {
@@ -72,6 +77,7 @@ export class RawModeComponent implements OnInit {
             console.log("RawModeComponent.getInitData() failed");
             console.log(err.message);
         });
+        // TODO: replace forkJoin with flatMap
     }
 
     getNumSamples() {
@@ -88,7 +94,9 @@ export class RawModeComponent implements OnInit {
             .subscribe(res => {
                 this.numSamples = value;
             }, err => {
-                console.log(err);
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
             });
     }
 
@@ -113,7 +121,9 @@ export class RawModeComponent implements OnInit {
             .subscribe(res => {
                 this.saveData = value;
             }, err => {
-                console.log(err);
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
             });
     }
 

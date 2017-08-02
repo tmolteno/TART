@@ -26,7 +26,12 @@ export class CalModeComponent implements OnInit {
             this.router.navigateByUrl('/');
         } else {
             this.modeSubscription = this.modeService.setOperatingMode('cal')
-                .subscribe();
+                .subscribe(result => {},
+                err => {
+                    if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                        this.router.navigateByUrl('/');
+                    }
+                });
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/calibrate-mode') {

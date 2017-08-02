@@ -55,7 +55,12 @@ export class VisModeComponent {
 
     setVisDataMode() {
         this.modeSubscription = this.modeService.setOperatingMode('vis')
-            .subscribe();
+            .subscribe(result => {},
+            err => {
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
+            });
     }
 
     getInitData() {
@@ -71,6 +76,7 @@ export class VisModeComponent {
             console.log("VisModeComponent.getInitData() failed");
             console.log(err.message);
         });
+        // TODO: replace forkjoin with flatmap
     }
 
     getNumSamples() {
@@ -87,7 +93,9 @@ export class VisModeComponent {
             .subscribe(res => {
                 this.numSamples = value;
             }, err => {
-                console.log(err);
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
             });
     }
 
@@ -112,7 +120,9 @@ export class VisModeComponent {
             .subscribe(res => {
                 this.saveData = value;
             }, err => {
-                console.log(err);
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
             });
     }
 

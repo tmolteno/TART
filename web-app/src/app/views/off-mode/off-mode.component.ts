@@ -43,6 +43,11 @@ export class OffModeComponent implements OnInit {
 
     setOffMode() {
         this.modeSubscription = this.modeService.setOperatingMode('off')
-            .subscribe();
+            .subscribe(result => {},
+            err => {
+                if (err.message === AuthService.TOKEN_EXPIRED_ERR_MSG) {
+                    this.router.navigateByUrl('/');
+                }
+            });
     }
 }
