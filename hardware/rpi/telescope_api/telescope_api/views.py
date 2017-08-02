@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template, jsonify, send_file
-from flask_jwt import jwt_required, current_identity
+#from flask_jwt import jwt_required, current_identity
+from flask_jwt_extended import JWTManager, jwt_required
 
 from telescope_api import app, get_config
 
@@ -91,6 +92,8 @@ def get_status_channel_all():
       ret = runtime_config["channels"]
       for ch in ret:
         ch['enabled'] = channel_list[ch['id']]['enabled']
+        ch['phase']['stability'] = int(ch['phase']['stability']*100)/100.
+        ch['radio_mean']['mean'] = int(ch['radio_mean']['mean']*10000)/10000.
       return jsonify(ret)
     else:
       return jsonify({})
@@ -165,7 +168,7 @@ def get_mode():
 
 
 @app.route('/mode/<mode>', methods=['POST',])
-@jwt_required()
+@jwt_required
 def set_mode(mode):
     """
     @api {post} /mode/<mode> Set telescope operating mode
@@ -195,7 +198,7 @@ def set_mode(mode):
 
 
 @app.route('/loop/<loop_mode>', methods=['POST',])
-@jwt_required()
+@jwt_required
 def set_loop_mode(loop_mode):
     """
     @api {post} /loop/<loop_mode> Set telescopes loop mode.
@@ -214,7 +217,7 @@ def set_loop_mode(loop_mode):
 
 
 @app.route('/loop/<int:loop_n>', methods=['POST',])
-@jwt_required()
+@jwt_required
 def set_loop_n(loop_n):
     """
     @api {post} /loop/<loop_n> Set telescopes loop mode.

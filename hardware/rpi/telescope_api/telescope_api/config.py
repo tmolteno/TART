@@ -25,10 +25,10 @@ def init_config(manager):
     }
     runtime_config['diagnostic'] = {
         'num_ant': 24,\
-        'N_samples' : 150,\
+        'N_samples' : 15,\
         'stable_threshold' : 0.95,\
-        'N_samples_exp' : 22,\
-        'spectre': {'NFFT': 256, 'N_samples_exp': 18}
+        'N_samples_exp' : 20,\
+        'spectre': {'NFFT': 512, 'N_samples_exp': 18}
 
     }
     runtime_config['vis'] = {

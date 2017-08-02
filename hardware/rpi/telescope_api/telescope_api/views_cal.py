@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask import render_template, jsonify, send_file
-from flask_jwt import jwt_required, current_identity
+from flask_jwt_extended import jwt_required
 
 from telescope_api import app, get_config
 import database as db
@@ -11,7 +11,7 @@ import multiprocessing
 
 minimize_process = None
 
-@jwt_required()
+@jwt_required
 @app.route('/calibration/gain', methods=['POST',])
 def set_gain():
   """
@@ -54,7 +54,7 @@ def get_gain():
   }
   return jsonify(ret_dict)
 
-@jwt_required()
+@jwt_required
 @app.route('/calibrate', methods=['POST',])
 def post_calibration_from_vis():
   """

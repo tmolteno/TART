@@ -1,15 +1,15 @@
 # Maximilian Scheel (c) 2017
 # max@max.ac.nz
 
-from flask import Flask
-from flask_jwt import JWT
+from flask import Flask, jsonify, request
+from flask_jwt_extended import JWTManager
+
 from flask_cors import CORS, cross_origin
 
 import multiprocessing
 from multiprocessing import Manager
 
 from service import cleanup_observation_cache, cleanup_visibility_cache, TartControl
-from auth import authenticate, identity
 from config import init_config
 import database as db
 
@@ -41,14 +41,19 @@ tart_process.start()
 
 app = Flask(__name__)
 CORS(app)
-app.config['SECRET_KEY'] = 'super-secret-cow-key-hsa'
+#app.config['SECRET_KEY'] = 'super-secret-cow-key-hsa'
 from datetime import timedelta as td
-app.config['JWT_EXPIRATION_DELTA'] = td(hours=1)
-JWT(app, authenticate, identity)
+#app.config['JWT_EXPIRATION_DELTA'] = td(seconds=3600)
+#JWT(app, authenticate, identity)
+
+app.secret_key = 'super-secret-123897219379179464asd13khk213'  # Change this!
+app.config['JWT_HEADER_TYPE'] = 'JWT'
+jwt = JWTManager(app)
 
 import telescope_api.views
+import telescope_api.views_auth
 import telescope_api.views_acquisition
 import telescope_api.views_cal
 import telescope_api.views_obs
-#import telescope_api.views_log
+import telescope_api.views_log
 import telescope_api.views_channel
