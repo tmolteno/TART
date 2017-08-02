@@ -6,8 +6,7 @@ import { InfoService } from '../../services/info.service';
 import { AuthService } from '../../services/auth.service';
 import { ModeService } from '../../services/mode.service';
 
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/forkJoin';
+import { Observable } from 'rxjs/Rx';
 
 @Component({
     selector: 'app-vis-mode',
@@ -64,19 +63,19 @@ export class VisModeComponent {
     }
 
     getInitData() {
-        Observable.forkJoin([
-            this.dataAcquisitionService.getVisNumSamplesExp(),
-            this.infoService.getInfo(),
-            this.dataAcquisitionService.getVisSaveFlag()
-        ]).subscribe(result => {
-            this.numSamples = result[0];
-            this.samplingFreq =  result[1]["sampling_frequency"];
-            this.saveData = result[2];
-        }, err => {
-            console.log("VisModeComponent.getInitData() failed");
-            console.log(err.message);
-        });
-        // TODO: replace forkjoin with flatmap
+        this.dataAcquisitionService.getVisNumSamplesExp()
+        .catch(() => { return Observable.of(0); })
+        .flatMap(result => {
+            this.numSamples = result;
+            return this.infoService.getInfo()
+        })
+        .catch(() => { return Observable.of({ sampling_frequency: 0 }); })
+        .flatMap(result => {
+            this.samplingFreq = result["sampling_frequency"];
+            return this.dataAcquisitionService.getVisSaveFlag()
+        })
+        .catch(() => { return Observable.of(false); })
+        .subscribe(result => { this.saveData = result; });
     }
 
     getNumSamples() {

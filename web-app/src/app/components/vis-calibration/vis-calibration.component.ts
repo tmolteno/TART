@@ -3,9 +3,8 @@ import { Component } from '@angular/core';
 import { ImagingService } from '../../services/imaging.service';
 import { CalibrationService } from '../../services/calibration.service';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs/Rx';
 import * as moment from 'moment/moment';
-import 'rxjs/add/observable/forkJoin';
 
 @Component({
     selector: 'app-vis-calibration',
@@ -43,15 +42,25 @@ export class VisCalibrationComponent {
     }
 
     onAddCalClicked(event) {
-        Observable.forkJoin([
-            this.imagingService.getVis(),
-            this.imagingService.getTimestamp()
-        ]).subscribe(result => {
-            let vis = result[0];
-            let timestamp = result[1];
+        let vis = null;
+        let timestamp = null;
+
+        this.imagingService.getVis()
+        .catch(() => { return Observable.of({}); })
+        .flatMap(result => {
+            if (!!result) {
+                vis = result;
+            }
+            return this.imagingService.getTimestamp()
+        })
+        .catch(() => { return Observable.of(moment().format()); })
+        .subscribe(result => {
+            if (!!result) {
+                timestamp = result;
+            }
             let calMeasurement = this.generateCalMeasurement(vis, timestamp);
             this.calMeasurements.push(calMeasurement);
-        })
+        });
     }
 
     generateCalMeasurement(vis: any, timestamp: string) {
