@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 from flask import render_template, jsonify, send_file
-from flask_jwt import jwt_required, current_identity
 
 from telescope_api import app, get_config
 
