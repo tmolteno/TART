@@ -18,7 +18,7 @@ export class ChannelCardComponent {
     @ViewChild('channelCardCheckbox') channelCardCheckbox : ElementRef;
 
     @Input()
-    channel : ChannelStatus;
+    channel : ChannelStatus = null;
 
     @Output()
     antennaEnabledChange = new EventEmitter();

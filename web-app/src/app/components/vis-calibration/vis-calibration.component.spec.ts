@@ -1,6 +1,15 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpModule } from '@angular/http';
 
 import { VisCalibrationComponent } from './vis-calibration.component';
+import { VisiblesConfigSliderComponent } from
+'../visibles-config-slider/visibles-config-slider.component';
+
+import { ImagingService } from '../../services/imaging.service';
+import { CalibrationService } from '../../services/calibration.service';
+import { AuthService } from '../../services/auth.service';
+
+import { NouisliderModule } from 'ng2-nouislider';
 
 describe('VisCalibrationComponent', () => {
   let component: VisCalibrationComponent;
@@ -8,7 +17,12 @@ describe('VisCalibrationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ VisCalibrationComponent ]
+        imports: [ HttpModule, NouisliderModule ],
+        providers: [ ImagingService, CalibrationService, AuthService ],
+        declarations: [
+            VisCalibrationComponent,
+            VisiblesConfigSliderComponent
+        ]
     })
     .compileComponents();
   }));

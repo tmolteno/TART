@@ -1,6 +1,10 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ChartsModule } from 'ng2-charts/ng2-charts';
 
 import { ChannelsStatusComponent } from './channels-status.component';
+import { ChannelCardComponent } from '../channel-card/channel-card.component';
+import { StatusRowHeaderComponent }
+from '../status-row-header/status-row-header.component';
 
 describe('ChannelsStatusComponent', () => {
   let component: ChannelsStatusComponent;
@@ -8,7 +12,12 @@ describe('ChannelsStatusComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ChannelsStatusComponent ]
+        imports: [ ChartsModule ],
+        declarations: [
+            ChannelsStatusComponent,
+            StatusRowHeaderComponent,
+            ChannelCardComponent
+        ]
     })
     .compileComponents();
   }));

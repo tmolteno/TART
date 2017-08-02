@@ -11,6 +11,7 @@ import {
      XHRBackend
 } from '@angular/http';
 import { MockBackend } from '@angular/http/testing';
+import { ChartsModule } from 'ng2-charts/ng2-charts';
 
 import { DiagnoseModeComponent } from './diagnose-mode.component';
 import { StatusMapComponent } from
@@ -36,7 +37,7 @@ describe('DiagnoseModeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-        imports: [HttpModule],
+        imports: [HttpModule, ChartsModule],
         providers: [
             { provide: XHRBackend, useClass: MockBackend },
             { provide: AuthService, useClass: MockAuthService },

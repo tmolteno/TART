@@ -1,4 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ChartsModule } from 'ng2-charts/ng2-charts';
 
 import { ChannelCardComponent } from './channel-card.component';
 
@@ -8,7 +9,8 @@ describe('ChannelCardComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ChannelCardComponent ]
+        imports: [ ChartsModule ],
+        declarations: [ ChannelCardComponent ]
     })
     .compileComponents();
   }));

@@ -8,6 +8,7 @@ import {
 } from '@angular/http';
 import { MockBackend } from '@angular/http/testing';
 import { CalibrationService } from './calibration.service';
+import { AuthService } from './auth.service';
 
 describe('CalibrationService', () => {
   beforeEach(() => {
@@ -15,7 +16,8 @@ describe('CalibrationService', () => {
       imports: [HttpModule],
       providers: [
         {provide: XHRBackend, useClass: MockBackend},
-        CalibrationService
+        CalibrationService,
+        AuthService
       ]
     });
   });

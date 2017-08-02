@@ -25,8 +25,8 @@ export class HdImgModeComponent implements OnInit {
             && this.router.url === '/hd-img-mode') {
             this.router.navigateByUrl('/');
         } else {
-            this.modeSubscription = this.modeService.setOperatingMode('hd_img')
-                .subscribe();
+            /*this.modeSubscription = this.modeService.setOperatingMode('hd_img')
+                .subscribe();*/
         }
         this.authService.login$.subscribe(loginStatus => {
             if (!loginStatus && this.router.url === '/hd-img-mode') {

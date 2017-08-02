@@ -11,6 +11,9 @@ import {
      XHRBackend
 } from '@angular/http';
 import { MockBackend } from '@angular/http/testing';
+import { FormsModule } from '@angular/forms';
+import { TimeElapsedPipe } from '../../pipes/time-elapsed-pipe';
+import { FileNameParser } from '../../pipes/parse-file-pipe';
 
 import { HomeComponent } from './home.component';
 import { InfoComponent } from '../../components/info/info.component';
@@ -20,6 +23,12 @@ import { VisiblesConfigSliderComponent } from
 '../../components/visibles-config-slider/visibles-config-slider.component';
 import { StatusRowHeaderComponent } from
 '../../components/status-row-header/status-row-header.component';
+import { FileDownloadComponent } from
+'../../components/file-download/file-download.component';
+import { GifRecorderComponent } from
+'../../components/gif-recorder/gif-recorder.component';
+
+
 import { IsoTimestampDisplay } from  '../../pipes/display-timestamp-pipe';
 import { NouisliderModule } from 'ng2-nouislider';
 
@@ -30,6 +39,9 @@ import { TartService } from '../../services/tart.service';
 import { ImagingService } from '../../services/imaging.service';
 import { InfoService } from '../../services/info.service';
 import { CalibrationService } from '../../services/calibration.service';
+import { DataAcquisitionService } from '../../services/data-acquisition.service';
+import { ColourService } from '../../services/colour.service';
+import { CatalogService } from '../../services/catalog.service';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -37,7 +49,7 @@ describe('HomeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-        imports: [NouisliderModule, HttpModule],
+        imports: [NouisliderModule, HttpModule, FormsModule],
         providers: [
             { provide: XHRBackend, useClass: MockBackend },
             { provide: AuthService, useClass: MockAuthService },
@@ -48,7 +60,10 @@ describe('HomeComponent', () => {
             InfoService,
             TartService,
             ImagingService,
-            CalibrationService
+            CalibrationService,
+            DataAcquisitionService,
+            ColourService,
+            CatalogService
         ],
         declarations: [
             HomeComponent,
@@ -57,7 +72,11 @@ describe('HomeComponent', () => {
             FpgaStatusComponent,
             VisiblesConfigSliderComponent,
             IsoTimestampDisplay,
-            StatusRowHeaderComponent
+            StatusRowHeaderComponent,
+            FileDownloadComponent,
+            GifRecorderComponent,
+            TimeElapsedPipe,
+            FileNameParser
         ]
     })
     .compileComponents();

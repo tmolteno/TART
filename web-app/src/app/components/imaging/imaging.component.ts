@@ -69,8 +69,8 @@ export class ImagingComponent {
     numFrames: number = 0;
     isRecordingGif: boolean = false;
 
-    imagingColour: string;
-    imagingColours: ImageColour[];
+    imagingColour: string = '';
+    imagingColours: ImageColour[] = [];
 
     lat: number;
     lon: number;

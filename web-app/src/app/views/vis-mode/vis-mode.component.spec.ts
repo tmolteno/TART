@@ -11,6 +11,7 @@ import {
      XHRBackend
 } from '@angular/http';
 import { MockBackend } from '@angular/http/testing';
+import { FormsModule } from '@angular/forms';
 
 import { VisModeComponent } from './vis-mode.component';
 import { ImagingComponent } from
@@ -19,6 +20,11 @@ import { DataAcquisitionDisplayComponent } from
 '../../components/data-acquisition-display/data-acquisition-display.component';
 import { VisiblesConfigSliderComponent } from
 '../../components/visibles-config-slider/visibles-config-slider.component';
+import { VisCalibrationComponent } from
+'../../components/vis-calibration/vis-calibration.component';
+import { GifRecorderComponent } from
+'../../components/gif-recorder/gif-recorder.component';
+
 import { IsoTimestampDisplay } from  '../../pipes/display-timestamp-pipe';
 import { NouisliderModule } from 'ng2-nouislider';
 
@@ -28,7 +34,9 @@ import { ModeService } from '../../services/mode.service';
 import { InfoService } from '../../services/info.service';
 import { DataAcquisitionService } from '../../services/data-acquisition.service';
 import { ImagingService } from '../../services/imaging.service';
+import { ColourService } from '../../services/colour.service';
 import { CalibrationService } from '../../services/calibration.service';
+import { CatalogService } from '../../services/catalog.service';
 
 describe('VisModeComponent', () => {
   let component: VisModeComponent;
@@ -36,7 +44,7 @@ describe('VisModeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [NouisliderModule, HttpModule],
+      imports: [NouisliderModule, HttpModule, FormsModule],
       providers: [
           { provide: XHRBackend, useClass: MockBackend },
           { provide: AuthService, useClass: MockAuthService },
@@ -47,12 +55,16 @@ describe('VisModeComponent', () => {
           InfoService,
           DataAcquisitionService,
           ImagingService,
-          CalibrationService
+          CalibrationService,
+          ColourService,
+          CatalogService
       ],
       declarations: [
           VisModeComponent,
           DataAcquisitionDisplayComponent,
           ImagingComponent,
+          GifRecorderComponent,
+          VisCalibrationComponent,
           VisiblesConfigSliderComponent,
           IsoTimestampDisplay
       ]
