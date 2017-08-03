@@ -14,6 +14,9 @@ export class AuthService {
     private tokenGetTimeStorageKey: string = 'tokenGetTime';
     public tokenMaxAge: number = 3600000; // 1 hour in milliseconds
 
+    private refreshTokenStorageKey: string = 'refreshToken';
+    private refreshTokenGetTimeStorageKey: string = 'refreshTokenGetTime';
+
     private apiUrl: string = '';
 
     public login$: Observable<boolean>;
@@ -43,6 +46,7 @@ export class AuthService {
             let body  = res.json();
             if (body.access_token) {
                 this.setAuthToken(body.access_token);
+                this.setRefreshToken(body.refresh_token);
                 return true;
             } else {
                 return false;
@@ -51,6 +55,12 @@ export class AuthService {
         .catch((err: any) => {
             return Observable.throw(new Error(err.status));
         });
+    }
+
+    setRefreshToken(token: string) {
+        let getTime = new Date().getTime().toString();
+        localStorage.setItem(this.refreshTokenStorageKey, token);
+        localStorage.setItem(this.refreshTokenGetTimeStorageKey, getTime);
     }
 
     setAuthToken(token: string) {
@@ -81,6 +91,14 @@ export class AuthService {
         return timeDelta < this.tokenMaxAge;
     }
 
+    getRefreshToken() {
+        if (!this.isTokenValid()) {
+            this.logout();
+            return null;
+        }
+        return localStorage.getItem(this.refreshTokenStorageKey);
+    }
+
     getAuthToken() {
         // check that token is still valid
         if (!this.isTokenValid()) {
@@ -88,8 +106,6 @@ export class AuthService {
             return null;
         }
         return localStorage.getItem(this.tokenStorageKey);
-        // TODO: if there is a way to get a new token from an old token,
-        // TODO: and the old token is near expiry, get a new token.
     }
 
     getAuthRequestOptions() {
