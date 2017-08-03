@@ -5,6 +5,7 @@ from requests.auth import HTTPDigestAuth
 import json
 import hashlib
 import urllib2
+import time
 
 def get_from_api(view, api_endpoint):
     myResponse = requests.get(api_endpoint+view,)
@@ -21,7 +22,7 @@ def sha256_checksum(filename, block_size=65536):
             sha256.update(block)
     return sha256.hexdigest()
 
-def download_obs(url, checksum=0):
+def download_file(url, checksum=0):
     file_name = url.split('/')[-1]
     u = urllib2.urlopen(url)
     f = open(file_name, 'wb')
@@ -43,18 +44,28 @@ def download_obs(url, checksum=0):
     f.close()
     if checksum:
         if (sha256_checksum(file_name) != checksum):
-            os.rm(file_name)
+            os.remove(file_name)
 
 if __name__=="__main__":
-    tart_endpoint = "http://tart2-pear/signal/"
+    tart_endpoint = "http://tart2-raspberry/dev/"
+    #tart_endpoint = "http://tart2-pear/signal/"
     #tart_endpoint = "https://tart.elec.ac.nz/dev/"
     api_endpoint = tart_endpoint+"api/v1"
-    resp = get_from_api('/raw/data', api_endpoint)
-    for entry in resp: #-1
-        f = tart_endpoint+entry['filename']
-        file_name = f.split('/')[-1]
-        if os.path.isfile(file_name):
-            if (sha256_checksum(file_name) == entry['checksum']):
-                print 'Skipping', file_name
-        else:
-            download_obs(tart_endpoint+entry['filename'],entry['checksum'])
+    while True:
+        resp_raw = get_from_api('/raw/data', api_endpoint)
+        resp_vis = get_from_api('/vis/data', api_endpoint)
+        for entry in resp_raw+resp_vis:
+            if entry.has_key('filename'):
+                f = tart_endpoint+entry['filename']
+                file_name = f.split('/')[-1]
+                if os.path.isfile(file_name):
+                    if (sha256_checksum(file_name) == entry['checksum']):
+                        print 'Skipping', file_name
+                    else:
+                        print 'Corrupted File', file_name
+                        os.remove(file_name)
+                        download_file(tart_endpoint+entry['filename'],entry['checksum'])
+                else:
+                    download_file(tart_endpoint+entry['filename'],entry['checksum'])
+        time.sleep(5)
+
