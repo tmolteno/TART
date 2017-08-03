@@ -50,6 +50,6 @@ def my_expired_token_callback():
         'status': 401,
         'sub_status': 101,
         'msg': 'The token has expired'
-    }), 200
+    }), 401
 
 
