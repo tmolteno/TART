@@ -28,7 +28,7 @@ def init_config(manager):
         'N_samples' : 15,\
         'stable_threshold' : 0.95,\
         'N_samples_exp' : 20,\
-        'spectre': {'NFFT': 512, 'N_samples_exp': 18}
+        'spectre': {'NFFT': 4096, 'N_samples_exp': 18}
 
     }
     runtime_config['vis'] = {

@@ -14,7 +14,16 @@ Helper functions
 
 def get_psd(d, fs, nfft):
   power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
-  return power, freq
+  num_bins = 128
+  window_width = len(power)/num_bins
+  power_ret = []
+  freq_ret = []
+  for i in range(num_bins):
+    start = i*window_width
+    stop = start + window_width 
+    power_ret.append(power[start:stop].max())
+    freq_ret.append(freq[start:stop].mean())
+  return np.asarray(power_ret), np.asarray(freq_ret)
 
 def sha256_checksum(filename, block_size=65536):
     sha256 = hashlib.sha256()
@@ -135,9 +144,9 @@ def run_diagnostic(tart, runtime_config):
       channel['radio_mean'] =radio_means[i]
       power, freq = get_psd(ant_data[i]-ant_data[i].mean(),16e6,runtime_config['diagnostic']['spectre']['NFFT'])
       power_db = 10.*np.log10(power)
-      power_db= np.nan_to_num(power_db)
-      channel['power'] = power_db.tolist()
-      channel['freq'] = (freq/1e6).tolist()
+      power_db = np.nan_to_num(power_db)
+      channel['power'] = (np.asarray(power_db*1000,dtype=np.int)/1000.    ).tolist()
+      channel['freq'] = ((freq/1e6)).tolist()
       channels.append(channel)
 
     runtime_config['channels'] = channels
