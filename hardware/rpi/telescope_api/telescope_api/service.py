@@ -132,16 +132,17 @@ def cleanup_observation_cache():
         resp = db.get_raw_file_handle()
         if len(resp)>10:
             for entry in resp[10:]:
-                try:
-                    os.remove(entry['filename'])
-                except:
-                    print 'couldnt remove file'
-                    pass
+
                 try:
                     db.remove_raw_file_handle_by_Id(entry['Id'])
                     print 'removed', entry['Id'], entry['filename'], entry['checksum']
                 except:
                     print 'couldnt remove handle from database'
+                    pass
+                try:
+                    os.remove(entry['filename'])
+                except:
+                    print 'couldnt remove file'
                     pass
         else:
             db.update_observation_cache_process_state('OK')
@@ -153,16 +154,17 @@ def cleanup_visibility_cache():
         if len(resp)>10:
             for entry in resp[10:]:
                 try:
-                    os.remove(entry['filename'])
-                except:
-                    print 'couldnt remove file'
-                    pass
-                try:
                     db.remove_vis_file_handle_by_Id(entry['Id'])
                     print 'removed', entry['Id'], entry['filename'], entry['checksum']
                 except:
                     print 'couldnt remove handle from database'
                     pass
+                try:
+                    os.remove(entry['filename'])
+                except:
+                    print 'couldnt remove file'
+                    pass
+
         else:
             db.update_vis_cache_process_state('OK')
         time.sleep(60)
