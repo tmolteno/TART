@@ -4,4 +4,4 @@ apidoc:
 	sed "s/`hostname`/localhost/g" -i apidoc.json
 public:
 	apidoc -i ./ -o ./public_doc
-	scp -r public_doc tart@tart.elec.ac.nz:~/doc
+	scp -r public_doc tart@tart.elec.ac.nz:/var/www/html/doc
