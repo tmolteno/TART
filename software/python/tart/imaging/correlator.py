@@ -17,7 +17,7 @@ def combine_real_imag(v_real, v_imag):
   return v_real-1j*v_imag
 
 class Correlator:
-  def __init__(self, van_vleck_corr=False):
+  def __init__(self, van_vleck_corr=True):
     self.vv = van_vleck_corr
 
   def correlate(self, obs, debug=False, mode='roll'):

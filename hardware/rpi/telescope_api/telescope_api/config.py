@@ -34,7 +34,7 @@ def init_config(manager):
     runtime_config['vis'] = {
         'save' : 1, \
         'chunksize' : 60,\
-        'N_samples_exp' : 22,\
+        'N_samples_exp' : 24,\
         'vis_prefix' : '/var/www/html/vis/fpga',
     }
     runtime_config['telescope_config_path'] = '24_ant_setup/telescope_config.json'
