@@ -56,13 +56,14 @@ def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl
   from tart.imaging import visibility
   vis = []
   baselines = []
+  num_ant = config.get_num_antenna()
   # noise = np.random.uniform(0.,np.sqrt(noise_lvl),config.num_antennas) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antennas))
   if noise_lvl.__gt__(0.).all():
-    noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., config.get_num_antenna()))
+    noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., num_ant))
   else:
-    noise = np.zeros(config.get_num_antenna())
-  for i in range(0, config.get_num_antenna()):
-    for j in range(i+1, config.get_num_antenna()):
+    noise = np.zeros(num_ant)
+  for i in range(0, num_ant):
+    for j in range(i+1, num_ant):
       vi = noise[i]+noise[j]
       # print vi
       for src in sources:

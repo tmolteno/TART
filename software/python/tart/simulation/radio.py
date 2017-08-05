@@ -38,7 +38,7 @@ class Max2769B(Radio):
   '''
 
   def __init__(self, noise_level, n_samples=2**15, ref_freq = 16.368e6, freq_mult = 256, ref_div = 16, main_div = 1536, bandwidth = 2.5e6, order = 5):
-    #self.sample_duration = n_samples * 1./ref_freq #sample_duration
+    self.sample_duration = n_samples * 1./ref_freq #sample_duration
     self.n_samples = n_samples
     self.ref_freq = ref_freq
     self.freq_mult = freq_mult
@@ -101,18 +101,14 @@ class Max2769B(Radio):
 
     return filt_sig1
 
-  def get_full_obs(self, ant_sigs, utc_date, config):
-    self.timebase = np.arange(0, self.sample_duration, 1.0/self.sampling_rate)
-    num_radio_samples = (len(self.timebase) / self.freq_mult) #+ 1
-    # print num_radio_samples
+  def get_full_obs(self, ant_sigs, utc_date, config, timebase):
+    num_radio_samples = (len(timebase) / self.freq_mult) #+ 1
     num_ant = config.get_num_antenna()
     sampled_signals = np.zeros((num_ant, num_radio_samples))
-
     for i in range(num_ant):
       sampled_signals[i,:] = self.sampled_signal(ant_sigs[i], i, self.sample_duration)
-
-    data = np.array(sampled_signals)
-    obs = observation.Observation(utc_date, config, data=data)
+    sampled_signals = np.asarray((sampled_signals+1)/2,dtype=bool) # turn into boolean array
+    obs = observation.Observation(utc_date, config, data=sampled_signals)
     return obs
 
 
@@ -133,6 +129,7 @@ class Max2769B(Radio):
     s_signals = np.array(s_signals).real
     sampled_signals = np.sign(s_signals) # -1 if negative, 0 if 0, +1 if positive
     sampled_signals[s_signals == 0.0] = 1. # Replace 0 with 1 - true NRZ
+    sampled_signals = np.asarray((sampled_signals+1)/2,dtype=bool) # turn into boolean array
     obs = observation.Observation(utc_date, config, data=sampled_signals)
     return obs
 

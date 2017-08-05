@@ -34,15 +34,18 @@ def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', see
   # print 'debug: total amplitude', np.array([src.amplitude for src in sources]).sum()
 
   if mode == 'full':
-    ant_sigs_full = antennas.antennas_signal(ants, ant_models, sources, rad.timebase)
-    obs = rad.get_full_obs(ant_sigs_full, timestamp, config = config)
-    v = cor.correlate(obs)
+    timebase = np.arange(0, rad.sample_duration, 1.0/rad.sampling_rate)
+    ant_sigs_full = antennas.antennas_signal(ants, ant_models, sources, timebase)
+    obs = rad.get_full_obs(ant_sigs_full, timestamp, config, timebase)
+    v = cor.correlate_roll(obs)
+
   elif mode == 'mini':
     v = antennas.antennas_simp_vis(ants, ant_models, sources, timestamp, config, rad.noise_level)
   else:
     ant_sigs_simp = antennas.antennas_simplified_signal(ants, ant_models, sources, rad.baseband_timebase, rad.int_freq, seed=seed)
     obs = rad.get_simplified_obs(ant_sigs_simp, timestamp, config = config, seed=seed)
-    v = cor.correlate(obs)
+    v = cor.correlate_roll(obs)
+
   return v
 
 
