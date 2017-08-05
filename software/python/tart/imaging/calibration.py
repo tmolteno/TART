@@ -47,7 +47,8 @@ class CalibratedVisibility(object):
         return [bl for bl in self.vis.baselines if bl not in self.flagged_baselines]
 
     def get_baseline_lengths(self):
-        pos = self.get_config().ant_positions
+        pos = self.get_config().get_antenna_positions()
+        #print pos
         ret = []
         for bln in self.get_baselines():
             [i,j] = bln
@@ -64,7 +65,7 @@ class CalibratedVisibility(object):
                     self.flag_baseline(i,j)
 
     def leave_parallel_baselines(self,ew_threshold=10,ns_threshold=10):
-        ant_positions = np.array(self.get_config().ant_positions)
+        ant_positions = np.array(self.get_config().get_antenna_positions())
         for bln in self.get_baselines():
           [i,j] = bln
           diff = ant_positions[i]-ant_positions[j]
@@ -123,14 +124,14 @@ if __name__ == '__main__':
   vis = visibility.Visibility_Load(args.vis) #[:20]
 
   cal_vis = CalibratedVisibility(vis[0])
-  print cal_vis.get_visibility(0,1)
-  print cal_vis.get_baselines()
-  print len(cal_vis.get_baselines())
+  #print cal_vis.get_visibility(0,1)
+  #print cal_vis.get_baselines()
+  #print len(cal_vis.get_baselines())
 
   cal_vis.flag_baseline(0,1)
 
-  print cal_vis.get_baselines()
-  print len(cal_vis.get_baselines())
+  #print cal_vis.get_baselines()
+  #print len(cal_vis.get_baselines())
 
 
   def gen_tile_vis_list(tile_no,vis):

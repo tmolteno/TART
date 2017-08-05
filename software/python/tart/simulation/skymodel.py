@@ -225,28 +225,27 @@ class Skymodel(object):
     #plt.scatter(-x, y, color='black', s=25)
     plt.scatter(x, y, color='white', s=50)
 
-    for label, x_i, y_i in zip(l_name, x, y):
-      plt.annotate(
-      label,
-      xy = (x_i, y_i), xytext = (-10, 10),
-      size = 20,
-      textcoords = 'offset points', ha = 'right', va = 'bottom',
-      bbox = dict(boxstyle = 'round,pad=0.1', fc = 'white', alpha = 0.5),
-      #arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0')
-      )
+    #for label, x_i, y_i in zip(l_name, x, y):
+      #plt.annotate(
+      #label,
+      #xy = (x_i, y_i), xytext = (-10, 10),
+      #size = 20,
+      #textcoords = 'offset points', ha = 'right', va = 'bottom',
+      #bbox = dict(boxstyle = 'round,pad=0.1', fc = 'white', alpha = 0.5),
+      #)
 
 
-    #th = np.pi/2. - np.array(l_el)
-    #l_phi = -np.array(l_az)
-    ##_ = [hp.projtext(i, j, n, rot=(0,90,0), color='black', weight='light', ha='left', va='center') for i, j, n in zip(th, l_phi, l_name)]
-    #_ = [hp.projtext(i, j, n, rot=(0,90,0), color='gray', alpha=0.8, weight='bold', ha='center', va='bottom') for i, j, n in zip(th, l_phi, l_name)]
-    #_ = [hp.projscatter(i, j, rot=(0,90,0), color='black', alpha=1.0, s=25) for i, j, n in zip(th, l_phi, l_name)]
-    #_ = [hp.projscatter(i, j, rot=(0,90,0), color='white', alpha=1.0, s=10) for i, j, n in zip(th, l_phi, l_name)]
+    th = np.pi/2. - np.array(l_el)
+    l_phi = -np.array(l_az)
+    #_ = [hp.projtext(i, j, n, rot=(0,90,0), color='black', weight='light', ha='left', va='center') for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projtext(i, j, n, rot=(0,90,0), color='gray', alpha=0.8, weight='bold', ha='center', va='bottom') for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projscatter(i, j, rot=(0,90,0), color='black', alpha=1.0, s=25) for i, j, n in zip(th, l_phi, l_name)]
+    _ = [hp.projscatter(i, j, rot=(0,90,0), color='white', alpha=1.0, s=10) for i, j, n in zip(th, l_phi, l_name)]
 
-    #hp.projtext(np.pi/2, 0., 'N', rot=(0,90,0), va='top', ha='center')
-    #hp.projtext(np.pi/2, -np.pi/2., 'E', rot=(0,90,0), va='center')
-    #hp.projtext(np.pi/2, -np.pi, 'S', rot=(0,90,0), ha='center')
-    #hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0), ha='right', va='center')
+    hp.projtext(np.pi/2,     0.,       'N', rot=(0,90,0),   va='top', ha='center')
+    hp.projtext(np.pi/2, -np.pi/2.,    'E', rot=(0,90,0), va='center')
+    hp.projtext(np.pi/2, -np.pi,       'S', rot=(0,90,0), ha='center')
+    hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0), ha='right', va='center')
 
 
 

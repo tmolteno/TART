@@ -7,8 +7,6 @@
 import json
 import numpy as np
 from tart.util import angle
-from tart.imaging import location
-import matplotlib.pyplot as plt
 
 '''Antenna positions are in 3D ENU coordinates in meters'''
 def rotate_location(array_orientation, localcoord):
@@ -23,7 +21,6 @@ def rotate_location(array_orientation, localcoord):
 def from_dict(configdict):
   ret = Settings()
   ret.Dict = configdict
-
   return ret
 
 def from_file(filename):
@@ -65,7 +62,7 @@ class Settings:
     except:
       print 'could not load ' + design_antenna_positions_file
     self.Dict['antenna_positions'] = ant_pos
-  
+
   def get_antenna_positions(self, key='calibrated'):
     if self.Dict.has_key('antenna_positions'):
       if self.Dict['antenna_positions'].has_key(key):
@@ -106,6 +103,7 @@ class Settings:
     return ant_positions
 
   def plot_antenna_positions(self, c='blue', label=''):
+    import matplotlib.pyplot as plt
     for key in ret.Dict['antenna_positions']:
       ant_pos = ret.Dict['antenna_positions'][key]
       labels = ['{0}'.format(i) for i in range(self.num_antennas)]

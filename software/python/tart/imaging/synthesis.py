@@ -104,12 +104,12 @@ class Synthesis_Imaging(object):
       f.close()
       os.system("difmap < difmap_cmds")
       os.system("rm out.uvfits")
-  
+
   def get_uuvvwwvis_zenith(self):
     vis_l = []
     #for cal_vis in copy.deepcopy(self.cal_vis_list[:1]):
     for cal_vis in self.cal_vis_list[:1]:
-      ant_p = np.array(cal_vis.get_config().ant_positions)
+      ant_p = np.array(cal_vis.get_config().get_antenna_positions())
       bls = cal_vis.get_baselines()
       pos_pairs = ant_p[np.array(bls)]
       uu_a, vv_a, ww_a = (pos_pairs[:,0] - pos_pairs[:,1]).T/constants.L1_WAVELENGTH
@@ -121,7 +121,7 @@ class Synthesis_Imaging(object):
   def get_grid_idxs(self,uu_a, vv_a, num_bin, nw):
     try:
       if self.grid_idx is None:
-        import cPickle 
+        import cPickle
         self.grid_idx = cPickle.load(open(self.grid_file, 'rb'))
         #print 'finished loading ' + self.grid_file
     except:
@@ -139,9 +139,9 @@ class Synthesis_Imaging(object):
       save_ptr = open(self.grid_file, 'wb')
       cPickle.dump(self.grid_idx, save_ptr, cPickle.HIGHEST_PROTOCOL)
       save_ptr.close()
-    return self.grid_idx 
+    return self.grid_idx
 
- 
+
   def get_uvplane_zenith(self, num_bin = 1600, nw = 36,):
     uu_a, vv_a, ww_a, vis_l = self.get_uuvvwwvis_zenith()
     arr = np.zeros((num_bin, num_bin), dtype=np.complex64)
@@ -158,7 +158,7 @@ class Synthesis_Imaging(object):
         i,j,i2,j2 = grid_idxs[k]
         arr[j, i] += v_l
         arr[j2, i2] += np.conjugate(v_l)
-      n_arr = n_arr/(count_arr) 
+      n_arr = n_arr/(count_arr)
     else:
       arr[grid_idxs[:,1],grid_idxs[:,0]] = vis_l
       arr[grid_idxs[:,3],grid_idxs[:,2]] = np.conjugate(vis_l)
@@ -176,7 +176,7 @@ class Synthesis_Imaging(object):
       ts = cal_vis.get_timestamp()
       ra, dec = self.phase_center.radec(ts)
       c = cal_vis.get_config()
-      ant_p = np.array(c.get_antenna_positions())
+      ant_p = np.asarray(c.get_antenna_positions())
       loc = location.get_loc(c)
       bls = cal_vis.get_baselines()
       for bl in bls:
@@ -266,7 +266,7 @@ class Synthesis_Imaging(object):
 
     #print 'gridding', time.time()-t_gridding
     return (n_arr, uu_edges, vv_edges)
- 
+
   def get_ift_simp(self, nw = 30, num_bin = 2**7):
     #t_st = time.time()
     uv_plane = self.get_uvplane_zenith(num_bin=num_bin, nw=nw)
@@ -278,7 +278,7 @@ class Synthesis_Imaging(object):
     extent = [maxang, -maxang, -maxang, maxang]
     return [ift, extent]
 
- 
+
   def get_ift(self, nw = 30, num_bin = 2**7, use_kernel=True):
     uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
     ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))

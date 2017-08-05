@@ -38,7 +38,7 @@ class Max2769B(Radio):
   '''
 
   def __init__(self, noise_level, n_samples=2**15, ref_freq = 16.368e6, freq_mult = 256, ref_div = 16, main_div = 1536, bandwidth = 2.5e6, order = 5):
-    self.sample_duration = n_samples * 1./ref_freq #sample_duration
+    #self.sample_duration = n_samples * 1./ref_freq #sample_duration
     self.n_samples = n_samples
     self.ref_freq = ref_freq
     self.freq_mult = freq_mult
@@ -48,14 +48,14 @@ class Max2769B(Radio):
     self.order = order
     self.noise_level = noise_level
     self.sampling_rate = self.ref_freq * self.freq_mult
-    self.timebase = np.arange(0, self.sample_duration, 1.0/self.sampling_rate)
     self.baseband_timebase = np.arange(0, self.n_samples) * 1.0/self.ref_freq
     self.int_freq = self.ref_freq / self.ref_div * 4
     # print self.int_freq
 
-  def sampled_signal(self, ant_signal, ant_index, debug = False):
+  def sampled_signal(self, ant_signal, ant_index, sample_duration, debug = True):
     # t = np.linspace(0, self.sample_duration, len(ant_signal))
-    t = np.arange(0, self.sample_duration, self.sample_duration/len(ant_signal))
+    #t = np.arange(0, self.sample_duration, self.sample_duration/len(ant_signal))
+    t = np.arange(0, sample_duration, sample_duration/len(ant_signal))
 
     # Produce the LO signal - massively oversampled so approximates continuous time
     lo_freq = self.ref_freq / self.ref_div * self.main_div  # LO frequency
@@ -72,8 +72,8 @@ class Max2769B(Radio):
     # Need anti-aliasing filter BEFORE downsampling. See http://en.wikipedia.org/wiki/Downsampling
     # This is a low pass filter with a cutoff of ref_freq / 2.
     cutoff_freq = self.int_freq*1.5
-    samp_rate=float(len(ant_signal)) / self.sample_duration
-
+    samp_rate=float(len(ant_signal)) / sample_duration
+    # print samp_rate
     # The Nyquist rate of the signal.
     nyq_rate = samp_rate / 2.0
     width = 2e6/nyq_rate
@@ -102,12 +102,14 @@ class Max2769B(Radio):
     return filt_sig1
 
   def get_full_obs(self, ant_sigs, utc_date, config):
+    self.timebase = np.arange(0, self.sample_duration, 1.0/self.sampling_rate)
     num_radio_samples = (len(self.timebase) / self.freq_mult) #+ 1
     # print num_radio_samples
-    sampled_signals = np.zeros((config.num_antennas, num_radio_samples))
+    num_ant = config.get_num_antenna()
+    sampled_signals = np.zeros((num_ant, num_radio_samples))
 
-    for i in range(0, config.num_antennas):
-      sampled_signals[i,:] = self.sampled_signal(ant_sigs[i], i)
+    for i in range(num_ant):
+      sampled_signals[i,:] = self.sampled_signal(ant_sigs[i], i, self.sample_duration)
 
     data = np.array(sampled_signals)
     obs = observation.Observation(utc_date, config, data=data)
@@ -118,13 +120,13 @@ class Max2769B(Radio):
     np.random.seed(seed=seed)
     s_signals = []
     if_sig = baseband_signals * np.exp(-2.0j * np.pi * self.int_freq * self.baseband_timebase)
-
-    for i in range(config.num_antennas):
+    num_ant = config.get_num_antenna()
+    for i in range(num_ant):
       if (self.noise_level[i] > 0.0):
         noise = np.random.normal(0., self.noise_level[i], len(if_sig[i]))
         if_sig[i] = if_sig[i] + noise
 
-    for ant_num in range(0, config.num_antennas):
+    for ant_num in range(num_ant):
       filt_sig1 = butter_filter.butter_bandpass_filter(if_sig[ant_num], self.int_freq-self.bandwidth/2., self.int_freq+self.bandwidth/2., self.ref_freq, self.order)
       s_signals.append(filt_sig1)
 
@@ -150,17 +152,19 @@ if __name__ == '__main__':
     from tart.simulation.radio import *
 
     config = settings.Settings('../test/test_telescope_config.json')
-    noiselvls =  0.1 * np.ones(config.num_antennas)
+    num_ant = config.get_num_antenna()
+
+    noiselvls =  0.1 * np.ones(num_ant)
     rad = Max2769B(n_samples=2**14, noise_level = noiselvls)
     sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.), elevation = angle.from_dms(90.), sample_duration = rad.sample_duration)]
     ants = [antennas.Antenna(config.get_loc(), pos) for pos in config.ant_positions]
-    ant_models = [antenna_model.GpsPatchAntenna() for i in range(config.num_antennas)]
+    ant_models = [antenna_model.GpsPatchAntenna() for i in range(num_ant)]
     utc_date = datetime.datetime.utcnow()
 
-    
+
     plt.figure()
     ant_sigs = antennas.antennas_signal(ants, ant_models, sources, rad.timebase)
-    rad_sig_full = rad.sampled_signal(ant_sigs[0, :], 0)
+    rad_sig_full = rad.sampled_signal(ant_sigs[0, :], 0, rad.sample_duration)
     obs_full = rad.get_full_obs(ant_sigs, utc_date, config)
 
     ant_sigs_simp = antennas.antennas_simplified_signal(ants, ant_models, sources, rad.baseband_timebase, rad.int_freq)
