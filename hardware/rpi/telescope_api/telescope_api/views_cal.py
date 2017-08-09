@@ -6,6 +6,7 @@ from telescope_api import app, get_config
 import database as db
 
 import datetime
+import json
 from telescope_api import service
 import multiprocessing
 
@@ -77,6 +78,11 @@ def post_calibration_from_vis():
   if state == 'idle':
     db.update_calibration_process_state('preparing')
     cal_measurements = request.get_json(silent=False)
+    t = datetime.datetime.utcnow()
+    cal_request_file_name = t.strftime('Cal_%Y-%m-%d_%H-%M.json')
+    with open(cal_request_file_name, 'w') as outfile:
+      json.dump(cal_measurements, outfile)
+
     global minimize_process
     minimize_process = multiprocessing.Process(target=service.calibrate_from_vis, args=(cal_measurements, runtime_config))
     minimize_process.start()
