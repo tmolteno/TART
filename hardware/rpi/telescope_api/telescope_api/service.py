@@ -169,7 +169,16 @@ def cleanup_visibility_cache():
             db.update_vis_cache_process_state('OK')
         time.sleep(60)
 
-
+def create_direct_vis_dict(vis):
+    vis_dict = {}
+    vis_list = []
+    for (b, v) in zip(vis.baselines, vis.v):
+        i,j = b
+        vis_el = {'i': i, 'j': j, 're': v.real, 'im':v.imag}
+        vis_list.append(vis_el)
+    vis_dict = {'data':vis_list,'timestamp':vis.timestamp.isoformat()[:-3]+'Z'}
+    return vis_dict
+    
 from tart_dsp.tartspi import TartSPI
 from tart_dsp.highlevel_modes_api import *
 from tart_dsp.stream_vis import *
@@ -236,13 +245,8 @@ class TartControl():
             vis, means = self.queue_vis.get()
 
             if vis is not None:
-                vis_dict = {}
-                for (b, v) in zip(vis.baselines, vis.v):
-                    key = str(b)
-                    vis_dict[key] = (v.real, v.imag)
                 print 'updating latest visibilities in runtime dict.'
-                self.config['vis_current'] = vis_dict
-                self.config['vis_timestamp'] = vis.timestamp
+                self.config['vis_current'] = create_direct_vis_dict(vis)
                 self.vislist.append(vis)
                 if len(self.vislist)==self.config['vis']['chunksize']:
                     print 'reached chunksize'

@@ -242,18 +242,18 @@ def get_latest_vis():
     @apiName get_latest_vis
     @apiSuccess {Object[]} vis Get visibilities.
     """
-    import ast
-
     runtime_config = get_config()
-    ret = {}
     if runtime_config.has_key('vis_current'):
-      resp = runtime_config['vis_current']
+      ret = runtime_config['vis_current']
       channel_list = db.get_manual_channel_status()
-      channel_dict = {ch['channel_id']:ch['enabled'] for ch in channel_list}
-      for vis_key in resp:
-        bl = ast.literal_eval(vis_key)
-        if (channel_dict[bl[0]] and channel_dict[bl[1]]):
-          ret[vis_key] = resp[vis_key]
+      active_channels = np.array(len(channel_list))
+      for ch in channel_list:
+        active_channels[ch['channel_id']] = ch['enabled']
+      active_vis = []
+      for v in ret['data']:
+          if active_channels[v['i']] and active_channels[v['j']]:
+              active_vis.append(v)
+      ret['data'] = active_vis
     return jsonify(ret)
 
 @app.route('/imaging/antenna_positions')
