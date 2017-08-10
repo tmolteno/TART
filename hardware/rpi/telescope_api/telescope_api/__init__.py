@@ -56,5 +56,5 @@ import telescope_api.views_acquisition
 import telescope_api.views_cal
 import telescope_api.views_cache
 import telescope_api.views_obs
-import telescope_api.views_log
+#import telescope_api.views_log
 import telescope_api.views_channel

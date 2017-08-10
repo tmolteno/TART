@@ -4,7 +4,7 @@ from flask import render_template, jsonify, send_file
 from flask_jwt_extended import JWTManager, jwt_required
 
 from telescope_api import app, get_config
-
+import numpy as np
 import database as db
 
 @app.route('/status/fpga', methods=['GET',])
@@ -243,10 +243,12 @@ def get_latest_vis():
     @apiSuccess {Object[]} vis Get visibilities.
     """
     runtime_config = get_config()
+    ret = []
     if runtime_config.has_key('vis_current'):
       ret = runtime_config['vis_current']
       channel_list = db.get_manual_channel_status()
-      active_channels = np.array(len(channel_list))
+      print channel_list
+      active_channels = np.zeros(len(channel_list))
       for ch in channel_list:
         active_channels[ch['channel_id']] = ch['enabled']
       active_vis = []
