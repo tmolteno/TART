@@ -144,6 +144,7 @@ export class ImagingComponent {
             .catch(() => { return Observable.of({}); })
             .flatMap(result => {
                 this.visData = result;
+                this.timestamp = this.visData.timestamp
                 return this.calibrationService.getGain();
             })
             .catch(() => {
@@ -154,11 +155,11 @@ export class ImagingComponent {
             })
             .flatMap(result => {
                 this.calibrationData = result;
-                return this.imagingService.getTimestamp();
-            })
-            .catch(() => { return Observable.of(""); })
-            .flatMap(result => {
-                this.timestamp = result;
+            //    return this.imagingService.getTimestamp();
+            //})
+            //.catch(() => { return Observable.of(""); })
+            //.flatMap(result => {
+            //    this.timestamp = result;
                 return this.catalogService.getSatellites(this.lat, this.lon);
             })
             .catch(() => { return Observable.of([]); })

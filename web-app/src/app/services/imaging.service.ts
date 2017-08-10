@@ -28,10 +28,4 @@ export class ImagingService {
                 return res.json();
             });
     }
-    getTimestamp() {
-        return this.http.get(`${this.apiUrl}/imaging/timestamp`)
-            .map((res: Response) => {
-                return res.text();
-            });
-    }
 }
