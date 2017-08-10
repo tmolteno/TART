@@ -45,22 +45,31 @@ export class VisCalibrationComponent {
         let vis = null;
         let timestamp = null;
 
-        this.imagingService.getVis()
-        .catch(() => { return Observable.of({}); })
-        .flatMap(result => {
-            if (!!result) {
-                vis = result;
-            }
-            return this.imagingService.getTimestamp()
-        })
-        .catch(() => { return Observable.of(moment().format()); })
-        .subscribe(result => {
-            if (!!result) {
-                timestamp = result;
-            }
+
+        this.imagingService.getVis().subscribe(result => {
+            vis = result;
+            timestamp = vis.timestamp;
             let calMeasurement = this.generateCalMeasurement(vis, timestamp);
             this.calMeasurements.push(calMeasurement);
         });
+
+
+        //this.imagingService.getVis()
+        //.catch(() => { return Observable.of({}); })
+        //.flatMap(result => {
+        //    if (!!result) {
+        //        vis = result;
+        //    }
+        //    return this.imagingService.getTimestamp()
+        //  })
+        //.catch(() => { return Observable.of(moment().format()); })
+        //.subscribe(result => {
+        //    if (!!result) {
+        //        timestamp = result;
+        //   }
+        //    let calMeasurement = this.generateCalMeasurement(vis, timestamp);
+        //    this.calMeasurements.push(calMeasurement);
+        //});
     }
 
     generateCalMeasurement(vis: any, timestamp: string) {
