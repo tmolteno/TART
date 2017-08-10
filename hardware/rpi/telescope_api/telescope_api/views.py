@@ -247,7 +247,6 @@ def get_latest_vis():
     if runtime_config.has_key('vis_current'):
       ret = runtime_config['vis_current']
       channel_list = db.get_manual_channel_status()
-      print channel_list
       active_channels = np.zeros(len(channel_list))
       for ch in channel_list:
         active_channels[ch['channel_id']] = ch['enabled']
