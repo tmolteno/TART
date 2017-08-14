@@ -75,7 +75,7 @@ def post_calibration_from_vis():
   """
   state = db.get_calibration_process_state()
   runtime_config = get_config()
-  if state == 'idle':
+  if state in ['idle','preparing']:
     db.update_calibration_process_state('preparing')
     cal_measurements = request.get_json(silent=False)
     t = datetime.datetime.utcnow()
