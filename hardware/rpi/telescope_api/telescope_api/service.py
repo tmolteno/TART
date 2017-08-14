@@ -68,15 +68,16 @@ def likelihood_vis_dicts(msd_vis, sim_vis, debug=False):
       ret += vis_diff(meas_v, sim_v, ant_i, ant_j)*np.abs(sim_v.get_visibility(ant_i, ant_j))
   return ret
 
-def vis_object_from_response(vis, ts, SETTINGS):
-  bl = [eval(k) for k in vis.keys()]
+def vis_object_from_response(vis,ts, SETTINGS):
   ret = visibility.Visibility(SETTINGS, ts)
   v_order = []
-  for b in bl:
-    v_real, v_imag = vis[str(b)]
-    v_order.append(v_real + 1j*v_imag)
-  ret.set_visibilities(v_order, bl)
+  bl_order = []
+  for v in vis:
+    v_order.append(complex(v['re'],v['im']))
+    bl_order.append([v['i'],v['j']])
+  ret.set_visibilities(v_order, bl_order)
   return ret
+
 
 def calibrate_from_vis(cal_measurements, runtime_config):
     MODE = 'mini'
