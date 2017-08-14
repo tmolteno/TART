@@ -108,7 +108,7 @@ def calibrate_from_vis(cal_measurements, runtime_config):
       sim_vis[key] = calibration.CalibratedVisibility(v_sim)
 
       # Construct (un)calibrated visibility objects from received measured visibilities
-      vis = vis_object_from_response(m['data']['vis'], timestamp, SETTINGS)
+      vis = vis_object_from_response(m['data']['vis']['data'], timestamp, SETTINGS)
       msd_vis[key] = calibration.CalibratedVisibility(vis)
 
     # Define initial optimisation paramters
