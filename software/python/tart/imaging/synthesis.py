@@ -54,6 +54,11 @@ mappl\n\
 exit\n" % (fits_file, o, o, o)
   return difmap
 
+
+def get_max_ang(nw, num_bin):
+  ret = np.degrees(num_bin/(4.*nw))
+  return ret
+
 class Synthesis_Imaging(object):
   def __init__(self, cal_vis_list):
     self.cal_vis_list = cal_vis_list
@@ -267,6 +272,7 @@ class Synthesis_Imaging(object):
     #print 'gridding', time.time()-t_gridding
     return (n_arr, uu_edges, vv_edges)
 
+
   def get_ift_simp(self, nw = 30, num_bin = 2**7):
     #t_st = time.time()
     uv_plane = self.get_uvplane_zenith(num_bin=num_bin, nw=nw)
@@ -274,7 +280,7 @@ class Synthesis_Imaging(object):
     #t_st = time.time()
     ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
     #print 'full fft', time.time() - t_st
-    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+    maxang = get_max_ang(nw, num_bin)
     extent = [maxang, -maxang, -maxang, maxang]
     return [ift, extent]
 
@@ -282,7 +288,7 @@ class Synthesis_Imaging(object):
   def get_ift(self, nw = 30, num_bin = 2**7, use_kernel=True):
     uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
     ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(uv_plane)))
-    maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+    maxang = get_max_ang(nw, num_bin)
     extent = [maxang, -maxang, -maxang, maxang]
     return [ift, extent]
 
@@ -298,7 +304,7 @@ class Synthesis_Imaging(object):
           theta = np.arctan2(x, y)
           r = np.sqrt(x**2 + y**2)
           return theta, r
-        maxang = 1./(2*(nw*2.)/num_bin)*(180./np.pi)
+        maxang = get_max_ang(nw, num_bin)
         grid_l, grid_m = np.mgrid[-maxang:maxang:num_bin*1j, -maxang:maxang:num_bin*1j]
         grid_phi, grid_r = convert_to_polar(grid_l,grid_m)
         idx = np.unravel_index(absift.argmax(), absift.shape)
