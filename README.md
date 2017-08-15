@@ -1,7 +1,7 @@
 # Transient Array Radio Telescope
 
 The Transient Array Radio Telescope (TART) is a low-cost 24-element aperture synthesis array
-developed by the [Elec research group](http://elec.ac.nz) at the University of Otago
+developed by the [Elec Research Group](http://elec.ac.nz) at the University of Otago
 
  ![All-sky image from a TART telescope][tart_image] 
 
@@ -26,7 +26,9 @@ Verilog language is in the hardware/FPGA directory
 ## Software 
 
 Software for operation is predominantly written in python and contained in the software/python
-directory. This installs the tart python package that contains all the necessary code.
+directory. This installs the tart python package that contains all the necessary code. 
 
+The telescope operation is controlled by a RESTful API. There is a web-based front end that can be used to
+monitor telescope operation.
 
 [tart_image]: https://github.com/tmolteno/TART/blob/master/doc/img/tart_image.jpg "TART All-Sky Image"
