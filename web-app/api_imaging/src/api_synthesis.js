@@ -73,8 +73,6 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
     for(var i=0; i<vis.data.length; i++){
       var v = vis.data[i];
       var a = [v.i,v.j];
-      console.log(v);
-      console.log(a);
       uu_a.push((ant_pos[a[0]][0] - ant_pos[a[1]][0])/L1_WAVELENGTH);
       vv_a.push((ant_pos[a[0]][1] - ant_pos[a[1]][1])/L1_WAVELENGTH);
       ww_a.push((ant_pos[a[0]][2] - ant_pos[a[1]][2])/L1_WAVELENGTH);
