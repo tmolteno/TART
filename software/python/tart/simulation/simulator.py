@@ -2,6 +2,7 @@
 import numpy as np
 from multiprocessing import Pool
 from tart.simulation import antennas
+import time
 
 def get_vis_parallel(sky, cor, rad, ants, ant_models, config, time, mode='simp'):
   p = Pool()
@@ -26,9 +27,9 @@ def get_vis_parallel(sky, cor, rad, ants, ant_models, config, time, mode='simp')
     p.terminate()
   return ret_vis_list
 
-def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', seed=None):
+def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', seed=None,):
   np.random.seed(seed=seed)
-  sources = sky.gen_photons_per_src( timestamp, radio=rad, config=config, n_samp=1)
+  sources = sky.gen_photons_per_src(timestamp, radio=rad, config=config, n_samp=1)
   # sources = sky.gen_n_photons(config, timestamp, radio=rad, n=10)
   # print 'debug: total flux',  np.array([src.jansky(timestamp) for src in self.known_objects]).sum()
   # print 'debug: total amplitude', np.array([src.amplitude for src in sources]).sum()
@@ -45,7 +46,6 @@ def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', see
     ant_sigs_simp = antennas.antennas_simplified_signal(ants, ant_models, sources, rad.baseband_timebase, rad.int_freq, seed=seed)
     obs = rad.get_simplified_obs(ant_sigs_simp, timestamp, config = config, seed=seed)
     v = cor.correlate_roll(obs)
-
   return v
 
 

@@ -2,7 +2,7 @@
 
 from tart.util import angle
 
-from tart.imaging import sun
+#from tart.imaging import sun
 from tart.imaging import radio_source
 from tart.imaging import gps_satellite
 from tart.imaging import location
@@ -13,14 +13,51 @@ import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 
+import requests
+import json
+import datetime
+
+
+def get_L1_srcs(ts=None):
+  '''
+    In order to reduce the number of requests to the catalog it is adviseable to establish a local nginx proxy:
+    apt-get install nginx
+    vim /etc/nginx/sites-available/default
+
+    proxy_cache_path /data/nginx/cache levels=1:2 keys_zone=my_cache:10m max_size=10g;
+    server {
+    ...
+          location /catalog/ {
+                proxy_cache my_cache;
+                proxy_cache_methods GET HEAD POST;
+                proxy_ignore_headers Cache-Control;
+                proxy_cache_valid any 30m;
+                proxy_pass https://tart.elec.ac.nz/catalog/;
+          }
+  '''
+  # catalog_server = "https://tart.elec.ac.nz/catalog"
+
+  catalog_server = "http://localhost/catalog"
+  if ts is None:
+    ts = datetime.datetime.utcnow()
+    r = requests.get('{}/catalog?lat=-45.85&lon=170.54&date={}'.format(catalog_server,ts.isoformat()))
+  else:
+    r = requests.get('{}/catalog?lat=-45.85&lon=170.54&date={}'.format(catalog_server,ts.isoformat()))
+  return np.array(json.loads(r.text))
+
+
+
 class Skymodel(object):
   """Ensemble of sources and their visibilities"""
-  def __init__(self, n_sources, location, sun_str=2.e5, sat_str=5.01e6, gps=True, thesun=False, known_cosmic=True):
+  def __init__(self, n_sources, location, sun_str=2.e5, sat_str=5.01e6, gps=True, l1_catalog=False, l1_elevation_threshold = 30, thesun=False, known_cosmic=True):
     self.n_sources = n_sources
     self.source_list = []
     self.known_objects = []
     self.gps_ants = []
     self.location = location
+
+    self.l1_catalog = l1_catalog
+    self.l1_elevation_threshold = l1_elevation_threshold
 
     self.sun_str=sun_str
     self.sat_str=sat_str
@@ -70,16 +107,23 @@ class Skymodel(object):
     ''' Generate n_samp photons per source'''
     sources = []
     #for src in self.known_objects:
-    for src in self.get_src_objects(location.get_loc(config), utc_date):
+    if self.l1_catalog:
+      for src in get_L1_srcs(utc_date):
+        if src['el']>self.l1_elevation_threshold:
+          sources.append(simulation_source.SimulationSource(\
+          amplitude = 1./n_samp, \
+          azimuth = angle.from_dms(src['az']), elevation = angle.from_dms(src['el']), sample_duration = radio.n_samples/radio.ref_freq))
+    for src in self.known_objects:
+      #for src in self.get_src_objects(location.get_loc(config), utc_date):
       ra, declination = src.radec(utc_date)
       dx, dy = np.random.multivariate_normal([0., 0.], np.identity(2)*np.power(src.width, 2.), n_samp).T
-
       for j in range(n_samp):
         el, az = location.get_loc(config).equatorial_to_horizontal(utc_date, \
           ra + angle.from_dms(dx[j]), declination + angle.from_dms(dy[j]))
         sources.append(simulation_source.SimulationSource(\
           amplitude = src.jansky(utc_date)/self.get_int_src_flux(utc_date)*1./n_samp, \
           azimuth = az, elevation = el, sample_duration = radio.n_samples/radio.ref_freq))
+    #print len(sources)
     return sources
 
 
@@ -187,7 +231,6 @@ class Skymodel(object):
     flip : {'astro', 'geo''}, optional
     Defines the convention of projection : 'astro'' (default, east towards left, west towards right) or 'geo' (east towards right, west towards left)
     '''
-
     l_el, l_az, l_name = self.get_src_positions(location, utc_date)
 
     th = np.pi/2. - np.array(l_el)
@@ -203,7 +246,7 @@ class Skymodel(object):
     hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0), ha='right', va='center')
 
 
-  def true_FFT_overlay(self, utc_date):
+  def true_FFT_overlay(self, utc_date, nw, num_bin):
     '''Plot current sky.
     Theta is colatitude and measured from North pole. 0 .. pi
      (straight up) |  el:  pi/2   | theta 0
@@ -213,42 +256,16 @@ class Skymodel(object):
     flip : {'astro', 'geo''}, optional
     Defines the convention of projection : 'astro'' (default, east towards left, west towards right) or 'geo' (east towards right, west towards left)
     '''
+    from tart.imaging.synthesis import get_max_ang
 
+    max_ang = get_max_ang(nw, num_bin)
     l_el, l_az, l_name = self.get_src_positions(self.location, utc_date)
     l_el, l_az = np.array(l_el), np.array(l_az)
-    print l_el, l_az
-    x = (90-l_el*180/np.pi) * np.sin(l_az)
-    y = (90-l_el*180/np.pi) * np.cos(l_az)
-    #plt.scatter(x, y, color='pink')
-    #plt.scatter(x, -y, color='black')
-    #plt.scatter(-x, -y, color='red')
-    #plt.scatter(-x, y, color='black', s=25)
+
+    r = (90.-np.degrees(l_el))
+    x = r * np.sin(l_az)
+    y = r * np.cos(l_az)
     plt.scatter(x, y, color='white', s=50)
-
-    #for label, x_i, y_i in zip(l_name, x, y):
-      #plt.annotate(
-      #label,
-      #xy = (x_i, y_i), xytext = (-10, 10),
-      #size = 20,
-      #textcoords = 'offset points', ha = 'right', va = 'bottom',
-      #bbox = dict(boxstyle = 'round,pad=0.1', fc = 'white', alpha = 0.5),
-      #)
-
-
-    th = np.pi/2. - np.array(l_el)
-    l_phi = -np.array(l_az)
-    #_ = [hp.projtext(i, j, n, rot=(0,90,0), color='black', weight='light', ha='left', va='center') for i, j, n in zip(th, l_phi, l_name)]
-    _ = [hp.projtext(i, j, n, rot=(0,90,0), color='gray', alpha=0.8, weight='bold', ha='center', va='bottom') for i, j, n in zip(th, l_phi, l_name)]
-    _ = [hp.projscatter(i, j, rot=(0,90,0), color='black', alpha=1.0, s=25) for i, j, n in zip(th, l_phi, l_name)]
-    _ = [hp.projscatter(i, j, rot=(0,90,0), color='white', alpha=1.0, s=10) for i, j, n in zip(th, l_phi, l_name)]
-
-    hp.projtext(np.pi/2,     0.,       'N', rot=(0,90,0),   va='top', ha='center')
-    hp.projtext(np.pi/2, -np.pi/2.,    'E', rot=(0,90,0), va='center')
-    hp.projtext(np.pi/2, -np.pi,       'S', rot=(0,90,0), ha='center')
-    hp.projtext(np.pi/2, -np.pi*3./2., 'W', rot=(0,90,0), ha='right', va='center')
-
-
-
 
 def from_state_vector(state):
   '''Generate skymodel from state vector'''

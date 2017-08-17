@@ -102,8 +102,8 @@ class Max2769B(Radio):
     return filt_sig1
 
   def get_full_obs(self, ant_sigs, utc_date, config, timebase):
-    num_radio_samples = (len(timebase) / self.freq_mult) #+ 1
-    num_ant = config.get_num_antenna()
+    num_radio_samples = (len(timebase) / self.freq_mult)
+    num_ant = len(ant_sigs)
     sampled_signals = np.zeros((num_ant, num_radio_samples))
     for i in range(num_ant):
       sampled_signals[i,:] = self.sampled_signal(ant_sigs[i], i, self.sample_duration)
@@ -116,7 +116,7 @@ class Max2769B(Radio):
     np.random.seed(seed=seed)
     s_signals = []
     if_sig = baseband_signals * np.exp(-2.0j * np.pi * self.int_freq * self.baseband_timebase)
-    num_ant = config.get_num_antenna()
+    num_ant = len(baseband_signals)
     for i in range(num_ant):
       if (self.noise_level[i] > 0.0):
         noise = np.random.normal(0., self.noise_level[i], len(if_sig[i]))

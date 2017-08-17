@@ -30,33 +30,23 @@ def antennas_simplified_signal(antennas, ant_models, sources, timebase, fc0, see
   debug = False
   # create an array to hold the signal seen by each antenna (in rows)
   ant_sigs = []
-  # int_sig = np.exp(-2.0j*np.pi*fc0*timebase)
 
-  #a0 = antennas[1]
-  a0 = antennas[0]
   for i, ant in enumerate(antennas):
     s_bb = np.zeros(len(timebase), dtype=complex)
     for src in sources: # Cycle through each signal source in turn
-      #print src
       gain = ant_models[i].get_gain(src.elevation, src.azimuth)
-      #print 'Antenna: %i Gain: %1.1f el: %1.1f az: %1.1f' % (i, gain, src.elevation.to_degrees(), src.azimuth.to_degrees())
-      #s_bb += src.s_baseband(timebase) * np.exp(src.omega*(dt)*1.0j) * gain
       if gain > 0.0: # Gain theshold
-        dt = get_geo_delay_horizontal(a0, ant, src.elevation, src.azimuth)
-        #print 'delay', dt, dt*constants.V_LIGHT
-        #print "Delay %s %g" % (antenna_locations[ant], dt)
-        # s_bb += src.s_baseband(timebase + dt) * gain * np.exp(-1j*src.omega*dt)
+        dt = ant.get_geo_delay_horizontal(src.elevation, src.azimuth)
         s_bb += src.s_baseband(timebase + dt) * gain * np.exp(1j*src.omega*dt)
-    ant_sigs.append(s_bb) # * int_sig
-  #print 'antennas is;\n', antennas
-  return np.array(ant_sigs) # signal in baseband
+    ant_sigs.append(s_bb)
+  return np.asarray(ant_sigs) # signal in baseband
 
 def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl):
   """ Return visibility object without generating timeseries or filtering."""
   from tart.imaging import visibility
   vis = []
   baselines = []
-  num_ant = config.get_num_antenna()
+  num_ant = len(antennas)
   # noise = np.random.uniform(0.,np.sqrt(noise_lvl),config.num_antennas) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antennas))
   if noise_lvl.__gt__(0.).all():
     noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., num_ant))
