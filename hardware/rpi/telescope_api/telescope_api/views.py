@@ -288,7 +288,7 @@ def get_imaging_timestamp():
 @app.route('/info', methods=['GET',])
 def get_info():
     """
-    @api {get} /info Request telescopes available operating modes
+    @api {get} /info Request telescope general information
     @apiGroup Info
 
     @apiName get_info
