@@ -46,6 +46,8 @@ def get_gain():
   @apiSuccess {Object}  body
   @apiSuccess {Number[]} body.gain List of channel gains
   @apiSuccess {Number[]} body.phase_offset List of channel phase offset
+  
+  @apiSampleRequest /calibration/gain
   """
   rows_dict =  db.get_gain()
   ret_gain = [rows_dict[i][2] for i in range(24)]
