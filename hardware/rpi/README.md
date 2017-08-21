@@ -124,7 +124,7 @@ Edit /etc/nginx/sites-available/default
 #### Install telescope API
 ```
 sudo easy_install --upgrade pip
-sudo pip install Flask Flask-JWT Flask-jwt-extended flask-cli flask-cors flask-script
+sudo pip install flask Flask-JWT Flask-jwt-extended flask-cli flask-cors flask-script
 ```
 
 #### Run telescope API
@@ -168,20 +168,29 @@ consists of yyyy/mm/dd/h_m_s.pkl. See the Observation object for more details
 ```
 
 
+## Autostart API and start SSH tunnels and Network setup
+```
+    ssh-keygen
+    ssh-copy-id tart@tart.elec.ac.nz
+```
+
+Replace ports 80XX and 30XX with assigned ports from tim@elec.ac.nz
+Edit /etc/rc.local
+
+```
+su pi -c 'export AUTOSSH_LOGFILE="/home/pi/autossh.log"; autossh -M 0 -f -N -T -q -i /home/pi/.ssh/id_rsa -o ExitOnForwardFailure=yes -o ServerAliveInterval=10 -o ServerAliveCountMax=1 -R 80XX:localhost:80 -R 30XX:localhost:22 tart@tart.elec.ac.nz' &
+
+su pi -c 'cd /home/pi/git/TART/hardware/rpi && make'
+```
+
 ## Connecting to TART remotely
 
 Each TART node uses autossh to forward a port on a remote server to ssh on the local machine.
 Each TART node forwards a DIFFERENT port.
 
-If a TART node were forwarding 2222, then after logging in to the remote machine (tart.elec.ac.nz)
+If a TART node were forwarding 3022, then after logging in to the remote machine (tart.elec.ac.nz)
 the following commands would connect back to the TART (wherever it was in the world)
-
-ssh -p 2222 pi@localhost
-
-
-## Network setup
-
-TBA
-    ssh-keygen
-    ssh-copy-id tart@tart.elec.ac.nz
+```
+ssh -p 3022 pi@localhost
+```
 
