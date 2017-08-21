@@ -31,15 +31,16 @@ When done boot up raspberry pi.
 ## Create directories for data and web frontend
 ```
     sudo mkdir /data
-    chown -R pi:pi /data
+    sudo chown -R pi:pi /data
     sudo mkdir -p /var/www/html/assets/img/
     sudo mkdir -p /var/www/html/doc
-    chown -R pi:pi /var/www/html/
+    sudo chown -R pi:pi /var/www/html/
 ```
 ## Create RAM disc for raw data storage to avoid SDCARD writes
 ```
-    sudo echo 'tmpfs	/var/www/html/raw	tmpfs	size=200M,noatime	0 0' >> /etc/fstab
-    sudo echo 'tmpfs	/var/www/html/vis	tmpfs	size=100M,noatime	0 0' >> /etc/fstab
+    sudo su
+    echo 'tmpfs	/var/www/html/raw	tmpfs	size=200M,noatime	0 0' >> /etc/fstab
+    echo 'tmpfs	/var/www/html/vis	tmpfs	size=100M,noatime	0 0' >> /etc/fstab
     sudo reboot
 ```
 
@@ -47,10 +48,10 @@ When done boot up raspberry pi.
 ```
     sudo apt-get update
     sudo apt-get dist-upgrade
-    sudo apt-get aptitude
+    sudo apt-get install aptitude
 
-    sudo apt-get install python-setuptools ntp python-dev autossh git
-    sudo apt-get install python-astropy python-psycopg2 python-setuptools ntp python-dev autossh git python-jsonrpclib
+    sudo apt-get install screen python-setuptools ntp python-dev autossh git
+    sudo apt-get install python-yaml python-scipy python-astropy python-psycopg2 python-setuptools ntp python-dev autossh git python-jsonrpclib
     sudo pip install healpy
 
     sudo apt-get install npm 
@@ -63,7 +64,7 @@ When done boot up raspberry pi.
 ## Clone TART project repository
 ```
     git clone https://github.com/tmolteno/TART.git
-    cd TART/python
+    cd TART/software/python
     sudo python setup.py develop
 ```
 
@@ -73,15 +74,34 @@ When done boot up raspberry pi.
 ```
 
 ### Configure NGINX
+Edit /etc/nginx/nginx.conf
+```
+http {
+        add_header Access-Control-Allow-Origin *;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+```
 Edit /etc/nginx/sites-available/default
 ```
 	...
         server_name _;
-	
+
         location /api/v1 {
-                rewrite ^/api/v1(.*) /$1 break;
-                proxy_pass http://127.0.0.1:5000;
+                rewrite ^/api/v1(.*) $1 break;
+                proxy_pass http://127.0.0.1:5000/;
         }
+
+        location /lab/api/v1 {
+                rewrite ^/lab/api/v1(.*) $1 break;
+                proxy_pass http://127.0.0.1:5000/;
+        }
+        location /lab {
+                rewrite ^/lab(.*) $1 break;
+                try_files $uri $uri/ /index.html;
+        }
+
 
         location / {
 	...
@@ -89,16 +109,22 @@ Edit /etc/nginx/sites-available/default
 
 ### Install SPI driver communication with FPGA
 ```
-    cd tart_dsp
+    cd ~/git/TART/hardware/rpi/tart_dsp
     sudo python setup.py develop
 ```
 
 ### Install telescope API and APIDOC
 ```
-    cd telescope_api
+    cd ~/git/TART/hardware/rpi/telescope_api/
     sudo python setup.py develop
     cd telescope_api
     make
+```
+
+#### Install telescope API
+```
+sudo easy_install --upgrade pip
+sudo pip install Flask Flask-JWT Flask-jwt-extended flask-cli flask-cors flask-script
 ```
 
 #### Run telescope API
