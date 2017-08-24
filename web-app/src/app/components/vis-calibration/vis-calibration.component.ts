@@ -14,9 +14,9 @@ import * as moment from 'moment/moment';
 export class VisCalibrationComponent {
 
     elevationSliderLabel: string = 'Elevation';
-    elevationSliderMin: number = 30;
+    elevationSliderMin: number = 10;
     elevationSliderMax: number = 90;
-    elevationSliderStepSize: number = 10;
+    elevationSliderStepSize: number = 5;
     elevationSliderValue: number = 90;
 
     azimuthSliderLabel: string = 'Azimuth Degrees';
