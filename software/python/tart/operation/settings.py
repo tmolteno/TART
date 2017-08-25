@@ -45,6 +45,9 @@ class Settings:
   def __init__(self):
     self.Dict = {}
 
+  def set_antenna_positions(self, ant_pos):
+    self.Dict['antenna_positions'] = {'calibrated':ant_pos}
+
   def load_antenna_positions(self,\
       cal_ant_positions_file = 'calibrated_antenna_positions.json',\
       design_antenna_positions_file = 'design_antenna_positions.json'):
