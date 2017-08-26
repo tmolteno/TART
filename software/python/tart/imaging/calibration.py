@@ -9,6 +9,7 @@ class CalibratedVisibility(object):
         self.vis = vis
         self.flagged_baselines = []
         self.phase_offset = np.zeros(self.get_config().get_num_antenna())
+        self.tile_phase_offset = np.zeros(4)
         self.gain = np.ones(self.get_config().get_num_antenna())
 
     def set_config(self, config):
@@ -80,10 +81,19 @@ class CalibratedVisibility(object):
             self.flag_baseline(i,j)
 
     def set_phase_offset(self, i, val):
-        self.phase_offset[i] = val
+        self.phase_offset[i] = np.asarray(val) % (2*np.pi)
 
     def get_phase_offset(self, i):
-        return self.phase_offset[i]
+        return self.phase_offset[i]+self.get_tile_phase_offset_for_antenna(i)
+
+    def set_tile_phase_offset(self,i,val):
+        self.tile_phase_offset[i] = val
+
+    def get_tile_offset(self, i):
+        return self.tile_phase_offset[i]
+    
+    def get_tile_phase_offset_for_antenna(self, ant_idx):
+        return self.tile_phase_offset[np.asarray(ant_idx)/6]
 
     def set_gain(self, i, val):
         self.gain[i] = val
@@ -93,8 +103,8 @@ class CalibratedVisibility(object):
 
     def to_json(self, filename='gain_calibration.json'):
         calib_dict = {}
-        calib_dict['gain'] = self.gain.tolist()
-        calib_dict['phase_offset'] = self.phase_offset.tolist()
+        calib_dict['gain'] = self.get_gain(range(len(self.gain))).tolist()
+        calib_dict['phase_offset'] = self.get_phase_offset(range(len(self.phase_offset))).tolist()
         calib_dict['flagged_baselines'] = self.flagged_baselines
         with open(filename, 'w') as handle:
           json.dump(calib_dict, handle)
