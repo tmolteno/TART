@@ -6,12 +6,12 @@ var ant_pos = fake_data.ant_pos;
 var calib = fake_data.calib;
 var sat = fake_data.sat;
 
-var nw = 60; // Number of wavelengths
-var num_bin = Math.pow(2,9); // bins in the fft
+var nw = 100; // Number of wavelengths
+var num_bin = Math.pow(2,7); // bins in the fft
 
 
 window.onload = function() {
-  var dummyCanvas = api_synthesis.gen_image(vis, ant_pos, calib, nw, num_bin,'magma');
+  var dummyCanvas = api_synthesis.gen_image(vis, ant_pos, calib, nw, num_bin,'portland');
   var dummyImageData = dummyCanvas.getContext('2d').getImageData(0,0,dummyCanvas.width,dummyCanvas.height);
   var myCanvas = document.getElementById('my-canvas');
   var ctx = myCanvas.getContext('2d');
