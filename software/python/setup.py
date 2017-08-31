@@ -6,14 +6,14 @@ with open('README.txt') as f:
     readme = f.read()
 
 setup(name='tart',
-    version='0.14.1',
+    version='0.14.2',
     description='Transient Array Radio Telescope Imaging and Operation Library',
     long_description=readme,
     url='http://github.com/tmolteno/projects/TART',
     author='Tim Molteno',
     author_email='tim@elec.ac.nz',
     license='GPLv3',
-    requires=['numpy'],
+    requires=['numpy', 'matplotlib', 'healpy'],
     packages=['tart', 'tart.imaging', 'tart.simulation', 'tart.operation', 'tart.util',\
             'tart.test',  'tart.imaging.test', 'tart.simulation.test', 'tart.operation.test', 'tart.util.test'],
     classifiers=[
@@ -24,3 +24,7 @@ setup(name='tart',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         "Intended Audience :: Science/Research"])
+
+# aptitude install python-numpy python-matplotlib python-setuptools pkg-config python-scipy python-psycopg2 libfftw3-dev
+# easy_install jsonrpclib pyfits healpy pyfftw json-->
+#

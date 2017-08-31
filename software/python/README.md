@@ -1,14 +1,20 @@
-# TART: operating software
+# TART: Radio-telescope operating software
     
-## tools
-    Software for operation and analysis of data
+This module is used for the operation and imaging from the open-source Transient Array Radio Telescope (TART).
 
+For more information see the [TART github repository](https://github.com/tmolteno/TART)
 
-## Software Dependencies
+## Authors
 
-    aptitude install python-numpy python-matplotlib python-setuptools pkg-config python-scipy python-psycopg2 libfftw3-dev
-    easy_install jsonrpclib pyfits healpy pyfftw json
+* Tim Molteno (tim@elec.ac.nz)
+* Max Scheel (max@max.ac.nz)
 
 ## Development work
-    Python package software. This should be installed using 
-    python setyp.py install
+    
+If you are developing this package, this should be installed using
+
+    python setyp.py develop
+
+in which case changes to the source-code will be immediately available to projects using it.
+
+    
