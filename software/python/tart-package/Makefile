@@ -1,10 +1,10 @@
 .PHONY: doc
 
+develop: doc
+	sudo python setup.py develop
+
 lint:
 	pylint tart
-
-develop:
-	sudo python setup.py develop
 
 doc:
 	pandoc --to=rst  README.md > README.txt
