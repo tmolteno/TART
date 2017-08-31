@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from tart_dsp.tartspi import TartSPI
+from tart_hardware_interface.tartspi import TartSPI
 
 import numpy as np
 import time

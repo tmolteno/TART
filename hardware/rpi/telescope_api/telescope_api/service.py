@@ -14,6 +14,10 @@ import numpy as np
 from numpy import concatenate as cc
 from scipy.optimize import minimize
 
+from tart_hardware_interface.tartspi import TartSPI
+from tart_hardware_interface.highlevel_modes_api import *
+from tart_hardware_interface.stream_vis import *
+
 from tart.operation import settings
 from tart.imaging import visibility
 from tart.imaging import calibration
@@ -180,9 +184,6 @@ def create_direct_vis_dict(vis):
     vis_dict = {'data':vis_list,'timestamp':vis.timestamp.isoformat()[:-3]+'Z'}
     return vis_dict
     
-from tart_dsp.tartspi import TartSPI
-from tart_dsp.highlevel_modes_api import *
-from tart_dsp.stream_vis import *
 
 class TartControl():
     ''' High Level TART Interface'''

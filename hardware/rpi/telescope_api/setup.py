@@ -6,6 +6,11 @@ setup(
     include_package_data=True,
     install_requires=[
         'flask',
-	'tart_dsp'
+	'flask-jwt',
+	'flask-jwt-extended',
+	'flask-cli',
+	'flask-cors',
+	'flask-script',
+	'tart_hardware_interface'
     ],
 )

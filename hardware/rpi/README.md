@@ -109,8 +109,10 @@ Edit /etc/nginx/sites-available/default
 
 ### Install SPI driver communication with FPGA
 ```
-    cd ~/git/TART/hardware/rpi/tart_dsp
-    sudo python setup.py develop
+    sudo easy_install --upgrade pip
+    #cd ~/git/TART/hardware/rpi/tart_hardware_interface
+    #sudo python setup.py develop
+    sudo pip install tart_hardware_interface
 ```
 
 ### Install telescope API and APIDOC
@@ -123,7 +125,6 @@ Edit /etc/nginx/sites-available/default
 
 #### Install telescope API
 ```
-sudo easy_install --upgrade pip
 sudo pip install flask Flask-JWT Flask-jwt-extended flask-cli flask-cors flask-script
 ```
 

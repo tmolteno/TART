@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='tart_dsp',
-    packages=['tart_dsp'],
+    name='tart_hardware_interface',
+    packages=['tart_hardware_interface'],
     install_requires=[
         'spidev',
 	'numpy',
