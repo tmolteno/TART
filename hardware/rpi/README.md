@@ -117,9 +117,9 @@ Edit /etc/nginx/sites-available/default
 
 ### Install telescope API and APIDOC
 ```
-    cd ~/git/TART/hardware/rpi/telescope_api/
+    cd ~/git/TART/hardware/rpi/tart_web_api/
     sudo python setup.py develop
-    cd telescope_api
+    cd tart_web_api
     make
 ```
 
@@ -130,7 +130,7 @@ sudo pip install flask Flask-JWT Flask-jwt-extended flask-cli flask-cors flask-s
 
 #### Run telescope API
 ```
-    export FLASK_APP=telescope_api
+    export FLASK_APP=tart_web_api
     flask run -h 0.0.0.0 -p 5000
 ```
 
@@ -145,7 +145,7 @@ sudo killall python flask
 You can run it with
 ```
     screen
-    export FLASK_APP=telescope_api
+    export FLASK_APP=tart_web_api
     flask run -h 0.0.0.0 -p 5000
 ```
 You can look at the output with

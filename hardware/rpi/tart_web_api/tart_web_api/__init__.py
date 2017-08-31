@@ -50,11 +50,11 @@ app.secret_key = 'super-secret-123897219379179464asd13khk213'  # Change this!
 app.config['JWT_HEADER_TYPE'] = 'JWT'
 jwt = JWTManager(app)
 
-import telescope_api.views
-import telescope_api.views_auth
-import telescope_api.views_acquisition
-import telescope_api.views_cal
-import telescope_api.views_cache
-import telescope_api.views_obs
-#import telescope_api.views_log
-import telescope_api.views_channel
+import tart_web_api.views
+import tart_web_api.views_auth
+import tart_web_api.views_acquisition
+import tart_web_api.views_cal
+import tart_web_api.views_cache
+import tart_web_api.views_obs
+#import tart_web_api.views_log
+import tart_web_api.views_channel

@@ -3,20 +3,16 @@
 lint:
 	pylint tart
 
-install:
-	sudo python setup.py install
-
 develop:
 	sudo python setup.py develop
 
 doc:
 	pandoc --to=rst  README.md > README.txt
 	
-test_upload:
+test_upload: doc
 	python setup.py sdist
 	twine upload --repository testpypi dist/*
 
-upload:
-	pandoc --to=rst  README.md > README.txt
+upload: doc
 	python setup.py sdist
 	twine upload --repository pypi dist/*

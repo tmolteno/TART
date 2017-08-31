@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, \
     create_access_token, jwt_refresh_token_required, \
     create_refresh_token, get_jwt_identity
 
-from telescope_api import app, jwt
+from tart_web_api import app, jwt
 
 import os
 if os.environ.has_key('LOGIN_PW'):

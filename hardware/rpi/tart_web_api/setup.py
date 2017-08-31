@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='telescope_api',
-    packages=['telescope_api'],
+    name='tart_web_api',
+    packages=['tart_web_api'],
     include_package_data=True,
     install_requires=[
         'flask',
