@@ -15,7 +15,7 @@ For everyday use, these can simply be installed using PyPi
 
 * Tim Molteno (tim@elec.ac.nz)
 * Max Scheel (max@max.ac.nz)
-* Tim Miller (milletf1@gmail.com)
+* Tim Miller (timmiller83@gmail.com)
 * Pat Suggate (ihavenolimbs@gmail.com)
 
 
