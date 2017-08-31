@@ -1,2 +1,2 @@
 include LICENSE.txt
-include permute.txt
+include tart_hardware_interface/permute.txt
