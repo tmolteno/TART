@@ -2,7 +2,7 @@
     
 This module is used for the operation and imaging from the open-source Transient Array Radio Telescope (TART).
 
-For more information see the [TART github repository](https://github.com/tmolteno/TART)
+For more information see the [TART Github repository](https://github.com/tmolteno/TART)
 
 ## Authors
 
@@ -12,9 +12,9 @@ For more information see the [TART github repository](https://github.com/tmolten
 ## Development work
     
 If you are developing this package, this should be installed using
-
-    python setyp.py develop
-
+```
+	make develop
+```
 in which case changes to the source-code will be immediately available to projects using it.
 
     
