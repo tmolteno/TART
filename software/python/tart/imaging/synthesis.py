@@ -69,7 +69,7 @@ class Synthesis_Imaging(object):
     # ra, dec = vt.config.get_loc().horizontal_to_equatorial(vt.timestamp, angle.from_dms(90.), angle.from_dms(0.))
     # dec = angle.from_dms(-90.00)
     # print 'phasecenter:', ra, dec
-    self.phase_center = radio_source.CosmicSource(ra, dec)
+    self.phase_center = radio_source.CosmicSource(ra, dec, 1e10)
     self.grid_file = 'grid.idx'
     self.grid_idx = None
     #print 'debug:' , self.phase_center.to_horizontal(vt.config.get_loc(),vt.timestamp)
@@ -197,14 +197,6 @@ class Synthesis_Imaging(object):
     vv_a = np.array(vv_l)
     ww_a = np.array(ww_l)
     vis_l = np.array(vis_l)
-    #uu_a2, vv_a2, ww_a2, vis_l2 = self.get_uuvvwwvis_zenith()
-    #print 'uu',uu_a-uu_a2
-    #print 'vv',vv_a-vv_a2
-    #print 'ww',ww_a-ww_a2
-    #print 'vd',vis_l - vis_l2
-
-    #print 't uu,vv,ll,vis', time.time()-t_dv
-    #t_gridding = time.time()
     outest_point = max(uu_a.max(), vv_a.max(), -vv_a.min(), -uu_a.min())
     if outest_point>nw:
       print outest_point, nw

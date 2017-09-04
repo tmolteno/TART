@@ -3,7 +3,6 @@ import numpy as np
 
 import cPickle as pickle
 from tart.util import angle
-from tart.simulation import antennas
 from tart.util import skyloc
 from tart.util import constants
 
@@ -50,6 +49,7 @@ class Visibility:
    <N(t) N^*(t)> = v(0,1) e^{+j \omega t_g^{01}}
   '''
   def rotate(self, sloc):
+    from tart.simulation import antennas
     stopped_vis = []
     omega = self.config.frequency*2.0*np.pi
     # Now we must do fringe stopping

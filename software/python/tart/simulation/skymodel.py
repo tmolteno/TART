@@ -40,16 +40,16 @@ def get_L1_srcs(ts=None):
   catalog_server = "http://localhost/catalog"
   if ts is None:
     ts = datetime.datetime.utcnow()
-    r = requests.get('{}/catalog?lat=-45.85&lon=170.54&date={}'.format(catalog_server,ts.isoformat()))
+    r = requests.get('{}/catalog?lat=-45.851820&lon=170.545448&date={}'.format(catalog_server,ts.isoformat()))
   else:
-    r = requests.get('{}/catalog?lat=-45.85&lon=170.54&date={}'.format(catalog_server,ts.isoformat()))
+    r = requests.get('{}/catalog?lat=-45.851820&lon=170.545448&date={}'.format(catalog_server,ts.isoformat()))
   return np.array(json.loads(r.text))
 
 
 
 class Skymodel(object):
   """Ensemble of sources and their visibilities"""
-  def __init__(self, n_sources, location, sun_str=2.e5, sat_str=5.01e6, gps=True, l1_catalog=False, l1_elevation_threshold = 30, thesun=False, known_cosmic=True):
+  def __init__(self, n_sources, location, sun_str=2.e5, sat_str=5.01e6, gps=True, l1_catalog=False, l1_elevation_threshold = 30, l1_allowed=[], thesun=False, known_cosmic=True):
     self.n_sources = n_sources
     self.source_list = []
     self.known_objects = []
@@ -58,6 +58,7 @@ class Skymodel(object):
 
     self.l1_catalog = l1_catalog
     self.l1_elevation_threshold = l1_elevation_threshold
+    self.l1_allowed = l1_allowed
 
     self.sun_str=sun_str
     self.sat_str=sat_str
@@ -73,14 +74,14 @@ class Skymodel(object):
       for i in range(32):
         sv = gps_satellite.GpsSatellite(i+1, location=self.location,jy=sat_str)
         self.add_src(sv)
-    if self.known_cosmic:
-      for src in radio_source.BrightSources:
-        self.add_src(src)
-    for _ in range(self.n_sources):
-      ra = angle.from_dms(np.random.uniform(0., 360.))
-      dec = angle.asin(np.random.uniform(-1., 1))
-      cs = radio_source.CosmicSource(ra, dec)
-      self.add_src(cs)
+    #if self.known_cosmic:
+    #  for src in radio_source.BrightSources:
+    #    self.add_src(src)
+    #for _ in range(self.n_sources):
+      #ra = angle.from_dms(np.random.uniform(0., 360.))
+      #dec = angle.asin(np.random.uniform(-1., 1))
+      #cs = radio_source.CosmicSource(ra, dec)
+    #  self.add_src(cs)
 
   def gen_beam(self, utc_date_init, utc_date_obs, config, radio,  az_deg = 20., el_deg = 80.):
     ''' Generate point source with constant at RA and DEC according to given az and el at time utc_date_init'''
@@ -109,11 +110,24 @@ class Skymodel(object):
     #for src in self.known_objects:
     if self.l1_catalog:
       for src in get_L1_srcs(utc_date):
-        if src['el']>self.l1_elevation_threshold:
-          sources.append(simulation_source.SimulationSource(\
-          amplitude = 1./n_samp, \
-          azimuth = angle.from_dms(src['az']), elevation = angle.from_dms(src['el']), sample_duration = radio.n_samples/radio.ref_freq))
+        if (src['el']>self.l1_elevation_threshold):
+          l = len(self.l1_allowed)
+          if (l==0) or (src['name'] in self.l1_allowed['names']):
+            if (l!=0):
+              s_str = self.l1_allowed['strength_log10'][self.l1_allowed['names'].index(src['name'])]
+              #print s_str, type(s_str)
+              amplitude = np.power(10,s_str)
+            else:
+              amplitude = 1.
+            print src['name'], src['az'], src['el']
+            sources.append(simulation_source.SimulationSource(\
+            r = src['r'],
+            amplitude = amplitude, \
+            azimuth = angle.from_dms(src['az']), elevation = angle.from_dms(src['el']), sample_duration = radio.n_samples/radio.ref_freq))
+            #print 'here'
+
     for src in self.known_objects:
+      print 'extra',src
       #for src in self.get_src_objects(location.get_loc(config), utc_date):
       ra, declination = src.radec(utc_date)
       dx, dy = np.random.multivariate_normal([0., 0.], np.identity(2)*np.power(src.width, 2.), n_samp).T
@@ -121,9 +135,10 @@ class Skymodel(object):
         el, az = location.get_loc(config).equatorial_to_horizontal(utc_date, \
           ra + angle.from_dms(dx[j]), declination + angle.from_dms(dy[j]))
         sources.append(simulation_source.SimulationSource(\
+          r = src.r,
           amplitude = src.jansky(utc_date)/self.get_int_src_flux(utc_date)*1./n_samp, \
           azimuth = az, elevation = el, sample_duration = radio.n_samples/radio.ref_freq))
-    #print len(sources)
+    print len(sources)
     return sources
 
 

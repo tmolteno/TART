@@ -7,13 +7,14 @@ from tart.util import constants
 from scipy import interpolate
 
 class SimulationSource:
-  def __init__(self, amplitude, azimuth, elevation, sample_duration):
+  def __init__(self, r, amplitude, azimuth, elevation, sample_duration):
 
     self.omega = constants.L1_OMEGA
     self.duration = sample_duration
     self.amplitude = amplitude
     self.azimuth = azimuth
     self.elevation = elevation
+    self.r = r
 
     Fs = 16.368e6
     max_baseline = 100 # in m
@@ -38,7 +39,7 @@ if __name__ == '__main__':
   from tart.util import angle
   import matplotlib.pyplot as plt
 
-  crab = SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(45.0), sample_duration = 1e-3) # 10 ms sample duration
+  crab = SimulationSource(r=1e10, amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(45.0), sample_duration = 1e-3) # 10 ms sample duration
 
   timebase = np.arange(0,1e-5,1e-6)
   for t in timebase:
