@@ -54,6 +54,8 @@ When done boot up raspberry pi.
     sudo apt-get install python-yaml python-scipy python-astropy python-psycopg2 python-setuptools ntp python-dev autossh git python-jsonrpclib
     sudo pip install healpy
 
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+    sudo apt-get install -y nodejs
     sudo apt-get install npm 
     sudo npm cache clean -f
     sudo npm install -g n
@@ -61,7 +63,13 @@ When done boot up raspberry pi.
     sudo npm install apidoc -g
 ```
 
-## Clone TART project repository
+
+## Install TART python packages, hardware_interface and telescope API
+```
+   sudo pip install tart tart_hardware_interface tart_web_api
+```
+
+## (Optional) Clone Github TART project repository for development
 ```
     git clone https://github.com/tmolteno/TART.git
     cd TART/software/python
@@ -107,26 +115,21 @@ Edit /etc/nginx/sites-available/default
 	...
 ```
 
-### Install SPI driver communication with FPGA
+### (Optional for developer) Install SPI driver communication with FPGA
 ```
     sudo easy_install --upgrade pip
-    #cd ~/git/TART/hardware/rpi/tart_hardware_interface
-    #sudo python setup.py develop
-    sudo pip install tart_hardware_interface
+    cd ~/git/TART/software/python/tart_hardware_interface
+    sudo python setup.py develop
 ```
 
-### Install telescope API and APIDOC
+### (Optional for developer) Install telescope API and APIDOC
 ```
-    cd ~/git/TART/hardware/rpi/tart_web_api/
+    cd ~/git/TART/software/python/tart_web_api/
     sudo python setup.py develop
     cd tart_web_api
-    make
+    make  # requires apidoc to be installed
 ```
 
-#### Install telescope API
-```
-sudo pip install flask Flask-JWT Flask-jwt-extended flask-cli flask-cors flask-script
-```
 
 #### Run telescope API
 ```
