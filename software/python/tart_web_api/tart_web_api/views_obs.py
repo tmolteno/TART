@@ -1,5 +1,5 @@
 from flask import jsonify
-from telescope_api import app
+from tart_web_api import app
 import database as db
 
 @app.route('/raw/data')

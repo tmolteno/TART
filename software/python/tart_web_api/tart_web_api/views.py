@@ -3,7 +3,7 @@ from flask import render_template, jsonify, send_file
 #from flask_jwt import jwt_required, current_identity
 from flask_jwt_extended import JWTManager, jwt_required
 
-from telescope_api import app, get_config
+from tart_web_api import app, get_config
 import numpy as np
 import database as db
 

@@ -2,7 +2,7 @@ from flask import Flask, request
 from flask import render_template, jsonify, send_file
 from flask_jwt_extended import jwt_required 
 
-from telescope_api import app, get_config
+from tart_web_api import app, get_config
 import database as db
 
 import datetime

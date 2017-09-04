@@ -6,9 +6,9 @@ import logging.config
 import yaml
 logger = logging.getLogger(__name__)
 
-from tart_dsp.tartspi import TartSPI
-from tart_dsp.highlevel_modes_api import *
-from tart_dsp.stream_vis import *
+from tart_hardware_interface.tartspi import TartSPI
+from tart_hardware_interface.highlevel_modes_api import *
+from tart_hardware_interface.stream_vis import *
 
 if __name__=="__main__":
     PARSER = argparse.ArgumentParser()

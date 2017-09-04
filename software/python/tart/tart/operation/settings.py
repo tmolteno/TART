@@ -2,7 +2,7 @@
 # Settings for the telescope. This provides an accessor object for the data stored in
 # The telescope_config.json file.
 #
-# Tim Molteno 2013 tim@elec.ac.nz
+# Tim Molteno 2013-2017 tim@elec.ac.nz
 # Max Scheel 2017 max@max.ac.nz : do no derive any prober
 import json
 import numpy as np
@@ -41,12 +41,22 @@ def to_json(self):
   json_str = json.dumps(configdict)
   return json_str
 
+def from_api_json(config_json, ant_pos_json):
+    ret  = Settings()
+    ret.Dict['num_antenna'] = config_json['num_antenna']
+    ret.Dict['sampling_frequency'] = config_json['sampling_frequency']
+    ret.set_antenna_positions(ant_pos_json)
+    loc = config_json['location']
+    ret.set_geo(loc['lat'], loc['lon'], loc['alt'])
+    return ret
+
 class Settings:
   def __init__(self):
     self.Dict = {}
 
   def set_antenna_positions(self, ant_pos):
     self.Dict['antenna_positions'] = {'calibrated':ant_pos}
+    assert (self.Dict['num_antenna'] == len(ant_pos))
 
   def load_antenna_positions(self,\
       cal_ant_positions_file = 'calibrated_antenna_positions.json',\
