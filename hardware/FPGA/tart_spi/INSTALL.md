@@ -1,5 +1,12 @@
 # Using a Prebuilt Image
+*TODO: Prebuilt images for various configurations*
 Prebuilt images can be uploaded using the *Papilio Prog* Java program, which requires a Java runtime to be installed.
+
+Assuming that `papilio-prog` is installed (see the relevant section below, for more information), and that the Papilio board is connected, then just:
+
+> make upload
+
+(when executed from the `tart_spi` directory) will upload the prebuilt image.
 
 
 ## Papilio Programmer Installation ##
@@ -7,11 +14,21 @@ On Debian-like systems:
 
 > apt install java
 
-And then download [papilio-prog](https://www.pappy.org) , and install via:
+### Installation from Source ###
+The sources can be obtained from Github, [Papilio-Loader](https://github.com/GadgetFactory/Papilio-Loader), and cloned via:
 
-> unzip pappy
+> git clone https://github.com/GadgetFactory/Papilio-Loader
+
 > cd pappy
 > ./configure && make
+
+### Windows Installation ###
+
+Or a Windows version can be downloaded from [papilio-prog](https://www.pappy.org) , and install via:
+
+> unzip pappy
+
+### Programming the FPGA ###
 
 Then the prebuilt TART image, `bin/tart.bit`, can be uploaded:
 
@@ -32,6 +49,32 @@ Obtain from Xilinx, and install such that the required paths have been setup:
 
 ### Make ###
 Any recent version should work correctly, for example *GNU Make 4.1* works.
+
+
+### Simulation & Testbenches ###
+Icarus Verilog is used for simulation from the command line, and this can be installed (on Debian-based systems) via:
+
+> apt install iverilog gtkwave
+
+The testbenches should probably also work using the Xilinx simulator, though this hasn't been tested.
+
+To perform the various simulations, and referencing from the root directory of `TART/hardware/FPGA`, the makefiles and testbench files are typically within `bench` subdirectories.
+
+For example, within the `tart_spi/bench` directory, to simulate a single correlator:
+
+> make cor
+
+for the entire DSP:
+
+> make dsp
+
+or just the SPI modules, from the `tart_spi/bench/spi` directory:
+
+> make spi
+
+And there are other testbenches for other subsystems, and the `wishbone` directory contains testbenches for many of the Wishbone compliant cores.
+
+Some simulations generate `.vcd` files, and GtkWave was used during development to visualise simulation output. Some GtkWave project files, which end with `.gtkw`, are part of the TART repository, as they were used during testing & functional verification.
 
 
 ### Papilio-Prog ###

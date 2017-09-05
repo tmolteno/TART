@@ -1,6 +1,36 @@
+##--------------------------------------------------------------------------##
+##
+##  Makefile for command line synthesis, using Xilinx ISE tools.
+##
+##  Copyright:
+##    Roy Ward, 2006
+##    Tim Molteno, 2006-2017
+##    Patrick Suggate, 2007-2017
+##    Max Scheel, 2017
+##
+##  NOTE:
+##   + currently, the command-line options, for the various ISE tools, are
+##     for ISE 14.7 ;
+##   + `make clean` can be a little dangerous;
+##
+##  TODO:
+##   + needs a different floorplan when correlators are not used;
+##   + improve the `upload`, `images`, and `clean` Makefile targets;
+##
+##--------------------------------------------------------------------------##
+
 SHELL=/bin/bash
 
-all: pairs permute floor build
+standard: build upload
+
+# TODO: use `papilio-prog`
+upload: program
+
+# Build the various prebuilt images
+# TODO: build for several configurations
+images: build
+
+all: pairs permute floor build upload
 
 .PHONY: pairs
 pairs:
