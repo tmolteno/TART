@@ -18,7 +18,7 @@
 ```
 
 ## Development server
-Run `npm run ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 <br/><br/>
 Note: when running in development mode, all API requests will be made to `http://tart2-raspberry/api/v1`.
 
