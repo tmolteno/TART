@@ -24,7 +24,7 @@ def set_gain():
 
   @apiParam {Object}   body
   @apiParam {Number[]} body.gain List of channel gains
-  @apiParam {Number[]} body.phase_offset List of channel phase offset
+  @apiParam {Number[]} body.phase_offset List of channel phase offset (rad)
   """
   g = content['gain']
   ph = content['phase_offset']
@@ -45,7 +45,7 @@ def get_gain():
 
   @apiSuccess {Object}  body
   @apiSuccess {Number[]} body.gain List of channel gains
-  @apiSuccess {Number[]} body.phase_offset List of channel phase offset
+  @apiSuccess {Number[]} body.phase_offset List of channel phase offset (rad)
   
   @apiSampleRequest /calibration/gain
   """
