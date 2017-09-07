@@ -8,8 +8,8 @@ from tart.util import constants
 from tart.util import angle
 
 import numpy as np
-import pyfftw.interfaces.numpy_fft as fft
-#import numpy.fft as fft
+#import pyfftw.interfaces.numpy_fft as fft
+import numpy.fft as fft
 import time
 
 import os
@@ -261,7 +261,7 @@ class Synthesis_Imaging(object):
 
   def get_ift_simp(self, nw = 30, num_bin = 2**7):
     uv_plane = self.get_uvplane_zenith(num_bin=num_bin, nw=nw)
-    ift = np.fft.fftshift(fft.ifft2(np.fft.ifftshift(uv_plane),threads=8))
+    ift = np.fft.fftshift(fft.ifft2(np.fft.ifftshift(uv_plane)))
     maxang = get_max_ang(nw, num_bin)
     extent = [maxang, -maxang, -maxang, maxang]
     return [ift, extent]
@@ -269,7 +269,7 @@ class Synthesis_Imaging(object):
 
   def get_ift(self, nw = 30, num_bin = 2**7, use_kernel=False):
     uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
-    ift = np.fft.fftshift(fft.ifft2(np.fft.ifftshift(uv_plane), threads=8))
+    ift = np.fft.fftshift(fft.ifft2(np.fft.ifftshift(uv_plane)))
     maxang = get_max_ang(nw, num_bin)
     extent = [maxang, -maxang, -maxang, maxang]
     return [ift, extent]
