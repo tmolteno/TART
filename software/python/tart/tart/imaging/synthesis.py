@@ -219,7 +219,10 @@ class Synthesis_Imaging(object):
       all_v   = np.concatenate((vis_l, np.conjugate(vis_l)))
       h_real,_,_ = np.histogram2d(vv_comb, uu_comb, weights = all_v.real, bins=[vv_edges, uu_edges])
       h_imag,_,_ = np.histogram2d(vv_comb, uu_comb, weights = all_v.imag, bins=[vv_edges, uu_edges])
-      n_arr[:,:] = h_real+(1j*h_imag)
+      num_entries,_,_ = np.histogram2d(vv_comb, uu_comb, bins=[vv_edges, uu_edges])
+      n_arr[:,:] = (h_real+(1j*h_imag))
+      pos = np.where(num_entries.__gt__(1))
+      n_arr[pos] /= num_entries[pos]
 
     else:
       pixels_per_wavelength = num_bin/(nw*2.)
