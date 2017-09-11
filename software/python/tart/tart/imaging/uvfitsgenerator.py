@@ -153,7 +153,7 @@ class UVFitsGenerator(object):
     c11 = pyfits.Column(name='POLCALB', format='3E', array= [a['POLCALB'] for a in v.antennas])
     c0 = pyfits.Column(name='ORBPARM',  format='1D', array= [a['ORBPARM'] for a in v.antennas])
 
-    return pyfits.new_table([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c0], tbtype='BinTableHDU')
+    return pyfits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c0])
 
 
   def update_vis_header(self):

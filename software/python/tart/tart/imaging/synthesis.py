@@ -38,20 +38,29 @@ cc = np.concatenate
 
 #mapsize 1024, 1.25e6\n\
 
-def get_difmap(fits_file, o=0):
-  difmap = "! Basic imaging instructions by Tim Molteno\n\
-  debug = False\n\
-observe %s\n\
-select I, 1,5\n\
-mapcolor color\n\
-device uvplot%04d.png/png\n\
-uvplot\n\
-mapsize 2048, 1.25e5\n\
-device beam%04d.png/png\n\
-mappl beam\n\
-device map%04d.png/png\n\
-mappl\n\
-exit\n" % (fits_file, o, o, o)
+def get_difmap(fits_file):
+  difmap = """
+! Basic imaging instructions by Tim Molteno
+debug = False
+observe {}
+select I, 1,5
+mapcolor color
+device uvplot{}.png/png
+uvplot
+mapsize 1024, 1265624.0
+device beam{}.png/png
+mappl beam
+i = 0
+docont = false
+repeat
+    clean 100,0.05
+    selfcal
+    i = i+1
+until(i > 35)
+device map{}.png/png
+mappl cln
+exit
+""".format(fits_file, fits_file, fits_file, fits_file)
   return difmap
 
 
