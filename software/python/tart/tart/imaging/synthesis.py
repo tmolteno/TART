@@ -44,12 +44,12 @@ def get_difmap(fits_file, o=0):
 observe %s\n\
 select I, 1,5\n\
 mapcolor color\n\
-device uv/uvplot%04d.png/png\n\
+device uvplot%04d.png/png\n\
 uvplot\n\
 mapsize 2048, 1.25e5\n\
-device beam/beam%04d.png/png\n\
+device beam%04d.png/png\n\
 mappl beam\n\
-device map/map%04d.png/png\n\
+device map%04d.png/png\n\
 mappl\n\
 exit\n" % (fits_file, o, o, o)
   return difmap
@@ -76,16 +76,17 @@ class Synthesis_Imaging(object):
   def set_grid_file(self,fpath):
     self.grid_file = fpath
 
-  def get_uvfits(self):
-    os.system("rm out.uvfits")
-    fits_name = "out.uvfits" #self.fname + ".uvfits"
+  def get_uvfits(self, fname = "out.uvfits"):
+    #os.system("rm out.uvfits")
+    fits_name = fname
     gen = uvfitsgenerator.UVFitsGenerator(copy.deepcopy(self.cal_vis_list), self.phase_center)
     gen.write(fits_name)
     difcmd = get_difmap(fits_name)
-    f = open('difmap_cmds', 'w')
-    f.write(difcmd)
-    f.close()
-    os.system("difmap < difmap_cmds")
+    return difcmd
+    #f = open('difmap_cmds', 'w')
+    #f.write(difcmd)
+    #f.close()
+    #os.system("difmap < difmap_cmds")
 
 
   def get_difmap_movie(self, base_index, frames):
