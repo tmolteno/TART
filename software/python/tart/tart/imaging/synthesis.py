@@ -39,8 +39,7 @@ cc = np.concatenate
 #mapsize 1024, 1.25e6\n\
 
 def get_difmap(fits_file):
-  difmap = """
-! Basic imaging instructions by Tim Molteno
+  difmap = """! Basic imaging instructions by Tim Molteno
 debug = False
 observe {}
 select I, 1,5
@@ -59,8 +58,7 @@ repeat
 until(i > 35)
 device map{}.png/png
 mappl cln
-exit
-""".format(fits_file, fits_file, fits_file, fits_file)
+exit""".format(fits_file, fits_file, fits_file, fits_file)
   return difmap
 
 

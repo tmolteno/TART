@@ -3,6 +3,7 @@
 import json
 
 import numpy as np
+from tart.util import constants
 
 class CalibratedVisibility(object):
     def __init__(self, vis):

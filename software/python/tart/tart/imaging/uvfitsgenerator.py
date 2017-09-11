@@ -59,7 +59,7 @@ class UVFitsGenerator(object):
 
     self.config = c
     self.v_array = cal_vis_list
-    self.n_baselines = len(self.baselines)
+    self.n_baselines = len(vt.get_baselines())
     self.loc = c.get_loc() # Assume the array isn't moving
     
     if phase_center is None:
@@ -79,16 +79,17 @@ class UVFitsGenerator(object):
       #v.rotate(skyloc.Skyloc(ra, dec))
       uu_a, vv_a, ww_a = cal_vis.get_all_uvw()
       bls = cal_vis.get_baselines()
+      datestamp = tart_util.get_julian_date(cal_vis.vis.timestamp)- int(tart_util.get_julian_date(cal_vis.vis.timestamp)+0.5)
       for uu,vv,ww, b in zip(uu_a, vv_a, ww_a, bls):
         baseline = {}
         [i,j] = b
         # print (np.array(a1.enu) - np.array(a0.enu)), uu, vv, ww
         # arcane units of UVFITS require u,v,w in nanoseconds
-        baseline['UU'] = uu/constants.V_LIGHT
-        baseline['VV'] = vv/constants.V_LIGHT
-        baseline['WW'] = ww/constants.V_LIGHT
+        baseline['UU'] = uu*constants.L1_WAVELENGTH/constants.V_LIGHT
+        baseline['VV'] = vv*constants.L1_WAVELENGTH/constants.V_LIGHT
+        baseline['WW'] = ww*constants.L1_WAVELENGTH/constants.V_LIGHT
         baseline['BASELINE'] = encode_baseline(i+1, j+1)
-        baseline['DATE'] = tart_util.get_julian_date(v.vis.timestamp)- int(tart_util.get_julian_date(v.vis.timestamp)+0.5)
+        baseline['DATE'] = datestamp
         # DATE FIXME ?
         baselines.append(baseline)
 
@@ -101,8 +102,7 @@ class UVFitsGenerator(object):
       for k,  b in enumerate(cal_vis.get_baselines()):
         for l, _ in enumerate(freqs):
           for j, _ in enumerate(pols):
-            i,j = b
-            vis  = v.get_visibility(i,j)
+            vis  = v.get_visibility(b[0], b[1])
             re = vis.real
             img = vis.imag
             w = np.ones(1)
@@ -276,4 +276,3 @@ class UVFitsGenerator(object):
 
     hdulist = pyfits.hdu.hdulist.HDUList([vis_table, ant_table])
     hdulist.writeto(filename)
-    print 'wrote %s' % filename
