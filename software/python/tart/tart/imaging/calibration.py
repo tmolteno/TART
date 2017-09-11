@@ -49,6 +49,15 @@ class CalibratedVisibility(object):
         v_arr = np.asarray(self.get_unflagged_vis())
         return v_arr * self.get_gain(bl[:,0]) * self.get_gain(bl[:,1]) * np.exp(-1j*(self.get_phase_offset(bl[:,0])-self.get_phase_offset(bl[:,1])))
 
+    def get_all_uvw(self):
+        c = self.get_config()
+        ant_p = np.asarray(c.get_antenna_positions())
+
+        bls = np.asarray(self.get_baselines())
+        bl_pos = ant_p[bls]
+        uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
+        return uu_a, vv_a, ww_a
+
     def get_unflagged_vis(self):
         return [vis for bl,vis in zip(self.vis.baselines, self.vis.v) if bl not in self.flagged_baselines]
 

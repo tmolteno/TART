@@ -57,11 +57,9 @@ class UVFitsGenerator(object):
     c = vt.get_config()
     ant_p = np.asarray(c.get_antenna_positions())
 
-    bls = np.asarray(vt.get_baselines())
-
     self.config = c
     self.v_array = cal_vis_list
-    self.n_baselines = len(bls)
+    self.n_baselines = len(self.baselines)
     self.loc = c.get_loc() # Assume the array isn't moving
     
     if phase_center is None:
@@ -76,21 +74,20 @@ class UVFitsGenerator(object):
     baselines = []
     ant_pos = self.config.get_antenna_positions()
     loc = self.config.get_loc()
-    for v in self.v_array:
-      ra, dec = self.phase_center.radec(v.vis.timestamp)
+    for cal_vis in self.v_array:
+      ra, dec = self.phase_center.radec(cal_vis.vis.timestamp)
       #v.rotate(skyloc.Skyloc(ra, dec))
-      for i in range(self.n_baselines):
-        c = self.config
-        a0 = antennas.Antenna(loc, ant_pos[v.vis.baselines[i][0]])
-        a1 = antennas.Antenna(loc, ant_pos[v.vis.baselines[i][1]])
+      uu_a, vv_a, ww_a = cal_vis.get_all_uvw()
+      bls = cal_vis.get_baselines()
+      for uu,vv,ww, b in zip(uu_a, vv_a, ww_a, bls):
         baseline = {}
-        uu, vv, ww = antennas.get_UVW(a0, a1, v.vis.timestamp, ra, dec)
+        [i,j] = b
         # print (np.array(a1.enu) - np.array(a0.enu)), uu, vv, ww
         # arcane units of UVFITS require u,v,w in nanoseconds
         baseline['UU'] = uu/constants.V_LIGHT
         baseline['VV'] = vv/constants.V_LIGHT
         baseline['WW'] = ww/constants.V_LIGHT
-        baseline['BASELINE'] = encode_baseline(v.vis.baselines[i][0]+1, v.vis.baselines[i][1]+1)
+        baseline['BASELINE'] = encode_baseline(i+1, j+1)
         baseline['DATE'] = tart_util.get_julian_date(v.vis.timestamp)- int(tart_util.get_julian_date(v.vis.timestamp)+0.5)
         # DATE FIXME ?
         baselines.append(baseline)
@@ -101,11 +98,13 @@ class UVFitsGenerator(object):
     data = np.zeros((len(self.v_array)*self.n_baselines, 1, 1, len(freqs), len(pols), 3))
 
     for i, v in enumerate(self.v_array):
-      for k,  b in enumerate(v.vis.baselines):
+      for k,  b in enumerate(cal_vis.get_baselines()):
         for l, _ in enumerate(freqs):
           for j, _ in enumerate(pols):
-            re = v.vis.v[k].real
-            img = v.vis.v[k].imag
+            i,j = b
+            vis  = v.get_visibility(i,j)
+            re = vis.real
+            img = vis.imag
             w = np.ones(1)
             data[i*self.n_baselines+k, 0, 0, l, j, :] = [re, img, w]
 
