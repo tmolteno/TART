@@ -51,15 +51,17 @@ class Visibility:
   def rotate(self, sloc):
     from tart.simulation import antennas
     stopped_vis = []
-    omega = self.config.frequency*2.0*np.pi
+    omega = self.config.get_operating_frequency()*2.0*np.pi
     # Now we must do fringe stopping
-    el, az = self.config.get_loc().equatorial_to_horizontal(self.timestamp, sloc.ra, sloc.dec)
+    loc = self.config.get_loc()
+    el, az = loc.equatorial_to_horizontal(self.timestamp, sloc.ra, sloc.dec)
 
+    ant_pos = self.config.get_antenna_positions()
     for v, b in zip(self.v, self.baselines):
-      a0 = antennas.Antenna(self.config.get_loc(), self.config.ant_positions[b[0]])
-      a1 = antennas.Antenna(self.config.get_loc(), self.config.ant_positions[b[1]])
+      a0 = antennas.Antenna(loc, ant_pos[b[0]])
+      a1 = antennas.Antenna(loc, ant_pos[b[1]])
 
-      tg = antennas.get_geo_delay_horizontal(a0, a1, el, az)
+      tg = antennas.get_geo_delay_horizontal(a0, a1, sloc)
       # tg is t_a1 - t_a0
       # (negative if a1 is closer to source than a0)
 

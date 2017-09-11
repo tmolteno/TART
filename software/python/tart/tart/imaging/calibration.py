@@ -44,6 +44,14 @@ class CalibratedVisibility(object):
         else:
             return self.__get_vis(bl) * self.get_gain(i) * self.get_gain(j) * np.exp(-1j*(self.get_phase_offset(i)-self.get_phase_offset(j)))
 
+    def get_all_visibility(self):
+        bl = np.asarray(self.get_baselines())
+        v_arr = np.asarray(self.get_unflagged_vis())
+        return v_arr * self.get_gain(bl[:,0]) * self.get_gain(bl[:,1]) * np.exp(-1j*(self.get_phase_offset(bl[:,0])-self.get_phase_offset(bl[:,1])))
+
+    def get_unflagged_vis(self):
+        return [vis for bl,vis in zip(self.vis.baselines, self.vis.v) if bl not in self.flagged_baselines]
+
     def get_baselines(self):
         return [bl for bl in self.vis.baselines if bl not in self.flagged_baselines]
 
@@ -91,7 +99,7 @@ class CalibratedVisibility(object):
 
     def get_tile_offset(self, i):
         return self.tile_phase_offset[i]
-    
+
     def get_tile_phase_offset_for_antenna(self, ant_idx):
         return self.tile_phase_offset[np.asarray(ant_idx)/6]
 
@@ -103,11 +111,12 @@ class CalibratedVisibility(object):
 
     def to_json(self, filename='gain_calibration.json'):
         calib_dict = {}
-        calib_dict['gain'] = self.get_gain(range(len(self.gain))).tolist()
-        calib_dict['phase_offset'] = self.get_phase_offset(range(len(self.phase_offset))).tolist()
+        calib_dict['gain'] = [int(1e5*self.get_gain(i))/float(1e5) for i in range(len(self.gain))]
+        calib_dict['phase_offset'] = [int(1e5*self.get_phase_offset(i))/float(1e5) for i in range(len(self.gain))]
         calib_dict['flagged_baselines'] = self.flagged_baselines
         with open(filename, 'w') as handle:
-          json.dump(calib_dict, handle)
+          json.dump(calib_dict, handle, sort_keys = True, indent = 4,
+               ensure_ascii = False)
         json_str = json.dumps(calib_dict)
         return json_str
 

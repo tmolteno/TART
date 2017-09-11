@@ -7,6 +7,7 @@
 import json
 import numpy as np
 from tart.util import angle
+from tart.imaging import location
 
 '''Antenna positions are in 3D ENU coordinates in meters'''
 def rotate_location(array_orientation, localcoord):
@@ -45,6 +46,8 @@ def from_api_json(config_json, ant_pos_json):
     ret  = Settings()
     ret.Dict['num_antenna'] = config_json['num_antenna']
     ret.Dict['sampling_frequency'] = config_json['sampling_frequency']
+    ret.Dict['operating_frequency'] = config_json['operating_frequency']
+    ret.Dict['bandwidth'] = config_json['bandwidth']
     ret.set_antenna_positions(ant_pos_json)
     loc = config_json['location']
     ret.set_geo(loc['lat'], loc['lon'], loc['alt'])
@@ -91,6 +94,11 @@ class Settings:
     self.Dict['lon'] = lon
     self.Dict['alt'] = alt
 
+  def get_loc(self):
+    return location.Location(angle.from_dms(self.Dict['lat']), 
+                             angle.from_dms(self.Dict['lon']), 
+                             self.Dict['alt'])
+
   def get_lat(self):
     return self.Dict['lat']
 
@@ -102,6 +110,12 @@ class Settings:
 
   def get_sampling_frequency(self):
     return self.Dict['sampling_frequency']
+
+  def get_operating_frequency(self):
+    return self.Dict['operating_frequency']
+
+  def get_bandwidth(self):
+    return self.Dict['bandwidth']
 
   def get_name(self):
     return self.Dict['name']
