@@ -1,4 +1,41 @@
 `timescale 1ns/100ps
+/*
+ * Module      : bench/xilinx/RAMB16_S9_S36_tb.v
+ * Copyright   : (C) Tim Molteno     2016
+ *             : (C) Max Scheel      2016
+ *             : (C) Patrick Suggate 2016
+ * License     : LGPL3
+ * 
+ * Maintainer  : Patrick Suggate <patrick.suggate@gmail.com>
+ * Stability   : Experimental
+ * Portability : simulation file, and only tested with Icarus Verilog
+ * 
+ * 
+ * This file is part of TART.
+ * 
+ * TART is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * 
+ * TART is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Lesser Public License along with
+ * TART.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * 
+ * Description:
+ * Testbench for the fake Xilinx SRAM primitive.
+ * 
+ * NOTE:
+ * 
+ * TODO:
+ * 
+ */
+
 module RAMB16_S9_S36_tb;
 
    parameter DELAY = 3;         // in ns
