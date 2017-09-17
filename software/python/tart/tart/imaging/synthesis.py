@@ -89,7 +89,7 @@ class Synthesis_Imaging(object):
     gen = uvfitsgenerator.UVFitsGenerator(copy.deepcopy(self.cal_vis_list), self.phase_center)
     gen.write(fits_name)
     difcmd = get_difmap(fits_name)
-    return difcmd
+    return difcmd, fits_name
     #f = open('difmap_cmds', 'w')
     #f.write(difcmd)
     #f.close()
