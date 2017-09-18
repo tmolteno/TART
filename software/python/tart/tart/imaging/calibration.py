@@ -52,7 +52,8 @@ class CalibratedVisibility(object):
     def get_all_visibility(self):
         bl = np.asarray(self.get_baselines())
         v_arr = np.asarray(self.get_unflagged_vis())
-        return v_arr * self.get_gain(bl[:,0]) * self.get_gain(bl[:,1]) * np.exp(-1j*(self.get_phase_offset(bl[:,0])-self.get_phase_offset(bl[:,1])))
+        ret = v_arr * self.get_gain(bl[:,0]) * self.get_gain(bl[:,1]) * np.exp(-1j*(self.get_phase_offset(bl[:,0])-self.get_phase_offset(bl[:,1])))
+        return ret, bl
 
     def get_all_uvw(self):
         c = self.get_config()

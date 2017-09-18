@@ -181,14 +181,8 @@ class Synthesis_Imaging(object):
 
     for cal_vis in (self.cal_vis_list):
       if self.fixed_zenith:
-        c = cal_vis.get_config()
-        ant_p = np.asarray(c.get_antenna_positions())
-
-        bls = np.asarray(cal_vis.get_baselines())
-        bl_pos = ant_p[bls]
-        uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
-        vis_l = cal_vis.get_all_visibility()
-
+        uu_a, vv_a, ww_a = cal_vis.get_all_uvw()
+        vis_l, bls = cal_vis.get_all_visibility()
       else:
         uu_l = []
         vv_l = []
