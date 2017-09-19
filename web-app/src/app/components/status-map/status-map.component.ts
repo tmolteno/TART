@@ -186,8 +186,8 @@ export class StatusMapComponent {
         }
         this.canvasAntennas = this.createAntennas(this.antennaPositions, this.channelsStatus);
         this.clearCanvas();
-        this.drawMeterLength(this.antennaPositions);
         this.drawAntennas(this.canvasAntennas);
+        this.drawMeterLength(this.antennaPositions);
     }
 
 
