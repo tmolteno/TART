@@ -12,11 +12,12 @@ from tart.imaging import location
 '''Antenna positions are in 3D ENU coordinates in meters'''
 def rotate_location(array_orientation, localcoord):
   array_orientation = angle.from_dms(array_orientation)
+  _e,_n,_u = localcoord
   c = array_orientation.cos()
   s = array_orientation.sin()
-  e = localcoord[0]*c - localcoord[1]*s
-  n = localcoord[0]*s + localcoord[1]*c
-  u = localcoord[2]
+  e = _e*c - _n*s
+  n = _e*s + _n*c
+  u = _u
   return [e, n, u]
 
 def from_dict(configdict):
