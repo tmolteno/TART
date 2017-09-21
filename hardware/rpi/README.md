@@ -31,15 +31,16 @@ When done boot up raspberry pi.
 ## Create directories for data and web frontend
 ```
     sudo mkdir /data
-    chown -R pi:pi /data
+    sudo chown -R pi:pi /data
     sudo mkdir -p /var/www/html/assets/img/
     sudo mkdir -p /var/www/html/doc
-    chown -R pi:pi /var/www/html/
+    sudo chown -R pi:pi /var/www/html/
 ```
 ## Create RAM disc for raw data storage to avoid SDCARD writes
 ```
-    sudo echo 'tmpfs	/var/www/html/raw	tmpfs	size=200M,noatime	0 0' >> /etc/fstab
-    sudo echo 'tmpfs	/var/www/html/vis	tmpfs	size=100M,noatime	0 0' >> /etc/fstab
+    sudo su
+    echo 'tmpfs	/var/www/html/raw	tmpfs	size=200M,noatime	0 0' >> /etc/fstab
+    echo 'tmpfs	/var/www/html/vis	tmpfs	size=100M,noatime	0 0' >> /etc/fstab
     sudo reboot
 ```
 
@@ -47,12 +48,14 @@ When done boot up raspberry pi.
 ```
     sudo apt-get update
     sudo apt-get dist-upgrade
-    sudo apt-get aptitude
+    sudo apt-get install aptitude
 
-    sudo apt-get install python-setuptools ntp python-dev autossh git
-    sudo apt-get install python-astropy python-psycopg2 python-setuptools ntp python-dev autossh git python-jsonrpclib
+    sudo apt-get install screen python-setuptools ntp python-dev autossh git
+    sudo apt-get install python-yaml python-scipy python-astropy python-psycopg2 python-setuptools ntp python-dev autossh git python-jsonrpclib
     sudo pip install healpy
 
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+    sudo apt-get install -y nodejs
     sudo apt-get install npm 
     sudo npm cache clean -f
     sudo npm install -g n
@@ -60,10 +63,16 @@ When done boot up raspberry pi.
     sudo npm install apidoc -g
 ```
 
-## Clone TART project repository
+
+## Install TART python packages, hardware_interface and telescope API
+```
+   sudo pip install tart tart_hardware_interface tart_web_api
+```
+
+## (Optional) Clone Github TART project repository for development
 ```
     git clone https://github.com/tmolteno/TART.git
-    cd TART/python
+    cd TART/software/python
     sudo python setup.py develop
 ```
 
@@ -73,37 +82,58 @@ When done boot up raspberry pi.
 ```
 
 ### Configure NGINX
+Edit /etc/nginx/nginx.conf
+```
+http {
+        add_header Access-Control-Allow-Origin *;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+```
 Edit /etc/nginx/sites-available/default
 ```
 	...
         server_name _;
-	
+
         location /api/v1 {
-                rewrite ^/api/v1(.*) /$1 break;
-                proxy_pass http://127.0.0.1:5000;
+                rewrite ^/api/v1(.*) $1 break;
+                proxy_pass http://127.0.0.1:5000/;
         }
+
+        location /lab/api/v1 {
+                rewrite ^/lab/api/v1(.*) $1 break;
+                proxy_pass http://127.0.0.1:5000/;
+        }
+        location /lab {
+                rewrite ^/lab(.*) $1 break;
+                try_files $uri $uri/ /index.html;
+        }
+
 
         location / {
 	...
 ```
 
-### Install SPI driver communication with FPGA
+### (Optional for developer) Install SPI driver communication with FPGA
 ```
-    cd tart_dsp
+    sudo easy_install --upgrade pip
+    cd ~/git/TART/software/python/tart_hardware_interface
     sudo python setup.py develop
 ```
 
-### Install telescope API and APIDOC
+### (Optional for developer) Install telescope API and APIDOC
 ```
-    cd telescope_api
+    cd ~/git/TART/software/python/tart_web_api/
     sudo python setup.py develop
-    cd telescope_api
-    make
+    cd tart_web_api
+    make  # requires apidoc to be installed
 ```
+
 
 #### Run telescope API
 ```
-    export FLASK_APP=telescope_api
+    export FLASK_APP=tart_web_api
     flask run -h 0.0.0.0 -p 5000
 ```
 
@@ -118,7 +148,7 @@ sudo killall python flask
 You can run it with
 ```
     screen
-    export FLASK_APP=telescope_api
+    export FLASK_APP=tart_web_api
     flask run -h 0.0.0.0 -p 5000
 ```
 You can look at the output with
@@ -142,20 +172,29 @@ consists of yyyy/mm/dd/h_m_s.pkl. See the Observation object for more details
 ```
 
 
+## Autostart API and start SSH tunnels and Network setup
+```
+    ssh-keygen
+    ssh-copy-id tart@tart.elec.ac.nz
+```
+
+Replace ports 80XX and 30XX with assigned ports from tim@elec.ac.nz
+Edit /etc/rc.local
+
+```
+su pi -c 'export AUTOSSH_LOGFILE="/home/pi/autossh.log"; autossh -M 0 -f -N -T -q -i /home/pi/.ssh/id_rsa -o ExitOnForwardFailure=yes -o ServerAliveInterval=10 -o ServerAliveCountMax=1 -R 80XX:localhost:80 -R 30XX:localhost:22 tart@tart.elec.ac.nz' &
+
+su pi -c 'cd /home/pi/git/TART/hardware/rpi && make'
+```
+
 ## Connecting to TART remotely
 
 Each TART node uses autossh to forward a port on a remote server to ssh on the local machine.
 Each TART node forwards a DIFFERENT port.
 
-If a TART node were forwarding 2222, then after logging in to the remote machine (tart.elec.ac.nz)
+If a TART node were forwarding 3022, then after logging in to the remote machine (tart.elec.ac.nz)
 the following commands would connect back to the TART (wherever it was in the world)
-
-ssh -p 2222 pi@localhost
-
-
-## Network setup
-
-TBA
-    ssh-keygen
-    ssh-copy-id tart@tart.elec.ac.nz
+```
+ssh -p 3022 pi@localhost
+```
 

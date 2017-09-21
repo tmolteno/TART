@@ -14,8 +14,8 @@ export class AuthService {
     private tokenGetTimeStorageKey: string = 'tokenGetTime';
     public tokenMaxAge: number = 3600000; // 1 hour in milliseconds
 
-    private refreshTokenStorageKey: string = 'refreshToken';
-    private refreshTokenGetTimeStorageKey: string = 'refreshTokenGetTime';
+    //private refreshTokenStorageKey: string = 'refreshToken';
+    //private refreshTokenGetTimeStorageKey: string = 'refreshTokenGetTime';
 
     private apiUrl: string = '';
 
@@ -46,7 +46,7 @@ export class AuthService {
             let body  = res.json();
             if (body.access_token) {
                 this.setAuthToken(body.access_token);
-                this.setRefreshToken(body.refresh_token);
+                //this.setRefreshToken(body.refresh_token);
                 return true;
             } else {
                 return false;
@@ -57,11 +57,11 @@ export class AuthService {
         });
     }
 
-    setRefreshToken(token: string) {
+    /*setRefreshToken(token: string) {
         let getTime = new Date().getTime().toString();
         localStorage.setItem(this.refreshTokenStorageKey, token);
         localStorage.setItem(this.refreshTokenGetTimeStorageKey, getTime);
-    }
+    }*/
 
     setAuthToken(token: string) {
         let getTime = new Date().getTime().toString();
@@ -91,13 +91,13 @@ export class AuthService {
         return timeDelta < this.tokenMaxAge;
     }
 
-    getRefreshToken() {
+    /*getRefreshToken() {
         if (!this.isTokenValid()) {
             this.logout();
             return null;
         }
         return localStorage.getItem(this.refreshTokenStorageKey);
-    }
+    }*/
 
     getAuthToken() {
         // check that token is still valid

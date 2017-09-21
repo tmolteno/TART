@@ -40,6 +40,13 @@ or, for further options:
 > sudo python tartdsp.py --help
 
 
+## Simulation & Testbenches ##
+
+Additionally, there are numerous testbenches for TART's FPGA-based subsystems, and typically reside with `bench` subdirectories. The testbench's associated `Makefile` expects that the Icarus Verilog simulator is installed.
+
+GtkWave can be used to visualise the simulation output, and some `.gtkw` files are included, as these were used during development.
+
+
 # Architecture #
 
 The TART correlators consist of 24 correlators, arranged in six blocks. Each correlator performs two 1-bit correlations, and each of these is then accumulated using a 24-bit accumulator. The correlators operate at 12 times the signal-acquisition clock frequency, which is about 196 MHz, by default.
@@ -51,12 +58,28 @@ ASCII art schematics can be found in some of the higher-level modules (within th
 and these schematics give the high-level structure of the design.
 
 
+## Wishbone Interconnects ##
+
+On-chip communication between cores typically uses Wishbone interconnects (and usually SPEC B4 compliant). There are two Wishbone domains:
+* 98.208 MHz for the system-wide bus; and
+* 196.416 MHz for transferring the data from the correlators to a Wishbone bridge.
+
+Wishbone (SPEC B4) was used to standardise communication between cores, to improve modularity and extensibility, and without sacrificing performance. Key to this was support for pipelined burst-mode transfers, and that Wishbone (in general) is a fairly simple protocol with only very little additional logic overhead (versus typical custom/ad-hoc interconnects).
+
+The full Wishbone SPEC B4 specification can be obtained from:
+
+https://opencores.org/cdn/downloads/wbspec_b4.pdf
+
+
 ## SPI Interface ##
+
 Communication between the *Raspberry Pi* and the *Papilio Pro* uses the *SPI* interconnect, and with the RPi as the master. The slave SPI logic core (within the Papilio) uses asynchronous FIFO's for clock-domain crossing, and a source-synchronous configuration. This allows the SPI core to operate at around 100 MHz (with Spartan 6 IOB's), though it is limited to 32 MHz for the current version of TART (as any faster would require additional "padding" bytes).
 
 The slave uses signalling levels that are compatible with a MODE1 (POL = 0, PHA = 1) SPI master, and the data bit-width is set to 8-bits.
 
+
 ### Future Work ###
+
 The Tx & Rx FIFO's should be changed to a smaller, simple design. This should also (slightly) reduce latency, but this has yet to be implemented & tested.
 
 

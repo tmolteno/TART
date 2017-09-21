@@ -8,3 +8,4 @@ The TART project has been developed by:
 * Max Scheel (TART 2 and imaging algorithms)
 * Mike Field (HamsterNZ) Memory Controller for SDRAM.
 * Pat Suggate. Real-time FPGA correlator
+* Tim Miller. Web-App interface

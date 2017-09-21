@@ -62,6 +62,11 @@ function abs(real, imag){
   return ret;
 }
 
+function flip_ud(arr) {
+  var flipped_arr = arr.step(-1,1);
+  return flipped_arr;
+}
+
 
 var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
@@ -121,8 +126,9 @@ var gen_image = function(vis, ant_pos, calib, nw, num_bin, colourmap){
 
     var SAbs_scaled = scale(SAbs);
 
+    var SAbs_scaled_flipped = flip_ud(SAbs_scaled);
     var colourmap = colourmap || 'viridis';
-    canvas = apply_colormap(SAbs_scaled, colourmap)
+    canvas = apply_colormap(SAbs_scaled_flipped, colourmap);
     return canvas;
 };
 
@@ -186,36 +192,59 @@ function get_max_ang(nw, num_bin){
   return max_ang;
 }
 
-function ang_2_pos(ang, nw, num_bin) {
+// function ang_2_pos(ang_deg, nw, num_bin) {
+//   var max_ang = get_max_ang(nw, num_bin);
+//   //   -max_ang  0
+//   //   0         num_bin/2
+//   //   max_ang   num_bin
+//   return Math.floor((ang_deg + max_ang)/(2*max_ang) * num_bin)
+// }
+
+function get_bin_width(nw, num_bin) {
   var max_ang = get_max_ang(nw, num_bin);
-  //   -max_ang  0
-  //   0         num_bin/2
-  //   max_ang   num_bin
-  return Math.floor((ang + max_ang)/(2*max_ang) * num_bin)
+  return num_bin/(2.*max_ang)
 }
 
-function ang_2_px(ang, nw, num_bin){
+function get_R_px(nw, num_bin){
+  var R_deg = 60;
+  var R_px = R_deg * get_bin_width(nw, num_bin);
+  return Math.floor(R_px);
+}
+
+function proj_ang_2_px(ang_deg, nw, num_bin){
+  var R_px = get_R_px(nw, num_bin);
+  var ang_px =  ang_2_px(ang_deg, nw, num_bin);
+  var dpx = R_px * Math.atan(ang_px/R_px);
+  return Math.floor(dpx);
+}
+
+function ang_2_px(ang_deg, nw, num_bin){
   var max_ang = get_max_ang(nw, num_bin);
-  //   -max_ang  0
-  //   0         num_bin/2
-  //   max_ang   num_bin
-  return Math.floor(ang * (num_bin)/(2*max_ang))
+  var dpx = ang_deg * get_bin_width(nw, num_bin);
+  return Math.floor(dpx);
 }
 
 
 function horizontal_2_px(el, az, nw, num_bin){
   var max_ang = get_max_ang(nw, num_bin);
-  var x = ang_2_pos((90-el)*Math.sin(az*Math.PI/180), nw, num_bin);
-  var y = num_bin-ang_2_pos((90-el)*Math.cos(az*Math.PI/180), nw, num_bin);
+  var r_deg = (90-el);
+  var az_rad = az*Math.PI/180;
+  var dx = proj_ang_2_px(r_deg, nw, num_bin) * Math.sin(az_rad);
+  var dy = proj_ang_2_px(r_deg, nw, num_bin) * Math.cos(az_rad);
+  var x = num_bin/2 + dx;
+  var y = num_bin/2 - dy;
+  console.log(dx,dy, x, y);
+//   -num_bin/2
+  // y is from bottom up. hence y = num_bin-py
   return {x:x, y:y};
 }
 
 function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
-  var r = ang_2_px(2, nw, num_bin);
   var pos = horizontal_2_px(el, az, nw, num_bin)
+  var r_dot = ang_2_px(1.5, nw, num_bin);
   ctx.beginPath();
   ctx.fillStyle = 'white';
-  ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
+  ctx.arc(pos.x, pos.y, r_dot, 0, 2 * Math.PI);
   ctx.fill()
   ctx.stroke();
   var show_name = show_name !== undefined ? show_name : 1;
@@ -223,16 +252,16 @@ function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = 'Bold 14px sans';
-    ctx.fillText(label, pos.x, pos.y+2*r);
+    ctx.fillText(label, pos.x, pos.y+2*r_dot);
   }
 }
 
 
 
 function draw_circ(ctx, ang, nw, num_bin) {
-  var r = ang_2_px(ang, nw, num_bin);
-  var x_0 = ang_2_pos(0, nw, num_bin);
-  var y_0 = ang_2_pos(0, nw, num_bin);
+  var r = proj_ang_2_px(ang, nw, num_bin);
+  var x_0 = num_bin/2. //+ proj_ang_2_px(0, nw, num_bin);
+  var y_0 = num_bin/2. //- proj_ang_2_px(0, nw, num_bin);
   ctx.beginPath();
   ctx.arc(x_0, y_0, r, 0, 2 * Math.PI);
   ctx.stroke();
@@ -246,7 +275,7 @@ function overlay_grid(ctx, nw, num_bin){
   ctx.moveTo(0,num_bin/2);
   ctx.lineTo(num_bin, num_bin/2);
   ctx.stroke();
-  var const_el = [80,70,60,50,40,30,0];
+  var const_el = [80,70,60,50,40,30,20,10,0];
   for (i=0; i< const_el.length;i++){
     draw_circ(ctx, 90-const_el[i],nw,num_bin)
   }

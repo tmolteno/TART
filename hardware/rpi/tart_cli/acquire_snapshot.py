@@ -5,8 +5,8 @@
 #    sudo chown pi:pi /data
 
 
-from tart_dsp.tartspi import TartSPI
-from tart_dsp.highlevel_modes_api import *
+from tart_hardware_interface.tartspi import TartSPI
+from tart_hardware_interface.highlevel_modes_api import *
 
 import argparse
 

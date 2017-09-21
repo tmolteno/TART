@@ -1,11 +1,24 @@
 # Tart Web-App
 
 ## Setup
-
-```npm install``` to install node packages
+### Get latest version of node and npm on debian (may work on ubuntu..)
+```
+	sudo apt-get update
+	curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+	sudo apt-get install -y nodejs
+	sudo apt-get install npm
+	sudo npm cache clean -f
+	sudo npm install -g n
+	sudo n stable
+	sudo npm install apidoc -g
+```
+### Install node packages
+```
+	npm install
+```
 
 ## Development server
-Run `npm run ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 <br/><br/>
 Note: when running in development mode, all API requests will be made to `http://tart2-raspberry/api/v1`.
 

@@ -38,4 +38,4 @@ module mfsr32
 
    assign	count_o = {count_i[30:2], tap_xor1, tap_xor0, count_i[31]};
 
-endmodule	// mfsr20
+endmodule	// mfsr32

@@ -1,18 +1,20 @@
-#TART: operating software
+# TART: Radio-telescope operating software
+    
+This module is used for the operation and imaging from the open-source Transient Array Radio Telescope (TART).
 
-This package contains three major sub-packages.
+For more information see the [TART Github repository](https://github.com/tmolteno/TART)
 
-* operation Software that is used to operate the telescope, collect data and bring it to the central servers. 
-* imaging. Software for imaging, and other science.
-* simulation. Software to simulate operation of the telescope
+## Authors
 
+* Tim Molteno (tim@elec.ac.nz)
+* Max Scheel (max@max.ac.nz)
 
+## Development work
+    
+If you are developing this package, this should be installed using
+```
+	make develop
+```
+in which case changes to the source-code will be immediately available to projects using it.
 
-
-pyephem
-healpy
-
-numpy
-matplotlib
-scipy
-
+    

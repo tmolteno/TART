@@ -41,16 +41,16 @@ export class ImagingComponent {
     numBinsStep: number = 1;
     numBinsLabel: string = "Number of bins (2**n)";
     // number of waves settings
-    waves: number = 70;
+    waves: number = 100;
     minWaves: number = 10;
-    maxWaves: number = 100;
+    maxWaves: number = 120;
     wavesStep: number = 5;
     wavesLabel: string = "UV-Plane Extent [wavelengths]";
     // refresh time settings
     refreshTime: number = 15;
-    minRefreshTime: number = 5;
+    minRefreshTime: number = 1;
     maxRefreshTime: number = 60;
-    refreshTimeStep: number = 5;
+    refreshTimeStep: number = 1;
     refreshTimeLabel: string = "Refresh timer [seconds]";
 
     // flag to block refresh image update
