@@ -39,16 +39,21 @@ class CalibratedVisibility(object):
             self.flag_baseline(a,b)
 
     def get_visibility(self,i,j):
+        if (j < i):
+            return np.conjugate(self.get_visibility(j, i))
+        
         bl = [i,j]
         if bl in self.flagged_baselines:
             raise
         else:
-            return self.__get_vis(bl) * self.get_gain(i) * self.get_gain(j) * np.exp(-1j*(self.get_phase_offset(i)-self.get_phase_offset(j)))
+            v = self.__get_vis(bl)
+            return v * self.get_gain(i) * self.get_gain(j) * np.exp(-1j*(self.get_phase_offset(i)-self.get_phase_offset(j)))
 
     def get_all_visibility(self):
         bl = np.asarray(self.get_baselines())
         v_arr = np.asarray(self.get_unflagged_vis())
-        return v_arr * self.get_gain(bl[:,0]) * self.get_gain(bl[:,1]) * np.exp(-1j*(self.get_phase_offset(bl[:,0])-self.get_phase_offset(bl[:,1])))
+        ret = v_arr * self.get_gain(bl[:,0]) * self.get_gain(bl[:,1]) * np.exp(-1j*(self.get_phase_offset(bl[:,0])-self.get_phase_offset(bl[:,1])))
+        return ret, bl
 
     def get_all_uvw(self):
         c = self.get_config()

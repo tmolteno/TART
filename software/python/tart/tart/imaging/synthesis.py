@@ -181,14 +181,8 @@ class Synthesis_Imaging(object):
 
     for cal_vis in (self.cal_vis_list):
       if self.fixed_zenith:
-        c = cal_vis.get_config()
-        ant_p = np.asarray(c.get_antenna_positions())
-
-        bls = np.asarray(cal_vis.get_baselines())
-        bl_pos = ant_p[bls]
-        uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
-        vis_l = cal_vis.get_all_visibility()
-
+        uu_a, vv_a, ww_a = cal_vis.get_all_uvw()
+        vis_l, bls = cal_vis.get_all_visibility()
       else:
         uu_l = []
         vv_l = []
@@ -285,37 +279,25 @@ class Synthesis_Imaging(object):
     extent = [maxang, -maxang, -maxang, maxang]
     return [ift, extent]
 
+  def get_beam(self, nw = 30, num_bin = 2**7, use_kernel=False):
+    uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
+    ift = np.fft.ifftshift(fft.ifft2(np.fft.ifftshift(np.abs(uv_plane).__gt__(0))))
+    return np.abs(ift)
 
-  def get_image(self, nw = 30, num_bin = 2**7, pax=0, ex_ax=0):
+  def get_image(self, CAL_IFT, CAL_EXTENT):
+    abs_ift = np.abs(CAL_IFT)
+    ift_std = np.std(abs_ift)
+    ift_scaled = abs_ift/ift_std
 
-    ift, extent = self.get_ift(nw = nw, num_bin = num_bin)
-    absift = np.abs(ift)
-
-    if pax!=0:
-      if len(pax)==4:
-        def convert_to_polar(x, y):
-          theta = np.arctan2(x, y)
-          r = np.sqrt(x**2 + y**2)
-          return theta, r
-        maxang = get_max_ang(nw, num_bin)
-        grid_l, grid_m = np.mgrid[-maxang:maxang:num_bin*1j, -maxang:maxang:num_bin*1j]
-        grid_phi, grid_r = convert_to_polar(grid_l,grid_m)
-        idx = np.unravel_index(absift.argmax(), absift.shape)
-        print (grid_phi[idx]*180/np.pi, 90.-grid_r[idx])
-
-        uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=True)
-        beam_ift = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(1-uv_plane.__ne__(0))))
-        pax[0].pcolormesh(grid_phi, grid_r, absift)
-        pax[1].imshow(absift, origin='lower', extent=extent, interpolation='nearest')
-        pax[2].imshow(np.abs(beam_ift), origin='lower', extent=extent, interpolation='nearest')
-        pax[3].imshow(np.abs(uv_plane), origin='lower', extent=[uu_edges[-1], uu_edges[0], vv_edges[0], vv_edges[-1]], interpolation='nearest')
-      else:
-        return pax[1].imshow(absift, origin='lower', extent=extent, interpolation='nearest')
-
-    else:
-      if ex_ax==0:
-        plt.imshow(absift, origin='lower', extent=extent, interpolation='nearest')
-        return ift
-      else:
-        ex_ax.imshow(absift, origin='lower', extent=extent, interpolation='nearest')
-        return ift
+    plt.figure(figsize=(8,6))
+    plt.imshow(ift_scaled, extent=CAL_EXTENT)
+    plt.colorbar()
+    ift_median = np.median(abs_ift)
+    ts = self.cal_vis_list[0].get_timestamp()
+    plt.title( ts.strftime("%d-%m-%y %H:%M:%S") + ' std %1.3e median: %1.3e' % (ift_std, ift_median))
+    plt.grid()
+    plt.xlim(63, -63)
+    plt.ylim(-63, 63)
+    plt.xlabel('East-West')
+    plt.ylabel('North-South')
+    plt.tight_layout()
