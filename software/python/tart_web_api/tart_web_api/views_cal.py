@@ -26,8 +26,6 @@ def set_gain():
   @apiParam {Number[]} body.gain List of channel gains
   @apiParam {Number[]} body.phase_offset List of channel phase offset (rad)
   """
-  g = content['gain']
-  ph = content['phase_offset']
 
   utc_date = datetime.datetime.utcnow()
   content = request.get_json(silent=False)
