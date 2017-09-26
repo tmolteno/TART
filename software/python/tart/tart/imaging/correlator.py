@@ -68,41 +68,41 @@ class Correlator:
         v_imag = van_vleck_correction(v_imag)
     return combine_real_imag(v_real, v_imag)
 
-  def correlate_roll(self, obs, debug=False):
-    v = []
-    baselines = []
-    num_ant = obs.config.get_num_antenna()
-    data = obs.data # use obs.data[i] instead of get_antenna to keep mem usage low
-    means = obs.get_means()
-    cos_str = []
-    sin_str = []
-    for a in data:
-      cos_str.append(a[1:].tostring())
-      sin_str.append(a[:-1].tostring())
-    n = len(data[0][1:])
-    for i in range(0, num_ant):
-      for j in range(i+1, num_ant):
-        if debug:
-          progress = len(baselines)
-          if (progress%10==0):
-            print progress
-        #cos_i = data[i][1:]
-        #cos_j = data[j][1:]
-        #sin_j = data[j][:-1]
-        #v_real =  -means[i]*means[j] + corr_b(cos_i, cos_j, n)
-        #v_imag =  -means[i]*means[j] + corr_b(cos_i, sin_j, n)
-        v_real =  -means[i]*means[j] + corr_b_cpp(cos_str[i], cos_str[j], n)
-        v_imag =  -means[i]*means[j] + corr_b_cpp(cos_str[i], sin_str[j], n)
+  #def correlate_roll(self, obs, debug=False):
+    #v = []
+    #baselines = []
+    #num_ant = obs.config.get_num_antenna()
+    #data = obs.data # use obs.data[i] instead of get_antenna to keep mem usage low
+    #means = obs.get_means()
+    #cos_str = []
+    #sin_str = []
+    #for a in data:
+      #cos_str.append(a[1:].tostring())
+      #sin_str.append(a[:-1].tostring())
+    #n = len(data[0][1:])
+    #for i in range(0, num_ant):
+      #for j in range(i+1, num_ant):
+        #if debug:
+          #progress = len(baselines)
+          #if (progress%10==0):
+            #print progress
+        ##cos_i = data[i][1:]
+        ##cos_j = data[j][1:]
+        ##sin_j = data[j][:-1]
+        ##v_real =  -means[i]*means[j] + corr_b(cos_i, cos_j, n)
+        ##v_imag =  -means[i]*means[j] + corr_b(cos_i, sin_j, n)
+        #v_real =  -means[i]*means[j] + corr_b_cpp(cos_str[i], cos_str[j], n)
+        #v_imag =  -means[i]*means[j] + corr_b_cpp(cos_str[i], sin_str[j], n)
 
-        if self.vv:
-          v_real = van_vleck_correction(v_real)
-          v_imag = van_vleck_correction(v_imag)
-        v_com = combine_real_imag(v_real,v_imag)
-        v.append(v_com)
-        baselines.append([i,j])
-    vis = visibility.Visibility(obs.config, obs.timestamp)
-    vis.set_visibilities(v, baselines)
-    return vis
+        #if self.vv:
+          #v_real = van_vleck_correction(v_real)
+          #v_imag = van_vleck_correction(v_imag)
+        #v_com = combine_real_imag(v_real,v_imag)
+        #v.append(v_com)
+        #baselines.append([i,j])
+    #vis = visibility.Visibility(obs.config, obs.timestamp)
+    #vis.set_visibilities(v, baselines)
+    #return vis
 
 def corr_b(x, y, n):
   #num_not_same = (x ^ y).sum()
@@ -116,57 +116,57 @@ def corr_b_pat(x, y):
   ret = 2*num_same/float(n) -1
   return ret
 
-from scipy import weave
+#from scipy import weave
 
-code = """
-PyObject* res = PyString_FromStringAndSize(NULL, real_size);
+#code = """
+#PyObject* res = PyString_FromStringAndSize(NULL, real_size);
 
-const ssize_t tail = (ssize_t)PyString_AS_STRING(res) % ALIGNMENT;
-const ssize_t head = (ALIGNMENT - tail) % ALIGNMENT;
+#const ssize_t tail = (ssize_t)PyString_AS_STRING(res) % ALIGNMENT;
+#const ssize_t head = (ALIGNMENT - tail) % ALIGNMENT;
 
-memxor((const char*)a, (const char*)b, PyString_AS_STRING(res), head);
+#memxor((const char*)a, (const char*)b, PyString_AS_STRING(res), head);
 
-const __m128i* pa = (__m128i*)((char*)a + head);
-const __m128i* pend = (__m128i*)((char*)a + real_size - tail);
-const __m128i* pb = (__m128i*)((char*)b + head);
-__m128i xmm1, xmm2;
-__m128i* pc = (__m128i*)(PyString_AS_STRING(res) + head);
-while (pa < pend) {
-    xmm1 = _mm_loadu_si128(pa);
-    xmm2 = _mm_loadu_si128(pb);
-    _mm_stream_si128(pc, _mm_xor_si128(xmm1, xmm2));
-    ++pa;
-    ++pb;
-    ++pc;
-}
-memxor((const char*)pa, (const char*)pb, (char*)pc, tail);
-return_val = res;
-Py_DECREF(res);
-"""
+#const __m128i* pa = (__m128i*)((char*)a + head);
+#const __m128i* pend = (__m128i*)((char*)a + real_size - tail);
+#const __m128i* pb = (__m128i*)((char*)b + head);
+#__m128i xmm1, xmm2;
+#__m128i* pc = (__m128i*)(PyString_AS_STRING(res) + head);
+#while (pa < pend) {
+    #xmm1 = _mm_loadu_si128(pa);
+    #xmm2 = _mm_loadu_si128(pb);
+    #_mm_stream_si128(pc, _mm_xor_si128(xmm1, xmm2));
+    #++pa;
+    #++pb;
+    #++pc;
+#}
+#memxor((const char*)pa, (const char*)pb, (char*)pc, tail);
+#return_val = res;
+#Py_DECREF(res);
+#"""
 
-support = """
-#define ALIGNMENT 16
-static void memxor(const char* in1, const char* in2, char* out, ssize_t n) {
-    const char* end = in1 + n;
-    while (in1 < end) {
-       *out = *in1 ^ *in2;
-       ++in1;
-       ++in2;
-       ++out;
-    }
-}
-"""
+#support = """
+##define ALIGNMENT 16
+#static void memxor(const char* in1, const char* in2, char* out, ssize_t n) {
+    #const char* end = in1 + n;
+    #while (in1 < end) {
+       #*out = *in1 ^ *in2;
+       #++in1;
+       #++in2;
+       #++out;
+    #}
+#}
+#"""
 
-def corr_b_cpp(x, y, n):
-  a = np.frombuffer(x, dtype=np.bool)
-  b = np.frombuffer(y, dtype=np.bool)
-  real_size = len(a)
-  out = weave.inline(code, ["a", "b", "real_size"],
-                        headers = ['"emmintrin.h"'],
-                        support_code = support)
-  num_not_same = np.count_nonzero(np.frombuffer(out,dtype=np.bool))
-  ret = 1 - 2*num_not_same/float(n)
-  return ret
+#def corr_b_cpp(x, y, n):
+  #a = np.frombuffer(x, dtype=np.bool)
+  #b = np.frombuffer(y, dtype=np.bool)
+  #real_size = len(a)
+  #out = weave.inline(code, ["a", "b", "real_size"],
+                        #headers = ['"emmintrin.h"'],
+                        #support_code = support)
+  #num_not_same = np.count_nonzero(np.frombuffer(out,dtype=np.bool))
+  #ret = 1 - 2*num_not_same/float(n)
+  #return ret
 
 
 

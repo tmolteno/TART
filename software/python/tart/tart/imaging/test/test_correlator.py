@@ -36,7 +36,7 @@ class TestCorrelator(unittest.TestCase):
     
     cor = Correlator(van_vleck_corr=True)
     vis_a = cor.correlate(o,mode='roll')
-    vis_b = cor.correlate_roll(o)
+    #vis_b = cor.correlate_roll(o)
     vis_c = cor.correlate(o,mode='fftw_hilbert')
     #print vis_a.vis(0,1), vis_b.vis(0,1), vis_c.vis(0,1)
 
@@ -69,22 +69,22 @@ class TestCorrelator(unittest.TestCase):
       obs = observation.Observation(t,c,d)
 
       vis_a = cor.correlate(o,mode='roll')
-      vis_b = cor.correlate_roll(o)
+      #vis_b = cor.correlate_roll(o)
       vis_c = cor.correlate(o,mode='fftw_hilbert')
       vis_d = cor.correlate(o,mode='fftw_hilbert_sign')
       
-      print vis_a.vis(0,1),vis_b.vis(0,1)
+      #print vis_a.vis(0,1),vis_b.vis(0,1)
       print vis_a.vis(0,1),vis_c.vis(0,1)
       print vis_a.vis(0,1),vis_d.vis(0,1)
-      print vis_b.vis(0,1),vis_c.vis(0,1)
-      print vis_b.vis(0,1),vis_d.vis(0,1)
+      #print vis_b.vis(0,1),vis_c.vis(0,1)
+      #print vis_b.vis(0,1),vis_d.vis(0,1)
       print vis_c.vis(0,1),vis_d.vis(0,1)
       
-      self.assertAlmostEqual(vis_a.vis(0,1),vis_b.vis(0,1),4)
+      #self.assertAlmostEqual(vis_a.vis(0,1),vis_b.vis(0,1),4)
       self.assertAlmostEqual(vis_a.vis(0,1),vis_c.vis(0,1),4)
       self.assertAlmostEqual(vis_a.vis(0,1),vis_d.vis(0,1),4)
-      self.assertAlmostEqual(vis_b.vis(0,1),vis_c.vis(0,1),4)
-      self.assertAlmostEqual(vis_b.vis(0,1),vis_d.vis(0,1),4)
+      #self.assertAlmostEqual(vis_b.vis(0,1),vis_c.vis(0,1),4)
+      #self.assertAlmostEqual(vis_b.vis(0,1),vis_d.vis(0,1),4)
       self.assertAlmostEqual(vis_c.vis(0,1),vis_d.vis(0,1),4)
              
 
