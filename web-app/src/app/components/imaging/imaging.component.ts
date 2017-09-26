@@ -176,17 +176,18 @@ export class ImagingComponent {
             return;
         }
         let totalNumBins = Math.pow(2, this.numBins);
+        let numWaves = totalNumBins / 4;
         let imgCanvas = visImaging.gen_image(this.visData, this.antennaPositions,
-            this.calibrationData, this.waves, totalNumBins,this.imagingColour);
+            this.calibrationData, numWaves, totalNumBins,this.imagingColour);
         let ctx = imgCanvas.getContext('2d');
 
         if (this.displayGridCheckbox.nativeElement.checked) {
-            visImaging.overlay_grid(ctx, this.waves, totalNumBins);
+            visImaging.overlay_grid(ctx, numWaves, totalNumBins);
         }
         if (this.displaySatsCheckbox.nativeElement.checked) {
             let showNames = this.displaySatNamesCheckbox.nativeElement.checked?
                 1 : 0;
-            visImaging.overlay_satellites(ctx, this.catalogData, this.waves,
+            visImaging.overlay_satellites(ctx, this.catalogData, numWaves,
                     totalNumBins, showNames);
         }
         let img = new Image();
@@ -217,13 +218,13 @@ export class ImagingComponent {
         }
     }
 
-    onNumWavesChanged(value) {
+    /** onNumWavesChanged(value) {
         if (value !== this.waves) {
             this.waves = value;
             this.blockRefresh = true;
             this.drawImage();
         }
-    }
+    } **/
 
     onRefreshTimerChanged(value) {
         if (value !== this.refreshTime) {
