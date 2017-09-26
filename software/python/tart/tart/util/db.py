@@ -1,5 +1,8 @@
 import sqlite3
-import psycopg2
+try:
+    import psycopg2
+except Exception as e:
+    pass
 
 def db_connect(dbfile=None,\
   conn_parameter="host='<hostname>' dbname=tart2 user=<USER> password='<PASSWORD>'",\
