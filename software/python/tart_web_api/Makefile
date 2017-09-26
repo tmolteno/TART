@@ -1,7 +1,10 @@
-.PHONY: doc
+.PHONY: doc, lint
 
-develop:
+develop: lint
 	sudo python setup.py develop
+
+lint:
+	pylint --load-plugins pylint_flask tart_web_api
 
 doc:
 	pandoc --to=rst  README.md > README.txt

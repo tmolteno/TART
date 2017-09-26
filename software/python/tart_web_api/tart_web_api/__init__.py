@@ -9,9 +9,9 @@ from flask_cors import CORS, cross_origin
 import multiprocessing
 from multiprocessing import Manager
 
-from service import cleanup_observation_cache, cleanup_visibility_cache, TartControl
-from config import init_config
-import database as db
+from tart_web_api.service import cleanup_observation_cache, cleanup_visibility_cache, TartControl
+from tart_web_api.config import init_config
+import tart_web_api.database as db
 
 db.setup_db()
 
@@ -20,8 +20,8 @@ runtime_config = init_config(m)
 runtime_config['sample_delay'] = db.get_sample_delay()
 
 def get_config():
-  global runtime_config
-  return runtime_config
+    global runtime_config
+    return runtime_config
 
 def tart_p():
     tart_control = TartControl(runtime_config)

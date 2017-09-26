@@ -1,10 +1,12 @@
 
-import database as db
+import tart_web_api.database as db
 
 
 import datetime
 import dateutil.parser
-import os, stat, time
+import os
+import stat
+import time
 import traceback
 
 import json
@@ -35,52 +37,54 @@ sim_vis = []
 N_IT = 0
 
 def optimize_phaseNgain(opt_parameters):
-  global msd_vis, sim_vis, N_IT
-  gains, phase_offsets = opt_parameters[:23], opt_parameters[23:]
-  """Set phase offsets in list of calibrated visibility objects. Calculate and return likelihood"""
-  for key in msd_vis.keys():
-    ant_idxs = range(1, 24)
-    for i, g in enumerate(gains):
-      if g<0:
-        gains[i] = -g
-        phase_offsets[i] += np.pi
-    msd_vis[key].set_phase_offset(ant_idxs, phase_offsets)
-    msd_vis[key].set_gain(ant_idxs, gains)
-  ret = likelihood_vis_dicts(msd_vis, sim_vis, debug=False)
-  N_IT += 1
-  if (N_IT%20==0):
-    db.update_calibration_process_state(str(ret))
-    print ret#, phase_offsets, gains
-  return ret
+    """ Set phase offsets in list of calibrated visibility objects.
+        Calculate and return likelihood
+    """
+    global msd_vis, sim_vis, N_IT
+    gains, phase_offsets = opt_parameters[:23], opt_parameters[23:]
+    for key in msd_vis.keys():
+        ant_idxs = range(1, 24)
+        for i, g in enumerate(gains):
+            if g < 0:
+                gains[i] = -g
+                phase_offsets[i] += np.pi
+        msd_vis[key].set_phase_offset(ant_idxs, phase_offsets)
+        msd_vis[key].set_gain(ant_idxs, gains)
+    ret = likelihood_vis_dicts(msd_vis, sim_vis, debug=False)
+    N_IT += 1
+    if N_IT%20 == 0:
+        db.update_calibration_process_state(str(ret))
+        print ret#, phase_offsets, gains
+    return ret
 
 def vis_diff(vis1, vis2, ant_a, ant_b):
-  """ Calculate difference of complex visibilities vis1 and vis2 for baseline ant_a and ant_b"""
-  ret = np.power(np.abs(vis1.get_visibility(ant_a, ant_b)-vis2.get_visibility(ant_a, ant_b)), 2)
-  return ret
+    """ Calculate difference of complex visibilities vis1 and vis2 for baseline ant_a and ant_b"""
+    ret = np.power(np.abs(vis1.get_visibility(ant_a, ant_b)-vis2.get_visibility(ant_a, ant_b)), 2)
+    return ret
 
 def likelihood_vis_dicts(msd_vis, sim_vis, debug=False):
-  """Calculate likelihood from lists of measured and simulated visibilities"""
-  ret = 0.
-  for key in msd_vis.keys():
-    meas_v = msd_vis[key]
-    sim_v = sim_vis[key]
-    bls_meas = meas_v.get_baselines() # flagging based on measured visibilities
-    if debug:
-      print 'Number of baselines contributing: ', len(bls_meas)
-    for bln in bls_meas:
-      [ant_i, ant_j] = bln
-      ret += vis_diff(meas_v, sim_v, ant_i, ant_j)*np.abs(sim_v.get_visibility(ant_i, ant_j))
-  return ret
+    """Calculate likelihood from lists of measured and simulated visibilities"""
+    ret = 0.
+    for key in msd_vis.keys():
+        meas_v = msd_vis[key]
+        sim_v = sim_vis[key]
+        bls_meas = meas_v.get_baselines() # flagging based on measured visibilities
+        if debug:
+            print 'Number of baselines contributing: ', len(bls_meas)
+        for bln in bls_meas:
+            [ant_i, ant_j] = bln
+            ret += vis_diff(meas_v, sim_v, ant_i, ant_j)*np.abs(sim_v.get_visibility(ant_i, ant_j))
+    return ret
 
-def vis_object_from_response(vis,ts, SETTINGS):
-  ret = visibility.Visibility(SETTINGS, ts)
-  v_order = []
-  bl_order = []
-  for v in vis:
-    v_order.append(complex(v['re'],v['im']))
-    bl_order.append([v['i'],v['j']])
-  ret.set_visibilities(v_order, bl_order)
-  return ret
+def vis_object_from_response(vis, ts, SETTINGS):
+    ret = visibility.Visibility(SETTINGS, ts)
+    v_order = []
+    bl_order = []
+    for v in vis:
+        v_order.append(complex(v['re'], v['im']))
+        bl_order.append([v['i'], v['j']])
+    ret.set_visibilities(v_order, bl_order)
+    return ret
 
 
 def calibrate_from_vis(cal_measurements, runtime_config):
@@ -90,7 +94,10 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     #full
 
     SETTINGS = settings.from_file(runtime_config['telescope_config_path'])
-    ANTS = [antennas.Antenna(location.get_loc(SETTINGS), pos) for pos in runtime_config['antenna_positions']]
+    loc = location.get_loc(SETTINGS)
+    
+    ANTS = [antennas.Antenna(loc, pos)
+            for pos in runtime_config['antenna_positions']]
     ANT_MODELS = [antenna_model.GpsPatchAntenna() for i in range(SETTINGS.get_num_antenna())]
     NOISE_LVLS = 0.0 * np.ones(SETTINGS.get_num_antenna())
     RAD = radio.Max2769B(n_samples=2**12, noise_level=NOISE_LVLS)
@@ -102,18 +109,19 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     sim_sky = {}
 
     for m in cal_measurements:
-      timestamp = dateutil.parser.parse(m['data']['timestamp'])
+        timestamp = dateutil.parser.parse(m['data']['timestamp'])
 
-      key = '%f,%f,%s' % (m['el'], m['az'], timestamp)
-      # Generate model visibilities according to specified point source positions
-      sim_sky[key] = skymodel.Skymodel(0, location=location.get_loc(SETTINGS), gps=0, thesun=0, known_cosmic=0)
-      sim_sky[key].add_src(radio_source.ArtificialSource(location.get_loc(SETTINGS), timestamp, m['el'], m['az']))
-      v_sim = get_vis(sim_sky[key], COR, RAD, ANTS, ANT_MODELS, SETTINGS, timestamp, mode=MODE)
-      sim_vis[key] = calibration.CalibratedVisibility(v_sim)
+        key = '%f,%f,%s' % (m['el'], m['az'], timestamp)
+        # Generate model visibilities according to specified point source positions
+        sim_sky[key] = skymodel.Skymodel(0, location=loc,
+                                         gps=0, thesun=0, known_cosmic=0)
+        sim_sky[key].add_src(radio_source.ArtificialSource(loc, timestamp, m['el'], m['az']))
+        v_sim = get_vis(sim_sky[key], COR, RAD, ANTS, ANT_MODELS, SETTINGS, timestamp, mode=MODE)
+        sim_vis[key] = calibration.CalibratedVisibility(v_sim)
 
-      # Construct (un)calibrated visibility objects from received measured visibilities
-      vis = vis_object_from_response(m['data']['vis']['data'], timestamp, SETTINGS)
-      msd_vis[key] = calibration.CalibratedVisibility(vis)
+        # Construct (un)calibrated visibility objects from received measured visibilities
+        vis = vis_object_from_response(m['data']['vis']['data'], timestamp, SETTINGS)
+        msd_vis[key] = calibration.CalibratedVisibility(vis)
 
     # Define initial optimisation paramters
 
@@ -135,7 +143,7 @@ def calibrate_from_vis(cal_measurements, runtime_config):
 def cleanup_observation_cache():
     while True:
         resp = db.get_raw_file_handle()
-        if len(resp)>10:
+        if len(resp) > 10:
             for entry in resp[10:]:
 
                 try:
@@ -156,7 +164,7 @@ def cleanup_observation_cache():
 def cleanup_visibility_cache():
     while True:
         resp = db.get_vis_file_handle()
-        if len(resp)>10:
+        if len(resp) > 10:
             for entry in resp[10:]:
                 try:
                     db.remove_vis_file_handle_by_Id(entry['Id'])
@@ -178,12 +186,11 @@ def create_direct_vis_dict(vis):
     vis_dict = {}
     vis_list = []
     for (b, v) in zip(vis.baselines, vis.v):
-        i,j = b
+        i, j = b
         vis_el = {'i': i, 'j': j, 're': v.real, 'im':v.imag}
         vis_list.append(vis_el)
-    vis_dict = {'data':vis_list,'timestamp':vis.timestamp.isoformat()[:-3]+'Z'}
+    vis_dict = {'data':vis_list, 'timestamp':vis.timestamp.isoformat()[:-3]+'Z'}
     return vis_dict
-    
 
 class TartControl():
     ''' High Level TART Interface'''
@@ -210,7 +217,7 @@ class TartControl():
                 db.insert_raw_file_handle(ret['filename'], ret['sha256'])
 
         elif self.state == 'vis':
-            if (self.queue_vis is None):
+            if self.queue_vis is None:
                 self.vis_stream_setup()
             else:
                 ret = self.vis_stream_acquire()
@@ -223,11 +230,11 @@ class TartControl():
             print 'unknown state'
 
     def set_state(self, new_state):
-        if (new_state == self.state):
+        if new_state == self.state:
             return
         else:
             ''' State Transition '''
-            if (self.state == 'vis'):
+            if self.state == 'vis':
                 '''Cleanup vis acquisition queues and processes'''
                 self.vis_stream_finish()
             self.state = new_state
@@ -243,17 +250,18 @@ class TartControl():
     def vis_stream_acquire(self):
         ''' Get all available visibities'''
         ret = {}
-        while self.queue_vis.qsize()>0:
+        while self.queue_vis.qsize() > 0:
             vis, means = self.queue_vis.get()
 
             if vis is not None:
                 print 'updating latest visibilities in runtime dict.'
                 self.config['vis_current'] = create_direct_vis_dict(vis)
                 self.vislist.append(vis)
-                if len(self.vislist)==self.config['vis']['chunksize']:
+                if len(self.vislist) == self.config['vis']['chunksize']:
                     print 'reached chunksize'
                     if self.config['vis']['save']:
-                        fname = self.config['vis']['vis_prefix'] + "_" + vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
+                        fname = self.config['vis']['vis_prefix'] + "_" + 
+                            vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
                         visibility.Visibility_Save(self.vislist, fname)
                         print 'saved ', vis, ' to', fname
                         ret['filename'] = fname
@@ -273,4 +281,3 @@ class TartControl():
 
     def vis_stream_reconfigure(self):
         self.vis_stream_finish()
-
