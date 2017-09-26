@@ -1,6 +1,6 @@
 {
     "/api/**": {
-        "target": "http://tart2-raspberry/dev",
+        "target": "http://tart2-pear",
         "secure": false
     }
 }
