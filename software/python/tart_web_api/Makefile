@@ -1,3 +1,10 @@
+#
+# Makefile for Creating and Installing package
+# Tim Molteno tim@elec.ac.nz
+#
+# The lint target requires pylint, and python-pylint-flask
+# to be installed.
+#
 .PHONY: doc, lint
 
 develop: lint
