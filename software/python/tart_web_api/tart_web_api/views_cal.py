@@ -1,14 +1,15 @@
+import datetime
+import json
+import multiprocessing
+
 from flask import Flask, request
 from flask import render_template, jsonify, send_file
 from flask_jwt_extended import jwt_required
 
 from tart_web_api import app, get_config
-import database as db
-
-import datetime
-import json
 from tart_web_api import service
-import multiprocessing
+import tart_web_api.database as db
+
 
 minimize_process = None
 
@@ -26,7 +27,6 @@ def set_gain():
     @apiParam {Number[]} body.gain List of channel gains
     @apiParam {Number[]} body.phase_offset List of channel phase offset (rad)
     """
-    
     utc_date = datetime.datetime.utcnow()
     content = request.get_json(silent=False)
     g = content['gain']
@@ -44,15 +44,14 @@ def get_gain():
     @apiSuccess {Object}  body
     @apiSuccess {Number[]} body.gain List of channel gains
     @apiSuccess {Number[]} body.phase_offset List of channel phase offset (rad)
-    
+
     @apiSampleRequest /calibration/gain
     """
     rows_dict =  db.get_gain()
     ret_gain = [rows_dict[i][2] for i in range(24)]
     ret_ph = [rows_dict[i][3] for i in range(24)]
-    ret_dict = {"gain": ret_gain,\
-        "phase_offset": ret_ph
-    }
+    ret_dict = {"gain": ret_gain,
+                "phase_offset": ret_ph}
     return jsonify(ret_dict)
 
 @jwt_required
@@ -75,7 +74,7 @@ def post_calibration_from_vis():
     """
     state = db.get_calibration_process_state()
     runtime_config = get_config()
-    if state in ['idle','preparing']:
+    if state in ['idle', 'preparing']:
         db.update_calibration_process_state('preparing')
         cal_measurements = request.get_json(silent=False)
         t = datetime.datetime.utcnow()

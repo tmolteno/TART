@@ -1,20 +1,18 @@
 
-import tart_web_api.database as db
-
-
 import datetime
 import dateutil.parser
 import os
 import stat
 import time
 import traceback
-
 import json
 import requests
 
 import numpy as np
 from numpy import concatenate as cc
 from scipy.optimize import minimize
+
+import tart_web_api.database as db
 
 from tart_hardware_interface.tartspi import TartSPI
 from tart_hardware_interface.highlevel_modes_api import *
@@ -115,7 +113,7 @@ def calibrate_from_vis(cal_measurements, runtime_config):
         # Generate model visibilities according to specified point source positions
         sim_sky[key] = skymodel.Skymodel(0, location=loc,
                                          gps=0, thesun=0, known_cosmic=0)
-        sim_sky[key].add_src(radio_source.ArtificialSource(loc, timestamp, m['el'], m['az']))
+        sim_sky[key].add_src(radio_source.ArtificialSource(loc, timestamp, r=100.0, el=m['el'], az=m['az']))
         v_sim = get_vis(sim_sky[key], COR, RAD, ANTS, ANT_MODELS, SETTINGS, timestamp, mode=MODE)
         sim_vis[key] = calibration.CalibratedVisibility(v_sim)
 
@@ -260,10 +258,12 @@ class TartControl():
                 if len(self.vislist) == self.config['vis']['chunksize']:
                     print 'reached chunksize'
                     if self.config['vis']['save']:
-                        fname = self.config['vis']['vis_prefix'] + "_" + 
-                            vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
+                        fname = "{}_{}.vis".format(self.config['vis']['vis_prefix'], 
+                                                   vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
+                        #fname = self.config['vis']['vis_prefix'] + "_" + 
+                            #vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
                         visibility.Visibility_Save(self.vislist, fname)
-                        print 'saved ', vis, ' to', fname
+                        print("saved {} to {}".format(vis, fname))
                         ret['filename'] = fname
                         ret['sha256'] = sha256_checksum(fname)
                     self.vislist = []

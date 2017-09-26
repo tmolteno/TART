@@ -56,7 +56,7 @@ def set_raw_num_samples_exp(exp):
 
     """
     runtime_config = get_config()
-    if ((exp>=16) & (exp<=24)):
+    if (exp >= 16) and (exp <= 24):
         r = runtime_config['raw']
         r['N_samples_exp'] = exp
         runtime_config['raw'] = r
@@ -76,7 +76,7 @@ def set_vis_num_samples_exp(exp):
 
     """
     runtime_config = get_config()
-    if ((exp>=16) & (exp<=24)):
+    if (exp >= 16) and (exp <= 24):
         r = runtime_config['vis']
         r['N_samples_exp'] = exp
         runtime_config['vis'] = r

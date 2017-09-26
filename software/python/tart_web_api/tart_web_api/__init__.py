@@ -1,13 +1,12 @@
 # Maximilian Scheel (c) 2017
 # max@max.ac.nz
+import multiprocessing
 
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager
 
 from flask_cors import CORS, cross_origin
 
-import multiprocessing
-from multiprocessing import Manager
 
 from tart_web_api.service import cleanup_observation_cache, cleanup_visibility_cache, TartControl
 from tart_web_api.config import init_config
@@ -15,7 +14,7 @@ import tart_web_api.database as db
 
 db.setup_db()
 
-m = Manager()
+m = multiprocessing.Manager()
 runtime_config = init_config(m)
 runtime_config['sample_delay'] = db.get_sample_delay()
 

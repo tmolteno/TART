@@ -1,11 +1,11 @@
 from flask import Flask
 from flask import render_template, jsonify, send_file
-#from flask_jwt import jwt_required, current_identity
 from flask_jwt_extended import JWTManager, jwt_required
 
-from tart_web_api import app, get_config
 import numpy as np
-import database as db
+
+from tart_web_api import app, get_config
+import tart_web_api.database as db
 
 @app.route('/status/fpga', methods=['GET',])
 def get_status_fpga():
@@ -70,11 +70,11 @@ def get_status_fpga():
     """
     runtime_config = get_config()
     if runtime_config.has_key("status"):
-      ret = runtime_config["status"]
-      ret['hostname'] = runtime_config['hostname']
-      return jsonify(ret)
+        ret = runtime_config["status"]
+        ret['hostname'] = runtime_config['hostname']
+        return jsonify(ret)
     else:
-      return jsonify({})
+        return jsonify({})
 
 @app.route('/status/channel', methods=['GET',])
 def get_status_channel_all():
@@ -88,15 +88,15 @@ def get_status_channel_all():
 
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
-      channel_list = db.get_manual_channel_status()
-      ret = runtime_config["channels"]
-      for ch in ret:
-        ch['enabled'] = channel_list[ch['id']]['enabled']
-        ch['phase']['stability'] = int(ch['phase']['stability']*100)/100.
-        ch['radio_mean']['mean'] = int(ch['radio_mean']['mean']*10000)/10000.
-      return jsonify(ret)
+        channel_list = db.get_manual_channel_status()
+        ret = runtime_config["channels"]
+        for ch in ret:
+            ch['enabled'] = channel_list[ch['id']]['enabled']
+            ch['phase']['stability'] = int(ch['phase']['stability']*100)/100.
+            ch['radio_mean']['mean'] = int(ch['radio_mean']['mean']*10000)/10000.
+        return jsonify(ret)
     else:
-      return jsonify({})
+        return jsonify({})
 
 @app.route('/status/channel/<int:channel_idx>', methods=['GET',])
 def get_status_channel_i(channel_idx):
@@ -131,15 +131,15 @@ def get_status_channel_i(channel_idx):
     """
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
-      if ((channel_idx<24) and (channel_idx>-1)):
-          channel_list = db.get_manual_channel_status()
-          ret = runtime_config["channels"][channel_idx]
-          ret['enabled'] = channel_list[channel_idx]['enabled']
-          return jsonify(ret)
-      else:
-        return jsonify({})
+        if ((channel_idx<24) and (channel_idx>-1)):
+            channel_list = db.get_manual_channel_status()
+            ret = runtime_config["channels"][channel_idx]
+            ret['enabled'] = channel_list[channel_idx]['enabled']
+            return jsonify(ret)
+        else:
+            return jsonify({})
     else:
-      return jsonify({})
+        return jsonify({})
 
 
 @app.route('/mode/current', methods=['GET',])
@@ -192,8 +192,8 @@ def set_mode(mode):
 
     runtime_config = get_config()
     if mode in runtime_config['modes_available']:
-      runtime_config['mode'] = mode
-      return jsonify({'mode':runtime_config['mode']})
+        runtime_config['mode'] = mode
+        return jsonify({'mode':runtime_config['mode']})
     return jsonify({})
 
 
@@ -212,8 +212,8 @@ def set_loop_mode(loop_mode):
     """
     runtime_config = get_config()
     if loop_mode in runtime_config['loop_mode_available']:
-      runtime_config['loop_mode'] = loop_mode
-      return jsonify({'loop_mode':runtime_config['loop_mode']})
+        runtime_config['loop_mode'] = loop_mode
+        return jsonify({'loop_mode':runtime_config['loop_mode']})
 
 
 @app.route('/loop/<int:loop_n>', methods=['POST',])
@@ -245,16 +245,16 @@ def get_latest_vis():
     runtime_config = get_config()
     ret = []
     if runtime_config.has_key('vis_current'):
-      ret = runtime_config['vis_current']
-      channel_list = db.get_manual_channel_status()
-      active_channels = np.zeros(len(channel_list))
-      for ch in channel_list:
-        active_channels[ch['channel_id']] = ch['enabled']
-      active_vis = []
-      for v in ret['data']:
-          if active_channels[v['i']] and active_channels[v['j']]:
-              active_vis.append(v)
-      ret['data'] = active_vis
+        ret = runtime_config['vis_current']
+        channel_list = db.get_manual_channel_status()
+        active_channels = np.zeros(len(channel_list))
+        for ch in channel_list:
+            active_channels[ch['channel_id']] = ch['enabled']
+        active_vis = []
+        for v in ret['data']:
+            if active_channels[v['i']] and active_channels[v['j']]:
+                active_vis.append(v)
+        ret['data'] = active_vis
     return jsonify(ret)
 
 @app.route('/imaging/antenna_positions')
