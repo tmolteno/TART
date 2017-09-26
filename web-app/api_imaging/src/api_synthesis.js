@@ -205,45 +205,61 @@ function get_bin_width(nw, num_bin) {
   return num_bin/(2.*max_ang)
 }
 
-function get_R_px(nw, num_bin){
-  var R_deg = 60;
-  var R_px = R_deg * get_bin_width(nw, num_bin);
-  return Math.floor(R_px);
-}
 
-function proj_ang_2_px(ang_deg, nw, num_bin){
-  var R_px = get_R_px(nw, num_bin);
-  var ang_px =  ang_2_px(ang_deg, nw, num_bin);
-  var dpx = R_px * Math.atan(ang_px/R_px);
-  return Math.floor(dpx);
-}
-
+/** Convert angle to pixels **/
 function ang_2_px(ang_deg, nw, num_bin){
   var max_ang = get_max_ang(nw, num_bin);
   var dpx = ang_deg * get_bin_width(nw, num_bin);
   return Math.floor(dpx);
 }
 
+/** Convert degrees to radians **/
+function deg2rad(deg) {
+    return deg*Math.PI/180;
+}
+
+/** Get the x-component in the image coordinates **/
+function get_l(el_rad, az_rad) {
+    return -Math.sin(az_rad)*Math.cos(el_rad);
+}
+
+/** Get the y-component in the image coordinates **/
+function get_m(el_rad, az_rad) {
+    return  Math.cos(az_rad)*Math.cos(el_rad);
+}
 
 function horizontal_2_px(el, az, nw, num_bin){
-  var az_rad = az*Math.PI/180;
-  var el_rad = el*Math.PI/180;
-    
-  var l = -Math.sin(az_rad)*Math.cos(el_rad)
-  var m =  Math.cos(az_rad)*Math.cos(el_rad)
-  var n2 = num_bin/2
-  var x_px = Math.round(self.l * n2 + n2)
-  var y_px = Math.round(self.m * n2 + n2)
+    var az_rad = deg2rad(az);
+    var el_rad = deg2rad(el);
 
-  var max_ang = get_max_ang(nw, num_bin);
-  var r_deg = (90-el);
-  var dx = proj_ang_2_px(r_deg, nw, num_bin) * Math.sin(az_rad);
-  var dy = proj_ang_2_px(r_deg, nw, num_bin) * Math.cos(az_rad);
-  var x = num_bin/2 + dx;
-  var y = num_bin/2 - dy;
-  console.log(dx,dy, x, y, x_px, y_px);
-  return {x:x, y:y};
+    var l = get_l(el_rad, az_rad);
+    var m = get_m(el_rad, az_rad);
+
+    var n2 = num_bin/2;
+    var x_px = Math.round(n2 - l * n2);
+    var y_px = Math.round(n2 - m * n2);
+
+    return {x:x_px, y:y_px};
 }
+
+
+
+function proj_ang_2_px(ang_deg, nw, num_bin){
+    var az_rad = deg2rad(0.0);
+    var el_rad = deg2rad(90.0 - ang_deg);
+
+    var l = get_l(el_rad, az_rad);
+    var m = get_m(el_rad, az_rad);
+
+    var n2 = num_bin/2;
+    var dx = (l * n2);
+    var dy = (m * n2);
+
+    var r_px = Math.sqrt(dx*dx + dy*dy);
+
+    return r_px
+}
+
 
 function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
   var pos = horizontal_2_px(el, az, nw, num_bin)
