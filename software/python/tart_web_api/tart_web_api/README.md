@@ -2,7 +2,6 @@
 ```
 sudo easy_install --upgrade pip
 sudo pip install Flask
-sudo pip install Flask-JWT
 sudo pip install Flask-jwt-extended
 sudo pip install -U flask-cors
 sudo pip install flask-script
