@@ -226,16 +226,22 @@ function ang_2_px(ang_deg, nw, num_bin){
 
 
 function horizontal_2_px(el, az, nw, num_bin){
+  var az_rad = az*Math.PI/180;
+  var el_rad = el*Math.PI/180;
+    
+  var l = -Math.sin(az_rad)*Math.cos(el_rad)
+  var m =  Math.cos(az_rad)*Math.cos(el_rad)
+  var n2 = num_bin/2
+  var x_px = Math.round(self.l * n2 + n2)
+  var y_px = Math.round(self.m * n2 + n2)
+
   var max_ang = get_max_ang(nw, num_bin);
   var r_deg = (90-el);
-  var az_rad = az*Math.PI/180;
   var dx = proj_ang_2_px(r_deg, nw, num_bin) * Math.sin(az_rad);
   var dy = proj_ang_2_px(r_deg, nw, num_bin) * Math.cos(az_rad);
   var x = num_bin/2 + dx;
   var y = num_bin/2 - dy;
-  console.log(dx,dy, x, y);
-//   -num_bin/2
-  // y is from bottom up. hence y = num_bin-py
+  console.log(dx,dy, x, y, x_px, y_px);
   return {x:x, y:y};
 }
 
