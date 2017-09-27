@@ -117,5 +117,5 @@ def set_calibration_antenna_positions():
     utc_date = datetime.datetime.utcnow()
     content = request.get_json(silent=False)
     runtime_config = get_config()
-    runtime_config['antenna_positions'] = content
+    runtime_config['antenna_positions'] = content['antenna_positions']
     return jsonify({})

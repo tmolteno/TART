@@ -131,7 +131,7 @@ def get_status_channel_i(channel_idx):
     """
     runtime_config = get_config()
     if runtime_config.has_key("channels"):
-        if ((channel_idx<24) and (channel_idx>-1)):
+        if (channel_idx < 24) and (channel_idx > -1):
             channel_list = db.get_manual_channel_status()
             ret = runtime_config["channels"][channel_idx]
             ret['enabled'] = channel_list[channel_idx]['enabled']
@@ -316,7 +316,7 @@ def get_info():
     ret['sampling_frequency'] = t_c['sampling_frequency']
     ret['bandwidth'] = t_c['bandwidth']
     ret['num_antenna'] = t_c['num_antenna']
-    ret['location'] = {'lon':t_c['lon'] , 'lat':t_c['lat'], 'alt':t_c['alt']}
+    ret['location'] = {'lon':t_c['lon'], 'lat':t_c['lat'], 'alt':t_c['alt']}
     return jsonify({'info':ret})
 
 
