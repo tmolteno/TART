@@ -272,7 +272,7 @@ function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
     ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
     ctx.fillStyle = 'rgba(255, 255, 0, 0.125)';
     ctx.arc(pos.x, pos.y, r_dot, 0, 2 * Math.PI);
-    ctx.fill()
+    //ctx.fill()
     ctx.stroke();
     var show_name = show_name !== undefined ? show_name : 1;
     if (show_name){
@@ -299,7 +299,8 @@ function draw_circ(ctx, ang, nw, num_bin) {
 function overlay_grid(ctx, nw, num_bin){
     setFont(ctx, num_bin);
     ctx.beginPath();
-    ctx.lineWidth = 2;
+    ctx.lineWidth = Math.ceil(num_bin/500);
+    ctx.imageSmoothingEnabled = true;
     ctx.moveTo(num_bin/2, 0);
     ctx.lineTo(num_bin/2, num_bin);
     ctx.moveTo(0,num_bin/2);
@@ -325,6 +326,7 @@ function overlay_grid(ctx, nw, num_bin){
 
 function overlay_satellites(ctx, sat_list, nw, num_bin, show_name){
     setFont(ctx, num_bin);
+    ctx.imageSmoothingEnabled = true;
     for (i in sat_list){
         var s = sat_list[i];
         draw_src(ctx, s.el, s.az, s.name, nw, num_bin, show_name);

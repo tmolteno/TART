@@ -36,16 +36,10 @@ export class ImagingComponent {
     canvasSizeModifierPortrait: number = 0.8;
     // number of bins picker settings
     numBins: number = 9;
-    minNumBins: number = 5;
-    maxNumBins: number = 10;
+    minNumBins: number = 7;
+    maxNumBins: number = 11;
     numBinsStep: number = 1;
     numBinsLabel: string = "Number of bins (2**n)";
-    // number of waves settings
-    waves: number = 100;
-    minWaves: number = 10;
-    maxWaves: number = 120;
-    wavesStep: number = 5;
-    wavesLabel: string = "UV-Plane Extent [wavelengths]";
     // refresh time settings
     refreshTime: number = 15;
     minRefreshTime: number = 1;
@@ -218,14 +212,6 @@ export class ImagingComponent {
         }
     }
 
-    /** onNumWavesChanged(value) {
-        if (value !== this.waves) {
-            this.waves = value;
-            this.blockRefresh = true;
-            this.drawImage();
-        }
-    } **/
-
     onRefreshTimerChanged(value) {
         if (value !== this.refreshTime) {
             this.timerSubscription.unsubscribe();
@@ -291,7 +277,7 @@ export class ImagingComponent {
     generateImageFilename(timestamp: string) {
         let gmtDateTime = moment.utc(timestamp);
         let localDateTime = gmtDateTime.local().format("YYYY_MM_DD_HH_mm_ss");
-        return `radio_image_${localDateTime}`;
+        return `radio_image_${localDateTime}.png`;
     }
 
     onResize(event) {
