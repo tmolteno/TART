@@ -34,6 +34,29 @@ def set_gain():
     db.insert_gain(utc_date, g, ph)
     return jsonify({})
 
+
+
+@jwt_required
+@app.route('/calibration/antenna_positions', methods=['POST',])
+def set_calibration_antenna_positions():
+    """
+    @api {POST} /calibration/antenna_positions Set antenna positions .
+    @apiName set_calibration_antenna_positions
+    @apiGroup Calibration
+
+    @apiHeader (Authorization) {String} Authorization JWT authorization value.
+
+    @apiParam {Object}   body
+    @apiParam {Object[]} body.antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
+    """
+    utc_date = datetime.datetime.utcnow()
+    content = request.get_json(silent=False)
+    runtime_config = get_config()
+    print(content)
+    runtime_config['antenna_positions'] = content
+    return jsonify({})
+
+
 @app.route('/calibration/gain', methods=['GET',])
 def get_gain():
     """
@@ -100,23 +123,3 @@ def get_calibrate_status():
     state = db.get_calibration_process_state()
     return jsonify({'status':state})
 
-
-@jwt_required
-@app.route('/calibration/antenna_positions', methods=['POST',])
-def set_calibration_antenna_positions():
-    """
-    @api {POST} /calibration/antenna_positions Set antenna positions .
-    @apiName set_calibration_antenna_positions
-    @apiGroup Calibration
-
-    @apiHeader (Authorization) {String} Authorization JWT authorization value.
-
-    @apiParam {Object}   body
-    @apiParam {Object[]} body.antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
-    """
-    utc_date = datetime.datetime.utcnow()
-    content = request.get_json(silent=False)
-    runtime_config = get_config()
-    print(content)
-    runtime_config['antenna_positions'] = content
-    return jsonify({})
