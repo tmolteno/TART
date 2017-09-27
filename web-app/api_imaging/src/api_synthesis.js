@@ -280,7 +280,8 @@ function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
         ctx.textBaseline = 'middle';
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.fillText(label, pos.x, pos.y+2*r_dot);
+        var shortLabel = (label.split('(')[0]).trim();
+        ctx.fillText(shortLabel, pos.x, pos.y+2*r_dot);
     }
 }
 
