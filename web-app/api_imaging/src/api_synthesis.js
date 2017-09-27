@@ -260,67 +260,74 @@ function proj_ang_2_px(ang_deg, nw, num_bin){
     return r_px
 }
 
+function setFont(ctx, num_bin) {
+    var pix = Math.round(num_bin / 44);
+    ctx.font = '' + pix + 'px sans';
+}
 
 function draw_src(ctx, el, az, label, nw, num_bin, show_name) {
-  var pos = horizontal_2_px(el, az, nw, num_bin)
-  var r_dot = ang_2_px(1.5, nw, num_bin);
-  ctx.beginPath();
-  ctx.fillStyle = 'white';
-  ctx.arc(pos.x, pos.y, r_dot, 0, 2 * Math.PI);
-  ctx.fill()
-  ctx.stroke();
-  var show_name = show_name !== undefined ? show_name : 1;
-  if (show_name){
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'Bold 14px sans';
-    ctx.fillText(label, pos.x, pos.y+2*r_dot);
-  }
+    var pos = horizontal_2_px(el, az, nw, num_bin)
+    var r_dot = ang_2_px(2.0, nw, num_bin);
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(255, 255, 0, 0.125)';
+    ctx.arc(pos.x, pos.y, r_dot, 0, 2 * Math.PI);
+    ctx.fill()
+    ctx.stroke();
+    var show_name = show_name !== undefined ? show_name : 1;
+    if (show_name){
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillText(label, pos.x, pos.y+2*r_dot);
+    }
 }
 
 
 
 function draw_circ(ctx, ang, nw, num_bin) {
-  var r = proj_ang_2_px(ang, nw, num_bin);
-  var x_0 = num_bin/2. //+ proj_ang_2_px(0, nw, num_bin);
-  var y_0 = num_bin/2. //- proj_ang_2_px(0, nw, num_bin);
-  ctx.beginPath();
-  ctx.arc(x_0, y_0, r, 0, 2 * Math.PI);
-  ctx.stroke();
+    var r = proj_ang_2_px(ang, nw, num_bin);
+    var x_0 = num_bin/2. //+ proj_ang_2_px(0, nw, num_bin);
+    var y_0 = num_bin/2. //- proj_ang_2_px(0, nw, num_bin);
+    ctx.beginPath();
+    ctx.arc(x_0, y_0, r, 0, 2 * Math.PI);
+    ctx.stroke();
 }
 
 function overlay_grid(ctx, nw, num_bin){
-  ctx.beginPath();
-  ctx.lineWidth = 2;
-  ctx.moveTo(num_bin/2, 0);
-  ctx.lineTo(num_bin/2, num_bin);
-  ctx.moveTo(0,num_bin/2);
-  ctx.lineTo(num_bin, num_bin/2);
-  ctx.stroke();
-  var const_el = [80,70,60,50,40,30,20,10,0];
-  for (i=0; i< const_el.length;i++){
-    draw_circ(ctx, 90-const_el[i],nw,num_bin)
-  }
-  ctx.font = 'Bold 14px sans';
-  var pos_n = horizontal_2_px(0  , 0, nw, num_bin)
-  var pos_e = horizontal_2_px(0 , 90, nw, num_bin)
-  var pos_s = horizontal_2_px(0, 180, nw, num_bin)
-  var pos_w = horizontal_2_px(0, 270, nw, num_bin)
-  ctx.fillStyle = 'white';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('N', pos_n.x, pos_n.y);
-  ctx.fillText('E', pos_e.x, pos_e.y);
-  ctx.fillText('S', pos_s.x, pos_s.y);
-  ctx.fillText('W', pos_w.x, pos_w.y);
+    setFont(ctx, num_bin);
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.moveTo(num_bin/2, 0);
+    ctx.lineTo(num_bin/2, num_bin);
+    ctx.moveTo(0,num_bin/2);
+    ctx.lineTo(num_bin, num_bin/2);
+    ctx.stroke();
+    var const_el = [80,70,60,50,40,30,20,10,0];
+    for (i=0; i< const_el.length;i++){
+        draw_circ(ctx, 90-const_el[i],nw,num_bin)
+    }
+    var pos_n = horizontal_2_px(80  , 0, nw, num_bin)
+    var pos_e = horizontal_2_px(80 , 90, nw, num_bin)
+    var pos_s = horizontal_2_px(80, 180, nw, num_bin)
+    var pos_w = horizontal_2_px(80, 270, nw, num_bin)
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('N', pos_n.x, pos_n.y);
+    ctx.fillText('E', pos_e.x, pos_e.y);
+    ctx.fillText('S', pos_s.x, pos_s.y);
+    ctx.fillText('W', pos_w.x, pos_w.y);
 }
 
 
 function overlay_satellites(ctx, sat_list, nw, num_bin, show_name){
-  for (i in sat_list){
-    var s = sat_list[i];
-    draw_src(ctx, s.el, s.az, s.name, nw, num_bin, show_name);
-  }
+    setFont(ctx, num_bin);
+    for (i in sat_list){
+        var s = sat_list[i];
+        draw_src(ctx, s.el, s.az, s.name, nw, num_bin, show_name);
+    }
 }
 
 
