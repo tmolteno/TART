@@ -1,3 +1,4 @@
+$fn = 91;
 
 module tower(height=300)
 {
@@ -18,8 +19,8 @@ module tower(height=300)
 	color("lightblue") cylinder(h=height,r=45); 				// pluming pipe
    color("LightSkyBlue") pluming_fitting();						// pluming fitting
 	color("LightSkyBlue") translate([0,0, height])cylinder(h=capheight,r=46); // cap
-	color("lightgrey") translate([0,0, height+capheight])cylinder(h=1,r=75); // reflector
-	color("Gray") translate([0,0, height+capheight]) gps_antenna();
+	color("gainsboro") translate([0,0, height+capheight])cylinder(h=1,r=75); // reflector
+	color("dimgrey") translate([0,0, height+capheight]) gps_antenna();
 }
 
 
@@ -72,7 +73,7 @@ module tile(squaresize = 1000, framewidth = 25, transport=false){
 }
 
 module tile_c(){
-	translate([-500,-500]) tile();
+	translate([-500,-500]) tile(transport=false);
 }
 translate([1000,0,0])  rotate([0,0,0]) tile_c();
 translate([-1000,0,0]) rotate([0,0,330]) tile_c();
