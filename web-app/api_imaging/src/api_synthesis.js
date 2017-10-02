@@ -208,7 +208,6 @@ function get_bin_width(nw, num_bin) {
 
 /** Convert angle to pixels **/
 function ang_2_px(ang_deg, nw, num_bin){
-  var max_ang = get_max_ang(nw, num_bin);
   var dpx = ang_deg * get_bin_width(nw, num_bin);
   return Math.floor(dpx);
 }
