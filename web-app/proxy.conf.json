@@ -1,6 +1,6 @@
 {
     "/api/**": {
-        "target": "http://tart2-pear",
+        "target": "https://tart.elec.ac.nz/signal",
         "secure": false
     }
 }
