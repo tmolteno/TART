@@ -192,13 +192,6 @@ function get_max_ang(nw, num_bin){
   return max_ang;
 }
 
-// function ang_2_pos(ang_deg, nw, num_bin) {
-//   var max_ang = get_max_ang(nw, num_bin);
-//   //   -max_ang  0
-//   //   0         num_bin/2
-//   //   max_ang   num_bin
-//   return Math.floor((ang_deg + max_ang)/(2*max_ang) * num_bin)
-// }
 
 function get_bin_width(nw, num_bin) {
   var max_ang = get_max_ang(nw, num_bin);
