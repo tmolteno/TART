@@ -22,7 +22,7 @@ def setup_db():
     c.execute("CREATE TABLE IF NOT EXISTS vis_cache_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
     c.execute("CREATE TABLE IF NOT EXISTS calibration_process (Id INTEGER PRIMARY KEY, date timestamp, state TEXT)")
     c.execute("CREATE TABLE IF NOT EXISTS sample_delay (date timestamp, delay REAL)")
-    c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL, flagged BOOLEAN)")
+    c.execute("CREATE TABLE IF NOT EXISTS calibration (date timestamp, antenna INTEGER, g_abs REAL, g_phase REAL)")
     c.execute("CREATE TABLE IF NOT EXISTS channels (channel_id INTEGER, enabled BOOLEAN)")
     c.execute('SELECT * FROM channels;')
     con.commit()
@@ -36,6 +36,14 @@ def setup_db():
         c.execute("INSERT INTO calibration_process(date, state) values (?, ?)", 
                   (datetime.datetime.utcnow(), 'idle'))
     con.commit()
+    
+    c.execute('SELECT * FROM calibration;')
+    con.commit()
+    if len(c.fetchall()) == 0:
+        utc_date = datetime.datetime.utcnow()
+        g = [1,]*24
+        ph = [0,]*24
+        insert_gain(utc_date, g, ph)
     con.close()
 
 def get_manual_channel_status():
@@ -74,8 +82,8 @@ def insert_sample_delay(timestamp, sample_delay):
 def insert_gain(utc_date, g, ph):
     con, c = connect_to_db()
     for ant_i in range(len(g)):
-        c.execute("INSERT INTO calibration VALUES (?,?,?,?,?)", 
-                  (utc_date, ant_i, g[ant_i], ph[ant_i], 0))
+        c.execute("INSERT INTO calibration VALUES (?,?,?,?)", 
+                  (utc_date, ant_i, g[ant_i], ph[ant_i]))
     con.commit()
 
 def get_gain():
