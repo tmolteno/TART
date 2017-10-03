@@ -5,7 +5,7 @@ def connect_to_db():
     con = None
     c = None
     try:
-        dbfile = '24_ant_setup/gains.db'
+        dbfile = 'tart_web_api_database.db'
         con = sqlite3.connect(dbfile)
         c = con.cursor()
     except Exception as e:

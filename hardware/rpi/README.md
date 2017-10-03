@@ -44,7 +44,7 @@ When done boot up raspberry pi.
     sudo reboot
 ```
 
-## Update to latest firmware
+## Update to latest software
 ```
     sudo apt-get update
     sudo apt-get dist-upgrade
@@ -68,12 +68,13 @@ When done boot up raspberry pi.
 ```
    sudo pip install tart tart_hardware_interface tart_web_api
 ```
+## (Optional) Clone Github TART project repository
 
-## (Optional) Clone Github TART project repository for development
 ```
+    cd ~/
+    mkdir git
+    cd ~/git
     git clone https://github.com/tmolteno/TART.git
-    cd TART/software/python
-    sudo python setup.py develop
 ```
 
 ### Install NGINX to serve web frontend
@@ -81,7 +82,7 @@ When done boot up raspberry pi.
     sudo aptitude install nginx
 ```
 
-### Configure NGINX
+### Configure NGINX (e.g.: for an API endpoint called 'lab')
 Edit /etc/nginx/nginx.conf
 ```
 http {
@@ -115,28 +116,12 @@ Edit /etc/nginx/sites-available/default
 	...
 ```
 
-### (Optional for developer) Install SPI driver communication with FPGA
-```
-    sudo easy_install --upgrade pip
-    cd ~/git/TART/software/python/tart_hardware_interface
-    sudo python setup.py develop
-```
-
-### (Optional for developer) Install telescope API and APIDOC
-```
-    cd ~/git/TART/software/python/tart_web_api/
-    sudo python setup.py develop
-    cd tart_web_api
-    make  # requires apidoc to be installed
-```
-
 
 #### Run telescope API
+From within TART repo ~/git/TART/hardware/rpi:
 ```
-    export FLASK_APP=tart_web_api
-    flask run -h 0.0.0.0 -p 5000
+    make
 ```
-
 
 
 # Working Remotely with the TART
@@ -197,4 +182,28 @@ the following commands would connect back to the TART (wherever it was in the wo
 ```
 ssh -p 3022 pi@localhost
 ```
+
+
+### (Optional for developer) Install tart software package
+```
+    cd ~/git/TART/software/python/tart
+    sudo python setup.py develop
+```
+
+
+### (Optional for developer) Install SPI driver communication with FPGA
+```
+    sudo easy_install --upgrade pip
+    cd ~/git/TART/software/python/tart_hardware_interface
+    sudo python setup.py develop
+```
+
+### (Optional for developer) Install telescope API and APIDOC
+```
+    cd ~/git/TART/software/python/tart_web_api/
+    sudo python setup.py develop
+    cd tart_web_api
+    make  # requires apidoc to be installed
+```
+
 
