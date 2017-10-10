@@ -4,7 +4,7 @@ develop: doc
 	sudo python setup.py develop
 
 lint:
-	pylint tart_tools
+	pylint --extension-pkg-whitelist=numpy --ignored-modules=numpy --extension-pkg-whitelist=astropy tart_tools
 
 doc:
 	pandoc --to=rst  README.md > README.txt

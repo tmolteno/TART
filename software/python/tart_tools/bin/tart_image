@@ -29,7 +29,9 @@ if __name__ == '__main__':
     PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
     PARSER.add_argument('--show', action="store_true", help="show instead of save.")
     PARSER.add_argument('--healpix', action="store_true", help="Use healpix to view.")
-    PARSER.add_argument('--uvfits', action="store_true", help="Use diffmap to generate a CLEAN image (requires extenal difmap executable).")
+    PARSER.add_argument('--difmap', action="store_true", help="Use difmap to generate a CLEAN image (requires extenal difmap executable).")
+    PARSER.add_argument('--fits', action="store_true", help="Generate a FITS format dirty image")
+    PARSER.add_argument('--beam', action="store_true", help="Generate a FITS format beam image")
     PARSER.add_argument('--gains', required=False, default=None, help="Use a local JSON file containing antenna gains to create the image image.")
     PARSER.add_argument('--dir', required=False, default='.', help="Output directory.")
     PARSER.add_argument('--rotation', type=float, default=2.0, help="Apply rotation (in degrees) to the antenna positions.")
@@ -65,7 +67,7 @@ if __name__ == '__main__':
     
     time_repr = "{:%Y-%m-%d_%H:%M:%S_%Z}".format(timestamp)
 
-    if (ARGS.uvfits):
+    if (ARGS.difmap):
         fits_bin = 2**12
         uvfitsfile = "{}/tart_obs_{}.uvfits".format(ARGS.dir, time_repr)
         difcmd, fits_name = api_imaging.get_uv_fits(cv, uvfitsfile)
@@ -88,9 +90,15 @@ exit
         os.system("/usr/local/bin/difmap < difmap_cmds")
         #os.system("vips scale {}_clean.fits {}_grey.png".format(fits_name, fits_name))
 
-
+    if (ARGS.fits):
+        api_imaging.save_fits_image(ift_scaled, fname = 'dirty_{}.fits'.format(time_repr), out_dir=ARGS.dir)
+        
+    if (ARGS.beam):
+        beam = api_imaging.beam_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
+        api_imaging.save_fits_image(beam, fname = 'beam_{}.fits'.format(time_repr), out_dir=ARGS.dir)
+        
     if (ARGS.healpix):
-        api_imaging.save_healpix_image(plt, ift_scaled, time_repr, n_bin/4, n_bin, ARGS.dir, source_json, show=ARGS.show)
+        api_imaging.save_healpix_image(plt, ift_scaled, time_repr, n_bin, ARGS.dir, source_json, show=ARGS.show)
     else:
         api_imaging.save_image(plt, ift_scaled, time_repr, n_bin/4, n_bin, ARGS.dir, source_json, show=ARGS.show)
 

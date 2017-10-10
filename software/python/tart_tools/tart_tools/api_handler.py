@@ -4,9 +4,9 @@
   Max Scheel 2017 - max@max.ac.nz
 '''
 
-import requests
 import datetime
 import json
+import requests
 
 from tart.operation import settings
 
@@ -18,8 +18,10 @@ class APIhandler:
     def url(self, path):
         return '{}/api/v1/{}'.format(self.root, path)
 
-    def catalog_url(self, config, catalog='https://tart.elec.ac.nz/catalog', datestr=datetime.datetime.utcnow().isoformat()):
-        return '{}/catalog?lat={}&lon={}&date={}'.format(catalog, config.get_lat(), config.get_lon(),datestr)
+    def catalog_url(self, config, catalog='https://tart.elec.ac.nz/catalog', 
+                    datestr=datetime.datetime.utcnow().isoformat()):
+        return '{}/catalog?lat={}&lon={}&date={}'.format(catalog, config.get_lat(), 
+                                                         config.get_lon(), datestr)
 
     def get(self, path):
         r = requests.get(self.url(path))
@@ -49,9 +51,8 @@ class AuthorizedAPIhandler(APIhandler):
             raise Exception('Authorization failed. Wrong pw?')
 
     def refresh_access_token(self):
-	r = requests.post(\
-			self.url('refresh'),\
-			headers=self.__get_refresh_header())
+        r = requests.post(self.url('refresh'),
+                          headers=self.__get_refresh_header())
         resp_json = json.loads(r.text)
         if resp_json.has_key('access_token'):
             self.token = resp_json['access_token']
@@ -64,12 +65,12 @@ class AuthorizedAPIhandler(APIhandler):
  
     def __get_header(self):
         if self.token is None:
-          raise Exception('login required')
+            raise Exception('login required')
         return {'Authorization': 'JWT '+ self.token}
 
     def __get_refresh_header(self):
         if self.refresh_token is None:
-          raise Exception('login required')
+            raise Exception('login required')
         return {'Authorization': 'JWT '+ self.refresh_token}
 
     # TODO catch the requests result that corresponds to a failed login (authorization expired)
@@ -78,12 +79,12 @@ class AuthorizedAPIhandler(APIhandler):
     def post(self, path, **kwargs):
         r = requests.post(self.url(path), headers=self.__get_header(), **kwargs)
         ret = json.loads(r.text)
-        if (ret.has_key('status') and ret.has_key('sub_status')):
-          if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
-            self.refresh_access_token()
-            return self.post(path, **kwargs)
+        if ret.has_key('status') and ret.has_key('sub_status'):
+            if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
+                self.refresh_access_token()
+                return self.post(path, **kwargs)
         return ret
-        
+
     def post_with_token(self, path):
         return self.post(path)
 
