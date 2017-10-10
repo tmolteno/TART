@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+#
+# Image from the HTTP API
+# Tim Molteno & Max Scheel 2017.
+#
+import matplotlib
+import os
+if os.name == 'posix' and "DISPLAY" not in os.environ:
+    matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+import argparse
+import sys
+import threading
+import datetime
+import json
+
+import numpy as np
+
+from tart_tools import api_imaging
+from tart_tools import api_handler
+
+from copy import deepcopy
+
+
+if __name__ == '__main__':
+    PARSER = argparse.ArgumentParser(description='Create an TART Image.')
+    PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
+    PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
+    PARSER.add_argument('--show', action="store_true", help="show instead of save.")
+    PARSER.add_argument('--healpix', action="store_true", help="Use healpix to view.")
+    PARSER.add_argument('--uvfits', action="store_true", help="Use healpix to view.")
+    PARSER.add_argument('--gains', required=False, default=None, help="Use a local JSON gains solution to image.")
+    PARSER.add_argument('--dir', required=False, default='.', help="Output directory.")
+    PARSER.add_argument('--rotation', type=float, default=2.0, help="Apply rotation (in degrees) to the telescope positions.")
+    PARSER.add_argument('--nfft', type=int, default=10, help="Log(2) of the number of points in the fft.")
+
+    ARGS = PARSER.parse_args()
+
+
+    api = api_handler.APIhandler(ARGS.api)
+    config = api_handler.get_config(api)
+
+    if (ARGS.gains is None):
+        gains = api.get('calibration/gain')
+    else:
+        # Load gains data
+        with open(ARGS.gains, 'r') as json_file:
+            gains = json.load(json_file)
+            
+    vis_json = api.get('imaging/vis')
+    
+    ts = api_imaging.vis_json_timestamp(vis_json)
+    source_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
+    
+    print("Data Grabbing Complete")
+    cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains['gain'], gains['phase_offset'], flag_list=[])
+    api_imaging.rotate_vis(ARGS.rotation, cv, reference_positions = deepcopy(config.get_antenna_positions()))
+    n_bin = 2**ARGS.nfft
+    cal_ift, cal_extent, n_fft, bin_width = api_imaging.image_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
+
+    img = np.abs(cal_ift)
+    sd = np.std(img)
+    ift_scaled = img/sd
+    
+    time_repr = "{:%Y-%m-%d_%H:%M:%S_%Z}".format(timestamp)
+
+    if (ARGS.uvfits):
+        fits_bin = 2**12
+        uvfitsfile = "{}/tart_obs_{}.uvfits".format(ARGS.dir, time_repr)
+        difcmd, fits_name = api_imaging.get_uv_fits(cv, uvfitsfile)
+        commands = """
+! Basic imaging instructions by Tim Molteno
+debug = False
+observe {}
+mapsize {}, {}
+docont=false
+mapcolor color
+@final_clean i
+device {}_view.png/png
+mappl cln
+!wmap {}_clean.fits
+exit
+""".format(fits_name, fits_bin, 1.3*648000000.0/fits_bin, fits_name, fits_name)
+        f = open('difmap_cmds', 'w')
+        f.write(commands)
+        f.close()
+        os.system("/usr/local/bin/difmap < difmap_cmds")
+        #os.system("vips scale {}_clean.fits {}_grey.png".format(fits_name, fits_name))
+
+
+    if (ARGS.healpix):
+        api_imaging.save_healpix_image(plt, ift_scaled, time_repr, n_bin/4, n_bin, ARGS.dir, source_json, show=ARGS.show)
+    else:
+        api_imaging.save_image(plt, ift_scaled, time_repr, n_bin/4, n_bin, ARGS.dir, source_json, show=ARGS.show)
+
