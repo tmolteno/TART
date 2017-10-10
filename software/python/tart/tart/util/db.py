@@ -19,11 +19,11 @@ def db_connect(dbfile=None,\
     conn.commit()
     def sql_(cmd, paramstyle):
         if paramstyle == 'qmark':
-                ph = "?"
+            ph = "?"
         elif paramstyle == 'pyformat':
-                ph = "%s"
+            ph = "%s"
         else:
-                raise Exception("Unexpected paramstyle: %s" % paramstyle)
+            raise Exception("Unexpected paramstyle: %s" % paramstyle)
         return cmd % { "ph" : ph }
     sql = lambda cmd: sql_(cmd, paramstyle)
     return conn, sql
