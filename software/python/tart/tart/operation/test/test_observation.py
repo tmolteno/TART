@@ -1,14 +1,16 @@
 import unittest
+import datetime
 import numpy as np
 
-from tart.operation.observation import *
+from tart.operation.observation import Observation, Observation_Load
+from tart.operation import settings
 
 class TestObservation(unittest.TestCase):
 
     def setUp(self):
 
         ts = datetime.datetime.utcnow()
-        self.config = settings.Settings('test_telescope_config.json')
+        self.config = settings.from_file('test_telescope_config.json')
         self.test_len = 2**16
         # generate some fake data
         self.data = [np.random.randint(0,2,self.test_len)*2-1 for _ in range(self.config.num_antennas)]

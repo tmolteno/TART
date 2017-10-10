@@ -6,15 +6,18 @@ import numpy as np
 from tart.util import constants
 from scipy import interpolate
 
-class SimulationSource:
+class HorizontalSource(object):
+    def __init__(self, r, azimuth, elevation):
+        self.r = r
+        self.azimuth = azimuth
+        self.elevation = elevation
+        
+class SimulationSource(HorizontalSource):
     def __init__(self, r, amplitude, azimuth, elevation, sample_duration):
-
+        super(SimulationSource, self).__init__(r, azimuth, elevation)
         self.omega = constants.L1_OMEGA
         self.duration = sample_duration
         self.amplitude = amplitude
-        self.azimuth = azimuth
-        self.elevation = elevation
-        self.r = r
 
         Fs = 16.368e6
         max_baseline = 100 # in m
