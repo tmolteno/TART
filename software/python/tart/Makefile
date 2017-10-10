@@ -6,6 +6,9 @@ develop: doc
 lint:
 	pylint tart
 
+test:
+	python -m unittest discover
+
 doc:
 	pandoc --to=rst  README.md > README.txt
 	

@@ -1,9 +1,18 @@
 # python setup.py develop
 # from distutils.core import setup
+import setuptools.command.test
 from setuptools import setup, find_packages
 
 with open('README.txt') as f:
     readme = f.read()
+
+class TestCommand(setuptools.command.test.test):
+    """ Setuptools test command explicitly using test discovery. """
+
+    def _test_args(self):
+        yield 'discover'
+        for arg in super(TestCommand, self)._test_args():
+            yield arg
 
 setup(name='tart',
     version='0.14.5',
@@ -13,6 +22,9 @@ setup(name='tart',
     author='Tim Molteno',
     author_email='tim@elec.ac.nz',
     license='GPLv3',
+    cmdclass={
+        'test': TestCommand,
+    },
     requires=['numpy', 'matplotlib', 'healpy', 'astropy'],
     packages=['tart', 'tart.imaging', 'tart.simulation', 'tart.operation', 'tart.util',\
             'tart.test',  'tart.imaging.test', 'tart.simulation.test', 'tart.operation.test', 'tart.util.test'],

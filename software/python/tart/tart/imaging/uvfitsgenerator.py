@@ -2,13 +2,7 @@
 Generate UVFITS file from visibility object.
 '''
 
-
-try:
-    from astropy.io import fits
-# import pyfits # easy_install pyfits
-except:
-    print 'astropy.io.fits not found, try "sudo easy_install astropy"'
-    pass
+from astropy.io import fits
 import numpy as np
 
 from tart.imaging import tart_util
