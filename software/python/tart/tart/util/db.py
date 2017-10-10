@@ -24,6 +24,6 @@ def db_connect(dbfile=None,\
             ph = "%s"
         else:
             raise Exception("Unexpected paramstyle: %s" % paramstyle)
-        return cmd % { "ph" : ph }
+        return cmd % {"ph": ph}
     sql = lambda cmd: sql_(cmd, paramstyle)
     return conn, sql

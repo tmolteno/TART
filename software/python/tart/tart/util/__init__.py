@@ -2,6 +2,3 @@
 # Tim Molteno 2013. tim@elec.ac.nz
 #
 #
-#import operation
-#import simulation
-#import imaging
