@@ -9,7 +9,7 @@ import json
 from tart_tools.api_handler import APIhandler
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Save antenna positions from api to local file')
+    parser = argparse.ArgumentParser(description='Save antenna positions from api to local file', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     parser.add_argument('--file', default='antenna_positions.json', type=str, help='local file to dump antenna positions')
 

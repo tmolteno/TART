@@ -221,18 +221,18 @@ def de_callback(xk, convergence):
     output_param(xk)
 
 if __name__ == '__main__':
-    PARSER = argparse.ArgumentParser(description='Create an TART Image.')
-    PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
-    PARSER.add_argument('--file', required=False, default='calibration_data.json', help="Calibration Output JSON file.")
-    PARSER.add_argument('--show', action="store_true", help="show instead of save.")
-    PARSER.add_argument('--cold-start', action="store_true", help="Start from zero knowledge of gains.")
-    PARSER.add_argument('--get-gains', action="store_true", help="Start from current knowledge of gains.")
-    PARSER.add_argument('--dir', required=False, default='.', help="Output directory.")
-    PARSER.add_argument('--method', required=False, default='LB', help="Optimization Method [NM, LB, DE]")
-    PARSER.add_argument('--elevation', type=float, default=20.0, help="Elevation threshold for sources]")
+    parser = argparse.ArgumentParser(description='Calibrate the tart telescope from API.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
+    parser.add_argument('--file', required=False, default='calibration_data.json', help="Calibration Output JSON file.")
+    parser.add_argument('--show', action="store_true", help="show instead of save.")
+    parser.add_argument('--cold-start', action="store_true", help="Start from zero knowledge of gains.")
+    parser.add_argument('--get-gains', action="store_true", help="Start from current knowledge of gains.")
+    parser.add_argument('--dir', required=False, default='.', help="Output directory.")
+    parser.add_argument('--method', required=False, default='LB', help="Optimization Method [NM, LB, DE]")
+    parser.add_argument('--elevation', type=float, default=20.0, help="Elevation threshold for sources]")
 
-    ARGS = PARSER.parse_args()
-
+    ARGS = parser.parse_args()
+    
     # Load calibration data
     with open(ARGS.file, 'r') as json_file:
         calib_info = json.load(json_file)

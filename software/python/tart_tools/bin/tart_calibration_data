@@ -31,7 +31,7 @@ def load_data(api, config):
 
 
 if __name__ == '__main__':
-    PARSER = argparse.ArgumentParser(description='Generate Calibration Data.')
+    PARSER = argparse.ArgumentParser(description='Generate Calibration Data.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     PARSER.add_argument('--file', required=False, default='calibration_data.json', help="Calibration Output JSON file.")
     PARSER.add_argument('--n', type=int, default=5, help="Number of samples in the JSON data file.")

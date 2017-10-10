@@ -24,7 +24,7 @@ from copy import deepcopy
 
 
 if __name__ == '__main__':
-    PARSER = argparse.ArgumentParser(description='Create an TART Image.')
+    PARSER = argparse.ArgumentParser(description='Create an TART Image.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
     PARSER.add_argument('--show', action="store_true", help="show instead of save.")

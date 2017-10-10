@@ -8,7 +8,7 @@ import json
 from tart_tools.api_handler import AuthorizedAPIhandler
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Upload antenna positions from local file to remote telescope')
+    parser = argparse.ArgumentParser(description='Upload antenna positions from local file to remote telescope', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     parser.add_argument('--pw', default='password', type=str, help='API password')
     parser.add_argument('--file', type=str, required=True, help='local file to upload')

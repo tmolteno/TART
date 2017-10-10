@@ -9,7 +9,7 @@ import json
 from tart_tools.api_handler import AuthorizedAPIhandler, upload_gain
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Upload gains from local file to api')
+    parser = argparse.ArgumentParser(description='Upload gains from local file to api', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     parser.add_argument('--pw', default='password', type=str, help='API password')
     parser.add_argument('--gains', type=str, required=True, help='local file to upload')
