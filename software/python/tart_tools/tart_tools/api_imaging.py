@@ -123,7 +123,7 @@ def save_healpix_image(plt, ift_scaled, time_repr, nw, num_bins, out_dir, source
             el = np.degrees(np.pi/2 - theta)
             az = np.degrees(phi)
             s = elaz.ElAz(el, az)
-            x_min,x_max,y_min,y_max, area = s.get_px_window(n_fft, window_deg=window_d)
+            x_min,x_max,y_min,y_max, area = s.get_px_window(num_bins, window_deg=window_d)
             s_px = ift_scaled[y_min:y_max, x_min:x_max]
 
             m[i] = np.sum(s_px)/area

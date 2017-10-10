@@ -33,9 +33,9 @@ class ElAz:
         y_px =  int(-np.round(self.m * n2 + n2))
         return x_px, y_px
 
-    def get_px_window(self, n_fft, window_deg):
-        x_i, y_i = self.get_px(n_fft)
-        pix_per_rad = n_fft/np.pi
+    def get_px_window(self, num_bins, window_deg):
+        x_i, y_i = self.get_px(num_bins)
+        pix_per_rad = num_bins/np.pi
         d = np.radians(window_deg)*pix_per_rad / 2
 
         x_min = int(np.floor(x_i-d))
