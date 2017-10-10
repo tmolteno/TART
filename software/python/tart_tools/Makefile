@@ -4,7 +4,7 @@ develop: doc
 	sudo python setup.py develop
 
 lint:
-	pylint tart
+	pylint tart_tools
 
 doc:
 	pandoc --to=rst  README.md > README.txt

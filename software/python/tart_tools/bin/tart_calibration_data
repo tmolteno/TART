@@ -9,6 +9,7 @@ from tart.operation import settings
 from tart.imaging import visibility
 from tart.imaging import calibration
 
+from tart_tools import api_handler
 from tart_tools import api_imaging
 
 def split_param(x):
@@ -24,7 +25,7 @@ def load_data(api, config):
     print('Loading new data from {}...'.format(api.root))
     vis_json = api.get('imaging/vis')
     ts = api_imaging.vis_json_timestamp(vis_json)
-    src_json = api.get_url(api.catalog_url(config, ts.isoformat()))
+    src_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
     print('Loading Complete')
     return vis_json, src_json
 
@@ -39,12 +40,12 @@ if __name__ == '__main__':
 
     ARGS = PARSER.parse_args()
     
-    api = api_imaging.APIhandler(ARGS.api)
+    api = api_handler.APIhandler(ARGS.api)
 
     info = api.get('info')
     ant_pos = api.get('imaging/antenna_positions')
-    gains_json = api.get('calibration/gain')
     config = settings.from_api_json(info['info'], ant_pos)
+    gains_json = api.get('calibration/gain')
 
     ret = {'info':info,
             'ant_pos':ant_pos,
