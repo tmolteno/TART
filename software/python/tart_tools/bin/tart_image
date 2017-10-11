@@ -22,23 +22,47 @@ from tart_tools import api_handler
 
 from copy import deepcopy
 
+def handle_image(args, img, n_bin, title, time_repr, source_json=None):
+    image_title = '{}_{}'.format(title, time_repr)
+    if args.fits:
+        fname = '{}.fits'.format(image_title)
+        api_imaging.save_fits_image(img, fname=fname, out_dir=args.dir)
+        print("Generating {}".format(fname))
+    if args.PNG or args.display:
+        api_imaging.make_image(plt, img, image_title, n_bin/4, n_bin, source_json)
+    if args.PNG:
+        fname = '{}.png'.format(image_title)
+        plt.savefig(os.path.join(args.dir, fname))
+        print("Generating {}".format(fname))
+    if args.display:
+        plt.show()
+    plt.clf()
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(description='Generate an image using the web api ofs a TART radio telescope.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
-    PARSER.add_argument('--show', action="store_true", help="show instead of save.")
-    PARSER.add_argument('--healpix', action="store_true", help="Use healpix to view.")
-    PARSER.add_argument('--difmap', action="store_true", help="Use difmap to generate a CLEAN image (requires extenal difmap executable).")
-    PARSER.add_argument('--fits', action="store_true", help="Generate a FITS format dirty image")
-    PARSER.add_argument('--beam', action="store_true", help="Generate a FITS format beam image")
+
     PARSER.add_argument('--gains', required=False, default=None, help="Use a local JSON file containing antenna gains to create the image image.")
     PARSER.add_argument('--dir', required=False, default='.', help="Output directory.")
     PARSER.add_argument('--rotation', type=float, default=2.0, help="Apply rotation (in degrees) to the antenna positions.")
     PARSER.add_argument('--nfft', type=int, default=10, help="Log(2) of the number of points in the fft.")
 
+    PARSER.add_argument('--dirty', action="store_true", help="Create a direct IFFT dirty image.")
+    PARSER.add_argument('--difmap', action="store_true", help="Use difmap to generate a CLEAN image (requires extenal difmap executable).")
+    PARSER.add_argument('--moresane', action="store_true", help="Use MORESANE to generate a wavelet based compressed representation (requires extenal difmap executable).")
+    PARSER.add_argument('--beam', action="store_true", help="Generate beam image")
+    
+    PARSER.add_argument('--healpix', action="store_true", help="Use HealPIX to create an image.")
+    
+    PARSER.add_argument('--display', action="store_true", help="Display Image to the user")
+    PARSER.add_argument('--fits', action="store_true", help="Generate a FITS format image")
+    PARSER.add_argument('--PNG', action="store_true", help="Generate a PNG format image")
+
+
     ARGS = PARSER.parse_args()
 
+    print("Getting Data from {}".format(ARGS.api))
 
     api = api_handler.APIhandler(ARGS.api)
     config = api_handler.get_config(api)
@@ -59,15 +83,22 @@ if __name__ == '__main__':
     cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains['gain'], gains['phase_offset'], flag_list=[])
     api_imaging.rotate_vis(ARGS.rotation, cv, reference_positions = deepcopy(config.get_antenna_positions()))
     n_bin = 2**ARGS.nfft
-    cal_ift, cal_extent, n_fft, bin_width = api_imaging.image_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
-
-    img = np.abs(cal_ift)
-    sd = np.std(img)
-    ift_scaled = img/sd
     
     time_repr = "{:%Y-%m-%d_%H:%M:%S_%Z}".format(timestamp)
 
-    if (ARGS.difmap):
+    # Processing
+    
+    if (ARGS.dirty or ARGS.moresane):
+        cal_ift, cal_extent, n_fft, bin_width = api_imaging.image_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
+
+        img = np.abs(cal_ift)
+        sd = np.std(img)
+        ift_scaled = img/sd
+    
+    if ARGS.beam or ARGS.moresane:
+        beam = api_imaging.beam_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
+
+    if ARGS.difmap:
         fits_bin = 2**12
         uvfitsfile = "{}/tart_obs_{}.uvfits".format(ARGS.dir, time_repr)
         difcmd, fits_name = api_imaging.get_uv_fits(cv, uvfitsfile)
@@ -90,15 +121,29 @@ exit
         os.system("/usr/local/bin/difmap < difmap_cmds")
         #os.system("vips scale {}_clean.fits {}_grey.png".format(fits_name, fits_name))
 
-    if (ARGS.fits):
-        api_imaging.save_fits_image(ift_scaled, fname = 'dirty_{}.fits'.format(time_repr), out_dir=ARGS.dir)
-        
-    if (ARGS.beam):
-        beam = api_imaging.beam_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
-        api_imaging.save_fits_image(beam, fname = 'beam_{}.fits'.format(time_repr), out_dir=ARGS.dir)
-        
-    if (ARGS.healpix):
-        api_imaging.save_healpix_image(plt, ift_scaled, time_repr, n_bin, ARGS.dir, source_json, show=ARGS.show)
-    else:
-        api_imaging.save_image(plt, ift_scaled, time_repr, n_bin/4, n_bin, ARGS.dir, source_json, show=ARGS.show)
+
+    if ARGS.moresane:
+        from pymoresane.main import DataImage
+        import scipy.misc
+
+        degrees_per_pixel = 180.0 / len(beam)
+
+        sane = DataImage(ift_scaled, beam, mask_data=None, cdelt1=degrees_per_pixel, cdelt2=degrees_per_pixel)
+        logger = sane.make_logger('INFO')
+
+        sane.moresane(subregion=None, scale_count=None, sigma_level=4, loop_gain=0.1, tolerance=0.75, accuracy=1e-6,
+                major_loop_miter=100, minor_loop_miter=50, all_on_gpu=False, decom_mode="ser", core_count=1,
+                conv_device='cpu', conv_mode='circular', extraction_mode='cpu', enforce_positivity=True,
+                edge_suppression=True, edge_offset=0, flux_threshold=0,
+                neg_comp=False, edge_excl=0, int_excl=0)
+
+        sane.restore()
+        handle_image(ARGS, sane.restored, n_bin, "MORESANE", time_repr, source_json)
+
+    # Output Files
+    if ARGS.beam:
+        handle_image(ARGS, beam, n_bin, "beam", time_repr)
+
+    if ARGS.dirty:
+        handle_image(ARGS, ift_scaled, n_bin, "dirty", time_repr, source_json)
 
