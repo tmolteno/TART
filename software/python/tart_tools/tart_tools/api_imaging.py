@@ -8,6 +8,7 @@ import dateutil.parser
 import astropy.io.fits as pyfits
 
 import numpy as np
+import healpy as hp
 
 from tart.operation import settings
 from tart.imaging import visibility
@@ -31,16 +32,16 @@ def vis_object_from_json(vis_json, config):
     return ret
 
 def vis_calibrated(vis_json, config, gains, phase_offset, flag_list=[]):
-    v = vis_object_from_json(vis_json, config)
+    vis = vis_object_from_json(vis_json, config)
 
-    cv = calibration.CalibratedVisibility(v)
+    cal_vis = calibration.CalibratedVisibility(vis)
     for f in flag_list:
-        cv.flag_antenna(f)
+        cal_vis.flag_antenna(f)
 
-    cv.set_gain(np.arange(24), gains)
-    cv.set_phase_offset(np.arange(24), phase_offset)
+    cal_vis.set_gain(np.arange(24), gains)
+    cal_vis.set_phase_offset(np.arange(24), phase_offset)
 
-    return cv, v.timestamp
+    return cal_vis, vis.timestamp
 
 def rotate_vis(rot_degrees, cv, reference_positions):
     conf = cv.vis.config
@@ -108,11 +109,10 @@ def make_square_image(plt, img, title, num_bins, source_json=None):
     plt.ylabel('North-South')
     plt.tight_layout()
 
-def make_healpix_image(plt, img, title, num_bins, source_json = None):
+def make_healpix_image(plt, img, title, num_bins, source_json=None):
     """
     Writes out an image as a healpy image
     """
-    import healpy as hp
     nside = hp.pixelfunc.get_min_valid_nside(num_bins*num_bins*3/4)
     npix = hp.nside2npix(nside)
 
@@ -141,7 +141,7 @@ def make_healpix_image(plt, img, title, num_bins, source_json = None):
             l, m = s.get_lm()
             output_list.append(plt.Circle([-l, m], 0.03, color=(0.9, 0.2, 0.3), fill=False))
         ax = plt.gca()
-        for circle in output_list:    
+        for circle in output_list:
             ax.add_artist(circle)
 
     #hp.projplot([float(sp.N(theta_actual)),], [float(sp.N(phi_actual)),], 'ro', rot=(0,90,0))
@@ -167,6 +167,4 @@ def save_fits_image(img, fname, out_dir, header_dict={}):
     prihdr.set('BPA', 0.0)               # Beam position angle
     for k in header_dict.keys():
         prihdr.set(k, header_dict[k])
-        
     hdulist.writeto(os.path.join(out_dir, fname))
-

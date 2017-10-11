@@ -23,6 +23,7 @@ from tart_tools import api_handler
 from copy import deepcopy
 
 def handle_image(args, img, n_bin, title, time_repr, source_json=None):
+    """ This function manages the output of an image, drawing sources e.t.c."""
     image_title = '{}_{}'.format(title, time_repr)
     if args.fits:
         fname = '{}.fits'.format(image_title)
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     time_repr = "{:%Y-%m-%d_%H:%M:%S_%Z}".format(timestamp)
 
     # Processing
-    
+
     if (ARGS.dirty or ARGS.moresane):
         cal_ift, cal_extent, n_fft, bin_width = api_imaging.image_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
 
@@ -122,7 +123,6 @@ exit
         f.close()
         os.system("/usr/local/bin/difmap < difmap_cmds")
         #os.system("vips scale {}_clean.fits {}_grey.png".format(fits_name, fits_name))
-
 
     if ARGS.moresane:
         from pymoresane.main import DataImage
