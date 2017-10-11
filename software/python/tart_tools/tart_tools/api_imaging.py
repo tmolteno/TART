@@ -74,14 +74,14 @@ def get_uv_fits(cv, fname):
     cal_syn = synthesis.Synthesis_Imaging([cv])
     return cal_syn.get_uvfits(fname)
 
-def save_image(plt, ift_scaled, time_repr, nw, num_bins, out_dir, source_json, show=False):
+def make_image(plt, img, title, nw, num_bins, source_json = None):
 
     plt.figure(figsize=(8, 6), dpi=num_bins/6)
-    plt.title(time_repr)
+    plt.title(title)
 
-    print("Dynamic Range: {}".format(np.max(ift_scaled)))
+    print("Dynamic Range: {}".format(np.max(img)))
 
-    plt.imshow(ift_scaled, extent=[-1, 1, -1, 1])
+    plt.imshow(img, extent=[-1, 1, -1, 1])
 
     plt.xlim(-1, 1)
     plt.ylim(-1, 1)
@@ -101,12 +101,6 @@ def save_image(plt, ift_scaled, time_repr, nw, num_bins, out_dir, source_json, s
     plt.xlabel('East-West')
     plt.ylabel('North-South')
     plt.tight_layout()
-    if show:
-        plt.show()
-    else:
-        fname = 'tart_image_{}.png'.format(time_repr)
-        plt.savefig(os.path.join(out_dir, fname))
-        print("Generating {}".format(fname))
 
 
 def save_fits_image(img, fname, out_dir, header_dict={}):
@@ -132,7 +126,7 @@ def save_fits_image(img, fname, out_dir, header_dict={}):
         
     hdulist.writeto(os.path.join(out_dir, fname))
 
-def save_healpix_image(plt, ift_scaled, time_repr, num_bins, out_dir, source_json, show=False):
+def make_healpix_image(plt, img, title, num_bins, source_json = None):
     """
     Writes out an image as a healpy image
     """
@@ -152,13 +146,12 @@ def save_healpix_image(plt, ift_scaled, time_repr, num_bins, out_dir, source_jso
             az = np.degrees(phi)
             s = elaz.ElAz(el, az)
             x_min, x_max, y_min, y_max, area = s.get_px_window(num_bins, window_deg=window_d)
-            s_px = ift_scaled[y_min:y_max, x_min:x_max]
+            s_px = img[y_min:y_max, x_min:x_max]
 
             m[i] = np.sum(s_px)/area
 
-    hp.orthview(m, rot=(0, 90, 180), title=time_repr, xsize=3000, cbar=False, half_sky=True)
+    hp.orthview(m, rot=(0, 90, 180), title=title, xsize=3000, cbar=False, half_sky=True)
     hp.graticule()
-    
     if source_json is not None:
         src_list = elaz.from_json(source_json, el_limit=20.0, jy_limit=1e4)
         output_list = []
@@ -171,9 +164,3 @@ def save_healpix_image(plt, ift_scaled, time_repr, num_bins, out_dir, source_jso
 
     #hp.projplot([float(sp.N(theta_actual)),], [float(sp.N(phi_actual)),], 'ro', rot=(0,90,0))
     #hp.projplot([float(sp.N(theta_actual2)),], [float(sp.N(phi_actual2)),], 'ro', rot=(0,90,0))
-    if show:
-        plt.show()
-    else:
-        fname = 'tart_image_{}.png'.format(time_repr)
-        plt.savefig(os.path.join(out_dir, fname))
-        print("Generating {}".format(fname))
