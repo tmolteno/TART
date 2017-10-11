@@ -133,10 +133,10 @@ exit
         sane = DataImage(ift_scaled, beam, mask_data=None, cdelt1=degrees_per_pixel, cdelt2=degrees_per_pixel)
         logger = sane.make_logger('INFO')
 
-        sane.moresane(subregion=None, scale_count=None, sigma_level=3.5, loop_gain=0.1, tolerance=0.75, accuracy=1e-6,
+        sane.moresane(subregion=None, scale_count=None, sigma_level=5, loop_gain=0.1, tolerance=0.75, accuracy=1e-6,
                 major_loop_miter=100, minor_loop_miter=50, all_on_gpu=False, decom_mode="ser", core_count=1,
                 conv_device='cpu', conv_mode='circular', extraction_mode='cpu', enforce_positivity=True,
-                edge_suppression=True, edge_offset=0, flux_threshold=0,
+                edge_suppression=False, edge_offset=int(n_bin/20), flux_threshold=0,
                 neg_comp=False, edge_excl=0, int_excl=0)
         sane.restore()
 
