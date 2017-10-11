@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-# Image from the HTTP API
-# Tim Molteno & Max Scheel 2017.
+# Generate and Image from the RESTful the API on a TART radio telescope
+# Tim Molteno 2017 tim@elec.ac.nz
 #
 import matplotlib
 import os
@@ -29,14 +29,13 @@ def handle_image(args, img, n_bin, title, time_repr, source_json=None):
         api_imaging.save_fits_image(img, fname=fname, out_dir=args.dir)
         print("Generating {}".format(fname))
     if args.PNG or args.display:
-        api_imaging.make_image(plt, img, image_title, n_bin/4, n_bin, source_json)
+        api_imaging.make_image(plt, img, image_title, n_bin, source_json, args.healpix)
     if args.PNG:
         fname = '{}.png'.format(image_title)
         plt.savefig(os.path.join(args.dir, fname))
         print("Generating {}".format(fname))
     if args.display:
         plt.show()
-    plt.clf()
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(description='Generate an image using the web api ofs a TART radio telescope.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -58,8 +57,10 @@ if __name__ == '__main__':
     PARSER.add_argument('--display', action="store_true", help="Display Image to the user")
     PARSER.add_argument('--fits', action="store_true", help="Generate a FITS format image")
     PARSER.add_argument('--PNG', action="store_true", help="Generate a PNG format image")
+    PARSER.add_argument('--show-sources', action="store_true", help="Show known sources on images (only works on PNG).")
 
-
+    source_json = None
+    
     ARGS = PARSER.parse_args()
 
     print("Getting Data from {}".format(ARGS.api))
@@ -77,7 +78,8 @@ if __name__ == '__main__':
     vis_json = api.get('imaging/vis')
     
     ts = api_imaging.vis_json_timestamp(vis_json)
-    source_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
+    if ARGS.show_sources:
+        source_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
     
     print("Data Grabbing Complete")
     cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains['gain'], gains['phase_offset'], flag_list=[])
@@ -131,16 +133,18 @@ exit
         sane = DataImage(ift_scaled, beam, mask_data=None, cdelt1=degrees_per_pixel, cdelt2=degrees_per_pixel)
         logger = sane.make_logger('INFO')
 
-        sane.moresane(subregion=None, scale_count=None, sigma_level=4, loop_gain=0.1, tolerance=0.75, accuracy=1e-6,
+        sane.moresane(subregion=None, scale_count=None, sigma_level=3.5, loop_gain=0.1, tolerance=0.75, accuracy=1e-6,
                 major_loop_miter=100, minor_loop_miter=50, all_on_gpu=False, decom_mode="ser", core_count=1,
                 conv_device='cpu', conv_mode='circular', extraction_mode='cpu', enforce_positivity=True,
                 edge_suppression=True, edge_offset=0, flux_threshold=0,
                 neg_comp=False, edge_excl=0, int_excl=0)
-
         sane.restore()
+
+    # Do output images
+    
+    if ARGS.moresane:
         handle_image(ARGS, sane.restored, n_bin, "MORESANE", time_repr, source_json)
 
-    # Output Files
     if ARGS.beam:
         handle_image(ARGS, beam, n_bin, "beam", time_repr)
 

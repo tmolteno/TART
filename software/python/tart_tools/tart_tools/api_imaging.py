@@ -74,7 +74,13 @@ def get_uv_fits(cv, fname):
     cal_syn = synthesis.Synthesis_Imaging([cv])
     return cal_syn.get_uvfits(fname)
 
-def make_image(plt, img, title, nw, num_bins, source_json = None):
+def make_image(plt, img, title, num_bins, source_json=None, healpix=False):
+    if healpix:
+        make_healpix_image(plt, img, title, num_bins, source_json)
+    else:
+        make_square_image(plt, img, title, num_bins, source_json)
+
+def make_square_image(plt, img, title, num_bins, source_json=None):
 
     plt.figure(figsize=(8, 6), dpi=num_bins/6)
     plt.title(title)
@@ -101,30 +107,6 @@ def make_image(plt, img, title, nw, num_bins, source_json = None):
     plt.xlabel('East-West')
     plt.ylabel('North-South')
     plt.tight_layout()
-
-
-def save_fits_image(img, fname, out_dir, header_dict={}):
-    """
-    This method saves a 2D array as a FITS image, and adds the minimum neccessary headers
-    to get the image to be processable by MORESANE
-    """
-    hdu = pyfits.PrimaryHDU(img)
-    hdulist = pyfits.HDUList([hdu])
-    deg_per_pixel = 180.0 / len(img)
-    prihdr = hdulist[0].header
-
-    prihdr.set('CTYPE1', 'RA---TAN')     # First parameter RA  ,  projection TANgential
-    prihdr.set('CTYPE2', 'DEC--TAN')     # Second parameter DEC,  projection TANgential
-    prihdr.set('CDELT1', deg_per_pixel)  # Degrees/pixel
-    prihdr.set('CDELT2', deg_per_pixel)  # Degrees/pixel
-    prihdr.set('CROTA2', 0.00000)        # Rotation in degrees.
-    prihdr.set('BMAJ', 0.0)              # Beam Major Axis (degrees)
-    prihdr.set('BMIN', 90.0)             # Beam Minor Axis (degrees)
-    prihdr.set('BPA', 0.0)               # Beam position angle
-    for k in header_dict.keys():
-        prihdr.set(k, header_dict[k])
-        
-    hdulist.writeto(os.path.join(out_dir, fname))
 
 def make_healpix_image(plt, img, title, num_bins, source_json = None):
     """
@@ -164,3 +146,27 @@ def make_healpix_image(plt, img, title, num_bins, source_json = None):
 
     #hp.projplot([float(sp.N(theta_actual)),], [float(sp.N(phi_actual)),], 'ro', rot=(0,90,0))
     #hp.projplot([float(sp.N(theta_actual2)),], [float(sp.N(phi_actual2)),], 'ro', rot=(0,90,0))
+
+def save_fits_image(img, fname, out_dir, header_dict={}):
+    """
+    This method saves a 2D array as a FITS image, and adds the minimum neccessary headers
+    to get the image to be processable by MORESANE
+    """
+    hdu = pyfits.PrimaryHDU(img)
+    hdulist = pyfits.HDUList([hdu])
+    deg_per_pixel = 180.0 / len(img)
+    prihdr = hdulist[0].header
+
+    prihdr.set('CTYPE1', 'RA---TAN')     # First parameter RA  ,  projection TANgential
+    prihdr.set('CTYPE2', 'DEC--TAN')     # Second parameter DEC,  projection TANgential
+    prihdr.set('CDELT1', deg_per_pixel)  # Degrees/pixel
+    prihdr.set('CDELT2', deg_per_pixel)  # Degrees/pixel
+    prihdr.set('CROTA2', 0.00000)        # Rotation in degrees.
+    prihdr.set('BMAJ', 0.0)              # Beam Major Axis (degrees)
+    prihdr.set('BMIN', 90.0)             # Beam Minor Axis (degrees)
+    prihdr.set('BPA', 0.0)               # Beam position angle
+    for k in header_dict.keys():
+        prihdr.set(k, header_dict[k])
+        
+    hdulist.writeto(os.path.join(out_dir, fname))
+
