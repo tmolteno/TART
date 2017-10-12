@@ -265,7 +265,8 @@ class Synthesis_Imaging(object):
     def get_beam(self, nw = 30, num_bin = 2**7, use_kernel=False):
         uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
         ift = np.fft.ifftshift(fft.ifft2(np.fft.ifftshift(np.abs(uv_plane).__gt__(0))))
-        return np.abs(ift)
+        ret = np.abs(ift)
+        return ret # /np.sum(ret)
 
     def get_image(self, CAL_IFT, CAL_EXTENT):
         abs_ift = np.abs(CAL_IFT)
