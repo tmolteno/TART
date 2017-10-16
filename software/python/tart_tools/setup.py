@@ -6,7 +6,7 @@ with open('README.txt') as f:
     readme = f.read()
 
 setup(name='tart_tools',
-    version='0.1.1',
+    version='0.1.2',
     description='Transient Array Radio Telescope Command Line Tools',
     long_description=readme,
     url='http://github.com/tmolteno/projects/TART',
@@ -15,7 +15,9 @@ setup(name='tart_tools',
     license='GPLv3',
     requires=['numpy', 'matplotlib', 'healpy', 'astropy', 'tart'],
     packages=['tart_tools'],
-    scripts=['bin/tart_image', 'bin/tart_calibrate', 'bin/tart_calibration_data',
+    scripts=['bin/tart_image',
+             'bin/tart_calibrate', 'bin/tart_calibration_data',
+             'bin/tart_vis2json',
              'bin/tart_download_gains', 'bin/tart_upload_gains',
              'bin/tart_download_antenna_positions', 'bin/tart_upload_antenna_positions'],
     classifiers=[

@@ -44,6 +44,7 @@ if __name__ == '__main__':
     PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
 
     PARSER.add_argument('--gains', required=False, default=None, help="Use a local JSON file containing antenna gains to create the image image.")
+    PARSER.add_argument('--vis', required=False, default=None, help="Use a local JSON file containing the visibilities to create the image image.")
     PARSER.add_argument('--dir', required=False, default='.', help="Output directory.")
     PARSER.add_argument('--rotation', type=float, default=2.0, help="Apply rotation (in degrees) to the antenna positions.")
     PARSER.add_argument('--nfft', type=int, default=10, help="Log(2) of the number of points in the fft.")
@@ -52,16 +53,16 @@ if __name__ == '__main__':
     PARSER.add_argument('--difmap', action="store_true", help="Use difmap to generate a CLEAN image (requires extenal difmap executable).")
     PARSER.add_argument('--moresane', action="store_true", help="Use MORESANE to generate a wavelet based compressed representation (requires extenal difmap executable).")
     PARSER.add_argument('--beam', action="store_true", help="Generate beam image")
-    
+
     PARSER.add_argument('--healpix', action="store_true", help="Use HealPIX to create an image.")
-    
+
     PARSER.add_argument('--display', action="store_true", help="Display Image to the user")
     PARSER.add_argument('--fits', action="store_true", help="Generate a FITS format image")
     PARSER.add_argument('--PNG', action="store_true", help="Generate a PNG format image")
     PARSER.add_argument('--show-sources', action="store_true", help="Show known sources on images (only works on PNG).")
 
     source_json = None
-    
+
     ARGS = PARSER.parse_args()
 
     print("Getting Data from {}".format(ARGS.api))
@@ -75,18 +76,22 @@ if __name__ == '__main__':
         # Load gains data
         with open(ARGS.gains, 'r') as json_file:
             gains = json.load(json_file)
-            
-    vis_json = api.get('imaging/vis')
-    
+
+    if (ARGS.vis is None):
+        vis_json = api.get('imaging/vis')
+    else:
+        with open(ARGS.vis, 'r') as json_file:
+            vis_json = json.load(json_file)
+
     ts = api_imaging.vis_json_timestamp(vis_json)
     if ARGS.show_sources:
         source_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
-    
+
     print("Data Grabbing Complete")
     cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains['gain'], gains['phase_offset'], flag_list=[])
     api_imaging.rotate_vis(ARGS.rotation, cv, reference_positions = deepcopy(config.get_antenna_positions()))
     n_bin = 2**ARGS.nfft
-    
+
     time_repr = "{:%Y-%m-%d_%H:%M:%S_%Z}".format(timestamp)
 
     # Processing
@@ -97,7 +102,7 @@ if __name__ == '__main__':
         img = np.abs(cal_ift)
         sd = np.std(img)
         ift_scaled = img/sd
-    
+
     if ARGS.beam or ARGS.moresane:
         beam = api_imaging.beam_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
 
@@ -141,7 +146,7 @@ exit
         sane.restore()
 
     # Do output images
-    
+
     if ARGS.moresane:
         handle_image(ARGS, sane.restored, n_bin, "MORESANE", time_repr, source_json)
 
