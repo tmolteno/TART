@@ -32,7 +32,7 @@ def wrap_180(x):
 # @total_ordering
 class Angle(object):
 
-    def __init__(self, deg, minute, sec):
+    def __init__(self, deg=0, minute=0, sec=0):
         dec_deg = deg + float(minute)/60.0 + float(sec) / 3600.0
         self.rad = deg_to_rad(dec_deg)
 
