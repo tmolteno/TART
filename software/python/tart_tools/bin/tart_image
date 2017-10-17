@@ -39,13 +39,14 @@ def handle_image(args, img, n_bin, title, time_repr, source_json=None):
         plt.show()
 
 if __name__ == '__main__':
-    PARSER = argparse.ArgumentParser(description='Generate an image using the web api ofs a TART radio telescope.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    PARSER = argparse.ArgumentParser(description='Generate an image using the web api ofs a TART radio telescope.', 
+                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
 
     PARSER.add_argument('--gains', required=False, default=None, help="Use a local JSON file containing antenna gains to create the image image.")
     PARSER.add_argument('--dir', required=False, default='.', help="Output directory.")
-    PARSER.add_argument('--rotation', type=float, default=2.0, help="Apply rotation (in degrees) to the antenna positions.")
+    PARSER.add_argument('--rotation', type=float, default=0.0, help="Apply rotation (in degrees) to the antenna positions.")
     PARSER.add_argument('--nfft', type=int, default=10, help="Log(2) of the number of points in the fft.")
 
     PARSER.add_argument('--dirty', action="store_true", help="Create a direct IFFT dirty image.")
@@ -126,17 +127,21 @@ exit
 
     if ARGS.moresane:
         from pymoresane.main import DataImage
-        import scipy.misc
 
         degrees_per_pixel = 180.0 / len(beam)
 
-        sane = DataImage(ift_scaled, beam, mask_data=None, cdelt1=degrees_per_pixel, cdelt2=degrees_per_pixel)
+        sane = DataImage(img/np.sum(beam), beam, mask_data=None, cdelt1=degrees_per_pixel, cdelt2=degrees_per_pixel)
         logger = sane.make_logger('INFO')
-
-        sane.moresane(subregion=None, scale_count=None, sigma_level=5, loop_gain=0.1, tolerance=0.75, accuracy=1e-6,
+        
+        beam_width_degrees = 3.0
+        stop_scale = ARGS.nfft - 1  # Maximum size feature (full image width)
+        start_scale = int(np.log2(n_bin*beam_width_degrees/180.0))
+        
+        print("Start Scale {}".format(start_scale))
+        sane.moresane_by_scale(start_scale=start_scale, stop_scale=start_scale+1, subregion=None, sigma_level=4.0, loop_gain=0.05, tolerance=0.75, accuracy=1e-6,
                 major_loop_miter=100, minor_loop_miter=50, all_on_gpu=False, decom_mode="ser", core_count=1,
                 conv_device='cpu', conv_mode='circular', extraction_mode='cpu', enforce_positivity=True,
-                edge_suppression=False, edge_offset=int(n_bin/20), flux_threshold=0,
+                edge_suppression=True, edge_offset=int(n_bin/30), flux_threshold=0,
                 neg_comp=False, edge_excl=0, int_excl=0)
         sane.restore()
 

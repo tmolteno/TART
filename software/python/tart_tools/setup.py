@@ -6,7 +6,7 @@ with open('README.txt') as f:
     readme = f.read()
 
 setup(name='tart_tools',
-    version='0.1.1',
+    version='0.1.2',
     description='Transient Array Radio Telescope Command Line Tools',
     long_description=readme,
     url='http://github.com/tmolteno/projects/TART',
