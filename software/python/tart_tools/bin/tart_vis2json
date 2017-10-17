@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+#
+# Generate corresponding visibility (json) files from *.vis files
+# Max Scheel 2017 tim@elec.ac.nz
+#
+
+from tart.imaging import visibility
+import argparse
+import json
+
+def create_direct_vis_dict(vis):
+    """ This function is provided with a visibility object. It returns a dictionary identical to the json response. """
+    vis_list = []
+    for (b, v) in zip(vis.baselines, vis.v):
+        i, j = b
+        vis_el = {'i': i, 'j': j, 're': v.real, 'im':v.imag}
+        vis_list.append(vis_el)
+    vis_dict = {'data':vis_list, 'timestamp':vis.timestamp.isoformat()[:-3]+'Z'}
+    return vis_dict
+
+if __name__ == '__main__':
+    PARSER = argparse.ArgumentParser(description='Generate offline json files from a list of visibility objects files.')
+    PARSER.add_argument('--vis', required=False, nargs='*', default="", help="Visibilities data file.")
+    ARGS = PARSER.parse_args()
+
+    if len(ARGS.vis)!=0:
+        VIS_LIST = []
+        for vis_file in ARGS.vis:
+            VIS_LIST += visibility.Visibility_Load(vis_file)
+
+    for vis in VIS_LIST:
+        vis_dict = create_direct_vis_dict(vis)
+        fname = 'vis_'+ vis_dict['timestamp'] + '.json'
+        with open(fname, 'w') as fp:
+            json.dump(vis_dict, fp)
