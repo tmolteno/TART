@@ -20,7 +20,7 @@ setup(
         'tart_hardware_interface',
         'tart'
     ],
-    url='http://github.com/tmolteno/projects/TART',
+    url='http://github.com/tmolteno/TART',
     author='Tim Molteno, Max Scheel, Pat Suggate',
     author_email='tim@elec.ac.nz',
     license='GPLv3',
