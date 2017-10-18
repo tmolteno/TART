@@ -54,7 +54,7 @@ def image_from_calibrated_vis(cv, nw, num_bin):
     cal_syn = synthesis.Synthesis_Imaging([cv])
 
     cal_ift, cal_extent = cal_syn.get_ift(nw=nw, num_bin=num_bin, use_kernel=False)
-    beam = cal_syn.get_beam(nw=nw, num_bin=num_bin, use_kernel=False)
+    #beam = cal_syn.get_beam(nw=nw, num_bin=num_bin, use_kernel=False)
     n_fft = len(cal_ift)
     assert n_fft == num_bin
 
@@ -71,9 +71,9 @@ def beam_from_calibrated_vis(cv, nw, num_bin):
 
     return cal_syn.get_beam(nw=nw, num_bin=num_bin, use_kernel=False)
 
-def get_uv_fits(cv, fname):
+def get_uv_fits(cv):
     cal_syn = synthesis.Synthesis_Imaging([cv])
-    return cal_syn.get_uvfits(fname)
+    return cal_syn.get_uvfits()
 
 def make_image(plt, img, title, num_bins, source_json=None, healpix=False):
     if healpix:
@@ -147,24 +147,121 @@ def make_healpix_image(plt, img, title, num_bins, source_json=None):
     #hp.projplot([float(sp.N(theta_actual)),], [float(sp.N(phi_actual)),], 'ro', rot=(0,90,0))
     #hp.projplot([float(sp.N(theta_actual2)),], [float(sp.N(phi_actual2)),], 'ro', rot=(0,90,0))
 
-def save_fits_image(img, fname, out_dir, header_dict={}):
+def save_fits_image(img, fname, timestamp, out_dir, header_dict={}):
     """
     This method saves a 2D array as a FITS image, and adds the minimum neccessary headers
     to get the image to be processable by MORESANE
     """
-    hdu = pyfits.PrimaryHDU(img)
+    hdu = pyfits.PrimaryHDU(img.astype(np.float32))
     hdulist = pyfits.HDUList([hdu])
     deg_per_pixel = 180.0 / len(img)
     prihdr = hdulist[0].header
 
-    prihdr.set('CTYPE1', 'RA---TAN')     # First parameter RA  ,  projection TANgential
-    prihdr.set('CTYPE2', 'DEC--TAN')     # Second parameter DEC,  projection TANgential
+    prihdr.set('CTYPE1', 'RA---SIN')     # First parameter RA  ,  projection TANgential
     prihdr.set('CDELT1', deg_per_pixel)  # Degrees/pixel
+    prihdr.set('CUNIT1', 'deg')          # Degrees
+
+    prihdr.set('CTYPE2', 'DEC--SIN')     # Second parameter DEC,  projection TANgential
     prihdr.set('CDELT2', deg_per_pixel)  # Degrees/pixel
+    prihdr.set('CUNIT2', 'deg')          # Degrees
+
     prihdr.set('CROTA2', 0.00000)        # Rotation in degrees.
+    
     prihdr.set('BMAJ', 0.0)              # Beam Major Axis (degrees)
     prihdr.set('BMIN', 90.0)             # Beam Minor Axis (degrees)
     prihdr.set('BPA', 0.0)               # Beam position angle
+
+    prihdr.set('DATE', timestamp)
+    prihdr.set('DATE-OBS', timestamp)
+
+    prihdr.set('TIMESYS', 'UTC')
+    prihdr.set('INSTRUME', 'TART')
+    prihdr.set('TELESCOP', 'TART')
+    prihdr.set('OBSERVER', 'CASA simulator')
+    prihdr.set('ORIGIN', 'tart_tools tart.elec.ac.nz ')
+
+    prihdr.set('OBSRA', 2.889721000000E+02)
+    prihdr.set('OBSDEC', -7.466052777778E+01)
+    prihdr.set('OBSGEO-X', 5.111202828133E+06)
+    prihdr.set('OBSGEO-Y', 2.001309252764E+06)
+    prihdr.set('OBSGEO-Z', -3.237339358474E+06)
+
+    '''
+    SIMPLE  =                    T /Standard FITS                                   
+    BITPIX  =                  -32 /Floating point (32 bit)                         
+    NAXIS   =                    4                                                  
+    NAXIS1  =                 1024                                                  
+    NAXIS2  =                 1024                                                  
+    NAXIS3  =                    1                                                  
+    NAXIS4  =                    1                                                  
+    BSCALE  =   1.000000000000E+00 /PHYSICAL = PIXEL*BSCALE + BZERO                 
+    BZERO   =   0.000000000000E+00                                                  
+    BTYPE   = 'Intensity'                                                           
+    OBJECT  = 'KAT7_1445_1x16_12h'                                                  
+                                                                                    
+    BUNIT   = 'JY/BEAM '           /Brightness (pixel) unit                         
+    EQUINOX =   2.000000000000E+03                                                  
+    LONPOLE =   1.800000000000E+02                                                  
+    LATPOLE =  -7.466052777778E+01                                                  
+    PC001001=   1.000000000000E+00                                                  
+    PC002001=   0.000000000000E+00                                                  
+    PC003001=   0.000000000000E+00                                                  
+    PC004001=   0.000000000000E+00                                                  
+    PC001002=   0.000000000000E+00                                                  
+    PC002002=   1.000000000000E+00                                                  
+    PC003002=   0.000000000000E+00                                                  
+    PC004002=   0.000000000000E+00                                                  
+    PC001003=   0.000000000000E+00                                                  
+    PC002003=   0.000000000000E+00                                                  
+    PC003003=   1.000000000000E+00                                                  
+    PC004003=   0.000000000000E+00                                                  
+    PC001004=   0.000000000000E+00                                                  
+    PC002004=   0.000000000000E+00                                                  
+    PC003004=   0.000000000000E+00                                                  
+    PC004004=   1.000000000000E+00                                                  
+    CTYPE1  = 'RA---SIN'                                                            
+    CRVAL1  =   2.889721000000E+02                                                  
+    CDELT1  =  -1.953125000000E-03                                                  
+    CRPIX1  =   5.130000000000E+02                                                  
+    CUNIT1  = 'deg     '                                                            
+    CTYPE2  = 'DEC--SIN'                                                            
+    CRVAL2  =  -7.466052777778E+01                                                  
+    CDELT2  =   1.953125000000E-03                                                  
+    CRPIX2  =   5.130000000000E+02                                                  
+    CUNIT2  = 'deg     '                                                            
+    CTYPE3  = 'STOKES  '                                                            
+    CRVAL3  =   1.000000000000E+00                                                  
+    CDELT3  =   1.000000000000E+00                                                  
+    CRPIX3  =   1.000000000000E+00                                                  
+    CUNIT3  = '        '                                                            
+    CTYPE4  = 'FREQ    '                                                            
+    CRVAL4  =   1.445000000000E+09                                                  
+    CDELT4  =   1.600000000000E+07                                                  
+    CRPIX4  =   1.000000000000E+00                                                  
+    CUNIT4  = 'HZ      '                                                            
+    PV2_1   =   0.000000000000E+00                                                  
+    PV2_2   =   0.000000000000E+00                                                  
+    RESTFREQ=   1.445000000000E+09 /Rest Frequency (Hz)                             
+    ALTRVAL =  -0.000000000000E+00 /Alternate frequency reference value             
+    ALTRPIX =   1.000000000000E+00 /Alternate frequency reference pixel             
+    VELREF  =                    3 /1 LSR, 2 HEL, 3 OBS, +256 Radio                 
+    COMMENT casacore non-standard usage: 4 LSD, 5 GEO, 6 SOU, 7 GAL                 
+    TELESCOP= 'MeerKAT '                                                            
+    OBSERVER= 'CASA simulator'                                                      
+    DATE-OBS= '2012-03-21T00:00:00.000000'                                          
+    TIMESYS = 'UTC     '                                                            
+    OBSRA   =   2.889721000000E+02                                                  
+    OBSDEC  =  -7.466052777778E+01                                                  
+    OBSGEO-X=   5.111202828133E+06                                                  
+    OBSGEO-Y=   2.001309252764E+06                                                  
+    OBSGEO-Z=  -3.237339358474E+06                                                  
+    OBJECT  = 'KAT7_1445_1x16_12h'                                                  
+    TELESCOP= 'MeerKAT '                                                            
+    INSTRUME= 'MeerKAT '                                                            
+    DISTANCE=   0.000000000000E+00                                                  
+    DATE    = '2013-01-15T15:21:51.222000' /Date FITS file was written              
+    ORIGIN  = 'CASA casacore alma-evla '           
+    '''
     for k in header_dict.keys():
         prihdr.set(k, header_dict[k])
     hdulist.writeto(os.path.join(out_dir, fname))
