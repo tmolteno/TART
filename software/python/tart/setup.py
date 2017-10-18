@@ -15,7 +15,7 @@ class TestCommand(setuptools.command.test.test):
             yield arg
 
 setup(name='tart',
-    version='0.14.6',
+    version='0.14.7',
     description='Transient Array Radio Telescope Imaging and Operation Library',
     long_description=readme,
     url='http://github.com/tmolteno/projects/TART',

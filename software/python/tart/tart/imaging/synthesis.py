@@ -21,30 +21,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 cc = np.concatenate
 
 
-def get_difmap(fits_file):
-    difmap = """! Basic imaging instructions by Tim Molteno
-debug = False
-observe {}
-select I, 1,5
-mapcolor color
-device uvplot{}.png/png
-uvplot
-mapsize 1024, 1265624.0
-device beam{}.png/png
-mappl beam
-i = 0
-docont = false
-repeat
-    clean 100,0.05
-    selfcal
-    i = i+1
-until(i > 35)
-device map{}.png/png
-mappl cln
-exit""".format(fits_file, fits_file, fits_file, fits_file)
-    return difmap
-
-
 def get_max_ang(nw, num_bin):
     ret = np.degrees(num_bin/(4.*nw))
     return ret
@@ -66,17 +42,9 @@ class Synthesis_Imaging(object):
     def set_grid_file(self,fpath):
         self.grid_file = fpath
 
-    def get_uvfits(self, fname = "out.uvfits"):
-        #os.system("rm out.uvfits")
-        fits_name = fname
+    def get_uvfits(self):
         gen = uvfitsgenerator.UVFitsGenerator(copy.deepcopy(self.cal_vis_list), self.phase_center)
-        gen.write(fits_name)
-        difcmd = get_difmap(fits_name)
-        return difcmd, fits_name
-        #f = open('difmap_cmds', 'w')
-        #f.write(difcmd)
-        #f.close()
-        #os.system("difmap < difmap_cmds")
+        return gen
 
 
     def get_difmap_movie(self, base_index, frames):
@@ -265,8 +233,7 @@ class Synthesis_Imaging(object):
     def get_beam(self, nw = 30, num_bin = 2**7, use_kernel=False):
         uv_plane, uu_edges, vv_edges = self.get_uvplane(num_bin=num_bin, nw=nw, use_kernel=use_kernel)
         ift = np.fft.ifftshift(fft.ifft2(np.fft.ifftshift(np.abs(uv_plane).__gt__(0))))
-        ret = np.abs(ift)
-        return ret # /np.sum(ret)
+        return ift # /np.sum(ret)
 
     def get_image(self, CAL_IFT, CAL_EXTENT):
         abs_ift = np.abs(CAL_IFT)
