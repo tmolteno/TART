@@ -9,6 +9,7 @@ if os.name == 'posix' and "DISPLAY" not in os.environ:
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+import logging
 import argparse
 import sys
 import threading
@@ -19,8 +20,12 @@ import numpy as np
 
 from tart_tools import api_imaging
 from tart_tools import api_handler
+from tart.operation import settings
+from tart.imaging import elaz
 
 from copy import deepcopy
+
+logger = logging.getLogger()
 
 def handle_image(args, img, n_bin, title, time_repr, source_json=None):
     """ This function manages the output of an image, drawing sources e.t.c."""
@@ -43,6 +48,7 @@ if __name__ == '__main__':
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     PARSER.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     PARSER.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
+    PARSER.add_argument('--file', required=False, default=None, help="Get data from a calibration JSON file.")
 
     PARSER.add_argument('--gains', required=False, default=None, help="Use a local JSON file containing antenna gains to create the image image.")
     PARSER.add_argument('--vis', required=False, default=None, help="Use a local JSON file containing the visibilities to create the image image.")
@@ -67,30 +73,65 @@ if __name__ == '__main__':
 
     ARGS = PARSER.parse_args()
 
-    print("Getting Data from {}".format(ARGS.api))
+    logger.setLevel(logging.DEBUG)
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    # create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # add formatter to ch
+    ch.setFormatter(formatter)
+    # add ch to logger
+    logger.addHandler(ch)
 
-    api = api_handler.APIhandler(ARGS.api)
-    config = api_handler.get_config(api)
+    if ARGS.file:
+        logger.info("Getting Data from file: {}".format(ARGS.file))
+        # Load data from a JSON file
+        with open(ARGS.file, 'r') as json_file:
+            calib_info = json.load(json_file)
 
-    if (ARGS.gains is None):
+        info = calib_info['info']
+        ant_pos = calib_info['ant_pos']
+        config = settings.from_api_json(info['info'], ant_pos)
+
+        flag_list = [] # [4, 5, 14, 22]
+
+        original_positions = deepcopy(config.get_antenna_positions())
+
+        gains_json = calib_info['gains']
+        gains = np.asarray(gains_json['gain'])
+        phase_offsets = np.asarray(gains_json['phase_offset'])
+        config = settings.from_api_json(info['info'], ant_pos)
+    
+        measurements = []
+        for d in calib_info['data']:
+            vis_json, source_json = d
+            cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains, phase_offsets, flag_list)
+            src_list = elaz.from_json(source_json, 0.0)
+
+    else:
+        logger.info("Getting Data from API: {}".format(ARGS.api))
+
+        api = api_handler.APIhandler(ARGS.api)
+        config = api_handler.get_config(api)
+
         gains = api.get('calibration/gain')
-    else:
-        # Load gains data
-        with open(ARGS.gains, 'r') as json_file:
-            gains = json.load(json_file)
 
-    if (ARGS.vis is None):
-        vis_json = api.get('imaging/vis')
-    else:
-        with open(ARGS.vis, 'r') as json_file:
-            vis_json = json.load(json_file)
+        if (ARGS.vis is None):
+            vis_json = api.get('imaging/vis')
+        else:
+            with open(ARGS.vis, 'r') as json_file:
+                vis_json = json.load(json_file)
 
-    ts = api_imaging.vis_json_timestamp(vis_json)
-    if ARGS.show_sources:
-        source_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
+        ts = api_imaging.vis_json_timestamp(vis_json)
+        if ARGS.show_sources:
+            source_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
 
-    print("Data Grabbing Complete")
-    cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains['gain'], gains['phase_offset'], flag_list=[])
+        logger.info("Data Download Complete")
+
+        cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains['gain'], gains['phase_offset'], flag_list=[])
+
+
     api_imaging.rotate_vis(ARGS.rotation, cv, reference_positions = deepcopy(config.get_antenna_positions()))
     n_bin = 2**ARGS.nfft
 
