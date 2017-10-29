@@ -19,6 +19,8 @@ if __name__ == '__main__':
 
     pos = api.get('imaging/antenna_positions')
 
+    out_json = {}
+    out_json["antenna_positions"] = pos
     with open(ARGS.file, 'w') as outfile:
-        json.dump(pos, outfile, sort_keys = True, indent = 4,
+        json.dump(out_json, outfile, sort_keys = True, indent = 4,
                   ensure_ascii = False)
