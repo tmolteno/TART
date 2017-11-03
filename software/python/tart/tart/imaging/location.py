@@ -14,6 +14,44 @@ from tart.imaging import tart_util
 def get_loc(Settings):
     return Location(angle.from_dms(Settings.get_lat()), angle.from_dms(Settings.get_lon()), Settings.get_alt())
 
+
+def JulianDay (utc_date):
+    jhr =utc_date.hour + utc_date.minute / 60.0 + utc_date.second / 3600.0
+    day = utc_date.day
+    month = utc_date.month
+    year = utc_date.year
+
+    if (month<=2):
+      month=month+12
+      year=year-1
+    return (int)(365.25*year) + (int)(30.6001*(month+1)) - 15 + 1720996.5 + day + jhr/24.0
+
+
+''' return the greenwich sidereal time'''
+def gst(utc_date):
+    jd = JulianDay(utc_date)
+    d = jd - 2451545.0
+    t = int(d / 36525)
+
+    gmst = 18.697374558 + 24.06570982441908*d
+
+    # now correct for precession of equioxes
+    epsilon = 23.4393 - 0.0000004*d
+    l = 280.47 + 0.98565*d
+    omega = 125.04 - 0.052954*d
+    dphi = -0.000319*math.sin(angle.deg_to_rad(omega)) - 0.000024*math.sin(angle.deg_to_rad(2.0*l))
+    eqeq = dphi * math.cos(angle.deg_to_rad(epsilon))
+
+    return angle.from_hours(gmst + eqeq)
+
+# Convert ECI (Earth-Centered-Inertial) to ECEF coordinates.
+def eci_to_ecef(utc_date, x_in, y_in, z_in):
+
+    # Rotate x and y by the hour angle
+    theta = gst(utc_date)
+
+    return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
+
 class Location:
     R_EARTH = 6378137.0 # earth semimajor axis in meters
     F_RECIP = 1.0/298.257223563 # reciprocal flattening
