@@ -65,6 +65,7 @@ if __name__ == '__main__':
     PARSER.add_argument('--healpix', action="store_true", help="Use HealPIX to map the resulting image onto a projected circle.")
 
     PARSER.add_argument('--display', action="store_true", help="Display Image to the user")
+    PARSER.add_argument('--log', action="store_true", help="Output the log of the image")
     PARSER.add_argument('--fits', action="store_true", help="Generate a FITS format image")
     PARSER.add_argument('--PNG', action="store_true", help="Generate a PNG format image")
     PARSER.add_argument('--show-sources', action="store_true", help="Show known sources on images (only works on PNG).")
@@ -338,6 +339,8 @@ exit
         handle_image(ARGS, sane.restored, n_bin, "MORESANE", time_repr, source_json)
 
     if ARGS.beam:
+        if ARGS.log:
+            beam = np.log10(beam)
         handle_image(ARGS, beam, n_bin, "beam", time_repr)
 
     if ARGS.dirty:
