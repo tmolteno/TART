@@ -9,7 +9,8 @@ deploy-raspberry:
 
 deploy-pear:
 	npm run pear-build
-	rsync ${RSYNC_OPTS} dist/* pi@tart2-pear:/var/www/html/
+	ssh -N -L 2222:localhost:3001 tart@tart.elec.ac.nz &
+	rsync ${RSYNC_OPTS} -auve "ssh -p 2222"  dist/* pi@localhost:/var/www/html/
 
 deploy-orange:
 	npm run orange-build
