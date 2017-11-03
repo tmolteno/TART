@@ -14,6 +14,17 @@ A TART telescope consists of some telescope hardware connected to a Raspberry Pi
 
 ## Installing software on the raspberry Pi
 
+On your telescope host, execute the following:
+
+    sudo pip install tart-web-api 
+
+Then create a shell script with the following contents.
+
+    #!/bin/bash
+    export LOGIN_PW=password
+    export FLASK_APP=tart_web_api
+    flask run
+
 ## Set up radio receiver array
 
 ### Antenna Location Calibration
