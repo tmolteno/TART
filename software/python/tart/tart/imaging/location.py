@@ -52,6 +52,14 @@ def eci_to_ecef(utc_date, x_in, y_in, z_in):
 
     return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
 
+# Convert ECEF to ECI (Earth-Centered-Inertial)
+def ecef_to_eci(utc_date, x_in, y_in, z_in):
+
+    # Undo Rotate x and y by the hour angle
+    theta = gst(utc_date)
+
+    return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
+
 class Location:
     R_EARTH = 6378137.0 # earth semimajor axis in meters
     F_RECIP = 1.0/298.257223563 # reciprocal flattening
