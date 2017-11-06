@@ -14,6 +14,7 @@ from tart.simulation import antennas
 from tart.util import angle
 from tart.imaging import correlator
 
+TEST_CONFIG='tart/test/test_telescope_config.json'
 def relative_diff(l1, l2):
   return (l1-l2)/np.sqrt(np.power(l1, 2) + np.power(l2, 2))
 
@@ -21,7 +22,7 @@ class TestSimulatedVisibility(unittest.TestCase):
 
   def setUp(self):
 
-    self.config = settings.Settings('test_telescope_config.json')
+    self.config = settings.from_file(TEST_CONFIG)
     self.utc_date = datetime.datetime.utcnow()
     self.sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = self.sample_duration)]
     self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.ant_positions]
@@ -64,7 +65,7 @@ class TestTelescope(unittest.TestCase):
 
     # rad = radio.Max2769B(noise_level=0.)
     utc_date = datetime.datetime.utcnow()
-    self.settings = settings.Settings('test_telescope_config.json')
+    self.settings = settings.from_file(TEST_CONFIG)
     rad = radio.Max2769B(noise_level=[0. for _ in self.settings.ant_positions])
     sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = rad.sample_duration)]
     ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.settings.num_antennas)]

@@ -23,7 +23,7 @@ class TestCorrelator(unittest.TestCase):
     N = 20
     a0 = np.random.randint(0,2,2**N)
     a1 = np.random.randint(0,2,2**N)
-    self.assertAlmostEqual(corr_b(a0,a1), corr_b_pat(a0,a1))
+    self.assertAlmostEqual(corr_b(a0,a1,N), corr_b_pat(a0,a1))
     
     from tart.operation import observation
     from tart.operation import settings

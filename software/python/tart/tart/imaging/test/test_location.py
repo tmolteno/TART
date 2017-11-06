@@ -201,9 +201,9 @@ class TestLocation(unittest.TestCase):
         
     def test_eci_to_ecef(self):
         utc_date = utc.now()
-        x_in = 12345.5
-        y_in = 23456.6
-        z_in = 1234567.8
+        x_in = 12345e3
+        y_in = 23456e3
+        z_in = 12345e3
 
         ecef = location.eci_to_ecef(utc_date, x_in, y_in, z_in)
 
