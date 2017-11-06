@@ -15,16 +15,16 @@ def get_loc(Settings):
     return Location(angle.from_dms(Settings.get_lat()), angle.from_dms(Settings.get_lon()), Settings.get_alt())
 
 
-def JulianDay (utc_date):
-    jhr =utc_date.hour + utc_date.minute / 60.0 + utc_date.second / 3600.0
-    day = utc_date.day
-    month = utc_date.month
-    year = utc_date.year
+#def JulianDay (utc_date):
+    #jhr =utc_date.hour + utc_date.minute / 60.0 + utc_date.second / 3600.0
+    #day = utc_date.day
+    #month = utc_date.month
+    #year = utc_date.year
 
-    if (month<=2):
-      month=month+12
-      year=year-1
-    return (int)(365.25*year) + (int)(30.6001*(month+1)) - 15 + 1720996.5 + day + jhr/24.0
+    #if (month<=2):
+      #month=month+12
+      #year=year-1
+    #return (int)(365.25*year) + (int)(30.6001*(month+1)) - 15 + 1720996.5 + day + jhr/24.0
 
 
 #''' return the greenwich sidereal time'''
