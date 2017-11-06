@@ -27,36 +27,39 @@ def JulianDay (utc_date):
     return (int)(365.25*year) + (int)(30.6001*(month+1)) - 15 + 1720996.5 + day + jhr/24.0
 
 
-''' return the greenwich sidereal time'''
-def gst(utc_date):
-    jd = JulianDay(utc_date)
-    d = jd - 2451545.0
-    t = int(d / 36525)
+#''' return the greenwich sidereal time'''
+#def gst(utc_date):
+    #jd = JulianDay(utc_date)
+    #d = jd - 2451545.0
+    #t = int(d / 36525)
 
-    gmst = 18.697374558 + 24.06570982441908*d
+    #gmst = 18.697374558 + 24.06570982441908*d
 
-    # now correct for precession of equioxes
-    epsilon = 23.4393 - 0.0000004*d
-    l = 280.47 + 0.98565*d
-    omega = 125.04 - 0.052954*d
-    dphi = -0.000319*math.sin(angle.deg_to_rad(omega)) - 0.000024*math.sin(angle.deg_to_rad(2.0*l))
-    eqeq = dphi * math.cos(angle.deg_to_rad(epsilon))
+    ## now correct for precession of equioxes
+    #epsilon = 23.4393 - 0.0000004*d
+    #l = 280.47 + 0.98565*d
+    #omega = 125.04 - 0.052954*d
+    #dphi = -0.000319*math.sin(angle.deg_to_rad(omega)) - 0.000024*math.sin(angle.deg_to_rad(2.0*l))
+    #eqeq = dphi * math.cos(angle.deg_to_rad(epsilon))
 
-    return angle.from_hours(gmst + eqeq)
+    #return angle.from_hours(gmst + eqeq)
 
 # Convert ECI (Earth-Centered-Inertial) to ECEF coordinates.
 def eci_to_ecef(utc_date, x_in, y_in, z_in):
-
+    ''' cos(theta) -sin(theta)  0
+        sin(theta)  cos(theta)  0
+        0           0           1
+    '''
     # Rotate x and y by the hour angle
-    theta = gst(utc_date)
+    theta = Location.GST(utc_date)
 
-    return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
+    return [x_in*theta.cos() - y_in*theta.sin(), y_in*theta.cos() + x_in*theta.sin(), z_in]
 
 # Convert ECEF to ECI (Earth-Centered-Inertial)
 def ecef_to_eci(utc_date, x_in, y_in, z_in):
 
     # Undo Rotate x and y by the hour angle
-    theta = gst(utc_date)
+    theta = Location.GST(utc_date)
 
     return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
 
@@ -150,8 +153,9 @@ class Location:
 
         return [r, el, az]
 
-    ''' Return the Greenwich Sidereal Time'''
-    def GST(self, utc_date):
+    @staticmethod
+    def GST(utc_date):
+        ''' Return the Greenwich Sidereal Time'''
         JD = tart_util.JulianDay(utc_date)
         D = JD - 2451545.0
         T = int(D / 36525)
@@ -168,11 +172,11 @@ class Location:
         return angle.from_hours(GMST + eqeq)
 
     def LST(self, utc_date):
-        return    self.GST(utc_date) + self.lon
+        return Location.GST(utc_date) + self.lon
 
     ''' This is the Greenwich Hour Angle (GHA)'''
     def GHA(self, utc_date, ra):
-        return self.GST(utc_date) - ra
+        return Location.GST(utc_date) - ra
 
     def horizontal_to_LHA(self, utc_date, el, az):
         phi_0 = self.lat.to_rad()

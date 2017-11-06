@@ -199,3 +199,15 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(az.to_degrees(), az1.to_degrees(), 5)
 
         
+    def test_eci_to_ecef(self):
+        utc_date = utc.now()
+        x_in = 12345.5
+        y_in = 23456.6
+        z_in = 1234567.8
+
+        ecef = location.eci_to_ecef(utc_date, x_in, y_in, z_in)
+
+        x,y,z = location.ecef_to_eci(utc_date, ecef[0], ecef[1], ecef[2])
+        self.assertAlmostEqual(x_in, x)
+        self.assertAlmostEqual(y_in, y)
+        self.assertAlmostEqual(z_in, z)
