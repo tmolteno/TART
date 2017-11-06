@@ -93,6 +93,9 @@ class Angle(object):
     def __lt__(self, x):
         return self.rad < x.rad # TODO should we wrap both?
 
+    def __neg__(self):
+        return from_rad(-self.rad)
+
 def from_hours(hour, minute=0.0, sec=0.0):
     hr = hour % 24.0
     return Angle(deg=hr*15, minute=minute*15, sec=sec*15)
