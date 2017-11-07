@@ -17,19 +17,22 @@ from tart.simulation.radio import *
 
 class TestMax2769B(unittest.TestCase):
   def setUp(self):
-    self.config = settings.Settings('test_telescope_config.json')
+    self.config = settings.from_file('../test/test_telescope_config.json')
+    self.config.load_antenna_positions(cal_ant_positions_file='../test/test_calibrated_antenna_positions.json')
     # noiselvls =  0.1.*np.ones(config.num_antennas)
-    noiselvls =  0. * np.ones(self.config.num_antennas)
+    num_ant = self.config.get_num_antenna()
+    noiselvls =  0. * np.ones(num_ant)
     self.rad = Max2769B(noise_level = noiselvls)
-    self.sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.), elevation = angle.from_dms(90.), sample_duration = self.rad.sample_duration)]
-    self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.ant_positions]
-    self.ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.config.num_antennas)]
+    self.sources = [simulation_source.SimulationSource(r=1e9,amplitude = 1.0, azimuth = angle.from_dms(0.), elevation = angle.from_dms(90.), sample_duration = self.rad.sample_duration)]
+    self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.get_antenna_positions()]
+    self.ant_models = [antenna_model.GpsPatchAntenna() for i in range(num_ant)]
     self.utc_date = datetime.datetime.utcnow()
 
   def test_get_obs(self):
 
     plt.figure()
-    ant_sigs = antennas.antennas_signal(self.ants, self.ant_models, self.sources, self.rad.timebase)
+    timebase = np.arange(0, self.rad.sample_duration, 1.0/self.rad.sampling_rate)
+    ant_sigs = antennas.antennas_signal(self.ants, self.ant_models, self.sources, timebase)
     rad_sig_full = self.rad.sampled_signal(ant_sigs[0, :], 0)
     obs_full = self.rad.get_full_obs(ant_sigs, self.utc_date, self.config)
 

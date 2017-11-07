@@ -5,7 +5,7 @@ from tart.util import utc
 from tart.util import angle
 from tart.util import constants
 
-from tart.simulation.antennas import Antenna, get_UVW, get_geo_delay_horizontal
+from tart.simulation.antennas import Antenna, get_UVW, get_geo_delay_horizontal, antennas_signal
 from tart.simulation.simulation_source import HorizontalSource, SimulationSource
 from tart.imaging import location
 from tart.imaging import antenna_model
@@ -99,8 +99,8 @@ class TestAntennas(unittest.TestCase):
         antenna_locations = [[-10.0, 0.0, 0.0], [10.0, 0.0, 0.0]]
 
         antennas =[Antenna(location.Dunedin, i) for i in antenna_locations]
-        src = [SimulationSource(amplitude=1.0, azimuth=angle.from_dms(0.0), elevation=angle.from_dms(20.0), sample_duration=sample_duration),
-               SimulationSource(amplitude=0.5, azimuth=angle.from_dms(0.0), elevation=angle.from_dms(20.0), sample_duration=sample_duration)]
+        src = [SimulationSource(r=1e9, amplitude=1.0, azimuth=angle.from_dms(0.0), elevation=angle.from_dms(20.0), sample_duration=sample_duration),
+               SimulationSource(r=1e9, amplitude=0.5, azimuth=angle.from_dms(0.0), elevation=angle.from_dms(20.0), sample_duration=sample_duration)]
         radio_sampling_rate = ref_freq*freq_mult
         tb = np.arange(0, sample_duration, 1.0/radio_sampling_rate)
         ant_models = [antenna_model.GpsPatchAntenna() for _ in range(2)]

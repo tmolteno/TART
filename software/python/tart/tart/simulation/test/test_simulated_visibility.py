@@ -14,24 +14,27 @@ from tart.simulation import antennas
 from tart.util import angle
 from tart.imaging import correlator
 
-TEST_CONFIG='tart/test/test_telescope_config.json'
+TEST_CONFIG='../test/test_telescope_config.json'
+TEST_ANTENNA_POSITIONS='../test/test_calibrated_antenna_positions.json'
 def relative_diff(l1, l2):
   return (l1-l2)/np.sqrt(np.power(l1, 2) + np.power(l2, 2))
 
 class TestSimulatedVisibility(unittest.TestCase):
 
   def setUp(self):
-
-    self.config = settings.from_file(TEST_CONFIG)
     self.utc_date = datetime.datetime.utcnow()
-    self.sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = self.sample_duration)]
-    self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.ant_positions]
-    self.rad = radio.Max2769B(noise_level=[0. for _ in self.config.ant_positions])
-    self.ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.config.num_antennas)]
-    self.cor = correlator.Correlator()
+    self.config = settings.from_file(TEST_CONFIG)
+    self.config.load_antenna_positions(cal_ant_positions_file=TEST_ANTENNA_POSITIONS)
 
-    ant_sigs_full = antennas.antennas_signal(self.ants, self.ant_models, self.sources, self.rad.timebase)
-    obs = self.rad.get_full_obs(ant_sigs_full, self.utc_date, config = self.config)
+    self.rad = radio.Max2769B(noise_level=[0. for _ in range(self.config.get_num_antenna())])
+    self.sources = [simulation_source.SimulationSource(r=1e9,amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = self.rad.sample_duration)]
+    self.ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.get_antenna_positions()]
+    self.ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.config.get_num_antenna())]
+    self.cor = correlator.Correlator()
+    self.timebase = np.arange(0, self.rad.sample_duration, 1.0/self.rad.sampling_rate)
+
+    ant_sigs_full = antennas.antennas_signal(self.ants, self.ant_models, self.sources, self.timebase)
+    obs = self.rad.get_full_obs(ant_sigs_full, self.utc_date, self.config, self.timebase)
     vis = self.cor.correlate(obs)
     self.full_vis = np.array(vis.v)
 
@@ -65,16 +68,20 @@ class TestTelescope(unittest.TestCase):
 
     # rad = radio.Max2769B(noise_level=0.)
     utc_date = datetime.datetime.utcnow()
-    self.settings = settings.from_file(TEST_CONFIG)
-    rad = radio.Max2769B(noise_level=[0. for _ in self.settings.ant_positions])
-    sources = [simulation_source.SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = rad.sample_duration)]
-    ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.settings.num_antennas)]
-    ants = [antennas.Antenna(self.settings.get_loc(), pos) for pos in self.settings.ant_positions]
-    ant_sigs = antennas.antennas_signal(ants, ant_models, sources, rad.timebase)
-    self.obs = rad.get_full_obs(ant_sigs, utc_date, config = self.settings)
+    self.config = settings.from_file(TEST_CONFIG)
+    self.config.load_antenna_positions(cal_ant_positions_file=TEST_ANTENNA_POSITIONS)
+
+    rad = radio.Max2769B(noise_level=[0. for _ in range(self.config.get_num_antenna())])
+    sources = [simulation_source.SimulationSource(r=1e9, amplitude = 1.0, azimuth = angle.from_dms(2.0), elevation = angle.from_dms(50.0), sample_duration = rad.sample_duration)]
+    ant_models = [antenna_model.GpsPatchAntenna() for i in range(self.config.get_num_antenna())]
+    ants = [antennas.Antenna(self.config.get_loc(), pos) for pos in self.config.get_antenna_positions()]
+    self.timebase = np.arange(0, rad.sample_duration, 1.0/rad.sampling_rate)
+
+    ant_sigs = antennas.antennas_signal(ants, ant_models, sources, self.timebase)
+    self.obs = rad.get_full_obs(ant_sigs, utc_date, self.config, self.timebase)
 
   def test_data_limits(self):
-    for i in range(1, self.obs.config.num_antennas):
+    for i in range(1, self.obs.config.get_num_antenna()):
       data = self.obs.get_antenna(i)
 
       self.assertGreater(data.max(), 0.99)
@@ -84,7 +91,7 @@ class TestTelescope(unittest.TestCase):
       self.assertLess(data.mean(), 0.1)
 
   def test_settings(self):
-    self.assertEqual(self.settings.num_antennas, 5)
+    self.assertEqual(self.config.get_num_antenna(), 24)
 
   def test_simulated_observation(self):
     fname = 'test_observation.pkl'
