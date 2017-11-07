@@ -243,6 +243,15 @@ class Location(object):
 
         return ra.to_ra(), dec.to_declination()
 
+    def horizontal_to_eci(self, r, el, az, utc_date):
+        x, y, z = self.horizontal_to_ecef(r, el, az)
+        xi, yi, zi = ecef_to_eci(utc_date, x, y, z)
+        return [xi, yi, zi]
+
+    def eci_to_horizontal(self, x, y, z, utc_date):
+        xf, yf, zf = eci_to_ecef(utc_date, x, y, z)
+        r, el, az = self.ecef_to_horizontal(xf, yf, zf)
+        return [r,el,az]
 
 '''Convenient helper function for the location of the Physics Department Roof'''
 Dunedin = Location(lat=angle.from_dms(-45.86391200), lon=angle.from_dms(170.51348452), alt=46.5)
