@@ -9,9 +9,9 @@ from tart.simulation.simulation_source import *
 
 class TestSimulationSource(unittest.TestCase):
   def setUp(self):
-      self.crab = SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(45.0), sample_duration = 1e-3) # 0.1 ms sample duration
-      self.s2 = SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(90.0), sample_duration = 1e-3) # 0.1 ms sample duration
-      self.s3 = SimulationSource(amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(0.0), sample_duration = 1e-3) # 0.1 ms sample duration
+      self.crab = SimulationSource(r=1e9, amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(45.0), sample_duration = 1e-3) # 0.1 ms sample duration
+      self.s2 = SimulationSource(r=1e9, amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(90.0), sample_duration = 1e-3) # 0.1 ms sample duration
+      self.s3 = SimulationSource(r=1e9, amplitude = 1.0, azimuth = angle.from_dms(0.0), elevation = angle.from_dms(0.0), sample_duration = 1e-3) # 0.1 ms sample duration
 
   def test_full_simp(self):
     tend= 1e-4

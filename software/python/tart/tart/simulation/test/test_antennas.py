@@ -6,7 +6,7 @@ from tart.util import angle
 from tart.util import constants
 
 from tart.simulation.antennas import Antenna, get_UVW, get_geo_delay_horizontal
-from tart.simulation.simulation_source import HorizontalSource
+from tart.simulation.simulation_source import HorizontalSource, SimulationSource
 from tart.imaging import location
 from tart.imaging import antenna_model
 
