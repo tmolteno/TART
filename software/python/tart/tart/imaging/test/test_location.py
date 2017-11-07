@@ -211,3 +211,28 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(x_in, x)
         self.assertAlmostEqual(y_in, y)
         self.assertAlmostEqual(z_in, z)
+
+
+    def test_horizontal_to_ecef(self):
+        theta = 90.0  # Straight Up
+        phi = 0.0
+
+        x,y,z = Dunedin.horizontal_to_ecef(0.0, angle.from_dms(theta), angle.from_dms(phi))
+        
+        ecef = Dunedin.get_ecef()
+        
+        self.assertAlmostEqual(x, ecef[0])
+        self.assertAlmostEqual(y, ecef[1])
+        self.assertAlmostEqual(z, ecef[2])
+
+    def test_horizontal_to_ecef_and_back(self):
+        theta = np.random.rand(100)*np.pi/2
+        phi = np.random.rand(100)*np.pi*2
+        r = 100.0
+        for i in range(100):
+            x,y,z = Dunedin.horizontal_to_ecef(r, angle.from_rad(theta[i]), angle.from_rad(phi[i]))
+
+            r2, theta2, phi2 = Dunedin.ecef_to_horizontal(x,y,z)
+
+            self.assertAlmostEqual(theta2.to_rad(), theta[i])
+            self.assertAlmostEqual(phi2.to_rad(), phi[i])

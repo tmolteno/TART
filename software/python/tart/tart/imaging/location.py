@@ -15,34 +15,31 @@ def get_loc(Settings):
     return Location(angle.from_dms(Settings.get_lat()), angle.from_dms(Settings.get_lon()), Settings.get_alt())
 
 
-#def JulianDay (utc_date):
-    #jhr =utc_date.hour + utc_date.minute / 60.0 + utc_date.second / 3600.0
-    #day = utc_date.day
-    #month = utc_date.month
-    #year = utc_date.year
+''' Future class structure going in here'''
+class ENU(object):
+    def __init__(self, e, n, u):
+        self.e = e
+        self.n = n
+        self.u = u
 
-    #if (month<=2):
-      #month=month+12
-      #year=year-1
-    #return (int)(365.25*year) + (int)(30.6001*(month+1)) - 15 + 1720996.5 + day + jhr/24.0
+class Horizontal(object):
+    def __init__(self, r, el, az):
+        self.r = r
+        self.el = el
+        self.az = az
 
+class ECEF(object):
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
 
-#''' return the greenwich sidereal time'''
-#def gst(utc_date):
-    #jd = JulianDay(utc_date)
-    #d = jd - 2451545.0
-    #t = int(d / 36525)
+class ECI(object):
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
 
-    #gmst = 18.697374558 + 24.06570982441908*d
-
-    ## now correct for precession of equioxes
-    #epsilon = 23.4393 - 0.0000004*d
-    #l = 280.47 + 0.98565*d
-    #omega = 125.04 - 0.052954*d
-    #dphi = -0.000319*math.sin(angle.deg_to_rad(omega)) - 0.000024*math.sin(angle.deg_to_rad(2.0*l))
-    #eqeq = dphi * math.cos(angle.deg_to_rad(epsilon))
-
-    #return angle.from_hours(gmst + eqeq)
 
 # Convert ECI (Earth-Centered-Inertial) to ECEF coordinates.
 def eci_to_ecef(utc_date, x_in, y_in, z_in):
@@ -63,7 +60,7 @@ def ecef_to_eci(utc_date, x_in, y_in, z_in):
 
     return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
 
-class Location:
+class Location(object):
     R_EARTH = 6378137.0 # earth semimajor axis in meters
     F_RECIP = 1.0/298.257223563 # reciprocal flattening
     E2 = 2.0*F_RECIP - F_RECIP*F_RECIP # eccentricity squared
@@ -102,6 +99,7 @@ class Location:
 
 
     def get_ecef(self):
+        ''' Position of the Location in ECEF coordinates '''
         sinlat = self.lat.sin()
         chi = math.sqrt(1.0 - Location.E2*sinlat*sinlat)
         coslat = self.lat.cos()
@@ -119,9 +117,9 @@ class Location:
         e = -x_in*lon.sin()                    + y_in*lon.cos()
         n = -x_in*lon.cos()*lat.sin() - y_in*lon.sin()*lat.sin() + z_in*lat.cos()
         u =    x_in*lon.cos()*lat.cos() + y_in*lon.sin()*lat.cos() + z_in*lat.sin()
-        return np.array([e,n,u])
+        return [e,n,u]
 
-    def get_ecef_delta_from_enu(self,e_in,n_in,u_in):
+    def get_ecef_delta_from_enu(self, e_in, n_in, u_in):
         # FIXME: definitely TEST ENU_TO_ECEF
         lat = self.lat
         lon = self.lon
@@ -136,7 +134,7 @@ class Location:
         ex,ey,ez = self.get_ecef() # My position in ECEF
 
         rx,ry,rz = [x_in - ex, y_in - ey, z_in - ez]
-        enu = self.ecef_to_enu(rx,ry,rz)
+        enu = np.array(self.ecef_to_enu(rx,ry,rz))
 
         r = np.sqrt(enu.dot(enu))
         rho = enu / r
@@ -150,9 +148,29 @@ class Location:
         if az.to_degrees() < 0.:
             az = angle.from_dms(360. + az.to_degrees())
 
-
         return [r, el, az]
 
+    @staticmethod
+    def horizontal_to_enu(r, el, az):
+        ''' Get ENU from Horizontal (local Topocentric)
+        '''
+        e = el.cos()*az.sin()
+        n = el.cos()*az.cos()
+        u = el.sin()
+
+        return [r*e, r*n, r*u]
+
+    def horizontal_to_ecef(self, r, el, az):
+        ''' Convert r,el,az to ECEF '''
+        ## Convert to ENU
+        e,n,u = Location.horizontal_to_enu(r, el, az)
+        
+        # Convert ENU to ECEF
+        delta_ecef = self.get_ecef_delta_from_enu(e, n, u)
+        my_ecef = np.array(self.get_ecef())
+
+        return my_ecef + delta_ecef
+        
     @staticmethod
     def GST(utc_date):
         ''' Return the Greenwich Sidereal Time'''
@@ -171,12 +189,18 @@ class Location:
 
         return angle.from_hours(GMST + eqeq)
 
+    @staticmethod
+    def GHA(utc_date, ra):
+        ''' Calculate the Greenwich Hour Angle (GHA)'''
+        return Location.GST(utc_date) - ra
+
     def LST(self, utc_date):
+        ''' Calculate the Local Sidereal Time '''
         return Location.GST(utc_date) + self.lon
 
-    ''' This is the Greenwich Hour Angle (GHA)'''
-    def GHA(self, utc_date, ra):
-        return Location.GST(utc_date) - ra
+    def LHA(self, utc_date, ra):
+        ''' Calculate the Local Hour Angle (LHA)'''
+        return self.LST(utc_date) - ra
 
     def horizontal_to_LHA(self, utc_date, el, az):
         phi_0 = self.lat.to_rad()
@@ -185,12 +209,9 @@ class Location:
         local_hour_angle = angle.atan(tan_h)
         return local_hour_angle
 
-    ''' This is the Local Hour Angle (LHA)'''
-    def LHA(self, utc_date, ra):
-        return self.LST(utc_date) - ra
 
-    # Convert RA/Decl to Elevation Azimuth this location
     def equatorial_to_horizontal(self, utc_date, ra, dec):
+        ''' Convert RA/Decl to Elevation Azimuth this location '''
         # [Peter Duffett-Smith, Jonathan_Zwart] Practical Astronomy with calculator and spreadsheet
         lha = self.LHA(utc_date,ra)
         lat = self.lat
@@ -204,12 +225,12 @@ class Location:
 
         return el, az
 
-    ''' Convert an azimuth and elevation to RA/Decl
-            Useful for looking straight up, and working out the RA/Declination
-            Return RA , Decl (in degrees)
-    '''
 
     def horizontal_to_equatorial(self, utc_date, el, az):
+        ''' Convert an azimuth and elevation to RA/Decl
+                Useful for looking straight up, and working out the RA/Declination
+                Return RA , Decl (in degrees)
+        '''
         lat = self.lat
         dec_sin = (el.sin() * lat.sin()) + (el.cos() * lat.cos() * az.cos())
         dec = angle.asin(dec_sin)
