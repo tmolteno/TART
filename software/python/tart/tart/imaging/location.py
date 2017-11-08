@@ -48,7 +48,7 @@ def eci_to_ecef(utc_date, x_in, y_in, z_in):
         0           0           1
     '''
     # Rotate x and y by the hour angle
-    theta = Location.GST(utc_date)
+    theta = -Location.GST(utc_date)
 
     return [x_in*theta.cos() - y_in*theta.sin(), y_in*theta.cos() + x_in*theta.sin(), z_in]
 
@@ -56,7 +56,7 @@ def eci_to_ecef(utc_date, x_in, y_in, z_in):
 def ecef_to_eci(utc_date, x_in, y_in, z_in):
 
     # Undo Rotate x and y by the hour angle
-    theta = Location.GST(utc_date)
+    theta = -Location.GST(utc_date)
 
     return [x_in*theta.cos() + y_in*theta.sin(), y_in*theta.cos() - x_in*theta.sin(), z_in]
 
