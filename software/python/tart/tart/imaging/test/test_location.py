@@ -215,7 +215,7 @@ class TestLocation(unittest.TestCase):
             ra, dec = loc.horizontal_to_equatorial(utc_date, angle.from_dms(el), angle.from_dms(az))
 
             self.assertAlmostEqual(radec.ra.degree, ra.to_degrees(), -1) # TODO better agreement should be possible.
-            self.assertAlmostEqual(radec.dec.degree, dec.to_degrees(), -1) # TODO better agreement should be possible.
+            self.assertAlmostEqual(radec.dec.degree, dec.to_degrees(), 1) # TODO better agreement should be possible.
 
 
     def test_LST(self):
@@ -236,7 +236,25 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(lst_m, 58,    2)
         self.assertAlmostEqual(lst_s, 13,    2)
 
+    def test_LST_astropy(self):
+        start_date =  datetime.datetime(2013,9,12,9,10,0)
+        
+        loc = Dunedin
+        
+        eloc = coord.EarthLocation(lat=loc.latitude_deg()*u.deg, lon=loc.longitude_deg()*u.deg, height=loc.alt*u.m) 
 
+        for t in np.linspace(0, 1440, 50):
+            utc_date = start_date + datetime.timedelta(seconds=t)
+            LST = loc.LST(utc_date)
+            h,m,s = LST.to_hms()
+            print LST.to_hours(), h,m,s
+            obstime = time.Time(utc_date, scale='utc')
+            st = obstime.sidereal_time('mean', longitude=eloc.lon) 
+            print st
+            self.assertAlmostEqual(h, st.hms.h,    5)
+            self.assertAlmostEqual(m, st.hms.m,    5)
+            self.assertAlmostEqual(s, st.hms.s,    5)
+        
     def test_GST(self):
         utc_datetime = datetime.datetime(2013,9,12,9,10,0)
         GST = Dunedin.GST(utc_datetime).to_hours()%24

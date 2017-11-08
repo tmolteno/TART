@@ -65,16 +65,15 @@ class Angle(object):
 
     def to_dms(self):
         dd = self.to_degrees()
-        mnt,sec = divmod(dd*3600,60)
+        mnt,sec = divmod(dd*3600,60) ## 60 seconds in a
         deg,mnt = divmod(mnt,60)
         return deg,mnt,sec
 
     def to_hms(self):
         dd = self.to_degrees()
-        mnt,sec = divmod(dd*3600,60)
-        deg,mnt = divmod(mnt,60)
-        hour,deg = divmod(deg, 15)
         
+        hour,rem = divmod(dd, 15)   # 15 Degrees in an hour
+        mnt,sec = divmod(rem*3600/15,60)  # 60 Minutes in an hour
         return hour,mnt,sec
 
     def sin(self):

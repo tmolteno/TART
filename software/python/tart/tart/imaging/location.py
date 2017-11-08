@@ -240,7 +240,7 @@ class Location(object):
     def horizontal_to_equatorial(self, utc_date, el, az):
         ''' Convert an azimuth and elevation to RA/Decl
                 Useful for looking straight up, and working out the RA/Declination
-                Return RA , Decl (in degrees)
+                Return RA , Decl as angle objects
         '''
         lat = self.lat
         dec_sin = (el.sin() * lat.sin()) + (el.cos() * lat.cos() * az.cos())

@@ -21,11 +21,11 @@ class TestAngle(unittest.TestCase):
         self.assertEqual(ax.to_degrees(), 180.)
 
     def test_hms(self):
-        x = from_dms(180,20,11)
+        x = from_dms(167.7958333333)
         h,m,s = x.to_hms()
-        self.assertEqual(h, 12)
-        self.assertEqual(m, 20)
-        self.assertEqual(s, 11)
+        self.assertEqual(h, 11)
+        self.assertEqual(m, 11)
+        self.assertAlmostEqual(s, 11)
         
     def test_dms(self):
         x = from_dms(180,20,11)
