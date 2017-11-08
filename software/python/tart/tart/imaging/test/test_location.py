@@ -51,8 +51,7 @@ class TestLocation(unittest.TestCase):
         itrf = elaz.transform_to(coord.ITRS)
         return  [itrf.cartesian.x.value, itrf.cartesian.y.value, itrf.cartesian.z.value]
 
-        
-    
+
     '''
     http://www.ngs.noaa.gov/cgi-bin/xyz_getxyz.prl
     =============================================================
@@ -243,6 +242,20 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(gst_h, 8,    2)
         self.assertAlmostEqual(gst_m,36,    2)
         self.assertAlmostEqual(gst_s, 9,    2)
+
+    def test_GST_astropy(self):
+        utc_date = datetime.datetime(2013,9,12,9,10,0)
+        GST = Dunedin.GST(utc_date).to_hours()%24
+        gst_h = int(GST)
+        gst_m = int((GST-int(GST))*60.)
+        gst_s = int(((GST-int(GST))*60-int((GST-int(GST))*60))*60)
+
+        obstime = time.Time(utc_date, scale='utc')
+        st = obstime.sidereal_time('apparent', 'greenwich') 
+        print st
+        self.assertAlmostEqual(gst_h, st.hms.h,    5)
+        self.assertAlmostEqual(gst_m, st.hms.m,    5)
+        self.assertAlmostEqual(gst_s, int(st.hms.s),    5)
 
     def test_julian_date(self):
         jd    = tart_util.JulianDay(self.utc_date)
