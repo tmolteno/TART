@@ -71,6 +71,11 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(y, 733300.4705, 3) 
         self.assertAlmostEqual(z, -4554760.4738, 3) 
     
+        x,y,z = Dunedin.get_ecef_wgs84()
+        self.assertAlmostEqual(x, -4388375.1765, 3) 
+        self.assertAlmostEqual(y, 733300.4705, 3) 
+        self.assertAlmostEqual(z, -4554760.4738, 3) 
+
     def test_XYX(self):
         x,y,z = Dunedin.get_XYZ(0., 0., 0.)
         self.assertAlmostEqual(x, 0.) 
@@ -274,9 +279,10 @@ class TestLocation(unittest.TestCase):
         
     def test_eci_to_ecef(self):
         utc_date = utc.now()
-        x_arr = np.random.rand(100)*12345e3
-        y_arr = np.random.rand(100)*23456e3
-        z_arr = np.random.rand(100)*12345e3
+        n_tests = 50
+        x_arr = np.random.rand(n_tests)*12345e3
+        y_arr = np.random.rand(n_tests)*23456e3
+        z_arr = np.random.rand(n_tests)*12345e3
 
         for x_in, y_in, z_in in zip(x_arr, y_arr, z_arr):
             ecef = location.eci_to_ecef(utc_date, x_in, y_in, z_in)
@@ -300,10 +306,12 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(z, ecef[2])
 
     def test_horizontal_to_ecef_and_back(self):
-        theta = np.random.rand(100)*np.pi/2
-        phi = np.random.rand(100)*np.pi*2
+        n_tests = 50
+
+        theta = np.random.rand(n_tests)*np.pi/2
+        phi = np.random.rand(n_tests)*np.pi*2
         r = 100.0
-        for i in range(100):
+        for i in range(n_tests):
             x,y,z = Dunedin.horizontal_to_ecef(r, angle.from_rad(theta[i]), angle.from_rad(phi[i]))
 
             r2, theta2, phi2 = Dunedin.ecef_to_horizontal(x,y,z)
@@ -314,9 +322,10 @@ class TestLocation(unittest.TestCase):
     def test_horizontal_to_ecef_vs_astropy(self):
         loc = Dunedin
 
-        el_arr = np.random.rand(100)*np.pi/2
-        az_arr = np.random.rand(100)*np.pi*2
-        r_arr = np.random.rand(100)*1e8
+        n_tests = 50
+        el_arr = np.random.rand(n_tests)*np.pi/2
+        az_arr = np.random.rand(n_tests)*np.pi*2
+        r_arr = np.random.rand(n_tests)*1e8
 
         utc_date = utc.now()
 
@@ -330,9 +339,11 @@ class TestLocation(unittest.TestCase):
 
 
     def test_horizontal_to_eci_and_back(self):
-        theta_arr = np.random.rand(100)*np.pi/2
-        phi_arr = np.random.rand(100)*np.pi*2
-        r = 100.0
+        
+        n_tests = 50
+        theta_arr = np.random.rand(n_tests)*np.pi/2
+        phi_arr = np.random.rand(n_tests)*np.pi*2
+        r = 1.3e7
         utc_date = utc.now()
 
         for theta, phi in zip(theta_arr, phi_arr):
@@ -347,9 +358,10 @@ class TestLocation(unittest.TestCase):
         utc_date = datetime.datetime.utcnow()
         loc = Dunedin
 
-        el_arr = np.random.rand(100)*np.pi/2
-        az_arr = np.random.rand(100)*np.pi*2
-        r_arr = np.random.rand(100)*1e8
+        n_tests = 50
+        el_arr = np.random.rand(n_tests)*np.pi/2
+        az_arr = np.random.rand(n_tests)*np.pi*2
+        r_arr = np.random.rand(n_tests)*1e8
 
         utc_date = utc.now()
 
@@ -357,7 +369,9 @@ class TestLocation(unittest.TestCase):
             x,y,z = self.astropy_horizontal_to_ECI(r, el, az, loc, utc_date)
             xi, yi, zi = Dunedin.horizontal_to_eci(r, angle.from_dms(el), angle.from_dms(az), utc_date)
             delta = np.sqrt((x-xi)**2 + (y-yi)**2 + (z-zi)**2)
-            print delta/r
+            
+            # TODO these are failing
+            self.assertAlmostEqual(delta/r, 0.0, 3)
             self.assertAlmostEqual(x/xi, 1.0, 3)
             self.assertAlmostEqual(y/yi, 1.0, 3)
             self.assertAlmostEqual(z/zi, 1.0, 3)

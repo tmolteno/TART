@@ -97,6 +97,17 @@ class Location(object):
 
         return np.array(ecef2) - np.array(ecef0)
 
+    def get_ecef_wgs84(self):
+        a = 6378137.0 # m Semi-major axis
+        b = 6356752.314245 # Semi-minor axis
+        inverse_flattening = 298.257223563
+        
+        sinlat = self.lat.sin()
+        n = a*a / (np.sqrt(a*a*self.lat.cos()**2 + b*b*sinlat**2))
+        x = (n + self.alt)*self.lat.cos()*self.lon.cos()
+        y = (n + self.alt)*self.lat.cos()*self.lon.sin()
+        z = (n*(b**2 / a**2) + self.alt)*sinlat
+        return [x,y,z]
 
     def get_ecef(self):
         ''' Position of the Location in ECEF coordinates '''
