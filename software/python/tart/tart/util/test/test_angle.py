@@ -1,7 +1,7 @@
 import unittest
 import math
 
-from tart.util.angle import atan, atan2, asin, acos
+from tart.util.angle import atan, atan2, asin, acos, from_dms
 
 class TestAngle(unittest.TestCase):
 
@@ -19,3 +19,17 @@ class TestAngle(unittest.TestCase):
         self.assertEqual(ax.to_hours(), 0.)
         ax = acos(-1.0)
         self.assertEqual(ax.to_degrees(), 180.)
+
+    def test_hms(self):
+        x = from_dms(180,20,11)
+        h,m,s = x.to_hms()
+        self.assertEqual(h, 12)
+        self.assertEqual(m, 20)
+        self.assertEqual(s, 11)
+        
+    def test_dms(self):
+        x = from_dms(180,20,11)
+        h,m,s = x.to_dms()
+        self.assertEqual(h, 180)
+        self.assertEqual(m, 20)
+        self.assertEqual(s, 11)

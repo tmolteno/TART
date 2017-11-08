@@ -61,7 +61,21 @@ class Angle(object):
         return self.rad * (360.0 / constants.TWO_PI)
 
     def to_hours(self):
-        return self.rad * (24.0 / constants.TWO_PI)
+        return wrap_2pi(self.rad) * (24.0 / constants.TWO_PI)
+
+    def to_dms(self):
+        dd = self.to_degrees()
+        mnt,sec = divmod(dd*3600,60)
+        deg,mnt = divmod(mnt,60)
+        return deg,mnt,sec
+
+    def to_hms(self):
+        dd = self.to_degrees()
+        mnt,sec = divmod(dd*3600,60)
+        deg,mnt = divmod(mnt,60)
+        hour,deg = divmod(deg, 15)
+        
+        return hour,mnt,sec
 
     def sin(self):
         return math.sin(self.rad)
