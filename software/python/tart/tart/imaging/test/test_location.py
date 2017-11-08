@@ -9,6 +9,11 @@ import datetime
 import numpy as np
 import unittest
 
+from astropy import coordinates as coord 
+from astropy import units as u 
+from astropy import time 
+from astropy.time import Time 
+
 Dunedin = location.Dunedin
 Aachen = location.Aachen
 
@@ -17,6 +22,37 @@ class TestLocation(unittest.TestCase):
     def setUp(self):
         self.utc_date = utc.utc_datetime(year=2009, month=7, day=22, hour=5, minute=9, second=50.3)
  
+    def astropy_get_AltAz(self, r, el, az, loc, utc_date):
+        ''' Get an astropy AltAz object 
+            r - distance from observer to object (m)
+            el - elevation angle
+            az - azimuth angle
+        '''
+        obstime = time.Time(utc_date, scale='utc')
+        eloc = coord.EarthLocation(lat=loc.latitude_deg()*u.deg, lon=loc.longitude_deg()*u.deg, height=loc.alt*u.m) 
+
+        #altaz_frame = coord.AltAz(obstime=obstime, location=eloc,
+                            #temperature=15 * u.deg_C, pressure=1.010 * u.bar)
+        altaz_frame = coord.AltAz(obstime=obstime, location=eloc)
+
+        elaz = coord.SkyCoord(alt = el*u.deg, az = az*u.deg, distance=r*u.m, frame=altaz_frame)
+        return elaz
+    
+    def astropy_horizontal_to_ECI(self, r, el, az, loc, utc_date):
+        obstime = time.Time(utc_date, scale='utc')
+        elaz = self.astropy_get_AltAz( r, el, az, loc, utc_date)
+        gcrs = elaz.transform_to(coord.GCRS(obstime=obstime))
+        return  [gcrs.cartesian.x.value, gcrs.cartesian.y.value, gcrs.cartesian.z.value]
+
+        
+    def astropy_horizontal_to_ECEF(self, r, el, az, loc, utc_date):
+        obstime = time.Time(utc_date, scale='utc')
+        elaz = self.astropy_get_AltAz( r, el, az, loc, utc_date)
+        itrf = elaz.transform_to(coord.ITRS)
+        return  [itrf.cartesian.x.value, itrf.cartesian.y.value, itrf.cartesian.z.value]
+
+        
+    
     '''
     http://www.ngs.noaa.gov/cgi-bin/xyz_getxyz.prl
     =============================================================
@@ -243,9 +279,9 @@ class TestLocation(unittest.TestCase):
         phi = 0.0
 
         x,y,z = Dunedin.horizontal_to_ecef(0.0, angle.from_dms(theta), angle.from_dms(phi))
-        
+
         ecef = Dunedin.get_ecef()
-        
+
         self.assertAlmostEqual(x, ecef[0])
         self.assertAlmostEqual(y, ecef[1])
         self.assertAlmostEqual(z, ecef[2])
@@ -261,6 +297,23 @@ class TestLocation(unittest.TestCase):
 
             self.assertAlmostEqual(theta2.to_rad(), theta[i])
             self.assertAlmostEqual(phi2.to_rad(), phi[i])
+
+    def test_horizontal_to_ecef_vs_astropy(self):
+        loc = Dunedin
+
+        el_arr = np.random.rand(100)*np.pi/2
+        az_arr = np.random.rand(100)*np.pi*2
+        r_arr = np.random.rand(100)*1e8
+
+        utc_date = utc.now()
+
+        for r, el, az in zip(r_arr, el_arr, az_arr):
+            x,y,z = self.astropy_horizontal_to_ECEF(r, el, az, loc, utc_date)
+            xi, yi, zi = Dunedin.horizontal_to_ecef(r, angle.from_dms(el), angle.from_dms(az))
+
+            self.assertAlmostEqual(x/xi, 1.0, 3)
+            self.assertAlmostEqual(y/yi, 1.0, 3)
+            self.assertAlmostEqual(z/zi, 1.0, 3)
 
 
     def test_horizontal_to_eci_and_back(self):
@@ -278,29 +331,20 @@ class TestLocation(unittest.TestCase):
             self.assertAlmostEqual(r2, r)
 
     def test_horizontal_to_eci_vs_astropy(self):
-        from astropy import coordinates as coord 
-        from astropy import units as u 
-        from astropy import time 
-        from astropy.time import Time 
-
         utc_date = datetime.datetime.utcnow()
         loc = Dunedin
 
-        r, el, az = [1e6, 45.0, 0.0]
-        
-        obstime = time.Time(utc_date, scale='utc')
-        eloc = coord.EarthLocation(lat=loc.latitude_deg()*u.deg, lon=loc.longitude_deg()*u.deg, height=loc.alt*u.m) 
+        el_arr = np.random.rand(100)*np.pi/2
+        az_arr = np.random.rand(100)*np.pi*2
+        r_arr = np.random.rand(100)*1e8
 
-        #altaz_frame = coord.AltAz(obstime=obstime, location=eloc,
-                            #temperature=15 * u.deg_C, pressure=1.010 * u.bar)
-        altaz_frame = coord.AltAz(obstime=obstime, location=eloc)
+        utc_date = utc.now()
 
-        elaz = coord.SkyCoord(alt = el*u.deg, az = az*u.deg, distance=r*u.m, frame=altaz_frame)
-        
-        gcrs = elaz.transform_to(coord.GCRS(obstime=obstime))
-        print gcrs.cartesian.x
-        xi, yi, zi = Dunedin.horizontal_to_eci(r, angle.from_dms(el), angle.from_dms(az), utc_date)
-
-        self.assertAlmostEqual(gcrs.cartesian.x.value/xi, 1.0, 1)
-        self.assertAlmostEqual(gcrs.cartesian.y.value/yi, 1.0, 1)
-        self.assertAlmostEqual(gcrs.cartesian.z.value/zi, 1.0, 1)
+        for r, el, az in zip(r_arr, el_arr, az_arr):
+            x,y,z = self.astropy_horizontal_to_ECI(r, el, az, loc, utc_date)
+            xi, yi, zi = Dunedin.horizontal_to_eci(r, angle.from_dms(el), angle.from_dms(az), utc_date)
+            delta = np.sqrt((x-xi)**2 + (y-yi)**2 + (z-zi)**2)
+            print delta/r
+            self.assertAlmostEqual(x/xi, 1.0, 3)
+            self.assertAlmostEqual(y/yi, 1.0, 3)
+            self.assertAlmostEqual(z/zi, 1.0, 3)
