@@ -153,9 +153,33 @@ class TestLocation(unittest.TestCase):
             self.assertAlmostEqual(el.to_rad(),j.alt.real,3) 
             self.assertAlmostEqual(az.to_rad(),j.az.real,3) 
 
-    ''' the Right Ascension of the Zenith: it is exactly the same as your Local Sidereal Time. '''
+
+    def test_horizontal_to_equatorial_astropy(self):
+        from astropy import coordinates as coord 
+        from astropy import units as u 
+        from astropy import time 
+        from astropy.time import Time 
+
+        utc_date = datetime.datetime.utcnow()
+        loc = Dunedin
+        
+        obstime = time.Time(utc_date, scale='utc')
+        eloc = coord.EarthLocation(lat=loc.latitude_deg()*u.deg, lon=loc.longitude_deg()*u.deg, height=loc.alt*u.m) 
+        altaz_frame = coord.AltAz(obstime=obstime, location=eloc)
+
+        for el, az in zip(np.linspace(0, 90, 10), np.linspace(0,259,10)):
+
+            elaz = coord.SkyCoord(alt = el*u.deg, az = az*u.deg, frame=altaz_frame)
+            radec = elaz.transform_to(coord.ICRS)
+
+            ra, dec = loc.horizontal_to_equatorial(utc_date, angle.from_dms(el), angle.from_dms(az))
+
+            self.assertAlmostEqual(radec.ra.degree, ra.to_degrees(), -1) # TODO better agreement should be possible.
+            self.assertAlmostEqual(radec.dec.degree, dec.to_degrees(), -1) # TODO better agreement should be possible.
+
 
     def test_LST(self):
+        ''' the Right Ascension of the Zenith: it is exactly the same as your Local Sidereal Time. '''
         st = Dunedin.LST(self.utc_date)
         check = angle.from_hours(12.53767)
         self.assertAlmostEqual(st.to_degrees(), check.to_degrees(),    2)
@@ -252,3 +276,31 @@ class TestLocation(unittest.TestCase):
             self.assertAlmostEqual(theta2.to_rad(), theta)
             self.assertAlmostEqual(phi2.to_rad(), phi)
             self.assertAlmostEqual(r2, r)
+
+    def test_horizontal_to_eci_vs_astropy(self):
+        from astropy import coordinates as coord 
+        from astropy import units as u 
+        from astropy import time 
+        from astropy.time import Time 
+
+        utc_date = datetime.datetime.utcnow()
+        loc = Dunedin
+
+        r, el, az = [1e6, 45.0, 0.0]
+        
+        obstime = time.Time(utc_date, scale='utc')
+        eloc = coord.EarthLocation(lat=loc.latitude_deg()*u.deg, lon=loc.longitude_deg()*u.deg, height=loc.alt*u.m) 
+
+        #altaz_frame = coord.AltAz(obstime=obstime, location=eloc,
+                            #temperature=15 * u.deg_C, pressure=1.010 * u.bar)
+        altaz_frame = coord.AltAz(obstime=obstime, location=eloc)
+
+        elaz = coord.SkyCoord(alt = el*u.deg, az = az*u.deg, distance=r*u.m, frame=altaz_frame)
+        
+        gcrs = elaz.transform_to(coord.GCRS(obstime=obstime))
+        print gcrs.cartesian.x
+        xi, yi, zi = Dunedin.horizontal_to_eci(r, angle.from_dms(el), angle.from_dms(az), utc_date)
+
+        self.assertAlmostEqual(gcrs.cartesian.x.value/xi, 1.0, 1)
+        self.assertAlmostEqual(gcrs.cartesian.y.value/yi, 1.0, 1)
+        self.assertAlmostEqual(gcrs.cartesian.z.value/zi, 1.0, 1)
