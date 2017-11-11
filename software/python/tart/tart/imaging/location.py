@@ -2,7 +2,7 @@
 # A class the encapsulates a location on earth. Does all the necessary frame-of-reference
 # conversions.
 #
-# Copyright (c) Tim Molteno 2013. tim@elec.ac.nz
+# Copyright (c) Tim Molteno 2013-2017. tim@elec.ac.nz
 #
 
 import math
@@ -69,7 +69,9 @@ class Location(object):
         self.lat = lat # requires init with lat and lon as angle objects (NEW)
         self.lon = lon # requires init with lat and lon as angle objects (NEW)
         self.alt = alt
+        self.ex, self.ey, self.ez = self.calculate_ecef()
 
+        
     def __repr__(self):
         return "[lat=%f, lon=%f, alt=%f]" % (self.latitude_deg(), self.longitude_deg(), self.alt)
 
@@ -107,9 +109,9 @@ class Location(object):
         x = (n + self.alt)*self.lat.cos()*self.lon.cos()
         y = (n + self.alt)*self.lat.cos()*self.lon.sin()
         z = (n*(b**2 / a**2) + self.alt)*sinlat
-        return [x,y,z]
+        return [x, y, z]
 
-    def get_ecef(self):
+    def calculate_ecef(self):
         ''' Position of the Location in ECEF coordinates '''
         sinlat = self.lat.sin()
         chi = math.sqrt(1.0 - Location.E2*sinlat*sinlat)
@@ -119,7 +121,10 @@ class Location(object):
         y = achih*coslat*self.lon.sin()
         z = (Location.R_EARTH*(1.0-Location.E2)/chi + self.alt)*sinlat
 
-        return [x,y,z]
+        return [x, y, z]
+
+    def get_ecef(self):
+        return [self.ex, self.ey, self.ez]
 
      # ECEF to ENU
     def ecef_to_enu(self, x_in, y_in, z_in):
@@ -128,7 +133,7 @@ class Location(object):
         e = -x_in*lon.sin()                    + y_in*lon.cos()
         n = -x_in*lon.cos()*lat.sin() - y_in*lon.sin()*lat.sin() + z_in*lat.cos()
         u =    x_in*lon.cos()*lat.cos() + y_in*lon.sin()*lat.cos() + z_in*lat.sin()
-        return [e,n,u]
+        return [e, n, u]
 
     def get_ecef_delta_from_enu(self, e_in, n_in, u_in):
         # FIXME: definitely TEST ENU_TO_ECEF
@@ -137,7 +142,7 @@ class Location(object):
         x = -lon.sin() * e_in - lon.cos()*lat.sin()*n_in + lon.cos()*lat.cos()*u_in
         y =    lon.cos() * e_in - lon.sin()*lat.sin()*n_in + lon.sin()*lat.cos()*u_in
         z = lat.cos() * n_in + lat.sin() * u_in
-        return [x,y,z]
+        return [x, y, z]
 
     # http://www.navipedia.net/index.php/Transformations_between_ECEF_and_ENU_coordinates
     def ecef_to_horizontal(self, x_in, y_in, z_in):
