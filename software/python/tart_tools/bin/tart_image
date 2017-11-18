@@ -116,7 +116,11 @@ if __name__ == '__main__':
         api = api_handler.APIhandler(ARGS.api)
         config = api_handler.get_config(api)
 
-        gains = api.get('calibration/gain')
+        if (ARGS.gains is None):
+            gains = api.get('calibration/gain')
+        else:
+            with open(ARGS.gains, 'r') as json_file:
+                gains = json.load(json_file)
 
         if (ARGS.vis is None):
             vis_json = api.get('imaging/vis')
