@@ -3,7 +3,7 @@
 
 	module tart_v1_0 #
 	(
-		parameter integer ANTENNAE = 24,
+		parameter integer ANTENNAE = 6,
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
 		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
@@ -40,7 +40,8 @@
 	
 	tart_v1_0_S00_AXI # ( 
 		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
-		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
+		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH),
+		.ANTENNAE(ANTENNAE)
 	) tart_v1_0_S00_AXI_inst (
 	    .rx_clk_16(rx_clk_16),
 	    .antenna(antenna),

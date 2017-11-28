@@ -3,7 +3,7 @@
 
 	module tart_v1_0_S00_AXI #
 	(
-        parameter integer ANTENNAE = 24,    
+        parameter integer ANTENNAE = 3,    
 		
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
@@ -100,11 +100,12 @@
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 	//-- Number of Slave Registers 32
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg[31:0];
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg[0:0];
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
-	integer	 byte_index, i;
+	integer	 byte_index;
+	reg [31:0] i;
 	reg	 aw_en;
 
 	// I/O Connections assignments
@@ -213,8 +214,7 @@
 	begin
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
-	       for (i = 0; i < 32; i = i + 1)
-	          slv_reg[i] <= 0;
+          slv_reg[0] <= 0;
 	    end 
 	  else begin
 	    if (slv_reg_wren)
@@ -223,8 +223,11 @@
 	          if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	           // Respective byte enables are asserted as per write strobes 
 	           // Slave register 0
-	           slv_reg[axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB]][(byte_index*8) +: 8] 
-	               <= S_AXI_WDATA[(byte_index*8) +: 8];
+	           case (axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
+	           0:
+	            slv_reg[0][(byte_index*8) +: 8] 
+	                  <= S_AXI_WDATA[(byte_index*8) +: 8];
+	           endcase
 	          end
 	      end
 	  end
@@ -328,9 +331,19 @@
 	// Slave register read enable is asserted when valid address is available
 	// and the slave is ready to accept the read address.
 	assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
+	
 	always @(*)
 	begin
-	   reg_data_out <= slv_reg[axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB]];
+       case (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
+       5'h0: reg_data_out <= {31'b0, led};
+       5'h1: reg_data_out <= {31'h0, antenna[0]};
+       5'h2: reg_data_out <= {31'h1, antenna[1]};
+       5'h3: reg_data_out <= {31'h2, antenna[2]};
+       5'h4: reg_data_out <= {31'h3, antenna[3]};
+       5'h5: reg_data_out <= {31'h4, antenna[4]};
+       5'h6: reg_data_out <= {31'h5, antenna[5]};
+	   default: reg_data_out <= 0;
+	   endcase
 	end
 
 	// Output register or memory read data
@@ -339,6 +352,7 @@
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
 	      axi_rdata  <= 0;
+	      i <= 0;
 	    end 
 	  else
 	    begin    
@@ -347,19 +361,11 @@
 	      // output the read dada 
 	      if (slv_reg_rden)
 	        begin
-	          axi_rdata <= reg_data_out;     // register read data
+	          axi_rdata <= reg_data_out;
 	        end   
 	    end
 	end    
 
-    assign led = slv_reg[0];
-    
-    always @(posedge rx_clk_16)
-    begin
-        for (i = 0; i < ANTENNAE; i = i + 1)
-        begin
-            slv_reg[i+1] = antenna[i];
-        end     
-    end
+    assign led = slv_reg[0][0];
 
 	endmodule
