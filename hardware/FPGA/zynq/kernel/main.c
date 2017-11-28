@@ -62,8 +62,7 @@ static int of_probe(struct platform_device *pdev)
 		printk(KERN_INFO " ------ run %i -----  \n", j);
 		for (i = 0; i < 6; i++) {
 			uint32_t *a = regs + 1 + i;
-			printk(KERN_INFO "antenna %d %p = %u or %u & %u\n", 
-					i, a, *a, (*a >> 1) & 0xff, *a & 1);
+			printk(KERN_INFO "antenna %d = %u\n", i, *a);
 		}
 	}
 

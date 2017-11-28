@@ -15,7 +15,6 @@ tree blob.
 The Makefile in this directory will create a device tree blob from 
 the device tree files the SDK generates for you.
 
-Compiled versions of u-boot.img, boot.bin and linux's uImage are in 
-`boot`. 
+Compiled versions of u-boot.img, boot.bin and linux's are in `boot`. 
 
 

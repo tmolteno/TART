@@ -100,7 +100,7 @@
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 	//-- Number of Slave Registers 32
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg[0:0];
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg[ANTENNAE:0];
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
@@ -334,16 +334,7 @@
 	
 	always @(*)
 	begin
-       case (axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB])
-       5'h0: reg_data_out <= {31'b0, led};
-       5'h1: reg_data_out <= {31'h0, antenna[0]};
-       5'h2: reg_data_out <= {31'h1, antenna[1]};
-       5'h3: reg_data_out <= {31'h2, antenna[2]};
-       5'h4: reg_data_out <= {31'h3, antenna[3]};
-       5'h5: reg_data_out <= {31'h4, antenna[4]};
-       5'h6: reg_data_out <= {31'h5, antenna[5]};
-	   default: reg_data_out <= 0;
-	   endcase
+	   reg_data_out <= slv_reg[axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB]];
 	end
 
 	// Output register or memory read data
@@ -352,7 +343,6 @@
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
 	      axi_rdata  <= 0;
-	      i <= 0;
 	    end 
 	  else
 	    begin    
@@ -367,5 +357,15 @@
 	end    
 
     assign led = slv_reg[0][0];
+    
+    always @(rx_clk_16)
+    begin
+            slv_reg[1] <= {31'b0, antenna[0]};
+            slv_reg[2] <= {31'b0, antenna[1]};
+            slv_reg[3] <= {31'b0, antenna[2]};
+            slv_reg[4] <= {31'b0, antenna[3]};
+            slv_reg[5] <= {31'b0, antenna[4]};
+            slv_reg[6] <= {31'b0, antenna[5]};
+    end
 
 	endmodule
