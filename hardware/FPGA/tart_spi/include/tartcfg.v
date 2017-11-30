@@ -162,7 +162,7 @@
 //    OPTIONAL ACQUISITION OF RAW ANTENNA DATA?
 //
 //----------------------------------------------------------------------------
-`define __USE_ACQUISITION
+`undef __USE_ACQUISITION
 
 //----------------------------------------------------------------------------
 //  There are two versions of the Papilio Pro LX9, V1.3 -- one has 8 MB of
@@ -177,7 +177,7 @@
 //    ENABLE HARDWARE CALCULATION OF THE VISIBILITIES?
 //
 //----------------------------------------------------------------------------
-`define __USE_CORRELATORS
+`undef __USE_CORRELATORS
 
 //----------------------------------------------------------------------------
 //  If banks of visibilities take to long to be read, then they can be over-

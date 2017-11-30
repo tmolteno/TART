@@ -153,7 +153,7 @@ module fifo_control
    always @(posedge clock_i)
      if (reset_i || !enable_i)
        overflow_o <= #DELAY 1'b0;
-     else if (bb_full && strobe_i && state == `AQ_BUFFERING)
+     else if (bb_full && strobe_i && aq_state == `AQ_BUFFERING)
        overflow_o <= #DELAY 1'b1;
 
 

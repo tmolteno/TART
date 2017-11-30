@@ -718,45 +718,7 @@ module tart_dsp
    assign sram_a_lo = {sram_a_di[27:24], sram_a_di[19:16],
                        sram_a_di[11:8] , sram_a_di[3:0]};
 
-   //  Stores the lower nibbles of the visibilities.
-   RAMB16X16X4_TDP
-     #( .DELAY(DELAY)
-        ) SRAM0
-       (.CLKA (clk_i),          // 16-bit write-only port
-        .ENA  (sram_a_ce),
-        .WEA  (sram_a_be[1:0]),
-        .ADDRA(sram_a_ad),
-        .DIA  (sram_a_lo),
-        .DOA  (sram_a_do[15:0]),
-
-        .CLKB (clk_i),          // 4-bit read-only port
-        .ENB  (sram_b_ce),
-        .WEB  (sram_b_we),
-        .ADDRB(sram_b_ad),
-        .DIB  (sram_b_di[3:0]),
-        .DOB  (sram_b_do[3:0])
-        );
-
-   //  Stores the upper nibbles of the visibilities.
-   RAMB16X16X4_TDP
-     #( .DELAY(DELAY)
-        ) SRAM1
-       (.CLKA (clk_i),          // 16-bit write-only port
-        .ENA  (sram_a_ce),
-        .WEA  (sram_a_be[3:2]),
-        .ADDRA(sram_a_ad),
-        .DIA  (sram_a_hi),
-        .DOA  (sram_a_do[31:16]),
-
-        .CLKB (clk_i),          // 4-bit read-only port
-        .ENB  (sram_b_ce),
-        .WEB  (sram_b_we),
-        .ADDRB(sram_b_ad),
-        .DIB  (sram_b_di[7:4]),
-        .DOB  (sram_b_do[7:4])
-        );
-
-
+ 
 
    //-------------------------------------------------------------------------
    //     

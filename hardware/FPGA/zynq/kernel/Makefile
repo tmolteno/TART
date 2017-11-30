@@ -1,6 +1,6 @@
 ARCH=arm
 CROSS_COMPILE=arm-linux-gnueabihf-
-KERNEL_DIR=~/src/linux-xlnx/
+KERNEL_DIR=/home/mytch/src/linux-xlnx/
 
 tart-objs := main.o
 obj-m += tart.o

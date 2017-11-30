@@ -1,6 +1,4 @@
-set_property PACKAGE_PIN R19 [get_ports led]
-set_property IOSTANDARD LVCMOS33 [get_ports led]
-set_property PACKAGE_PIN T19 [get_ports rx_clk_16]
+set_property PACKAGE_PIN U18 [get_ports rx_clk_16]
 set_property PACKAGE_PIN T11 [get_ports {antenna[0]}]
 set_property PACKAGE_PIN T10 [get_ports {antenna[1]}]
 set_property PACKAGE_PIN U13 [get_ports {antenna[2]}]
@@ -14,3 +12,4 @@ set_property IOSTANDARD LVCMOS33 [get_ports {antenna[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {antenna[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {antenna[4]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {antenna[5]}]
+

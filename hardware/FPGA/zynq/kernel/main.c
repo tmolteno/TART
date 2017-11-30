@@ -31,43 +31,41 @@
 #include <linux/slab.h>
 #include <linux/pm_runtime.h>
 
-static int remove(struct platform_device *pdev)
+static int test_remove(struct platform_device *pdev)
 {
-	printk(KERN_INFO "removing tart.\n");
 	return 0;
 }
 
-static int of_probe(struct platform_device *pdev)
+static int test_of_probe(struct platform_device *pdev)
 {
-	uint32_t *regs = (uint32_t *) pdev->resource->start;
 	struct resource *res;
-	int i, j;
+	int i;
+	uint32_t *regs = (uint32_t *) pdev->resource->start;
 
-	printk(KERN_INFO "tart of_probe.\n");
+	printk("test_of_probe with pdev %p, for dev %p or &dev %p\n", pdev, pdev->dev, &pdev->dev);
+
+	printk("regs at %p to %p?\n", pdev->resource->start, pdev->resource->end);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, res);
 
-	printk(KERN_INFO "regs mapped to %p\n", regs);	
-
+	printk("regs at %p\n", regs);	
 	if (IS_ERR(regs)) {
-		printk(KERN_ERR "Failed to remap resource!\n");
+		printk("Failed to remap resource!\n");
 		return -1;
 	}
 
-	/* Set led high. */
-	*(regs + 0) = 0xffffffff;
-
-	for (j = 0; j < 10; j++) {
-		printk(KERN_INFO " ------ run %i -----  \n", j);
-		for (i = 0; i < 6; i++) {
-			uint32_t *a = regs + 1 + i;
-			printk(KERN_INFO "antenna %d = %u\n", i, *a);
-		}
+	for (i = 0; i < 16; i++) {
+		printk("reg %d = %d\n", i, (int) *(regs + i));
 	}
 
-	/* Set led low. */	
-	*(regs + 0) = 0;
+	*(regs + 1) = 1234;
+	*(regs + 3) = 4321;
+	*(regs + 5) = 1111;
+
+	for (i = 0; i < 16; i++) {
+		printk("reg %d = %d\n", i, (int) *(regs + i));
+	}	
 
 	return 0;
 }
@@ -79,8 +77,8 @@ static const struct of_device_id test_of_match[] = {
 MODULE_DEVICE_TABLE(of, test_of_match);
 
 static struct platform_driver test_driver = {
-	.probe = of_probe,
-	.remove = remove,
+	.probe = test_of_probe,
+	.remove = test_remove,
 	.driver = {
 		.name = "tart",
 		.of_match_table = test_of_match,
@@ -102,5 +100,5 @@ static void __exit test_exit(void)
 module_exit(test_exit);
 
 MODULE_AUTHOR("Mytchel Hammond");
-MODULE_DESCRIPTION("Driver for the TART IP.");
+MODULE_DESCRIPTION("Test driver for custom zynq IP.");
 MODULE_LICENSE("GPL");

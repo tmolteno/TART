@@ -1,0 +1,10 @@
+fpgaaddr=0x1000000
+loadaddr=0x8000
+fdtaddr=0x100
+fpgaload=load mmc 0 ${fpgaaddr} zynq.bit
+fpgaboot=fpga loadb 0 ${fpgaaddr} $filesize
+mmcload=load mmc 0 ${loadaddr} uImage; load mmc 0 ${fdtaddr} devicetree.dtb
+mmcboot=bootm ${loadaddr} - ${fdtaddr}
+uenvcmd=run fpgaload; run fpgaboot; run mmcload; run mmcboot
+
+
