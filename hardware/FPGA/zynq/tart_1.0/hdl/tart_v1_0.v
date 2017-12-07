@@ -50,11 +50,12 @@ module tart_v1_0 #
     // TELESCOPE
     input [NSB:0]      antenna, // Radio Data Interface
 
+    input clk_locked,// clocks are ready to be used.
+    output clk_reset_o,
     input clk_i,     // 16.368 MHZ buffered
     input clk6x_i,   // 16.368x6 = 98.208 MHz
     input clk6n_i,   // 16.368x6 = 98.208 MHz
     input clk12x_i,  // 16.368x12 = 196.416 MHz
-    output clk_reset,
    
     // Ports of Axi Slave Bus Interface S00_AXI
     input wire  s00_axi_aclk,
@@ -186,7 +187,7 @@ module tart_v1_0 #
     //-------------------------------------------------------------------------
     assign clock_b = fpga_clk;
     assign reset_b = reset;
-    
+   
     //-------------------------------------------------------------------------
     //  Compose the status-signal from the most important status-signals of
     //  TART's subsystems.
@@ -202,9 +203,14 @@ module tart_v1_0 #
     assign clock_n = clk6n_i;
     assign rx_clk_16_buf = clk_i;
     assign clk_x = clk12x_i;
-    
-    assign clk_reset = reset_n;
-    
+ 
+    assign reset_n = !clk_locked; // Reset while clock's not ready.
+   
+    /* Take clock wizard out of reset. */ 
+    reg clk_reset = 0;
+    assign clk_reset_o = clk_reset;
+
+   
     //-------------------------------------------------------------------------
     //
     //  TART SYSTEM-WIDE, WISHBONE (SPEC B4) INTERCONNECT AND PERIPHERALS.
@@ -214,7 +220,7 @@ module tart_v1_0 #
     (* NOMERGE *) reg reset_tartwb = 1'b1;
     
     always @(posedge clock_b)
-    reset_tartwb <= #DELAY reset_b;
+        reset_tartwb <= #DELAY reset_b;
     
     //-------------------------------------------------------------------------
     //  The TART Wishbone bus connects the lone Wishbone master (the axi slave
@@ -319,7 +325,7 @@ module tart_v1_0 #
     (* NOMERGE *) reg reset_axi = 1'b1;
     
     always @(posedge clock_b)
-    reset_axi <= #DELAY reset_b;
+        reset_axi <= #DELAY reset_b;
     
     //-------------------------------------------------------------------------
     //  NOTE:
@@ -335,7 +341,8 @@ module tart_v1_0 #
         .C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
     ) tart_v1_0_S00_AXI_inst (
         .clk_i     (clock_b),
-        .rst_i     (reset_axi),
+        .rst_i(clk_locked),
+        //.rst_i     (reset_axi),
         
         //  Wishbone master interface.
         .cyc_o     (axi_cyc),

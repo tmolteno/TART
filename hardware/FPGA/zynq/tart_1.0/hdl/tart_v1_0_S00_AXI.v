@@ -328,38 +328,28 @@ begin
         begin
             rdelay <= 1;
         end
-      if (rdelay == 255)
+      else if (rdelay == 100)
         begin
           rdelay <= 0;
           // Valid read data is available at the read data bus
           axi_rvalid <= 1'b1;
           axi_rresp  <= 2'b0; // 'OKAY' response
-          axi_rdata <= reg_data_out;     // register read data
+          axi_rdata  <= reg_data_out;
         end
       else if (rdelay > 0)
-        begin
-            rdelay <= rdelay + 1;
-        end
+        rdelay <= rdelay + 1;
       else if (axi_rvalid && S_AXI_RREADY)
         begin
           // Read data is accepted by the master
           axi_rvalid <= 1'b0;
         end                
     end
-end    
+end
 
 always @(*)
 begin
-      // Address decoding for reading registers
-      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-        2'h0   : reg_data_out <= slv_reg0;
-        2'h1   : reg_data_out <= slv_reg1;
-        2'h2   : reg_data_out <= slv_reg2;
-        2'h3   : reg_data_out <= slv_reg3;
-        default : reg_data_out <= 0;
-      endcase
+    reg_data_out <= {30'b0, rst_i, clk_i};
 end
-
 
 //-------------------------------------------------------------------------
 //

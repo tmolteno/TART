@@ -55,17 +55,46 @@ static int test_of_probe(struct platform_device *pdev)
 		return -1;
 	}
 
-	for (i = 0; i < 16; i++) {
-		printk("reg %d = %d\n", i, (int) *(regs + i));
+	printk("regs currently:\n");
+	for (i = 0x0; i < 0x10; i += 4) {
+		printk("reg 0x%x = \n", i);
+		printk("0x%x\n", *((int *) ((size_t) regs + i)));
 	}
 
-	*(regs + 1) = 1234;
-	*(regs + 3) = 4321;
-	*(regs + 5) = 1111;
+	/*
+	for (i = 0x0; i < 0x10; i += 4) {
+		printk("write reg 0x%x = 0x%x\n", i, i + 2);
+		*((int *) ((size_t) regs + i)) = i + 2;
+	}
+	
+	printk("regs now:\n");
+	
+	for (i = 0x0; i < 0x10; i += 4) {
+		printk("reg 0x%x = \n", i);
+		printk("0x%x\n", *((int *) ((size_t) regs + i)));
+	}
 
-	for (i = 0; i < 16; i++) {
-		printk("reg %d = %d\n", i, (int) *(regs + i));
-	}	
+	printk("try unaligned access\n");
+	
+	uint8_t *c = (uint8_t *) regs;
+
+	for (i = 0; i < 0x10; i++) {
+		printk("reg 0x%x = \n", i);
+		printk("0x%x\n", c[i]);
+	}
+
+	printk("write regs\n");
+	for (i = 0; i < 0x10; i++) {
+		printk("write reg 0x%x = 0x%x\n", i, i + 3);
+		c[i] = i + 3;
+	}
+
+	printk("regs now:\n");
+	for (i = 0; i < 0x10; i++) {
+		printk("reg 0x%x = \n", i);
+		printk("0x%x\n", c[i]);
+	}
+*/
 
 	return 0;
 }

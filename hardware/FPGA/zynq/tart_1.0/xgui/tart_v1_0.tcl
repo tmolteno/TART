@@ -1,35 +1,7 @@
-
-# Loading additional proc with user specified bodies to compute parameter values.
-source [file join [file dirname [file dirname [info script]]] gui/tart_v1_0.gtcl]
-
 # Definitional proc to organize widgets for parameters.
 proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "Component_Name"
-  #Adding Page
-  set Page_0 [ipgui::add_page $IPINST -name "Page 0"]
-  set C_S00_AXI_DATA_WIDTH [ipgui::add_param $IPINST -name "C_S00_AXI_DATA_WIDTH" -parent ${Page_0} -widget comboBox]
-  set_property tooltip {Width of S_AXI data bus} ${C_S00_AXI_DATA_WIDTH}
-  set C_S00_AXI_ADDR_WIDTH [ipgui::add_param $IPINST -name "C_S00_AXI_ADDR_WIDTH" -parent ${Page_0}]
-  set_property tooltip {Width of S_AXI address bus} ${C_S00_AXI_ADDR_WIDTH}
-  ipgui::add_param $IPINST -name "C_S00_AXI_BASEADDR" -parent ${Page_0}
-  ipgui::add_param $IPINST -name "C_S00_AXI_HIGHADDR" -parent ${Page_0}
 
-  ipgui::add_param $IPINST -name "ANTENNAE"
-
-}
-
-proc update_PARAM_VALUE.NSB { PARAM_VALUE.NSB PARAM_VALUE.ANTENNAE } {
-	# Procedure called to update NSB when any of the dependent parameters in the arguments change
-	
-	set NSB ${PARAM_VALUE.NSB}
-	set ANTENNAE ${PARAM_VALUE.ANTENNAE}
-	set values(ANTENNAE) [get_property value $ANTENNAE]
-	set_property value [gen_USERPARAMETER_NSB_VALUE $values(ANTENNAE)] $NSB
-}
-
-proc validate_PARAM_VALUE.NSB { PARAM_VALUE.NSB } {
-	# Procedure called to validate NSB
-	return true
 }
 
 proc update_PARAM_VALUE.ACCUM_BITS { PARAM_VALUE.ACCUM_BITS } {
@@ -164,6 +136,15 @@ proc update_PARAM_VALUE.MULTI { PARAM_VALUE.MULTI } {
 
 proc validate_PARAM_VALUE.MULTI { PARAM_VALUE.MULTI } {
 	# Procedure called to validate MULTI
+	return true
+}
+
+proc update_PARAM_VALUE.NSB { PARAM_VALUE.NSB } {
+	# Procedure called to update NSB when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.NSB { PARAM_VALUE.NSB } {
+	# Procedure called to validate NSB
 	return true
 }
 
