@@ -14,22 +14,13 @@ set_property IOSTANDARD LVTTL [get_ports {antenna[4]}]
 set_property IOSTANDARD LVTTL [get_ports {antenna[5]}]
 
 
-
-
-
-
-set_property PACKAGE_PIN L16 [get_ports clk_ext_o_0]
-set_property IOSTANDARD LVTTL [get_ports clk_ext_o_0]
-
-
-set_property IOSTANDARD LVTTL [get_ports locked_0]
-set_property IOSTANDARD LVTTL [get_ports reset_0]
-set_property PACKAGE_PIN L17 [get_ports locked_0]
-set_property PACKAGE_PIN K18 [get_ports reset_0]
-
-set_property IOSTANDARD LVTTL [get_ports clk6x_o]
-set_property IOSTANDARD LVTTL [get_ports clk12x_o]
-set_property IOSTANDARD LVTTL [get_ports clk6n_o]
-set_property PACKAGE_PIN J19 [get_ports clk6x_o]
-set_property PACKAGE_PIN M18 [get_ports clk6n_o]
-set_property PACKAGE_PIN K19 [get_ports clk12x_o]
+set_property IOSTANDARD LVTTL [get_ports clk6x]
+set_property IOSTANDARD LVTTL [get_ports clk6n]
+set_property IOSTANDARD LVTTL [get_ports clk12x]
+set_property IOSTANDARD LVTTL [get_ports clk_locked]
+set_property IOSTANDARD LVTTL [get_ports clk_o]
+set_property PACKAGE_PIN M18 [get_ports clk_o]
+set_property PACKAGE_PIN M17 [get_ports clk_locked]
+set_property PACKAGE_PIN L20 [get_ports clk12x]
+set_property PACKAGE_PIN L19 [get_ports clk6x]
+set_property PACKAGE_PIN F17 [get_ports clk6n]

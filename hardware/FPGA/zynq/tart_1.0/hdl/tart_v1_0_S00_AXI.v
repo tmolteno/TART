@@ -118,7 +118,7 @@ reg              we = 1'b1;
 reg [ASB:0]      adr;
 reg [MSB:0]      dat;
 wire             busy, done, fail;
-wire             start;
+reg              start;
 
 // Example-specific design signals
 // local parameter for addressing 32 bit / 64 bit C_S_AXI_DATA_WIDTH
@@ -311,8 +311,6 @@ begin
     end 
 end       
 
-reg [7:0] rdelay;
-
 always @( posedge S_AXI_ACLK )
 begin
   if ( S_AXI_ARESETN == 1'b0 )
@@ -320,24 +318,16 @@ begin
       axi_rvalid <= 0;
       axi_rresp  <= 0;
       axi_rdata <= 0;
-      rdelay <= 0;
     end 
   else
     begin    
-      if (rdelay == 0 && axi_arready && S_AXI_ARVALID && ~axi_rvalid)
+      if (axi_arready && S_AXI_ARVALID && ~axi_rvalid)
         begin
-            rdelay <= 1;
-        end
-      else if (rdelay == 100)
-        begin
-          rdelay <= 0;
           // Valid read data is available at the read data bus
           axi_rvalid <= 1'b1;
           axi_rresp  <= 2'b0; // 'OKAY' response
           axi_rdata  <= reg_data_out;
         end
-      else if (rdelay > 0)
-        rdelay <= rdelay + 1;
       else if (axi_rvalid && S_AXI_RREADY)
         begin
           // Read data is accepted by the master
@@ -346,9 +336,16 @@ begin
     end
 end
 
-always @(*)
+always @(posedge clk_i)
 begin
-    reg_data_out <= {30'b0, rst_i, clk_i};
+	if (rst_i)
+	begin
+		reg_data_out <= 32'ha0b0c0d0;
+	end
+	else
+	begin
+		reg_data_out <= reg_data_out + 1;
+	end
 end
 
 //-------------------------------------------------------------------------
@@ -361,11 +358,10 @@ end
 //   b) SPI layer requests another register READ; or
 //   c) register data received, to be written.
 
-assign start = 0;
-
 //-------------------------------------------------------------------------
 //  Frame the external Wishbone bus cycles.
 //-------------------------------------------------------------------------
+`ifdef UNDEFINEDPLEASE
 wb_cycle
 #( 
     .ASYNC(ASYNC),   // should be `1` unless very slow clock rates
@@ -387,5 +383,7 @@ wb_cycle
     .done_o (done),
     .fail_o (fail)
 );
+
+`endif
 
 endmodule

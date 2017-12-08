@@ -50,8 +50,8 @@ module tart_v1_0 #
     // TELESCOPE
     input [NSB:0]      antenna, // Radio Data Interface
 
+	    // Shouldn't start until clk_locked is asserted.
     input clk_locked,// clocks are ready to be used.
-    output clk_reset_o,
     input clk_i,     // 16.368 MHZ buffered
     input clk6x_i,   // 16.368x6 = 98.208 MHz
     input clk6n_i,   // 16.368x6 = 98.208 MHz
@@ -203,14 +203,9 @@ module tart_v1_0 #
     assign clock_n = clk6n_i;
     assign rx_clk_16_buf = clk_i;
     assign clk_x = clk12x_i;
- 
-    assign reset_n = !clk_locked; // Reset while clock's not ready.
-   
-    /* Take clock wizard out of reset. */ 
-    reg clk_reset = 0;
-    assign clk_reset_o = clk_reset;
 
-   
+    assign reset_n = !clk_locked;
+ 
     //-------------------------------------------------------------------------
     //
     //  TART SYSTEM-WIDE, WISHBONE (SPEC B4) INTERCONNECT AND PERIPHERALS.
@@ -341,8 +336,7 @@ module tart_v1_0 #
         .C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
     ) tart_v1_0_S00_AXI_inst (
         .clk_i     (clock_b),
-        .rst_i(clk_locked),
-        //.rst_i     (reset_axi),
+        .rst_i     (reset_axi),
         
         //  Wishbone master interface.
         .cyc_o     (axi_cyc),
