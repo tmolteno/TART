@@ -21,7 +21,7 @@ module tart_v1_0_S00_AXI #
     // Width of S_AXI data bus
     parameter integer C_S_AXI_DATA_WIDTH	= 32,
     // Width of S_AXI address bus
-    parameter integer C_S_AXI_ADDR_WIDTH	= 4
+    parameter integer C_S_AXI_ADDR_WIDTH	= 8
 )
 (
     // Wishbone (SPEC B4) interface:
@@ -113,13 +113,6 @@ reg [C_S_AXI_DATA_WIDTH-1 : 0] 	axi_rdata;
 reg [1 : 0] 	axi_rresp;
 reg  	axi_rvalid;
 
-//  Wishbone bus and control signals:
-reg              we = 1'b1;
-reg [ASB:0]      adr;
-reg [MSB:0]      dat;
-wire             busy, done, fail;
-reg              start;
-
 // Example-specific design signals
 // local parameter for addressing 32 bit / 64 bit C_S_AXI_DATA_WIDTH
 // ADDR_LSB is used for addressing 32/64 bit registers/memories
@@ -151,12 +144,6 @@ assign S_AXI_ARREADY	= axi_arready;
 assign S_AXI_RDATA	= axi_rdata;
 assign S_AXI_RRESP	= axi_rresp;
 assign S_AXI_RVALID	= axi_rvalid;
-
-//-------------------------------------------------------------------------
-//  Map signals to the module outputs.
-assign we_o     = we;
-assign adr_o    = adr;
-assign dat_o    = dat;
 
 
 always @( posedge S_AXI_ACLK )
@@ -311,79 +298,64 @@ begin
     end 
 end       
 
+reg [2:0] start, done;
+reg start_t, done_t;
+reg busy;
+
 always @( posedge S_AXI_ACLK )
 begin
-  if ( S_AXI_ARESETN == 1'b0 )
-    begin
-      axi_rvalid <= 0;
-      axi_rresp  <= 0;
-      axi_rdata <= 0;
-    end 
-  else
-    begin    
-      if (axi_arready && S_AXI_ARVALID && ~axi_rvalid)
-        begin
-          // Valid read data is available at the read data bus
-          axi_rvalid <= 1'b1;
-          axi_rresp  <= 2'b0; // 'OKAY' response
-          axi_rdata  <= reg_data_out;
-        end
-      else if (axi_rvalid && S_AXI_RREADY)
-        begin
-          // Read data is accepted by the master
-          axi_rvalid <= 1'b0;
-        end                
-    end
+	if ( S_AXI_ARESETN == 1'b0 )
+	begin
+		axi_rvalid <= 0;
+		axi_rresp  <= 0;
+		axi_rdata <= 0;
+		start_t <= 0;
+		done <= 0;
+		busy <= 0;
+	end 
+	else
+	begin
+		if (!busy && axi_arready && S_AXI_ARVALID && ~axi_rvalid)
+		begin
+			start_t <= !start_t;
+			busy <= 1;
+		end
+		else if (done[2] ^ done[1])
+		begin
+			busy <= 0;
+			axi_rvalid <= 1'b1;
+			axi_rresp  <= 2'b0; // 'OKAY' response
+			axi_rdata  <= reg_data_out;
+		end
+		else if (axi_rvalid && S_AXI_RREADY)
+		begin
+			// Read data is accepted by the master
+			axi_rvalid <= 1'b0;
+		end
+
+		done <= {done[1:0], done_t};
+	end
 end
 
 always @(posedge clk_i)
 begin
 	if (rst_i)
 	begin
-		reg_data_out <= 32'ha0b0c0d0;
+		reg_data_out <= 32'h0;
+		start = 0;
+		done_t <= 0;
 	end
 	else
 	begin
-		reg_data_out <= reg_data_out + 1;
+		if (start[2] ^ start[1])
+		begin
+			done_t = !done_t;
+			reg_data_out <= reg_data_out + 1;
+		end
+
+		start <= {start[1:0], start_t};
 	end
 end
 
-//-------------------------------------------------------------------------
-//
-//  WISHBONE (SPEC B4) INTERCONNECT.
-//
-//-------------------------------------------------------------------------
-//  Initiate a Wishbone transaction whenever:
-//   a) register address received, and the command is READ;
-//   b) SPI layer requests another register READ; or
-//   c) register data received, to be written.
-
-//-------------------------------------------------------------------------
-//  Frame the external Wishbone bus cycles.
-//-------------------------------------------------------------------------
-`ifdef UNDEFINEDPLEASE
-wb_cycle
-#( 
-    .ASYNC(ASYNC),   // should be `1` unless very slow clock rates
-    .PIPED(PIPED),   // should be `1` for Wishbone SPEC B4
-    .CHECK(CHECK),   // `0` is probably OK for point-to-point, else `1`
-    .DELAY(DELAY)
-) RWCYC
-(
-    .clk_i  (clk_i),
-    .rst_i  (rst_i),
-    .cyc_o  (cyc_o),
-    .stb_o  (stb_o),
-    .ack_i  (ack_i),
-    .wat_i  (wat_i),
-    .rty_i  (rty_i),
-    .err_i  (err_i),
-    .start_i(start),
-    .busy_o (busy),
-    .done_o (done),
-    .fail_o (fail)
-);
-
-`endif
-
 endmodule
+

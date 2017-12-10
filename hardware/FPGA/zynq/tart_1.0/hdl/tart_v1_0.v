@@ -44,7 +44,7 @@ module tart_v1_0 #
 
     // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-    parameter integer C_S00_AXI_ADDR_WIDTH	= 4
+    parameter integer C_S00_AXI_ADDR_WIDTH	= 8
 )
 (
     // TELESCOPE
