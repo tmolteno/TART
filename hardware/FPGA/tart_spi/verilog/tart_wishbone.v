@@ -92,17 +92,17 @@ module tart_wishbone
     input          bus_clk_i,   // bus clock
     input          bus_rst_i,   // bus-domain reset
 
-    //  SPI (master) Wishbone (SPEC B4) interconnect:
-    input          spi_cyc_i,
-    input          spi_stb_i,
-    input          spi_we_i,
-    output         spi_ack_o,
-    output         spi_wat_o,
-    output         spi_rty_o,
-    output         spi_err_o,
-    input [6:0]    spi_adr_i,
-    input [7:0]    spi_dat_i,
-    output [7:0]   spi_dat_o,
+    //  SPI/AXI (master) Wishbone (SPEC B4) interconnect:
+    input          master_cyc_i,
+    input          master_stb_i,
+    input          master_we_i,
+    output         master_ack_o,
+    output         master_wat_o,
+    output         master_rty_o,
+    output         master_err_o,
+    input [6:0]    master_adr_i,
+    input [7:0]    master_dat_i,
+    output [7:0]   master_dat_o,
     
     //  Capture (slave) Wishbone (SPEC B4) interconnect:
     output         cap_cyc_o,
@@ -160,7 +160,7 @@ module tart_wishbone
    wire            bus_ack_w, bus_wat_w, bus_rty_w, bus_err_w;
    wire [7:0]      bus_dat_w, mux_dat_w;
 
-   wire            spi_cyc_w, spi_stb_w;
+   wire            master_cyc_w, master_stb_w;
    wire [XSB:0]    dec_adr_w;
    wire            cap_sel_w, acq_sel_w, dsp_sel_w, sys_sel_w;
 
@@ -182,10 +182,10 @@ module tart_wishbone
    //-------------------------------------------------------------------------
    //  Compute the device selects/strobes.
    //-------------------------------------------------------------------------
-   assign cap_sel_w = CAPEN && spi_stb_w && dec_adr_w == CAPAD;
-   assign acq_sel_w = ACQEN && spi_stb_w && dec_adr_w == ACQAD;
-   assign dsp_sel_w = DSPEN && spi_stb_w && dec_adr_w == DSPAD;
-   assign sys_sel_w = SYSEN && spi_stb_w && dec_adr_w == SYSAD;
+   assign cap_sel_w = CAPEN && master_stb_w && dec_adr_w == CAPAD;
+   assign acq_sel_w = ACQEN && master_stb_w && dec_adr_w == ACQAD;
+   assign dsp_sel_w = DSPEN && master_stb_w && dec_adr_w == DSPAD;
+   assign sys_sel_w = SYSEN && master_stb_w && dec_adr_w == SYSAD;
 
    assign cap_stb_w = ASYNC == 2 ? cap_sel_w : cap_stb_r;
    assign acq_stb_w = ASYNC == 2 ? acq_sel_w : acq_stb_r;
@@ -196,29 +196,29 @@ module tart_wishbone
    //-------------------------------------------------------------------------
    //  Master-device routing.
    //-------------------------------------------------------------------------
-   assign spi_cyc_w = CHECK ? spi_cyc_i : 1'b1;
-   assign spi_stb_w = spi_cyc_w && spi_stb_i;
+   assign master_cyc_w = CHECK ? master_cyc_i : 1'b1;
+   assign master_stb_w = master_cyc_w && master_stb_i;
 
    //  Route the responses back to the Wishbone master (the SPI unit).
    //  NOTE: Bus wait-state requests ('WAT_O == 1') can't be pipelined, so
    //    these are upgraded to retry ('RTY_O == 1') responses.
-   assign spi_ack_o = ASYNC ? bus_ack_w : bus_ack_r;
-   assign spi_wat_o = ASYNC ? bus_wat_w : 1'b0; // TODO: has to be ASYNC?
-   assign spi_rty_o = bus_rty_r;
-   assign spi_err_o = bus_err_r;
-   assign spi_dat_o = ASYNC ? mux_dat_w : mux_dat_r;
+   assign master_ack_o = ASYNC ? bus_ack_w : bus_ack_r;
+   assign master_wat_o = ASYNC ? bus_wat_w : 1'b0; // TODO: has to be ASYNC?
+   assign master_rty_o = bus_rty_r;
+   assign master_err_o = bus_err_r;
+   assign master_dat_o = ASYNC ? mux_dat_w : mux_dat_r;
 
    //  Extract the address-decoder bits.
-   assign dec_adr_w = spi_adr_i[USB:USB-XSB];
+   assign dec_adr_w = master_adr_i[USB:USB-XSB];
 
 
    //-------------------------------------------------------------------------
    //  Slave-device routing.
    //-------------------------------------------------------------------------
-   assign bus_cyc_w = ASYNC == 2 ? spi_cyc_w : bus_cyc_r;
-   assign bus_we_w  = ASYNC == 2 ? spi_we_i  : bus_we_r ;
-   assign bus_adr_w = ASYNC == 2 ? spi_adr_i : bus_adr_r;
-   assign bus_dat_w = ASYNC == 2 ? spi_dat_i : bus_dat_r;
+   assign bus_cyc_w = ASYNC == 2 ? master_cyc_w : bus_cyc_r;
+   assign bus_we_w  = ASYNC == 2 ? master_we_i  : bus_we_r ;
+   assign bus_adr_w = ASYNC == 2 ? master_adr_i : bus_adr_r;
+   assign bus_dat_w = ASYNC == 2 ? master_dat_i : bus_dat_r;
 
    //  And the slaves responses.
    assign bus_ack_w = cap_ack_i || acq_ack_i || dsp_ack_i || sys_ack_i;
@@ -282,7 +282,7 @@ module tart_wishbone
         sys_stb_r <= #DELAY 1'b0;
      end
      else begin
-        bus_cyc_r <= #DELAY spi_cyc_w;
+        bus_cyc_r <= #DELAY master_cyc_w;
         cap_stb_r <= #DELAY cap_sel_w;
         acq_stb_r <= #DELAY acq_sel_w;
         dsp_stb_r <= #DELAY dsp_sel_w;
@@ -293,16 +293,16 @@ module tart_wishbone
    //  Pipeline the address and data signals.
    always @(posedge bus_clk_i)
      begin
-        bus_we_r  <= #DELAY spi_we_i;
-        bus_adr_r <= #DELAY spi_adr_i;
-        bus_dat_r <= #DELAY spi_dat_i;
+        bus_we_r  <= #DELAY master_we_i;
+        bus_adr_r <= #DELAY master_adr_i;
+        bus_dat_r <= #DELAY master_dat_i;
         mux_dat_r <= #DELAY mux_dat_w;
      end
 
    //-------------------------------------------------------------------------
    //  Keep track of the selected unit.
    always @(posedge bus_clk_i)
-     mux_sel_r <= #DELAY spi_stb_w ? dec_adr_w : mux_sel_r;
+     mux_sel_r <= #DELAY master_stb_w ? dec_adr_w : mux_sel_r;
 
 
    //-------------------------------------------------------------------------

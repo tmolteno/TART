@@ -44,7 +44,7 @@ module tart_v1_0 #
 
     // Parameters of Axi Slave Bus Interface S00_AXI
     parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-    parameter integer C_S00_AXI_ADDR_WIDTH	= 8
+    parameter integer C_S00_AXI_ADDR_WIDTH	= 10
 )
 (
     // TELESCOPE
@@ -249,16 +249,16 @@ module tart_v1_0 #
         
         //-------------------------------------------------------------------
         //  axi Wishbone master.
-        .spi_cyc_i(spi_cyc),
-        .spi_stb_i(spi_stb),
-        .spi_we_i (spi_we),
-        .spi_ack_o(spi_ack),
-        .spi_wat_o(spi_wat),
-        .spi_rty_o(spi_rty),
-        .spi_err_o(spi_err),
-        .spi_adr_i(spi_adr),
-        .spi_dat_i(spi_drx),
-        .spi_dat_o(spi_dtx),
+        .master_cyc_i(axi_cyc),
+        .master_stb_i(axi_stb),
+        .master_we_i (axi_we),
+        .master_ack_o(axi_ack),
+        .master_wat_o(axi_wat),
+        .master_rty_o(axi_rty),
+        .master_err_o(axi_err),
+        .master_adr_i(axi_adr),
+        .master_dat_i(axi_drx),
+        .master_dat_o(axi_dtx),
         
         //-------------------------------------------------------------------
         //  Capture-unit Wishbone slave.

@@ -56,7 +56,7 @@ static int test_of_probe(struct platform_device *pdev)
 	}
 
 	printk("regs currently:\n");
-	for (i = 0x0; i < 0x10; i += 4) {
+	for (i = 0x00; i < 0x70; i += 4) {
 		printk("reg 0x%x = \n", i);
 		printk("0x%x\n", *((int *) ((size_t) regs + i)));
 	}

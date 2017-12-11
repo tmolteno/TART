@@ -486,17 +486,17 @@ module tart
          .bus_rst_i(reset_tartwb),
 
          //-------------------------------------------------------------------
-         //  SPI Wishbone master.
-         .spi_cyc_i(spi_cyc),
-         .spi_stb_i(spi_stb),
-         .spi_we_i (spi_we),
-         .spi_ack_o(spi_ack),
-         .spi_wat_o(spi_wat),
-         .spi_rty_o(spi_rty),
-         .spi_err_o(spi_err),
-         .spi_adr_i(spi_adr),
-         .spi_dat_i(spi_drx),
-         .spi_dat_o(spi_dtx),
+         //  SPI/AXI Wishbone master.
+         .master_cyc_i(spi_cyc),
+         .master_stb_i(spi_stb),
+         .master_we_i (spi_we),
+         .master_ack_o(spi_ack),
+         .master_wat_o(spi_wat),
+         .master_rty_o(spi_rty),
+         .master_err_o(spi_err),
+         .master_adr_i(spi_adr),
+         .master_dat_i(spi_drx),
+         .master_dat_o(spi_dtx),
 
          //-------------------------------------------------------------------
          //  Capture-unit Wishbone slave.

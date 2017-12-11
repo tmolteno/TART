@@ -1,4 +1,5 @@
-all: boot/devicetree.dtb boot/devicetree.dts boot/zynq.bit
+all: boot/zynq.bit
+#	boot/devicetree.dtb boot/devicetree.dts boot/zynq.bit
 
 boot/devicetree.dtb: project/project.sdk/device_tree_bsp_0/*.dts
 	dtc -I dts -O dtb -o $@ project/project.sdk/device_tree_bsp_0/system-top.dts

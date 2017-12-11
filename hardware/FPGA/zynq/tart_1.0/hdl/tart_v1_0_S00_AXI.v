@@ -21,7 +21,7 @@ module tart_v1_0_S00_AXI #
     // Width of S_AXI data bus
     parameter integer C_S_AXI_DATA_WIDTH	= 32,
     // Width of S_AXI address bus
-    parameter integer C_S_AXI_ADDR_WIDTH	= 8
+    parameter integer C_S_AXI_ADDR_WIDTH	= 10
 )
 (
     // Wishbone (SPEC B4) interface:
@@ -298,9 +298,16 @@ begin
     end 
 end       
 
-reg [2:0] start, done;
-reg start_t, done_t;
-reg busy;
+reg we, adr;
+reg start;
+
+assign we_o = we;
+assign adr_o = adr;
+
+reg [2:0] c_start, c_done;
+reg c_start_t, c_done_t;
+reg c_busy;
+reg r_busy;
 
 always @( posedge S_AXI_ACLK )
 begin
@@ -309,20 +316,20 @@ begin
 		axi_rvalid <= 0;
 		axi_rresp  <= 0;
 		axi_rdata <= 0;
-		start_t <= 0;
-		done <= 0;
-		busy <= 0;
+		c_start_t <= 0;
+		c_done <= 0;
+		c_busy <= 0;
 	end 
 	else
 	begin
-		if (!busy && axi_arready && S_AXI_ARVALID && ~axi_rvalid)
+		if (!c_busy && axi_arready && S_AXI_ARVALID && ~axi_rvalid)
 		begin
-			start_t <= !start_t;
-			busy <= 1;
+			c_start_t <= !c_start_t;
+			c_busy <= 1;
 		end
-		else if (done[2] ^ done[1])
+		else if (c_done[2] ^ c_done[1])
 		begin
-			busy <= 0;
+			c_busy <= 0;
 			axi_rvalid <= 1'b1;
 			axi_rresp  <= 2'b0; // 'OKAY' response
 			axi_rdata  <= reg_data_out;
@@ -333,7 +340,7 @@ begin
 			axi_rvalid <= 1'b0;
 		end
 
-		done <= {done[1:0], done_t};
+		c_done <= {c_done[1:0], c_done_t};
 	end
 end
 
@@ -342,20 +349,57 @@ begin
 	if (rst_i)
 	begin
 		reg_data_out <= 32'h0;
-		start = 0;
-		done_t <= 0;
+		c_start <= 0;
+		c_done_t <= 0;
+		r_busy <= 0;
 	end
 	else
 	begin
-		if (start[2] ^ start[1])
+		if (c_start[2] ^ c_start[1])
 		begin
-			done_t = !done_t;
-			reg_data_out <= reg_data_out + 1;
+			we <= 0;
+			start <= 1;
+			r_busy <= 1;
+// 1) for reasons unknown addrs multiples of 0, 8, get 0,  while 4, c get 1.
+			adr <= axi_araddr[9:2];
+		end
+		else if (start)
+		begin
+			start <= 0;
+		end
+		else if (r_busy && (done || fail))
+		begin
+			c_done_t <= !c_done_t;
+			r_busy <= 0;
+// 1) for reasons unknown addrs multiples of 0, 8, get 0,  while 4, c get 1.
+//			reg_data_out <= {dat_i, 16'b0, adr};
+			reg_data_out <= {22'b0, axi_araddr};
 		end
 
-		start <= {start[1:0], start_t};
+		c_start <= {c_start[1:0], c_start_t};
 	end
 end
+
+wb_cycle
+#( .ASYNC(ASYNC),
+	.PIPED(PIPED),
+	.CHECK(CHECK),
+	.DELAY(DELAY)
+) RWCYC
+(
+	.clk_i(clk_i),
+	.rst_i(rst_i),
+	.cyc_o (cyc_o),
+	.stb_o(stb_o),
+	.ack_i(ack_i),
+	.wat_i(wat_i),
+	.rty_i(rty_i),
+	.err_i(err_i),
+	.start_i(start),
+	.busy_o(busy),
+	.done_o(done),
+	.fail_o(fail)
+);
 
 endmodule
 
