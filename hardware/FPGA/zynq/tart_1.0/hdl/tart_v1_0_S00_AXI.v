@@ -298,7 +298,8 @@ begin
     end 
 end       
 
-reg we, adr;
+reg [ASB:0] adr;
+reg we;
 reg start;
 
 assign we_o = we;
@@ -307,7 +308,6 @@ assign adr_o = adr;
 reg [2:0] c_start, c_done;
 reg c_start_t, c_done_t;
 reg c_busy;
-reg r_busy;
 
 always @( posedge S_AXI_ACLK )
 begin
@@ -351,7 +351,7 @@ begin
 		reg_data_out <= 32'h0;
 		c_start <= 0;
 		c_done_t <= 0;
-		r_busy <= 0;
+		start <= 0;
 	end
 	else
 	begin
@@ -359,21 +359,13 @@ begin
 		begin
 			we <= 0;
 			start <= 1;
-			r_busy <= 1;
-// 1) for reasons unknown addrs multiples of 0, 8, get 0,  while 4, c get 1.
-			adr <= axi_araddr[9:2];
+			adr <= axi_araddr[(ASB+2):2];
 		end
-		else if (start)
+		else if (start && (done || fail))
 		begin
 			start <= 0;
-		end
-		else if (r_busy && (done || fail))
-		begin
 			c_done_t <= !c_done_t;
-			r_busy <= 0;
-// 1) for reasons unknown addrs multiples of 0, 8, get 0,  while 4, c get 1.
-//			reg_data_out <= {dat_i, 16'b0, adr};
-			reg_data_out <= {22'b0, axi_araddr};
+			reg_data_out <= {busy, 21'b0, dat_i, done, fail};
 		end
 
 		c_start <= {c_start[1:0], c_start_t};

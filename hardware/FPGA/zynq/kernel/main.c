@@ -38,13 +38,10 @@ static int test_remove(struct platform_device *pdev)
 
 static int test_of_probe(struct platform_device *pdev)
 {
-	struct resource *res;
-	int i;
 	uint32_t *regs = (uint32_t *) pdev->resource->start;
-
-	printk("test_of_probe with pdev %p, for dev %p or &dev %p\n", pdev, pdev->dev, &pdev->dev);
-
-	printk("regs at %p to %p?\n", pdev->resource->start, pdev->resource->end);
+	struct resource *res;
+	uint32_t v, dat, done, fail;
+	uint32_t dev, adr;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, res);
@@ -56,45 +53,58 @@ static int test_of_probe(struct platform_device *pdev)
 	}
 
 	printk("regs currently:\n");
-	for (i = 0x00; i < 0x70; i += 4) {
-		printk("reg 0x%x = \n", i);
-		printk("0x%x\n", *((int *) ((size_t) regs + i)));
+	for (dev = 0; dev < 4; dev++) {
+		if (dev == 2) continue;
+		for (adr = 0; adr < 4; adr++) {
+			uint32_t a = ((dev << 5) | (adr)) << 2;
+
+			printk("dev = %i, adr = %i, a = 0x%x\n",
+					dev, adr, a);
+
+			v = *((uint32_t *) ((size_t) regs + a));
+			dat = v >> 2;
+			done = (v >> 1) & 1;
+			fail = v & 1;
+
+			printk("    raw = 0x%x,  data = 0x%x,  done = %i, fail = %i\n",
+					v, dat, done, fail);
+		}
 	}
 
 	/*
-	for (i = 0x0; i < 0x10; i += 4) {
-		printk("write reg 0x%x = 0x%x\n", i, i + 2);
-		*((int *) ((size_t) regs + i)) = i + 2;
-	}
-	
-	printk("regs now:\n");
-	
-	for (i = 0x0; i < 0x10; i += 4) {
-		printk("reg 0x%x = \n", i);
-		printk("0x%x\n", *((int *) ((size_t) regs + i)));
-	}
+	   for (i = 0x0; i < 0x10; i += 4) {
+	   printk("write reg 0x%x = 0x%x\n", i, i + 2);
+	 *((int *) ((size_t) regs + i)) = i + 2;
+	 }
 
-	printk("try unaligned access\n");
-	
-	uint8_t *c = (uint8_t *) regs;
+	 printk("regs now:\n");
 
-	for (i = 0; i < 0x10; i++) {
-		printk("reg 0x%x = \n", i);
-		printk("0x%x\n", c[i]);
-	}
+	 for (i = 0x0; i < 0x10; i += 4) {
+	 printk("reg 0x%x = \n", i);
+	 printk("0x%x\n", *((int *) ((size_t) regs + i)));
+	 }
 
-	printk("write regs\n");
-	for (i = 0; i < 0x10; i++) {
-		printk("write reg 0x%x = 0x%x\n", i, i + 3);
-		c[i] = i + 3;
-	}
+	 printk("try unaligned access\n");
 
-	printk("regs now:\n");
-	for (i = 0; i < 0x10; i++) {
-		printk("reg 0x%x = \n", i);
-		printk("0x%x\n", c[i]);
-	}
-*/
+	 uint8_t *c = (uint8_t *) regs;
+
+	 for (i = 0; i < 0x10; i++) {
+	 printk("reg 0x%x = \n", i);
+	 printk("0x%x\n", c[i]);
+	 }
+
+	 printk("write regs\n");
+	 for (i = 0; i < 0x10; i++) {
+	 printk("write reg 0x%x = 0x%x\n", i, i + 3);
+	 c[i] = i + 3;
+	 }
+
+	 printk("regs now:\n");
+	 for (i = 0; i < 0x10; i++) {
+	 printk("reg 0x%x = \n", i);
+	 printk("0x%x\n", c[i]);
+	 }
+	 */
 
 	return 0;
 }
