@@ -40,7 +40,7 @@ static int test_of_probe(struct platform_device *pdev)
 {
 	uint32_t *regs = (uint32_t *) pdev->resource->start;
 	struct resource *res;
-	uint32_t v, dat, done, fail;
+	uint32_t v, dat, done, fail, busy;
 	uint32_t dev, adr;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
@@ -62,12 +62,13 @@ static int test_of_probe(struct platform_device *pdev)
 					dev, adr, a);
 
 			v = *((uint32_t *) ((size_t) regs + a));
-			dat = v >> 2;
+			dat = ((v&~(1<<31)) >> 2);
 			done = (v >> 1) & 1;
 			fail = v & 1;
+			busy = v >> 31;
 
-			printk("    raw = 0x%x,  data = 0x%x,  done = %i, fail = %i\n",
-					v, dat, done, fail);
+			printk("    raw = 0x%x,  data = 0x%x,  busy = %i, done = %i, fail = %i\n",
+					v, dat, busy, done, fail);
 		}
 	}
 

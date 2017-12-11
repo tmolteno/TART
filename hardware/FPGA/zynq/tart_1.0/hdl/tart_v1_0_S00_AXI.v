@@ -134,6 +134,24 @@ reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
 integer	 byte_index;
 reg	 aw_en;
 
+// wishbone registers. 
+
+reg [ASB:0] adr;
+reg [MSB:0] dat;
+reg we;
+reg read, write;
+
+wire start;
+
+assign we_o = we;
+assign adr_o = adr;
+assign dat_o = dat;
+
+reg [2:0] c_rd_start, c_wr_start, c_done;
+reg c_rd_start_t, c_wr_start_t, c_done_t;
+reg r_busy, w_busy;
+
+
 // I/O Connections assignments
 
 assign S_AXI_AWREADY	= axi_awready;
@@ -296,18 +314,31 @@ begin
           axi_arready <= 1'b0;
         end
     end 
-end       
+end
 
-reg [ASB:0] adr;
-reg we;
-reg start;
-
-assign we_o = we;
-assign adr_o = adr;
-
-reg [2:0] c_start, c_done;
-reg c_start_t, c_done_t;
-reg c_busy;
+always @( posedge S_AXI_ACLK )
+begin
+	if ( S_AXI_ARESETN == 1'b0 )
+	begin
+		c_done <= 0;
+	end
+	else
+		c_done <= {c_done[1:0], c_done_t};
+end	
+		
+always @( posedge clk_i )
+begin
+	if (rst_i)
+	begin
+		c_rd_start <= 0;
+		c_wr_start <= 0;
+	end
+	else
+	begin
+		c_rd_start <= {c_rd_start[1:0], c_rd_start_t};
+		c_wr_start <= {c_wr_start[1:0], c_wr_start_t};
+	end
+end
 
 always @( posedge S_AXI_ACLK )
 begin
@@ -316,59 +347,67 @@ begin
 		axi_rvalid <= 0;
 		axi_rresp  <= 0;
 		axi_rdata <= 0;
-		c_start_t <= 0;
-		c_done <= 0;
-		c_busy <= 0;
+		c_rd_start_t <= 0;
+		r_busy <= 0;
 	end 
 	else
 	begin
-		if (!c_busy && axi_arready && S_AXI_ARVALID && ~axi_rvalid)
+		if (!r_busy && axi_arready && S_AXI_ARVALID && ~axi_rvalid)
 		begin
-			c_start_t <= !c_start_t;
-			c_busy <= 1;
+			c_rd_start_t <= !c_rd_start_t;
+			r_busy <= 1;
 		end
-		else if (c_done[2] ^ c_done[1])
+		else if (r_busy && (c_done[2] ^ c_done[1]))
 		begin
-			c_busy <= 0;
+			r_busy <= 0;
 			axi_rvalid <= 1'b1;
 			axi_rresp  <= 2'b0; // 'OKAY' response
 			axi_rdata  <= reg_data_out;
 		end
 		else if (axi_rvalid && S_AXI_RREADY)
 		begin
-			// Read data is accepted by the master
 			axi_rvalid <= 1'b0;
 		end
-
-		c_done <= {c_done[1:0], c_done_t};
 	end
 end
+
+assign start = !busy && (read || write);
 
 always @(posedge clk_i)
 begin
 	if (rst_i)
 	begin
 		reg_data_out <= 32'h0;
-		c_start <= 0;
 		c_done_t <= 0;
-		start <= 0;
+		read <= 0;
+		write <= 0;
 	end
 	else
 	begin
-		if (c_start[2] ^ c_start[1])
+		if (c_rd_start[2] ^ c_rd_start[1])
 		begin
 			we <= 0;
-			start <= 1;
+			read <= 1;
 			adr <= axi_araddr[(ASB+2):2];
 		end
-		else if (start && (done || fail))
+		else if (c_wr_start[2] ^ c_wr_start[1])
 		begin
-			start <= 0;
+			we <= 1;
+			write <= 1;
+			adr <= axi_araddr[(ASB+2):2];
+			dat <= S_AXI_WDATA[MSB:0];
+		end
+		else if (read && (done || fail))
+		begin
+			read <= 0;
 			c_done_t <= !c_done_t;
 			reg_data_out <= {busy, 21'b0, dat_i, done, fail};
 		end
-
-		c_start <= {c_start[1:0], c_start_t};
+		else if (write && (done || fail))
+		begin
+			write <= 0;
+			c_done_t <= !c_done_t;
+		end
 	end
 end
 
