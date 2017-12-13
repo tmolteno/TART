@@ -578,19 +578,20 @@ module tart_capture
    //-------------------------------------------------------------------------
    //  NOTE: This allow half-rate sampling, but at the expense of twice the
    //    usage of routing-resources.
-   IDDR2
+   
+   // TODO: 7-series doesn't have IDDR2, this needs to be updated.
+   IDDR
      #( .DDR_ALIGNMENT("C0"),
         .SRTYPE("SYNC")
         ) IOBS [MSB:0]
      ( .C0(clock_i),
-       .C1(clock_n),
+   //    .C1(clock_n),
        .R (reset_i && RESET),
+       .S (1'b0),
        .CE(en_capture),
        .D (signal_e_i),
        .Q0(signal_p),
        .Q1(signal_n)            // lags by 180 degrees
        );
-
-
 
 endmodule // tart_capture

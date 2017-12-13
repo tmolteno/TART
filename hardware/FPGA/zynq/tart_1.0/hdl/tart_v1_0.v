@@ -118,12 +118,11 @@ module tart_v1_0 #
     //-------------------------------------------------------------------------
     wire fpga_clk;
     wire clk_x;
-    (* KEEP   = "TRUE"     *) wire reset;
+    wire reset;
     
     wire                clock_n, reset_n;
     wire                clock_b, reset_b; // WB system signals
     
-    (* KEEP   = "TRUE"    *)
     wire                rx_clk_16_buf;
     
     

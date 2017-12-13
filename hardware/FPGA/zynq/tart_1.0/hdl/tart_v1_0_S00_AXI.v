@@ -120,18 +120,8 @@ reg  	axi_rvalid;
 // ADDR_LSB = 3 for 64 bits (n downto 3)
 localparam integer ADDR_LSB = (C_S_AXI_DATA_WIDTH/32) + 1;
 localparam integer OPT_MEM_ADDR_BITS = 1;
-//----------------------------------------------
-//-- Signals for user logic register space example
-//------------------------------------------------
-//-- Number of Slave Registers 4
-reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg0;
-reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg1;
-reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg2;
-reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg3;
-wire	 slv_reg_rden;
-wire	 slv_reg_wren;
+
 reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
-integer	 byte_index;
 reg	 aw_en;
 
 // wishbone registers. 
@@ -177,10 +167,6 @@ begin
     begin    
       if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
         begin
-          // slave is ready to accept write address when 
-          // there is a valid write address and write data
-          // on the write address and data bus. This design 
-          // expects no outstanding transactions. 
           axi_awready <= 1'b1;
           axi_wready <= 1'b1;
           aw_en <= 1'b0;
@@ -191,7 +177,7 @@ begin
               aw_en <= 1'b1;
               axi_awready <= 1'b0;
             end
-      else           
+      else
         begin
           axi_awready <= 1'b0;
           axi_wready <= 1'b0;
@@ -199,146 +185,56 @@ begin
     end 
 end       
 
-assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
-
 always @( posedge S_AXI_ACLK )
 begin
-  if ( S_AXI_ARESETN == 1'b0 )
-    begin
-      slv_reg0 <= 0;
-      slv_reg1 <= 0;
-      slv_reg2 <= 0;
-      slv_reg3 <= 0;
-    end 
-  else begin
-    if (slv_reg_wren)
-      begin
-        case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-          2'h0:
-            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-                // Respective byte enables are asserted as per write strobes 
-                // Slave register 0
-                slv_reg0[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-              end  
-          2'h1:
-            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-                // Respective byte enables are asserted as per write strobes 
-                // Slave register 1
-                slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-              end  
-          2'h2:
-            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-                // Respective byte enables are asserted as per write strobes 
-                // Slave register 2
-                slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-              end  
-          2'h3:
-            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-                // Respective byte enables are asserted as per write strobes 
-                // Slave register 3
-                slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-              end  
-          default : begin
-                      slv_reg0 <= slv_reg0;
-                      slv_reg1 <= slv_reg1;
-                      slv_reg2 <= slv_reg2;
-                      slv_reg3 <= slv_reg3;
-                    end
-        endcase
-      end
-  end
-end    
-
-reg [7:0] delay;
-
-always @( posedge S_AXI_ACLK )
-begin
-  if ( S_AXI_ARESETN == 1'b0 )
-    begin
-      axi_bvalid  <= 0;
-      axi_bresp   <= 2'b0;
-      delay <= 0;
-    end 
-  else
-    begin    
-      if (delay == 0 && axi_awready && S_AXI_AWVALID && ~axi_bvalid && axi_wready && S_AXI_WVALID)
-        begin
-          delay <= 1;
-        end
-     
-      else if (delay == 255)
-        begin
-            delay <= 0;
-          // indicates a valid write response is available
-          axi_bvalid <= 1'b1;
-          axi_bresp  <= 2'b0; // 'OKAY' response 
-        end                   // work error responses in future
-         else if (delay > 0)
-               begin
-                 delay <= delay + 1;
-               end
-      else
-        begin
-          if (S_AXI_BREADY && axi_bvalid) 
-            //check if bready is asserted while bvalid is high) 
-            //(there is a possibility that bready is always asserted high)   
-            begin
-              axi_bvalid <= 1'b0; 
-            end  
-        end
-    end
-end   
-
-always @( posedge S_AXI_ACLK )
-begin
-  if ( S_AXI_ARESETN == 1'b0 )
-    begin
-      axi_arready <= 1'b0;
-      axi_araddr  <= 32'b0;
-    end 
-  else
-    begin    
-      if (~axi_arready && S_AXI_ARVALID)
-        begin
-          // indicates that the slave has acceped the valid read address
-          axi_arready <= 1'b1;
-          // Read address latching
-          axi_araddr  <= S_AXI_ARADDR;
-        end
-      else
-        begin
-          axi_arready <= 1'b0;
-        end
-    end 
+	if ( S_AXI_ARESETN == 1'b0 )
+	begin
+		axi_bvalid  <= 0;
+		axi_bresp   <= 2'b0;
+		w_busy <= 0;
+	end 
+	else
+	begin    
+	if (!w_busy && axi_awready && S_AXI_AWVALID && axi_wready && S_AXI_WVALID)
+	begin
+		c_wr_start_t <= !c_wr_start_t;
+		w_busy <= 1;
+	end
+	else if (w_busy && (c_done[2] ^ c_done[1]))
+	begin
+		w_busy <= 0;
+		// indicates a valid write response is available
+		axi_bvalid <= 1'b1;
+		axi_bresp  <= 2'b0; // 'OKAY' response 
+	end                   // work error responses in future
+	else if (S_AXI_BREADY && axi_bvalid) 
+	begin
+		axi_bvalid <= 1'b0; 
+	end
+end
 end
 
 always @( posedge S_AXI_ACLK )
 begin
 	if ( S_AXI_ARESETN == 1'b0 )
 	begin
-		c_done <= 0;
-	end
+		axi_arready <= 1'b0;
+		axi_araddr  <= 32'b0;
+	end 
 	else
-		c_done <= {c_done[1:0], c_done_t};
-end	
-		
-always @( posedge clk_i )
-begin
-	if (rst_i)
+	begin    
+	if (~axi_arready && S_AXI_ARVALID)
 	begin
-		c_rd_start <= 0;
-		c_wr_start <= 0;
+		axi_arready <= 1'b1;
+		axi_araddr  <= S_AXI_ARADDR;
 	end
 	else
 	begin
-		c_rd_start <= {c_rd_start[1:0], c_rd_start_t};
-		c_wr_start <= {c_wr_start[1:0], c_wr_start_t};
+		axi_arready <= 1'b0;
 	end
+end 
 end
+
 
 always @( posedge S_AXI_ACLK )
 begin
@@ -394,7 +290,7 @@ begin
 		begin
 			we <= 1;
 			write <= 1;
-			adr <= axi_araddr[(ASB+2):2];
+			adr <= axi_awaddr[(ASB+2):2];
 			dat <= S_AXI_WDATA[MSB:0];
 		end
 		else if (read && (done || fail))
@@ -410,6 +306,33 @@ begin
 		end
 	end
 end
+
+always @( posedge S_AXI_ACLK )
+begin
+	if ( S_AXI_ARESETN == 1'b0 )
+	begin
+		c_done <= 0;
+	end
+	else
+	begin
+		c_done <= {c_done[1:0], c_done_t};
+	end
+end	
+
+always @( posedge clk_i )
+begin
+	if (rst_i)
+	begin
+		c_rd_start <= 0;
+		c_wr_start <= 0;
+	end
+	else
+	begin
+		c_rd_start <= {c_rd_start[1:0], c_rd_start_t};
+		c_wr_start <= {c_wr_start[1:0], c_wr_start_t};
+	end
+end
+
 
 wb_cycle
 #( .ASYNC(ASYNC),

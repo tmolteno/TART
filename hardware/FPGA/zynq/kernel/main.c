@@ -36,21 +36,11 @@ static int test_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static int test_of_probe(struct platform_device *pdev)
+	static void
+dump_regs(uint32_t * regs)
 {
-	uint32_t *regs = (uint32_t *) pdev->resource->start;
-	struct resource *res;
 	uint32_t v, dat, done, fail, busy;
 	uint32_t dev, adr;
-
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	regs = devm_ioremap_resource(&pdev->dev, res);
-
-	printk("regs at %p\n", regs);	
-	if (IS_ERR(regs)) {
-		printk("Failed to remap resource!\n");
-		return -1;
-	}
 
 	printk("regs currently:\n");
 	for (dev = 0; dev < 4; dev++) {
@@ -72,40 +62,30 @@ static int test_of_probe(struct platform_device *pdev)
 		}
 	}
 
-	/*
-	   for (i = 0x0; i < 0x10; i += 4) {
-	   printk("write reg 0x%x = 0x%x\n", i, i + 2);
-	 *((int *) ((size_t) regs + i)) = i + 2;
-	 }
 
-	 printk("regs now:\n");
+}
 
-	 for (i = 0x0; i < 0x10; i += 4) {
-	 printk("reg 0x%x = \n", i);
-	 printk("0x%x\n", *((int *) ((size_t) regs + i)));
-	 }
+static int test_of_probe(struct platform_device *pdev)
+{
+	uint32_t *regs = (uint32_t *) pdev->resource->start;
+	struct resource *res;
 
-	 printk("try unaligned access\n");
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs = devm_ioremap_resource(&pdev->dev, res);
 
-	 uint8_t *c = (uint8_t *) regs;
+	printk("regs at %p\n", regs);	
+	if (IS_ERR(regs)) {
+		printk("Failed to remap resource!\n");
+		return -1;
+	}
 
-	 for (i = 0; i < 0x10; i++) {
-	 printk("reg 0x%x = \n", i);
-	 printk("0x%x\n", c[i]);
-	 }
-
-	 printk("write regs\n");
-	 for (i = 0; i < 0x10; i++) {
-	 printk("write reg 0x%x = 0x%x\n", i, i + 3);
-	 c[i] = i + 3;
-	 }
-
-	 printk("regs now:\n");
-	 for (i = 0; i < 0x10; i++) {
-	 printk("reg 0x%x = \n", i);
-	 printk("0x%x\n", c[i]);
-	 }
-	 */
+	dump_regs(regs);
+		
+	uint32_t dev = 0, adr = 3;	
+	uint32_t a = ((dev << 5) | (adr)) << 2;
+	*((uint32_t *) ((size_t) regs + a)) = 3;
+	
+	dump_regs(regs);
 
 	return 0;
 }
