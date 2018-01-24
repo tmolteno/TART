@@ -517,15 +517,13 @@ module tart_v1_0 #
 		    .dat_i    (acq_dtx),
 		    .dat_o    (acq_drx),
 
-		    .io_busy_i(axi_busy),
-
-            .M_AXIS_ACLK(m00_axis_aclk),
-            .M_AXIS_ARESETN(m00_axis_aresetn),
-            .M_AXIS_TVALID(m00_axis_tvalid),
-            .M_AXIS_TDATA(m00_axis_tdata),
-            .M_AXIS_TSTRB(m00_axis_tstrb),
-            .M_AXIS_TLAST(m00_axis_tlast),
-            .M_AXIS_TREADY(m00_axis_tready),
+		    .M_AXIS_ACLK(m00_axis_aclk),
+		    .M_AXIS_ARESETN(m00_axis_aresetn),
+		    .M_AXIS_TVALID(m00_axis_tvalid),
+		    .M_AXIS_TDATA(m00_axis_tdata),
+		    .M_AXIS_TSTRB(m00_axis_tstrb),
+		    .M_AXIS_TLAST(m00_axis_tlast),
+		    .M_AXIS_TREADY(m00_axis_tready),
 
 		    //  Debug signals.
 		    .enabled_o(aq_enabled),

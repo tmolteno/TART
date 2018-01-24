@@ -70,8 +70,6 @@ static void axidma_start_transfer(struct dma_chan *chan, struct completion *cmp,
 	timeout = wait_for_completion_timeout(cmp, timeout);
 	status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
 
-	printk(KERN_INFO "timeout = %lu, status = %i\n", timeout, status);
-
 	if (timeout == 0) {
 		printk(KERN_ERR "DMA timed out\n");
 	} else if (status != DMA_COMPLETE) {
@@ -82,7 +80,7 @@ static void axidma_start_transfer(struct dma_chan *chan, struct completion *cmp,
 
 static void test_dma(struct dma_chan *chan)
 {
-	const int len = 24 * sizeof(u32);
+	const int len = 32 * sizeof(u32);
 	dma_addr_t handle;
 	dma_cookie_t cookie;
 	struct completion cmp;
@@ -93,8 +91,6 @@ static void test_dma(struct dma_chan *chan)
 		printk(KERN_ERR "allocating DMA memory failed!\n");
 		return;
 	}
-
-	memset(buf, 255, len);
 
 	handle = dma_map_single(chan->device->dev, buf, len, DMA_FROM_DEVICE);
 
@@ -112,12 +108,10 @@ static void test_dma(struct dma_chan *chan)
 	dma_unmap_single(chan->device->dev, handle, len, DMA_FROM_DEVICE);
 
 	for (i = 0; i < len; i += sizeof(u32)) {
-		printk(KERN_INFO "%4i = %i\n", i, *((u32 *) &buf[i]));
+		printk(KERN_INFO "%4i = %08x\n", i, *((u32 *) &buf[i]));
 	}
 
-	printk(KERN_INFO "free\n");
 	kfree(buf);
-	printk(KERN_INFO "freed\n");
 }
 
 static int tart_remove(struct platform_device *pdev)
@@ -162,16 +156,12 @@ static int tart_of_probe(struct platform_device *pdev)
 
 	printk("tart regs mapped at %p\n", regs);
 
-	printk(KERN_INFO "tart dma probing\n");
-
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 	dma_cap_set(DMA_PRIVATE, mask);
 
 	/*chan = dma_request_channel(mask, NULL, NULL);*/
 	chan = dma_request_slave_channel(&pdev->dev, "rawdma");
-
-	printk(KERN_INFO "found chan %p\n", chan);
 
 	if (chan == NULL || IS_ERR(chan)) {
 		printk(KERN_ERR "failed to get channel\n");
@@ -201,7 +191,7 @@ static int tart_of_probe(struct platform_device *pdev)
 	printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
 	*((u32 *) ((size_t) regs + a)) = v;
 
-/*	
+
 	printk(KERN_INFO "enable correlator\n");
 	dev = 2, adr = 3;
 	a = ((dev << 5) | (adr)) << 2;
@@ -210,7 +200,6 @@ static int tart_of_probe(struct platform_device *pdev)
 	*((u32 *) ((size_t) regs + a)) = v;
 
 	dump_regs(regs);
-*/
 
 	printk(KERN_INFO "test dma\n");
 

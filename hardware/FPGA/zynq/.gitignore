@@ -7,4 +7,6 @@ design_1/*
 *.jou
 *.log
 *.str
+boot/zynq.bit
+.*.swp
 

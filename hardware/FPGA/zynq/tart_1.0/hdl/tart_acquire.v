@@ -134,9 +134,6 @@ module tart_acquire
     input [BSB:0]  dat_i,
     output [BSB:0] dat_o,
 
-    // Flag for when the I/O (SPI by default) interace is active:
-    input          io_busy_i,
-
     input wire  M_AXIS_ACLK,
     input wire  M_AXIS_ARESETN,
     // Master Stream Ports. TVALID indicates that the master 
@@ -180,7 +177,7 @@ module tart_acquire
    //-------------------------------------------------------------------------
    //  Additional MCB signals.
    wire [MSB:0]    data_in;
-   wire            request, mcb_512mb;
+   wire            request;
    reg             mcb_err = 1'b0, mcb_wat = 1'b0, active = 1'b0;
    wire [2:0]      cap_state;
 
@@ -210,11 +207,7 @@ module tart_acquire
    data_in[7:0];
 
    //  Data acquisition status, and control register.
-   assign aq_system  = {en_acquire, ready, 0, 0, oflow, cap_state};
-
-   //  Extended-memory device?
-   assign mcb_512mb  = ABITS >= 25;
-
+   assign aq_system  = {en_acquire, axis_active, 0, 0, oflow, cap_state};
 
    //-------------------------------------------------------------------------
    //  Map the output signals to the system WishBone bus.
@@ -286,16 +279,40 @@ module tart_acquire
      end
    end
 
-   localparam NUMBER_OF_OUTPUT_WORDS = 16;
+   wire fifo_empty;
+   wire [MSB:0] fifo_data_o;
 
-   reg [C_M_AXIS_TDATA_WIDTH-1 : 0] read_pointer;
+   afifo_gray 
+   #( 
+     .WIDTH(AXNUM),
+     .ABITS(8),
+     .DELAY(DELAY)
+   ) fifo ( 
+     .rst_i(reset_i),
 
-   reg  	axis_tvalid;
+     .wr_clk_i(clock_i),
+     .wr_en_i(en_acquire && locked_i),
+     .wr_data_i(signal_i),
+     .wfull_o(oflow),
+
+     .rd_clk_i(M_AXIS_ACLK),
+     .rd_en_i(axis_tvalid && M_AXIS_TREADY),
+     .rd_data_o(fifo_data_o),
+     .rempty_o(fifo_empty)
+   );
+
+   localparam NUMBER_OF_OUTPUT_WORDS = 31;
+
+   reg [7 : 0]  read_pointer;
+
+   wire  	axis_tvalid;
    reg  	axis_tlast;
-   reg 	        ready;
+   reg 	        axis_active;
+
+   assign axis_tvalid   = axis_active && !fifo_empty;
 
    assign M_AXIS_TVALID	= axis_tvalid;
-   assign M_AXIS_TDATA	= read_pointer;
+   assign M_AXIS_TDATA	= fifo_data_o;
    assign M_AXIS_TLAST	= axis_tlast;
    assign M_AXIS_TSTRB	= {(C_M_AXIS_TDATA_WIDTH/8){1'b1}};
 
@@ -303,40 +320,33 @@ module tart_acquire
    begin
      if(!M_AXIS_ARESETN)
      begin
-       ready <= 0;
+       axis_active <= 0;
        read_pointer <= 0;
        axis_tlast <= 0;
-       axis_tvalid <= 0;
      end
      else
      begin
-       if (en_acquire && !ready)
+       if (!axis_active)
        begin
-	 ready <= 1;
-	 axis_tvalid <= 1;
+	 axis_active <= 1;
        end
-
-       if (ready)
+       else if (axis_active && read_pointer < NUMBER_OF_OUTPUT_WORDS)
        begin
-	 if (read_pointer < NUMBER_OF_OUTPUT_WORDS)
+	 if (axis_tvalid && M_AXIS_TREADY)
 	 begin
-	   if (M_AXIS_TREADY)
-	   begin
-	     if (read_pointer == NUMBER_OF_OUTPUT_WORDS-1)
-	       axis_tlast <= 1;
+	   if (read_pointer == NUMBER_OF_OUTPUT_WORDS-1)
+	     axis_tlast <= 1;
 
-	     read_pointer <= read_pointer + 1;
-	   end
+	   read_pointer <= read_pointer + 1;
 	 end
-	 else 
-	 begin
-	   ready <= 0;
-	   axis_tvalid <= 0;
-	   axis_tlast <= 0;
-	   read_pointer <= 0;
-	 end
+       end
+       else 
+       begin
+	 axis_active <= 0;
+	 axis_tlast <= 0;
+	 read_pointer <= 0;
        end
      end
    end
 
-   endmodule
+ endmodule
