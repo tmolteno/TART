@@ -32,9 +32,7 @@ module design_1_wrapper
     FIXED_IO_ps_porb,
     FIXED_IO_ps_srstb,
     antenna,
-    rx_clk_16,
-    clk_locked,
-    clk_o
+    rx_clk_16
     );
   inout [14:0]DDR_addr;
   inout [2:0]DDR_ba;
@@ -59,8 +57,6 @@ module design_1_wrapper
   inout FIXED_IO_ps_srstb;
   input wire [23:0] antenna;
   input wire rx_clk_16;
-      
-  output wire clk_locked, clk_o;
 
   wire [14:0]DDR_addr;
   wire [2:0]DDR_ba;
@@ -107,8 +103,5 @@ module design_1_wrapper
         .FIXED_IO_ps_porb(FIXED_IO_ps_porb),
         .FIXED_IO_ps_srstb(FIXED_IO_ps_srstb),
         .antenna_0(antenna),
-        .rx_clk_16_0(rx_clk_16),
-        
-        .clk_locked(clk_locked),
-        .clk_o(clk_o));
+        .rx_clk_16_0(rx_clk_16));
 endmodule

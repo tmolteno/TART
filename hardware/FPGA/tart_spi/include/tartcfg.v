@@ -177,7 +177,7 @@
 //    ENABLE HARDWARE CALCULATION OF THE VISIBILITIES?
 //
 //----------------------------------------------------------------------------
-`undef __USE_CORRELATORS
+`define __USE_CORRELATORS
 
 //----------------------------------------------------------------------------
 //  If banks of visibilities take to long to be read, then they can be over-

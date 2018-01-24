@@ -38,6 +38,8 @@ module tart_v1_0_S00_AXI #
     //      input [SSB:0]  sel_i, // TODO: support larger word-sizes?
     input [MSB:0]  dat_i,
     output [MSB:0] dat_o,
+
+    output         busy_o,
     
     // Global Clock Signal
     input wire  S_AXI_ACLK,
@@ -268,6 +270,7 @@ begin
 end
 
 assign start = !busy && (read || write);
+assign busy_o = (r_busy || w_busy);
 
 always @(posedge clk_i)
 begin
@@ -297,7 +300,7 @@ begin
 		begin
 			read <= 0;
 			c_done_t <= !c_done_t;
-			reg_data_out <= {busy, 21'b0, dat_i, done, fail};
+			reg_data_out <= {24'b0, dat_i};
 		end
 		else if (write && (done || fail))
 		begin
