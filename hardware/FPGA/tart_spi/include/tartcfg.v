@@ -162,7 +162,7 @@
 //    OPTIONAL ACQUISITION OF RAW ANTENNA DATA?
 //
 //----------------------------------------------------------------------------
-`undef __USE_ACQUISITION
+`define __USE_ACQUISITION
 
 //----------------------------------------------------------------------------
 //  There are two versions of the Papilio Pro LX9, V1.3 -- one has 8 MB of

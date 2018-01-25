@@ -170,13 +170,15 @@ static int tart_of_probe(struct platform_device *pdev)
 
 	printk(KERN_INFO "got dma channel %p %s\n", chan, dma_chan_name(chan));
 
+	/*
 	printk(KERN_INFO "reset\n");
 	dev = 3, adr = 3;	
 	a = ((dev << 5) | (adr)) << 2;
 	v = 1;
 	printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
 	*((u32 *) ((size_t) regs + a)) = v;
-
+	*/
+	
 	printk(KERN_INFO "enable capture\n");
 	dev = 0, adr = 3;	
 	a = ((dev << 5) | (adr)) << 2;
@@ -190,7 +192,6 @@ static int tart_of_probe(struct platform_device *pdev)
 	v = (1<<7);
 	printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
 	*((u32 *) ((size_t) regs + a)) = v;
-
 
 	printk(KERN_INFO "enable correlator\n");
 	dev = 2, adr = 3;

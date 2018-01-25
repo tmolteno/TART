@@ -64,7 +64,10 @@ module correlate_cos_sin_DSP
 
    //  Operate the DSP48A1 as a 48-bit adder only.
    //  TODO: For the Z-MUX, sometimes use the `ZERO` setting?
-   wire [7:0] opmode = 8'b00001111;
+   //   wire [7:0] opmode = 8'b00001111;
+   wire [6:0] opmode = 7'b0110011;
+   wire [3:0] alumode = 4'b0000;
+   wire [4:0] inmode = 5'b00000;
 
    wire [17:0] d = {6'b0, dsin[23:12]};
    wire [17:0] a = {dsin[11:0], dcos[23:18]};
@@ -83,35 +86,36 @@ module correlate_cos_sin_DSP
    //-------------------------------------------------------------------------
    //  Xilinx Spartan 6 DSP48A1 primitive.
    //-------------------------------------------------------------------------
-   DSP48A1
+   //  Xilinx 7 Series DSP48E1 primitive.
+   DSP48E1
      #(  .OPMODEREG(0),
-         .CARRYINREG(0), .CARRYOUTREG(1),
-         .A0REG(1), .A1REG(0),
-         .B0REG(1), .B1REG(0),
+         .CARRYINREG(0),
+         .AREG (1),
+         .BREG (1),
          .CREG (1),
          .DREG (1),
          .MREG (0),
          .PREG (1)
        ) DSPCS
        ( .CLK(clk),
-         .RSTOPMODE(1'b0),
-         .RSTCARRYIN(1'b0),
          .RSTM(1'b0),
 
          .CECARRYIN(vld),
-         .CEOPMODE(1'b0),
+         .CECTRL(1'b0),
          .CEM(1'b0),
          .CARRYIN(1'b0),
          .PCIN(48'b0),
 
+         .ALUMODE(alumode),
          .OPMODE(opmode),
+         .INMODE(inmode),
 
          // inputs & input registers:
          .RSTA(clr),            // first 48-bit input
-         .CEA(en),
+         .CEA2(en),
          .A(a),
          .RSTB(clr),
-         .CEB(en),
+         .CEB2(en),
          .B(b),
          .RSTD(clr),
          .CED(en),
@@ -121,7 +125,6 @@ module correlate_cos_sin_DSP
          .CEC(en),
          .C(c),
 
-         .CARRYOUTF(),          // sine overflow
          .RSTP(1'b0),            // output register
          .CEP(vld),
          .P({qsin, qcos})

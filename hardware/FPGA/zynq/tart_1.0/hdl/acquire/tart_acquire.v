@@ -291,7 +291,7 @@ module tart_acquire
      .rst_i(reset_i),
 
      .wr_clk_i(clock_i),
-     .wr_en_i(en_acquire && locked_i),
+     .wr_en_i(en_acquire),
      .wr_data_i(signal_i),
      .wfull_o(oflow),
 

@@ -486,7 +486,7 @@ module tart
          .bus_rst_i(reset_tartwb),
 
          //-------------------------------------------------------------------
-         //  SPI/AXI Wishbone master.
+         //  SPI Wishbone master.
          .master_cyc_i(spi_cyc),
          .master_stb_i(spi_stb),
          .master_we_i (spi_we),
