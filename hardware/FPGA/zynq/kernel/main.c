@@ -78,12 +78,26 @@ static void axidma_start_transfer(struct dma_chan *chan, struct completion *cmp,
 	}
 }
 
+static void
+to_bin(char *s, u32 n)
+{
+	u32 i;
+	for (i = 0; i < 32; i++) {
+	  if ((n >> (31 - i)) & 1)
+	    s[i] = '1';
+	  else
+	    s[i] = '0';
+	}
+	s[i] = 0;
+}
+
 static void test_dma(struct dma_chan *chan)
 {
 	const int len = 32 * sizeof(u32);
 	dma_addr_t handle;
 	dma_cookie_t cookie;
 	struct completion cmp;
+	char s[33];
 	u32 i;
 
 	char *buf = kzalloc(len, GFP_KERNEL);
@@ -108,7 +122,8 @@ static void test_dma(struct dma_chan *chan)
 	dma_unmap_single(chan->device->dev, handle, len, DMA_FROM_DEVICE);
 
 	for (i = 0; i < len; i += sizeof(u32)) {
-		printk(KERN_INFO "%4i = %08x\n", i, *((u32 *) &buf[i]));
+		to_bin(s, *((u32 *) &buf[i]));
+		printk(KERN_INFO "%4i = %s\n", i, s);
 	}
 
 	kfree(buf);
