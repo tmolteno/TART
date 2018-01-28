@@ -29,6 +29,11 @@ print("Downloading data from {}".format(API_SERVER))
 api = api_handler.APIhandler(API_SERVER)
 
 config = api_handler.get_config(api)
+mode = api.get('mode/current')
+
+if mode['mode'] != 'vis':
+    print("ERROR: Telescope must be in visibility mode to allow imaging. Set via the web API")
+
 gains = api.get('calibration/gain')
 visibility_data = api.get('imaging/vis')
 
