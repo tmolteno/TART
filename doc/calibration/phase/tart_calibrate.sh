@@ -9,6 +9,9 @@
 # This should be run at regular intervals.
 # sh tart_calibrate.sh > calibration.log
 #
+# NOTE. Modify the <password> to be the password for your telescope to allow the gains
+# and phases to be saved.
+#
 METHOD=BH
 DATESTR=`date "+%Y_%m_%d_%H_%M_%S"`
 API=https://tart.elec.ac.nz/signal/
@@ -28,7 +31,7 @@ CALIB_OUTPUT=${DIR}/${METHOD}_opt_json.json
 LOGGED_OUTPUT=cal_${DATESTR}.json
 mv ${CALIB_OUTPUT} ${LOGGED_OUTPUT}
 echo "Calibration output is in ${LOGGED_OUTPUT}"
-/usr/local/bin/tart_upload_gains --api ${API} --gains ${LOGGED_OUTPUT} --pw sharkbait
+/usr/local/bin/tart_upload_gains --api ${API} --gains ${LOGGED_OUTPUT} --pw <password>
 
 # Clean up
 rm ${DIR}/*
