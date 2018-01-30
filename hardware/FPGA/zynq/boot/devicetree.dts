@@ -464,6 +464,7 @@
 			xlnx,s00-axi-data-width = <0x20>;
 			dmas = <0x7 0x0>;
 			dma-names = "rawdma";
+			memory-region = <0x8>;
 		};
 	};
 
@@ -481,5 +482,18 @@
 	memory {
 		device_type = "memory";
 		reg = <0x0 0x40000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <0x1>;
+		#size-cells = <0x1>;
+		ranges;
+
+		buffer@0 {
+			no-map;
+			reg = <0x20000000 0x4000000>;
+			linux,phandle = <0x8>;
+			phandle = <0x8>;
+		};
 	};
 };
