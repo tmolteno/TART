@@ -34,6 +34,8 @@
 #include <asm/uaccess.h>
 #include <linux/mutex.h>
 #include <linux/list.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
 
 #include "../tart.h"
 
@@ -41,8 +43,8 @@
 #define CLASS_NAME "tart"
 
 struct dma_mem {
-	struct dma_mem *next;
-	size_t offset;
+  struct dma_mem *next;
+  size_t offset;
 };
 
 static DEFINE_MUTEX(tart_mutex);
@@ -57,16 +59,41 @@ static struct resource reserved;
 
 static struct dma_mem *holders = NULL;
 static struct dma_mem *free    = NULL;
+/* TODO: full will need a lock of some kind. */
 static struct dma_mem *full    = NULL;
+
+/* TODO: clean up task when the module is removed. 
+   Also need some way to notify the task that it should
+   stop rather than killing it. */
+
+static struct task_struct *dma_task = NULL;
+static bool dma_running = false;
 
 static void tart_mmap_open(struct vm_area_struct *vma)
 {
   printk(KERN_INFO "tart mmap open\n");
+
+  /* I am not sure what the purpose of this is. Or when it
+     gets called other than by tart_mmap. */
 }
 
 static void tart_mmap_close(struct vm_area_struct *vma)
 {
+  struct dma_mem *h, *t;
+
   printk(KERN_INFO "tart mmap close\n");
+
+  h = (struct dma_mem *) vma->vm_private_data;
+  if (h == NULL) {
+    printk(KERN_ERR "Tart mmap private data not valid!\n");
+    return;
+  }
+
+  for (t = h; t->next != NULL; t = t->next)
+    ;
+
+  t->next = free;
+  h = free;
 }
 
 static int tart_mmap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
@@ -187,7 +214,142 @@ static u32 tart_reg(u8 i)
   return a;
 }
 
-int tart_dma(void);
+static void axidma_sync_callback(void *cmp)
+{
+  printk(KERN_INFO "sync_callback\n");
+  complete(cmp);
+}
+
+static int dma_thread(void *data)
+{
+  size_t len = 256*sizeof(u32), count = PAGE_SIZE / len;
+  unsigned long timeout = msecs_to_jiffies(2000);
+  struct dma_async_tx_descriptor *rxd;
+  struct dma_mem *m, **n;
+  enum dma_status status;
+  struct completion cmp;
+  dma_cookie_t cookie;
+  size_t buf, i;
+
+  /* TODO: locks for getting and adding pages. */
+
+  while (dma_running) {
+    /* debugging */
+    msleep_interruptible(2000);
+
+    if (free == NULL) {
+      printk(KERN_ERR "TART out of free pages!\n");
+      continue;
+    }
+
+    m = free;
+    free = m->next;
+
+    for (i = 0; i < count; i++) {
+      buf = reserved.start + m->offset + i * len;
+
+      printk(KERN_INFO "dma into 0x%x\n", buf);
+
+      rxd = dmaengine_prep_slave_single(chan, 
+	  (dma_addr_t) buf, 
+	  len, 
+	  DMA_DEV_TO_MEM, 
+	  DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
+
+      printk(KERN_INFO "init cmp\n");
+
+      init_completion(&cmp);
+      rxd->callback = axidma_sync_callback;
+      rxd->callback_param = &cmp;
+
+      printk(KERN_INFO "submit\n");
+
+      cookie = rxd->tx_submit(rxd);
+
+      if (dma_submit_error(cookie)) {
+	printk(KERN_ERR "dma submit error error\n");
+	return -1;
+      }
+
+      printk(KERN_INFO "Starting DMA transfers\n");
+
+      dma_async_issue_pending(chan);
+
+      printk("Waiting for dma\n");
+
+      timeout = wait_for_completion_timeout(&cmp, timeout);
+      status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
+
+      printk(KERN_INFO "DMA done, timeout = %lu, status = 0x%x\n", timeout, status);
+
+      if (status != DMA_COMPLETE) {
+	printk(KERN_ERR "DMA returned completion status of:");
+	switch (status) {
+	  case DMA_IN_PROGRESS:
+	    printk("in progress\n");
+	    break;
+	  case DMA_PAUSED:
+	    printk("paused\n");
+	    break;
+	  case DMA_ERROR:
+	    printk("error\n");
+	    break;
+	  default:
+	    printk("unknown\n");
+	    break;
+	}
+
+	continue;
+
+      } else if (timeout == 0) {
+	printk(KERN_ERR "DMA timed out\n");
+
+	continue;
+      }
+    }
+
+    for (n = &full; *n != NULL; n = &(*n)->next)
+      ;
+
+    *n = m;
+    m->next = NULL;
+  }
+
+  printk(KERN_INFO "TART dma stopped\n");
+  return 0;
+}
+
+static int start_dma(void)
+{
+  int r;
+
+  if (dma_running) {
+    return -1;
+
+  } else if (dma_task != NULL) {
+    r = kthread_stop(dma_task);
+    if (r != 0) {
+      return r;
+    }
+  }
+
+  dma_running = true;
+
+  dma_task = kthread_run(&dma_thread,
+      NULL, "tart-dma");
+
+  if (IS_ERR(dma_task)) {
+    return PTR_ERR(dma_task);
+  }
+
+  return 0;
+}
+
+static int stop_dma(void)
+{
+  dma_running = false;
+  return 0;
+}
 
 static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
@@ -199,14 +361,10 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
   switch (cmd) {
     case TART_IOCTL_DMA:
       if (arg == TART_IOCTL_DMA_ENABLE) {
-	printk("should enable dma\n");
+	return start_dma();
       } else {
-	printk("should disable dma\n");
+	return stop_dma();
       }
-
-      tart_dma();
-
-      break;
 
     case TART_IOCTL_READ_REG:
       if (copy_from_user(&tr, (void *) arg, sizeof(tr))) {
@@ -217,7 +375,7 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
       printk(KERN_INFO "tart read reg 0x%x\n", tr.reg);
 
       r = regs + tart_reg(tr.reg);
-      tr.val = 5;/**r;*/
+      tr.val = *r;
 
       printk(KERN_INFO "tart read reg 0x%x = 0x%x\n", tr.reg, tr.val);
 
@@ -226,7 +384,7 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
 	return -EFAULT;
       }
 
-      break;
+      return 0;
 
     case TART_IOCTL_WRITE_REG:
       if (copy_from_user(&tr, (void *) arg, sizeof(tr))) {
@@ -237,10 +395,10 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
       printk(KERN_INFO "tart write reg 0x%x = 0x%x\n", tr.reg, tr.val);
 
       r = regs + tart_reg(tr.reg);
-      /**r = tr.val;*/
+      *r = tr.val;
 
       printk(KERN_INFO "tart wrote reg\n");
-      break;
+      return 0;
 
     default:
       return -EINVAL;
@@ -256,102 +414,6 @@ static struct file_operations tart_fops = {
   .mmap            = tart_mmap,
   .release         = tart_release,
 };
-
-static void axidma_sync_callback(void *cmp)
-{
-  printk(KERN_INFO "sync_callback\n");
-  complete(cmp);
-}
-
-static dma_cookie_t axidma_prep_buffer(struct dma_chan *chan, dma_addr_t buf, size_t len,
-    enum dma_transfer_direction dir, struct completion *cmp)
-{
-  enum dma_ctrl_flags flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
-  struct dma_async_tx_descriptor *chan_desc;
-
-  chan_desc = dmaengine_prep_slave_single(chan, buf, len, dir, flags);
-
-  if (chan_desc) {
-    chan_desc->callback = axidma_sync_callback;
-    chan_desc->callback_param = cmp;
-    return dmaengine_submit(chan_desc);
-  } else {
-    printk(KERN_ERR "dmaengine_prep_slave_single error\n");
-    return -EBUSY;
-  }
-}
-
-static void axidma_start_transfer(struct dma_chan *chan, struct completion *cmp,
-    dma_cookie_t cookie)
-{
-  unsigned long timeout = msecs_to_jiffies(5000);
-  enum dma_status status;
-
-  init_completion(cmp);
-  dma_async_issue_pending(chan);
-
-  printk("Waiting for dma\n");
-
-  timeout = wait_for_completion_timeout(cmp, timeout);
-  status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
-
-  if (timeout == 0) {
-    printk(KERN_ERR "DMA timed out\n");
-  } else if (status != DMA_COMPLETE) {
-    printk(KERN_ERR "DMA returned completion status of: %s\n",
-	status == DMA_ERROR ? "error" : "in progress");
-  }
-}
-
-int tart_dma(void)
-{
-  struct dma_mem *m, **n;
-  struct completion cmp;
-  dma_cookie_t cookie;
-  dma_addr_t handle;
-  size_t len;
-  void *buf;
-
-  if (free == NULL) {
-    printk(KERN_ERR "TART out of free pages!\n");
-    return -1;
-  }
-
-  m = free;
-  free = m->next;
-
-  buf = (void *) (reserved.start + m->offset);
-  len = PAGE_SIZE;
-
-  printk(KERN_INFO "TART dma into %p\n", buf);
-  /*
-     handle = dma_map_single(chan->device->dev, buf, len, DMA_FROM_DEVICE);
-
-     cookie = axidma_prep_buffer(chan, handle, len, DMA_FROM_DEVICE, &cmp);
-
-     if (dma_submit_error(cookie)) {
-     printk(KERN_ERR "xdma_prep_buffer error\n");
-     return -1;
-     }
-
-     printk(KERN_INFO "Starting DMA transfers\n");
-
-     axidma_start_transfer(chan, &cmp, cookie);
-
-     dma_unmap_single(chan->device->dev, handle, len, DMA_FROM_DEVICE);
-   */
-
-  printk(KERN_INFO "full was %p\n", full);
-  for (n = &full; *n != NULL; n = &(*n)->next)
-    ;
-
-  *n = m;
-  m->next = NULL;
-
-  printk(KERN_INFO "full now %p\n", full);
-
-  return 0;
-}
 
 int test_regs(void)
 {
@@ -396,11 +458,13 @@ static int tart_of_probe(struct platform_device *pdev)
   struct dma_mem *m;
   int rc;
 
-  /* TODO: free on error. */
+  /* TODO: free things on error. */
 
   printk(KERN_INFO "probe tart dev\n");
 
   res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+  /* res should probably be checked somehow. */
+
   regs = devm_ioremap_resource(&pdev->dev, res);
 
   if (IS_ERR(regs)) {
@@ -413,7 +477,7 @@ static int tart_of_probe(struct platform_device *pdev)
   chan = dma_request_slave_channel(&pdev->dev, "rawdma");
 
   if (chan == NULL || IS_ERR(chan)) {
-    printk(KERN_ERR "failed to get channel\n");
+    printk(KERN_ERR "failed to get dma channel\n");
     return PTR_ERR(chan);
   }
 
@@ -539,6 +603,6 @@ module_init(tart_init);
 module_exit(tart_exit);
 
 MODULE_AUTHOR("Mytchel Hammond");
-MODULE_DESCRIPTION("Test driver for custom zynq IP.");
+MODULE_DESCRIPTION("Driver for TART zynq IP.");
 MODULE_LICENSE("GPL");
 
