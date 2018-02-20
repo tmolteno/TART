@@ -14,7 +14,7 @@ For more information see the [TART github repository](https://github.com/tmolten
     
 If you are developing this package, this should be installed using
 
-    python setyp.py develop
+    python setup.py develop
 
 in which case changes to the source-code will be immediately available to projects using it.
 

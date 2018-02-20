@@ -14,7 +14,7 @@ from scipy.optimize import minimize
 
 import tart_web_api.database as db
 
-from tart_hardware_interface.tartspi import TartSPI
+from tart_hardware_interface.tarthw import *
 from tart_hardware_interface.highlevel_modes_api import *
 from tart_hardware_interface.stream_vis import *
 
@@ -193,7 +193,7 @@ def create_direct_vis_dict(vis):
 class TartControl():
     ''' High Level TART Interface'''
     def __init__(self, runtime_config):
-        self.TartSPI = TartSPI()
+        self.TartHW = get_tart_hw()
         self.config = runtime_config
         self.state = 'off'
         self.queue_vis = None
@@ -206,11 +206,11 @@ class TartControl():
 
     def run(self):
         if self.state == 'diag':
-            run_diagnostic(self.TartSPI, self.config)
+            run_diagnostic(self.TartHW, self.config)
             db.insert_sample_delay(self.config['channels_timestamp'], self.config['sample_delay'])
 
         elif self.state == 'raw':
-            ret = run_acquire_raw(self.TartSPI, self.config)
+            ret = run_acquire_raw(self.TartHW, self.config)
             if ret.has_key('filename'):
                 db.insert_raw_file_handle(ret['filename'], ret['sha256'])
 
@@ -243,7 +243,7 @@ class TartControl():
         self.process_capture,\
         self.cmd_queue_vis_calc,\
         self.cmd_queue_capture,\
-        = stream_vis_to_queue(self.TartSPI, self.config)
+        = stream_vis_to_queue(self.TartHW, self.config)
 
     def vis_stream_acquire(self):
         ''' Get all available visibities'''

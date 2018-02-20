@@ -233,6 +233,8 @@ static int dma_thread(void *data)
 
   /* TODO: locks for getting and adding pages. */
 
+  printk(KERN_INFO "TART starting DMA thread\n");
+
   while (dma_running) {
     /* debugging */
     msleep_interruptible(2000);
@@ -245,7 +247,30 @@ static int dma_thread(void *data)
     m = free;
     free = m->next;
 
-    for (i = 0; i < count; i++) {
+    i = 0;
+    while (i < count) {
+      status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
+      if (status != DMA_COMPLETE && status != DMA_PAUSED) {
+	printk(KERN_ERR "TART DMA status bad: ");
+ 	switch (status) {
+	  case DMA_IN_PROGRESS:
+	    printk("in progress\n");
+	    break;
+	  case DMA_PAUSED:
+	    printk("paused\n");
+	    break;
+	  case DMA_ERROR:
+	    printk("error\n");
+	    break;
+	  default:
+	    printk("unknown\n");
+	    break;
+	}
+
+	dma_running = false;	
+	break;
+     }
+
       buf = reserved.start + m->offset + i * len;
 
       printk(KERN_INFO "dma into 0x%x\n", buf);
@@ -299,12 +324,12 @@ static int dma_thread(void *data)
 	    break;
 	}
 
-	continue;
-
       } else if (timeout == 0) {
 	printk(KERN_ERR "DMA timed out\n");
 
-	continue;
+      } else {
+	printk(KERN_INFO "DMA success, continue to next buffer\n");
+	i++;
       }
     }
 
@@ -397,10 +422,12 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
       r = regs + tart_reg(tr.reg);
       *r = tr.val;
 
-      printk(KERN_INFO "tart wrote reg\n");
+      printk(KERN_INFO "tart wrote reg 0x%x now = 0x%x\n", tr.reg, *r);
+
       return 0;
 
     default:
+      printk(KERN_ERR "tart got invalid ioctl %i\n", cmd);
       return -EINVAL;
   }
 

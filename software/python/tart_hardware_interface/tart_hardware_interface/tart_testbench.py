@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from tart_hardware_interface.tartspi import TartSPI
+from tart_hardware_interface.tarthw import * 
 
 import numpy as np
 import time
@@ -30,17 +30,26 @@ if __name__ == '__main__':
   num_words = np.power(2, args.bramexp)
 
   # Initialise the TART hardware, and place it into a known state.
-  tart = TartSPI(speed=args.speed*1000000)
+  tart = get_tart_hw()
+  #TartSPI(speed=args.speed*1000000)
+  print "reset"
   tart.reset()
+  print "debug"
   tart.debug(on= True, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  print "debug"
   tart.debug(on=False, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  print "reset"
   tart.reset(noisy=args.verbose)
+  print "debug"
 
   # Enable data-capture, and then raw-data acquistion.
   tart.debug(on=args.internal, shift=args.shifter, count=args.counter, noisy=args.verbose)
+  print "capture"
   tart.capture(on=True, noisy=args.verbose)
+  print "start acqu"
   tart.start_acquisition(sleeptime=0.1, noisy=args.verbose)
   while not tart.data_ready():
+    print "pause"
     tart.pause()
 
   print '\nAcquisition complete, beginning read-back.'
