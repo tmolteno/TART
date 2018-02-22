@@ -26,8 +26,9 @@ class TartAXI:
 
   ## IOCTL commands
   TART_MAJOR_NUM   = 144
-  TART_IOCTL_READ  = ioctl_opt.IOWR(TART_MAJOR_NUM,  1, tart_reg) 
-  TART_IOCTL_WRITE = ioctl_opt.IOWR(TART_MAJOR_NUM,  2, tart_reg) 
+  TART_IOCTL_DMA_FLUSH = ioctl_opt.IO(TART_MAJOR_NUM,  0) 
+  TART_IOCTL_READ      = ioctl_opt.IOWR(TART_MAJOR_NUM,  1, tart_reg) 
+  TART_IOCTL_WRITE     = ioctl_opt.IOWR(TART_MAJOR_NUM,  2, tart_reg) 
 
   ##--------------------------------------------------------------------------
   ##  TART AXI control, data, and status registers.
@@ -144,6 +145,9 @@ class TartAXI:
   ##------------------------------------------------------------------------##
   def reset(self, noisy=False):
     '''Issue a global reset to the TART hardware.'''
+    
+    fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_DMA_FLUSH)
+
     ret = self.setbyte(self.AXI_RESET, 0x01)
     if noisy:
       print tobin([ret])
@@ -340,6 +344,8 @@ class TartAXI:
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
     
+    fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_DMA_FLUSH)
+
     old = self.getbyte(self.AQ_SYSTEM)
     ret = self.setbyte(self.AQ_SYSTEM, old | 0x80)
     val = self.getbit (self.AQ_SYSTEM, 7)

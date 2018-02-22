@@ -1,5 +1,8 @@
 #define TART_MAJOR_NUM          144
 
+#define TART_IOCTL_DMA_FLUSH \
+  _IO(TART_MAJOR_NUM, 0)
+
 #define TART_IOCTL_READ_REG \
   _IOWR(TART_MAJOR_NUM, 1, struct tart_reg)
 
