@@ -76,10 +76,13 @@ class TartAXI:
     self.load_permute()
 
   def close(self, noisy=False):
-    self.dev.close()
+    fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_DMA, False) 
+   
     if self.mmap != None:
       self.mmap.close()
 
+    self.dev.close()
+    
     if noisy:
       print 'AXI <-> TART interface closed.'
     return 1
@@ -95,7 +98,8 @@ class TartAXI:
   ##------------------------------------------------------------------------##
   def setbyte(self, reg, val, noisy=False):
     print "set byte ", reg, " to ", val
-    s = tart_reg(reg & 0x7f, val)
+    s = tart_reg(reg, val)
+    print "really set byte ", s.reg, " to ", s.val
     fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_WRITE, s) 
 
     if noisy:
@@ -184,7 +188,7 @@ class TartAXI:
 
       # Acquisition registers:
       self.AQ_STREAM: 'AQ_STREAM:\tdata = %x' % val,
-      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, error = %s, (SDRAM) ready = %s, 512Mb = %s, overflow = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
+      self.AQ_SYSTEM: 'AQ_SYSTEM:\tenabled = %s, axis enabled = %s, overflow = %s' % (bits[7], bits[6], bits[3]),
 
       # Visibilities registers:
       self.VX_STREAM: 'VX_STREAM:\tdata = %x' % val,
@@ -244,7 +248,10 @@ class TartAXI:
       val = source & 0x1f
       flg = 'DISABLED'
 
+
+    print "before cap, aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
     ret = self.setbyte(self.TC_SYSTEM, val)
+    print "after cap, aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
     if noisy:
       print ' capture %s' % flg
     self.pause()
@@ -340,48 +347,58 @@ class TartAXI:
   ##------------------------------------------------------------------------##
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
-    print "get byte"
+    
+    fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_DMA, True) 
+
+    print "get aq system byte"
     old = self.getbyte(self.AQ_SYSTEM)
-    print "set byte"
+    print "got aq sys = ", old
+    print "set aq system byte to ", (old | 0x80)
     ret = self.setbyte(self.AQ_SYSTEM, old | 0x80)
-    print "get bit"
+    print "ret is", ret
+    print "get enabled bit"
     val = self.getbit (self.AQ_SYSTEM, 7)
+    print "got enabled bit ", val
     if noisy:
       print ' attempting to set acquisition-mode to ON'
       print tobin([old])
       print tobin([ret])
     if val:
-      print "pause"
+      print "got true, wait a little maybe?", sleeptime
       self.pause(sleeptime)       # optionally wait for acquisition to end
-      print "get byte"
+      print "get aq system"
       res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
         print self.show_status(self.AQ_SYSTEM, res)
-      fin = res & 0x07 > 2
+    print "aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
     print "pause"
     self.pause()
-    print "done"
-    return val and fin
+    return val
 
   def read_data(self, num_words=2**21, blocksize=1024):
     '''Read back the requested number of 24-bit words.'''
 
+    num_bytes = num_words * 4
     dat = []
 
-    print "read data ", num_words
-    while len(dat) < num_words:
+    print "reading data, aq state = ", self.getbyte(self.AQ_SYSTEM)
+    print "reading data, aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
+
+    print "read data ", num_bytes
+    while len(dat) < num_bytes:
       print "dat fulled to ", len(dat)
       if (self.mmap != None):
 	print "read from mmap start at ", self.mmap_start, " to ", len(self.mmap)
 
-	if (len(self.mmap) - self.mmap_start < num_words):
+	if (len(self.mmap) - self.mmap_start < num_bytes):
 	  j = len(self.mmap)
         else:
-    	  j = num_words + self.mmap_start
+    	  j = num_bytes + self.mmap_start
 
 	print "read from mmap start ", self.mmap_start, " to ", j
-        dat += self.mmap[self.mmap_start:j]
+        dat += [ord(i) for i in self.mmap[self.mmap_start:j]]
 
+        print "data now fulled to", len(dat)
         self.mmap_start = j
 
         if (self.mmap_start >= len(self.mmap)):
@@ -390,20 +407,16 @@ class TartAXI:
 	  self.mmap = None 
 
       else:
-	print "open new mmap of len ", (num_words - len(dat))
+	print "open new mmap"
         self.mmap_start = 0
-        self.mmap = mmap.mmap(self.dev.fileno(), num_words - len(dat))
-    
-    print "convert to np array"
-    # Convert to a
-    dat = np.array(dat, dtype=np.uint32).reshape(-1,3)
-    return dat
+        self.mmap = mmap.mmap(self.dev.fileno(), 
+                4096, 
+                prot=mmap.PROT_READ)
 
-  def data_ready(self):
-    '''Check the system register, of the acquistion unit, to see if the data is ready.'''
-    val = self.getbyte(self.AQ_SYSTEM) & 0x07
-    return val > 2
-
+        print "got mmap of len ", len(self.mmap)
+   
+    a = np.array(dat, dtype=np.uint32).reshape(-1, 4)
+    return a[:,0:3]
 
   ##--------------------------------------------------------------------------
   ##  Visibility-calculation settings, and streaming read-back.

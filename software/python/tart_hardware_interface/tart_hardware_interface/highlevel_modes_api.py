@@ -119,12 +119,12 @@ def run_diagnostic(tart, runtime_config):
 
     d, d_json = get_status_json(tart)
 
-    while not tart.data_ready():
-      tart.pause(duration=0.005, noisy=True)
-    print '\nAcquisition complete, beginning read-back.'
+    print '\nAcquisition started, beginning read-back.'
     #tart.capture(on=False, noisy=runtime_config['verbose'])
     print runtime_config['diagnostic']['spectre']['N_samples_exp']
+
     data = tart.read_data(num_words=2**runtime_config['diagnostic']['spectre']['N_samples_exp'])
+
     data = np.asarray(data,dtype=np.uint8)
     ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
     print ant_data[:,:10]
@@ -172,9 +172,7 @@ def run_acquire_raw(tart, runtime_config):
     t_stmp, path = create_timestamp_and_path(runtime_config['raw']['base_path'])
     tart.start_acquisition(1.1, True)
 
-    while not tart.data_ready():
-      tart.pause(duration=0.005, noisy=True)
-    print '\nAcquisition complete, beginning read-back.'
+    print '\nAcquisition started, beginning read-back.'
     #tart.capture(on=False, noisy=runtime_config['verbose'])
 
     data = tart.read_data(num_words=np.power(2, runtime_config['raw']['N_samples_exp']))

@@ -37,9 +37,6 @@ int main(void)
     return fd;
   }
 
-  r = ioctl(fd, TART_IOCTL_DMA, TART_IOCTL_DMA_ENABLE);
-  printf("dma got %d\n", r);
-
   tr.reg = 3 << 2 | 1;
   r = ioctl(fd, TART_IOCTL_READ_REG, &tr);
   printf("read got %d, val = %d\n", r, tr.val);

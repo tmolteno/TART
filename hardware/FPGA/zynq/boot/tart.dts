@@ -491,7 +491,7 @@
 
 		buffer@0 {
 			no-map;
-			reg = <0x20000000 0x4000000>;
+			reg = <0x20000000 0x8000000>;
 			linux,phandle = <0x8>;
 			phandle = <0x8>;
 		};

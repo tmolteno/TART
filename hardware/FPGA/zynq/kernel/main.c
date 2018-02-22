@@ -67,7 +67,6 @@ static struct dma_mem *full    = NULL;
    stop rather than killing it. */
 
 static struct task_struct *dma_task = NULL;
-static bool dma_running = false;
 
 static void tart_mmap_open(struct vm_area_struct *vma)
 {
@@ -150,13 +149,17 @@ static int tart_mmap(struct file *f, struct vm_area_struct *vma)
 
   h = &head;
   for (len = 0; len < vma->vm_end - vma->vm_start; len += PAGE_SIZE) {
-    if (full == NULL) {
-      printk(KERN_ERR "TART has no fulled pages!\n");
+    while (full == NULL) {
+      if (dma_task != NULL) {
+	schedule();
+      } else {
+	printk(KERN_ERR "TART has no full pages and dma is not running!\n");
 
-      *h = full;
-      full = head;
+	*h = full;
+	full = head;
 
-      return -1;
+	return -1;
+      }
     }
 
     m = full;
@@ -204,26 +207,22 @@ static int tart_release(struct inode *in, struct file *f)
 
 static u32 tart_reg(u8 i)
 {
-  u32 dev, adr, a;
-
-  dev = i >> 2;
-  adr = i & 3;
-
-  a = ((dev << 5) | (adr)) << 2;
-
-  return a;
+  return ((uint32_t) i) << 2;
 }
 
 static void axidma_sync_callback(void *cmp)
 {
-  printk(KERN_INFO "sync_callback\n");
   complete(cmp);
 }
 
 static int dma_thread(void *data)
 {
-  size_t len = 256*sizeof(u32), count = PAGE_SIZE / len;
+  size_t len = 32*sizeof(u32);
+  size_t count = PAGE_SIZE / len;
+
   unsigned long timeout = msecs_to_jiffies(2000);
+  size_t sleep_time = 10;
+  
   struct dma_async_tx_descriptor *rxd;
   struct dma_mem *m, **n;
   enum dma_status status;
@@ -235,45 +234,21 @@ static int dma_thread(void *data)
 
   printk(KERN_INFO "TART starting DMA thread\n");
 
-  while (dma_running) {
-    /* debugging */
-    msleep_interruptible(2000);
-
-    if (free == NULL) {
+  while (!kthread_should_stop()) {
+    sleep_time = 10;
+    while (!kthread_should_stop() && free == NULL) {
       printk(KERN_ERR "TART out of free pages!\n");
-      continue;
+      msleep_interruptible(sleep_time);
+      if (sleep_time < 5000)
+	sleep_time *= 2;
     }
 
     m = free;
     free = m->next;
 
     i = 0;
-    while (i < count) {
-      status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
-      if (status != DMA_COMPLETE && status != DMA_PAUSED) {
-	printk(KERN_ERR "TART DMA status bad: ");
- 	switch (status) {
-	  case DMA_IN_PROGRESS:
-	    printk("in progress\n");
-	    break;
-	  case DMA_PAUSED:
-	    printk("paused\n");
-	    break;
-	  case DMA_ERROR:
-	    printk("error\n");
-	    break;
-	  default:
-	    printk("unknown\n");
-	    break;
-	}
-
-	dma_running = false;	
-	break;
-     }
-
+    while (i < count && !kthread_should_stop()) {
       buf = reserved.start + m->offset + i * len;
-
-      printk(KERN_INFO "dma into 0x%x\n", buf);
 
       rxd = dmaengine_prep_slave_single(chan, 
 	  (dma_addr_t) buf, 
@@ -281,13 +256,9 @@ static int dma_thread(void *data)
 	  DMA_DEV_TO_MEM, 
 	  DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
 
-      printk(KERN_INFO "init cmp\n");
-
       init_completion(&cmp);
       rxd->callback = axidma_sync_callback;
       rxd->callback_param = &cmp;
-
-      printk(KERN_INFO "submit\n");
 
       cookie = rxd->tx_submit(rxd);
 
@@ -296,16 +267,12 @@ static int dma_thread(void *data)
 	return -1;
       }
 
-      printk(KERN_INFO "Starting DMA transfers\n");
-
       dma_async_issue_pending(chan);
 
-      printk("Waiting for dma\n");
-
-      timeout = wait_for_completion_timeout(&cmp, timeout);
-      status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
-
-      printk(KERN_INFO "DMA done, timeout = %lu, status = 0x%x\n", timeout, status);
+      do {
+	timeout = wait_for_completion_timeout(&cmp, timeout);
+	status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
+      } while (!kthread_should_stop() && status == DMA_IN_PROGRESS);
 
       if (status != DMA_COMPLETE) {
 	printk(KERN_ERR "DMA returned completion status of:");
@@ -324,11 +291,9 @@ static int dma_thread(void *data)
 	    break;
 	}
 
-      } else if (timeout == 0) {
-	printk(KERN_ERR "DMA timed out\n");
-
+	break;
+      
       } else {
-	printk(KERN_INFO "DMA success, continue to next buffer\n");
 	i++;
       }
     }
@@ -341,38 +306,7 @@ static int dma_thread(void *data)
   }
 
   printk(KERN_INFO "TART dma stopped\n");
-  return 0;
-}
 
-static int start_dma(void)
-{
-  int r;
-
-  if (dma_running) {
-    return -1;
-
-  } else if (dma_task != NULL) {
-    r = kthread_stop(dma_task);
-    if (r != 0) {
-      return r;
-    }
-  }
-
-  dma_running = true;
-
-  dma_task = kthread_run(&dma_thread,
-      NULL, "tart-dma");
-
-  if (IS_ERR(dma_task)) {
-    return PTR_ERR(dma_task);
-  }
-
-  return 0;
-}
-
-static int stop_dma(void)
-{
-  dma_running = false;
   return 0;
 }
 
@@ -384,13 +318,6 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
   printk(KERN_INFO "tart unlocked ioctl %u, %lu\n", cmd, arg);
 
   switch (cmd) {
-    case TART_IOCTL_DMA:
-      if (arg == TART_IOCTL_DMA_ENABLE) {
-	return start_dma();
-      } else {
-	return stop_dma();
-      }
-
     case TART_IOCTL_READ_REG:
       if (copy_from_user(&tr, (void *) arg, sizeof(tr))) {
 	printk(KERN_ERR "copy_from_user failed for 0x%p\n", (void *) arg);
@@ -399,10 +326,10 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
 
       printk(KERN_INFO "tart read reg 0x%x\n", tr.reg);
 
-      r = regs + tart_reg(tr.reg);
+      r = (uint32_t *) ((size_t) regs + tart_reg(tr.reg));
       tr.val = *r;
 
-      printk(KERN_INFO "tart read reg 0x%x = 0x%x\n", tr.reg, tr.val);
+      printk(KERN_INFO "tart read reg 0x%x / %p = 0x%x\n", tr.reg, r, tr.val);
 
       if (copy_to_user((void *) arg, &tr, sizeof(tr))) {
 	printk(KERN_ERR "copy_to_user failed for 0x%p\n", (void *) arg);
@@ -417,9 +344,8 @@ static long tart_unlocked_ioctl(struct file *f, unsigned int cmd, unsigned long 
 	return -EFAULT;
       }
 
-      printk(KERN_INFO "tart write reg 0x%x = 0x%x\n", tr.reg, tr.val);
-
-      r = regs + tart_reg(tr.reg);
+      r = (uint32_t *) ((size_t) regs + tart_reg(tr.reg));
+      printk(KERN_INFO "tart write reg 0x%x / %p = 0x%x\n", tr.reg, r, tr.val);
       *r = tr.val;
 
       printk(KERN_INFO "tart wrote reg 0x%x now = 0x%x\n", tr.reg, *r);
@@ -441,41 +367,6 @@ static struct file_operations tart_fops = {
   .mmap            = tart_mmap,
   .release         = tart_release,
 };
-
-int test_regs(void)
-{
-  u32 dev, adr, a, v;
-
-  printk(KERN_INFO "reset\n");
-  dev = 3, adr = 3;	
-  a = ((dev << 5) | (adr)) << 2;
-  v = 1;
-  printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
-  *((u32 *) ((size_t) regs + a)) = v;
-
-  printk(KERN_INFO "enable capture\n");
-  dev = 0, adr = 3;	
-  a = ((dev << 5) | (adr)) << 2;
-  v = (1<<7);
-  printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
-  *((u32 *) ((size_t) regs + a)) = v;
-
-  printk(KERN_INFO "enable acquire\n");
-  dev = 1, adr = 3;	
-  a = ((dev << 5) | (adr)) << 2;
-  v = (1<<7);
-  printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
-  *((u32 *) ((size_t) regs + a)) = v;
-
-  printk(KERN_INFO "enable correlator\n");
-  dev = 2, adr = 3;
-  a = ((dev << 5) | (adr)) << 2;
-  v = (1<<7);
-  printk(KERN_INFO "write %i 0x%x -> dev %i, adr %i / 0x%x\n", v, v, dev, adr, a);
-  *((u32 *) ((size_t) regs + a)) = v;
-
-  return 0;
-}
 
 static int tart_of_probe(struct platform_device *pdev)
 {
@@ -546,6 +437,15 @@ static int tart_of_probe(struct platform_device *pdev)
     offset += PAGE_SIZE;
   }
 
+  mutex_init(&tart_mutex);
+
+  dma_task = kthread_run(&dma_thread,
+      NULL, "tart-dma");
+
+  if (IS_ERR(dma_task)) {
+    return PTR_ERR(dma_task);
+  }
+
   return 0;
 }
 
@@ -553,14 +453,18 @@ static int tart_remove(struct platform_device *pdev)
 {
   printk(KERN_INFO "tart remove\n");
 
-  vfree(holders);
+  kthread_stop(dma_task);
 
   dma_release_channel(chan);
+
   memunmap(regs);
+  
+  vfree(holders);
+
+  mutex_destroy(&tart_mutex);
 
   return 0;
 }
-
 
 static const struct of_device_id tart_of_match[] = {
   { .compatible = "xlnx,tart-1.0", },
@@ -583,8 +487,6 @@ static int __init tart_init(void)
   int ret;
 
   printk(KERN_INFO "tart init\n");
-
-  mutex_init(&tart_mutex);
 
   ret = register_chrdev(TART_MAJOR_NUM, DEVICE_NAME, &tart_fops);
   if (ret < 0) {
@@ -622,8 +524,6 @@ static void __exit tart_exit(void)
   class_unregister(class);
   class_destroy(class);
   unregister_chrdev(TART_MAJOR_NUM, DEVICE_NAME);
-
-  mutex_destroy(&tart_mutex);
 }
 
 module_init(tart_init);

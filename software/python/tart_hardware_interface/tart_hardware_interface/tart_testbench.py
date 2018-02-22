@@ -48,11 +48,8 @@ if __name__ == '__main__':
   tart.capture(on=True, noisy=args.verbose)
   print "start acqu"
   tart.start_acquisition(sleeptime=0.1, noisy=args.verbose)
-  while not tart.data_ready():
-    print "pause"
-    tart.pause()
 
-  print '\nAcquisition complete, beginning read-back.'
+  print '\nAcquisition started, beginning read-back.'
   tart.capture(on=False, noisy=args.verbose)
 
 
@@ -60,6 +57,7 @@ if __name__ == '__main__':
   t0   = time.time()
 #   data = tart.read_data(num_words=num_words, blocksize=800)
   data = tart.read_data(num_words=num_words, blocksize=1024)
+      
   t1   = time.time()
   print 'elapsed time:\t%2.3f' % (t1-t0)
   base = convert(data[0])

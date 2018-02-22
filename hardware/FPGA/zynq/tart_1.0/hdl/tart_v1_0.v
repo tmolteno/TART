@@ -188,7 +188,6 @@ module tart_v1_0 #
     //-------------------------------------------------------------------------
     //  Acquisition (of antenna raw-data) signals:   
     wire                aq_enabled;
-    wire [2:0]          aq_state;
     
     //-------------------------------------------------------------------------
     //  axi and system-status signals.
@@ -206,7 +205,7 @@ module tart_v1_0 #
     //  TART's subsystems.
     assign sys_status =  {vx_enabled, vx_pending, // visibilities status
                           cx_enabled,   cx_debug, // capture status
-                          aq_enabled,  aq_state}; // acquisition status
+                          aq_enabled,  3'b0}; // acquisition status
     assign axi_status = {axi_oflow, axi_uflow, 5'h0, axi_busy};
 
 
@@ -526,8 +525,7 @@ module tart_v1_0 #
 		    .M_AXIS_TREADY(m00_axis_tready),
 
 		    //  Debug signals.
-		    .enabled_o(aq_enabled),
-		    .state_o  (aq_state)
+		    .enabled_o(aq_enabled)
 	    );
 
 

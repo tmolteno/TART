@@ -50,8 +50,8 @@
  *   10 ||                         RESERVED                              ||
  *      ||                                                               ||
  *      -------------------------------------------------------------------
- *   11 || ENABLED | ERROR | READY | 512Mb | OFLOW |        STATE        ||
- *      ||  (R/W)  | (RO)  | (RO)  | (RO)  | (RO)  |        (RO)         ||
+ *   11 || ENABLED | AXI EN|  RESERVED     | OFLOW |        RESERVED     ||
+ *      ||  (R/W)  | (RO)  |               | (RO)  |                     ||
  *      -------------------------------------------------------------------
  * 
  * By default, the raw-data acquisition unit has address 7'b010_00xx.
@@ -83,7 +83,6 @@
 // Raw antenna-data, read-back registers:
 `define AQ_STREAM 2'h0
 `define AQ_SYSTEM 2'h3
-
 
 module tart_acquire
 #(// Antenna-signal data bit-widths:
@@ -155,8 +154,7 @@ module tart_acquire
 
     //  Debug/status outputs:
     output         enabled_o,
-    output         oflow_o,
-    output [2:0]   state_o
+    output         oflow_o
   );
 
 
@@ -179,7 +177,6 @@ module tart_acquire
    wire [MSB:0]    data_in;
    wire            request;
    reg             mcb_err = 1'b0, mcb_wat = 1'b0, active = 1'b0;
-   wire [2:0]      cap_state;
 
    //-------------------------------------------------------------------------
    //  Data-streaming registers & signals.
@@ -194,7 +191,6 @@ module tart_acquire
    //-------------------------------------------------------------------------
    assign enabled_o  = en_acquire;
    assign oflow_o    = oflow;
-   assign state_o    = cap_state;
 
 
    //-------------------------------------------------------------------------
@@ -207,7 +203,7 @@ module tart_acquire
    data_in[7:0];
 
    //  Data acquisition status, and control register.
-   assign aq_system  = {en_acquire, axis_active, 0, 0, oflow, cap_state};
+   assign aq_system  = {en_acquire, axis_active, 2'b0, oflow, 3'b0};
 
    //-------------------------------------------------------------------------
    //  Map the output signals to the system WishBone bus.
@@ -257,6 +253,8 @@ module tart_acquire
    begin
      if (stb_w)
      begin
+       // TODO: Remove AQ_STREAM or figure out a way to
+       // make it function along side AXI stream.
        case (adr_i)
 	 `AQ_STREAM: dat <= #DELAY 0;
 	 `AQ_SYSTEM: dat <= #DELAY aq_system;
@@ -279,6 +277,19 @@ module tart_acquire
      end
    end
 
+   localparam NUMBER_OF_OUTPUT_WORDS = 31;
+
+   reg [7 : 0]  read_pointer;
+
+   wire  	axis_tvalid;
+   reg  	axis_tlast;
+   reg 	        axis_active;
+
+   // TODO: axis_active is not a very goot metric for axis 
+   // activity. It (or whatever is chosen) also needs to 
+   // be buffered between the clocks for reporting on 
+   // AQ_SYSTEM. 
+
    wire fifo_empty;
    wire [MSB:0] fifo_data_o;
 
@@ -300,14 +311,6 @@ module tart_acquire
      .rd_data_o(fifo_data_o),
      .rempty_o(fifo_empty)
    );
-
-   localparam NUMBER_OF_OUTPUT_WORDS = 31;
-
-   reg [7 : 0]  read_pointer;
-
-   wire  	axis_tvalid;
-   reg  	axis_tlast;
-   reg 	        axis_active;
 
    assign axis_tvalid   = axis_active && !fifo_empty;
 
