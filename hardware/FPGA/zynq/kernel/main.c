@@ -92,7 +92,7 @@ static void tart_mmap_close(struct vm_area_struct *vma)
     ;
 
   t->next = free;
-  h = free;
+  free = h;
 }
 
 static int tart_mmap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
@@ -217,7 +217,7 @@ static void axidma_sync_callback(void *cmp)
 
 static int dma_thread(void *data)
 {
-  size_t len = 32*sizeof(u32);
+  size_t len = 256*sizeof(u32);
   size_t count = PAGE_SIZE / len;
 
   unsigned long timeout = msecs_to_jiffies(2000);

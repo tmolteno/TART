@@ -32,21 +32,14 @@ if __name__ == '__main__':
   # Initialise the TART hardware, and place it into a known state.
   tart = get_tart_hw()
   #TartSPI(speed=args.speed*1000000)
-  print "reset"
   tart.reset()
-  print "debug"
   tart.debug(on= True, shift=args.shifter, count=args.counter, noisy=args.verbose)
-  print "debug"
   tart.debug(on=False, shift=args.shifter, count=args.counter, noisy=args.verbose)
-  print "reset"
   tart.reset(noisy=args.verbose)
-  print "debug"
 
   # Enable data-capture, and then raw-data acquistion.
   tart.debug(on=args.internal, shift=args.shifter, count=args.counter, noisy=args.verbose)
-  print "capture"
   tart.capture(on=True, noisy=args.verbose)
-  print "start acqu"
   tart.start_acquisition(sleeptime=0.1, noisy=args.verbose)
 
   print '\nAcquisition started, beginning read-back.'
@@ -80,7 +73,14 @@ if __name__ == '__main__':
   else:
     # Check the returned data.
     print 'generate 24bit integer'
-    resp_dec = (np.array(data[:,0],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,2],dtype='uint32'))
+
+    # NOTE: zynq gives out little endian, raspberry pi big endian
+    # Numpy seemed to know that resp_dec is little endian but I 
+    # do not know if there is a way to have numpy join the columns
+    # automatically rather than doing it ourself.
+
+    resp_dec = (np.array(data[:,2],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,0],dtype='uint32'))
+
     print np.info(resp_dec)
     print 'done'
     print 'first 10: ', resp_dec[:10]
@@ -89,8 +89,9 @@ if __name__ == '__main__':
     diffs = (resp_dec[1:]-resp_dec[:-1])
     diffssum = diffs.__ne__(1).sum()
     print diffs
-    print 'yo,', resp_dec[diffs.__ne__(1)]
+    print 'yo,', resp_dec[0:-1][diffs.__ne__(1)]
     print 'sum_of_errors: ', diffssum
     index = np.arange(len(diffs))
     print diffs[diffs.__ne__(1)]
     print index[diffs.__ne__(1)]
+

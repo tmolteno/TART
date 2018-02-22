@@ -26,7 +26,6 @@ class TartAXI:
 
   ## IOCTL commands
   TART_MAJOR_NUM   = 144
-  TART_IOCTL_DMA   = ioctl_opt.IOW(TART_MAJOR_NUM,   0, ctypes.c_bool)
   TART_IOCTL_READ  = ioctl_opt.IOWR(TART_MAJOR_NUM,  1, tart_reg) 
   TART_IOCTL_WRITE = ioctl_opt.IOWR(TART_MAJOR_NUM,  2, tart_reg) 
 
@@ -47,26 +46,25 @@ class TartAXI:
   VX_SYSTEM = 0x43
 
   SYS_STATS = 0x60
-  SPI_STATS = 0x61
-  SPI_RESET = 0x63
+  AXI_STATS = 0x61
+  AXI_RESET = 0x63
 
   NEWLINE   = 0x7F
-  WRITE_CMD = 0x80
 
   LATENCY   = 2
 
   regs = [TC_CENTRE, TC_STATUS, TC_DEBUG, TC_SYSTEM,
           AQ_STREAM,                      AQ_SYSTEM,
           VX_STREAM, VX_STATUS, VX_DEBUG, VX_SYSTEM,
-          SYS_STATS, SPI_STATS] #, self.SPI_RESET]
+          SYS_STATS, AXI_STATS] #, self.AXI_RESET]
 
   regs_s= ['TC_CENTRE', 'TC_STATUS', 'TC_DEBUG', 'TC_SYSTEM',
           'AQ_STREAM',                          'AQ_SYSTEM',
           'VX_STREAM', 'VX_STATUS', 'VX_DEBUG', 'VX_SYSTEM',
-          'SYS_STATS', 'SPI_STATS'] #, self.SPI_RESET]
+          'SYS_STATS', 'AXI_STATS'] #, self.AXI_RESET]
 
   ##--------------------------------------------------------------------------
-  ##  TART SPI interface commands.
+  ##  TART AXI interface commands.
   ##--------------------------------------------------------------------------
   def __init__(self):
     self.dev = open("/dev/tart", "rwb")
@@ -76,8 +74,6 @@ class TartAXI:
     self.load_permute()
 
   def close(self, noisy=False):
-    fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_DMA, False) 
-   
     if self.mmap != None:
       self.mmap.close()
 
@@ -97,9 +93,7 @@ class TartAXI:
   ##  TART register read/write commands.
   ##------------------------------------------------------------------------##
   def setbyte(self, reg, val, noisy=False):
-    print "set byte ", reg, " to ", val
     s = tart_reg(reg, val)
-    print "really set byte ", s.reg, " to ", s.val
     fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_WRITE, s) 
 
     if noisy:
@@ -150,7 +144,7 @@ class TartAXI:
   ##------------------------------------------------------------------------##
   def reset(self, noisy=False):
     '''Issue a global reset to the TART hardware.'''
-    ret = self.setbyte(self.SPI_RESET, 0x01)
+    ret = self.setbyte(self.AXI_RESET, 0x01)
     if noisy:
       print tobin([ret])
       print ' reset issued.'
@@ -158,7 +152,7 @@ class TartAXI:
     return 1
 
   def status(self, noisy=False):
-    '''Query all TART (SPI-mapped) registers.'''
+    '''Query all TART (AXI-mapped) registers.'''
     return self.read_status(noisy)
 
   def read_status(self, noisy=False):
@@ -199,9 +193,9 @@ class TartAXI:
       # System register:
       self.SYS_STATS: 'SYS_STATS:\tviz_en = %s, viz_pend = %s, cap_en = %s, cap_debug = %s, acq_en = %s, state = %d' % (bits[7], bits[6], bits[5], bits[4], bits[3], val & 0x07),
 
-      # SPI & system registers:
-      self.SPI_STATS: 'SPI_STATS:\tFIFO {overflow = %s, underrun = %s}, spi_busy = %s' % (bits[7], bits[6], bits[0]),
-      self.SPI_RESET: 'SPI_RESET:\treset = %s' % bits[0],
+      # AXI & system registers:
+      self.AXI_STATS: 'AXI_STATS:\tFIFO {overflow = %s, underrun = %s}, spi_busy = %s' % (bits[7], bits[6], bits[0]),
+      self.AXI_RESET: 'AXI_RESET:\treset = %s' % bits[0],
 
       # Miscellaneous:
       self.NEWLINE: '\r'
@@ -226,8 +220,8 @@ class TartAXI:
 
         self.SYS_STATS:  lambda val: dict(zip(['viz_en','viz_pend','cap_en','cap_debug','acq_en','state'], unpack(val)[[7,6,5,4,3]].tolist() + [val & 0x07,])),
 
-        self.SPI_STATS:  lambda val: dict(zip(['FIFO_overflow','FIFO_underrun','spi_busy'],unpack(val)[[7,6,0]].tolist())),
-        self.SPI_RESET:  lambda val: dict(zip(['reset',],[unpack(val)[0],])),
+        self.AXI_STATS:  lambda val: dict(zip(['FIFO_overflow','FIFO_underrun','spi_busy'],unpack(val)[[7,6,0]].tolist())),
+        self.AXI_RESET:  lambda val: dict(zip(['reset',],[unpack(val)[0],])),
     }
     ret = {}
     for reg,reg_s,val in zip(self.regs, self.regs_s, vals):
@@ -249,9 +243,7 @@ class TartAXI:
       flg = 'DISABLED'
 
 
-    print "before cap, aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
     ret = self.setbyte(self.TC_SYSTEM, val)
-    print "after cap, aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
     if noisy:
       print ' capture %s' % flg
     self.pause()
@@ -348,30 +340,18 @@ class TartAXI:
   def start_acquisition(self, sleeptime=0.2, noisy=False):
     '''Enable the data-acquisition flag, and then read back the acquisition-status register, to verify that acquisition has begun.'''
     
-    fcntl.ioctl(self.dev.fileno(), self.TART_IOCTL_DMA, True) 
-
-    print "get aq system byte"
     old = self.getbyte(self.AQ_SYSTEM)
-    print "got aq sys = ", old
-    print "set aq system byte to ", (old | 0x80)
     ret = self.setbyte(self.AQ_SYSTEM, old | 0x80)
-    print "ret is", ret
-    print "get enabled bit"
     val = self.getbit (self.AQ_SYSTEM, 7)
-    print "got enabled bit ", val
     if noisy:
       print ' attempting to set acquisition-mode to ON'
       print tobin([old])
       print tobin([ret])
     if val:
-      print "got true, wait a little maybe?", sleeptime
       self.pause(sleeptime)       # optionally wait for acquisition to end
-      print "get aq system"
       res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
         print self.show_status(self.AQ_SYSTEM, res)
-    print "aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
-    print "pause"
     self.pause()
     return val
 
@@ -380,43 +360,33 @@ class TartAXI:
 
     num_bytes = num_words * 4
     dat = []
-
-    print "reading data, aq state = ", self.getbyte(self.AQ_SYSTEM)
-    print "reading data, aq state = ", self.show_status(self.AQ_SYSTEM, self.getbyte(self.AQ_SYSTEM))
-
-    print "read data ", num_bytes
     while len(dat) < num_bytes:
-      print "dat fulled to ", len(dat)
       if (self.mmap != None):
-	print "read from mmap start at ", self.mmap_start, " to ", len(self.mmap)
-
 	if (len(self.mmap) - self.mmap_start < num_bytes):
 	  j = len(self.mmap)
         else:
     	  j = num_bytes + self.mmap_start
 
-	print "read from mmap start ", self.mmap_start, " to ", j
         dat += [ord(i) for i in self.mmap[self.mmap_start:j]]
 
-        print "data now fulled to", len(dat)
         self.mmap_start = j
 
         if (self.mmap_start >= len(self.mmap)):
-	  print "close mmap"
 	  self.mmap.close()
 	  self.mmap = None 
 
       else:
-	print "open new mmap"
         self.mmap_start = 0
         self.mmap = mmap.mmap(self.dev.fileno(), 
                 4096, 
                 prot=mmap.PROT_READ)
-
-        print "got mmap of len ", len(self.mmap)
    
-    a = np.array(dat, dtype=np.uint32).reshape(-1, 4)
-    return a[:,0:3]
+    print dat
+    # Convert to a
+   
+    a = np.array(dat, dtype=np.uint32)
+    
+    return a.reshape(-1, 4)[:,0:3]
 
   ##--------------------------------------------------------------------------
   ##  Visibility-calculation settings, and streaming read-back.

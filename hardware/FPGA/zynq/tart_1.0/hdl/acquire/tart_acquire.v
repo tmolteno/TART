@@ -277,7 +277,7 @@ module tart_acquire
      end
    end
 
-   localparam NUMBER_OF_OUTPUT_WORDS = 31;
+   localparam NUMBER_OF_OUTPUT_WORDS = 255;
 
    reg [7 : 0]  read_pointer;
 
@@ -352,4 +352,4 @@ module tart_acquire
      end
    end
 
- endmodule
+   endmodule
