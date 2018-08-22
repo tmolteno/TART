@@ -1,5 +1,7 @@
 ## Position calibrations
 
+Author: Tim Molteno tim@elec.ac.nz 2017.
+
 This notebook is used to calibrate the antenna positions. It generates a JSON output file that
 can be used to upload the calibrated positions via the telescope web API
 
