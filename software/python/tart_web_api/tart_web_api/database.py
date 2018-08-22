@@ -89,10 +89,17 @@ def insert_gain(utc_date, g, ph):
 def get_gain():
     rows_dict = {}
     con, c = connect_to_db()
-    for i in range(24):
-        c.execute('SELECT * FROM calibration WHERE antenna = '+str(i)+' ORDER BY date DESC LIMIT 1;')
-        row = c.fetchall()[0]
+
+    c.execute('SELECT date, antenna, g_abs, g_phase from calibration WHERE date = (SELECT MAX(date) FROM calibration) ORDER BY antenna;')
+    rows = c.fetchall()
+    for row in rows:
         rows_dict[row[1]] = row
+
+    if False:
+        for i in range(24):
+            c.execute('SELECT * FROM calibration WHERE antenna = '+str(i)+' ORDER BY date DESC LIMIT 1;')
+            row = c.fetchall()[0]
+            rows_dict[row[1]] = row
     return rows_dict
 
 #########################
