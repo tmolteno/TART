@@ -62,7 +62,7 @@ def from_json(source_json, el_limit=0.0, jy_limit=1e5):
             if (src['el'] > el_limit) and (src['jy'] > jy_limit):
                 src_list.append(ElAz(src['el'], src['az']))
         except:
-            print("ERROR in catalog src={}".format(src)
+            print("ERROR in catalog src={}".format(src))
 
     return src_list
 
