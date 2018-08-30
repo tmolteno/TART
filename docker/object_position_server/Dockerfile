@@ -1,4 +1,4 @@
-FROM debian 
+FROM debian:stretch
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
 # debian setup
