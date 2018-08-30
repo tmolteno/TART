@@ -1,0 +1,115 @@
+from flask import Flask
+from flask import jsonify, request
+from flask_cors import CORS, cross_origin
+import utc
+import angle
+import traceback
+
+import norad_cache
+from dateutil import parser
+import sun_object
+
+waas_cache = norad_cache.NORADCache()
+gps_cache = norad_cache.GPSCache()
+galileo_cache = norad_cache.GalileoCache()
+sun = sun_object.SunObject()
+
+def parse_date(request):
+    if request.args.has_key('date'):
+        try:
+            date_string = request.args.get('date')
+            # Deal with a URL that has a + sign replaced by a space
+            dt = parser.parse(date_string.replace(' ', '+'))
+            d = utc.to_utc(dt)
+        except Exception as err:
+            raise Exception("Invalid Date '{}' {}".format(date_string, err))
+    else:
+        d = utc.now()
+
+    current_date = utc.now()
+    if ((d -  current_date).total_seconds() > 86400.0):
+        raise Exception("Date '{}' more than 24 hours in future.".format(date_string))
+
+    return d
+
+def get_required_parameter(request, param_name):
+    if request.args.has_key(param_name):
+        return request.args.get(param_name)
+    else:
+        #app.logger.error("Missing Required Parameter {}".format(param_name))
+        raise Exception("Missing Required Parameter '{}'".format(param_name))
+
+# sudo pip install Flask
+app = Flask(__name__)
+CORS(app)
+
+if not app.debug:
+    import logging
+    from logging.handlers import RotatingFileHandler
+    log_handler = RotatingFileHandler("catalog.log", mode='a', maxBytes=100000, backupCount=5, encoding=None, delay=False)
+    log_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(log_handler)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(e)
+    tb = traceback.format_exc()
+    app.logger.error(tb)
+    return "Exception: {}".format(e)
+
+"""
+    @api {get} /catalog/ Request Object Positions local horizontal (El Az) coordinates
+    @apiName catalog
+    @apiGroup Catalog
+
+    @apiParam {String} [date=now] UTC date for the request
+    @apiParam {Number} lat Latitude in decimal degrees of observer
+    @apiParam {Number} lon Longitude in decimal degrees of observer
+    @apiParam {Number} [alt=0.0] Altitude in meters of observer
+
+    @apiSuccess {List} ObjectList List of objects with local horizontal (El Az) coordinates
+    
+    @apiSampleRequest /catalog/catalog?lat=-45.85&lon=170.54
+"""
+@app.route('/catalog', methods=['GET',])
+def get_catalog():
+    date = parse_date(request)
+    lat = angle.from_decimal_degrees(float(get_required_parameter(request, 'lat')))
+    lon = angle.from_decimal_degrees(float(get_required_parameter(request, 'lon')))
+    alt = 0.0
+    ret = waas_cache.get_az_el(date, lat, lon, alt)
+    ret += gps_cache.get_az_el(date, lat, lon, alt)
+    ret += galileo_cache.get_az_el(date, lat, lon, alt)
+    ret += sun.get_az_el(date, lat, lon, alt)
+    print ret
+    return jsonify(ret)
+
+"""
+    @api {get} /position/ Request SV Positions in ECEF coordinates
+    @apiName position
+    @apiGroup Catalog
+
+    @apiParam {String} [date=now] UTC date for the request
+
+    @apiSuccess {List} ObjectList List of objects with coordinates in ECEF
+    @apiSampleRequest /catalog/position
+"""
+@app.route('/position', methods=['GET',])
+def get_pos():
+    try:
+        date = parse_date(request)
+        ret = waas_cache.get_positions(date)
+        ret += gps_cache.get_positions(date)
+        ret += galileo_cache.get_positions(date)
+        return jsonify(ret)
+    except Exception as err:
+        tb = traceback.format_exc()
+        ret = "Exception: {}".format(err)
+        lines = tb.split("\n")
+        return jsonify({"error": ret, "traceback": lines})
+
+
+
+if __name__ == '__main__':
+    print("Hello world")
+    app.run(port=8876, host='0.0.0.0')
