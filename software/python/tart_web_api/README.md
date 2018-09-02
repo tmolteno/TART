@@ -18,10 +18,14 @@ that is installed as a dependency of this package. A shell script 'run_api.sh' s
 
     #!/bin/bash
     export LOGIN_PW=password
-    export FLASK_APP=tart_web_api
+    export FLASK_APP=tart_web_api.main
     flask run
 
 where 'password' is a secure password that can be used to log into the telescope web-application to configure your telescope.
+
+## Docker
+
+We are transitioning to deployment using docker. There is a Dockerfile for this in the TART/docker/tart_web_api directory.
 
 ## Twisted
 

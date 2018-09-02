@@ -6,7 +6,7 @@ from flask import Flask, request
 from flask import render_template, jsonify, send_file
 from flask_jwt_extended import jwt_required
 
-from tart_web_api import app, get_config
+from tart_web_api.main import app, get_config
 from tart_web_api import service
 import tart_web_api.database as db
 
