@@ -1,6 +1,6 @@
 ## Dockerfile for Telescope Calibration
 
-This docker file creates a process that runs at regular intervals and calibrates the telescope. The method of calibration is
+This docker file calibrates the telescope. The method of calibration is
 described in [1].
 
 This instance requires a lot of processing power (approx 1.5 hours of CPU time) and calibrates the TART telescope using a catalog
@@ -24,6 +24,16 @@ To execute the container type (where <passwd> is the password to your telescope 
     docker stop cal
     docker rm cal
 
+
+### Running this regularly
+
+Add this command as a cron job. Recommended interval is every two hours.
+
+    docker run -d \
+        -e TART_LOGIN_PW=$1 \
+        -e TART_API=https://tart.elec.ac.nz/signal/ \
+        -v ~/calibration_results:/app \
+        --name=cal -it  calibration_server
     
 ### Debugging
 

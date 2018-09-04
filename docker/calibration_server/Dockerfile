@@ -21,15 +21,8 @@ RUN pip install tart tart-tools requests
 # setup working directory
 WORKDIR /app
 
-# Add crontab file in the cron directory
-ADD crontab /etc/cron.d/calibrate-cron
+# Add the calibrate script.
 ADD tart_calibrate.sh /tart_calibrate.sh
- 
-# Give execution rights on the cron job
-RUN chmod 0644 /etc/cron.d/calibrate-cron
- 
-# Create the log file to be able to run tail
-RUN touch /var/log/cron.log
- 
-# Run the command on container startup
-CMD cron && tail -f /var/log/cron.log
+
+
+CMD sh /tart_calibrate.sh > /app/calibrate.log
