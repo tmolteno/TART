@@ -1,3 +1,5 @@
+# This is going to run on a raspberry pi, so the
+# Docker container needs to be created from an armv7 
 FROM debian:stretch
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
@@ -18,9 +20,9 @@ RUN npm cache clean -f
 RUN npm install -g n
 RUN n stable 
 
+RUN pip install healpy
 # Install tart python packages
 RUN pip install tart tart_web_api tart_hardware_interface requests 
-RUN pip install healpy
 
 RUN apt-get install -y nginx
 RUN apt-get install -y sqlite3
@@ -28,11 +30,10 @@ RUN apt-get install -y sqlite3
 # setup working directory
 COPY app /app
 WORKDIR /app
-RUN chmod 755 /app
 
-RUN ls
+# RUN python 
 
-ENV FLASK_APP=/app/tart_web_api
+ENV FLASK_APP=tart_web_api.main
 ENV FLASK_DEBUG=1
 
 EXPOSE 8080
