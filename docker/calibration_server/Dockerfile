@@ -9,7 +9,7 @@ MAINTAINER Tim Molteno "tim@elec.ac.nz"
 RUN apt-get update -y
 RUN apt-get upgrade -y 
 
-RUN apt-get install -y python-pip python-numpy python-dateutil python-matplotlib python-astropy
+RUN apt-get install -y python-pip python-numpy python-dateutil python-matplotlib python-scipy python-astropy
 RUN apt-get clean -y
 RUN rm -rf /var/lib/apt/lists/*
 
