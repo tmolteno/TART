@@ -19,6 +19,12 @@ services:
 
     api_container:
         build: telescope_web_api
+        volumes:
+            - /app
+        devices:
+            - /dev/spidev0.0
+        environment:
+            - LOGIN_PW=passwd
         ports:
             - 5000:5000
         restart: always
