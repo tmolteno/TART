@@ -2,6 +2,11 @@
 
 This directory contains Dockerfiles that automate the execution of the parts of the telescope. These are
 
+Author: Tim Molteno (tim@elec.ac.nz)
+
+### Web Application (web_app)
+
+This is a javascript application that runs in a browser (anywhere on earth) and communicates with the web API to view the telescope.
 
 ### Telescope Web API
 
