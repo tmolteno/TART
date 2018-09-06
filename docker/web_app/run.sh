@@ -4,5 +4,5 @@
 #
 # Persistent storage is in the folder ~/web_api_store
 #
-docker run -P -p 80:80 \
+docker run -d -P -p 80:80 --net="host" \
     --name=web_app -it  tart_web_front_end:prod

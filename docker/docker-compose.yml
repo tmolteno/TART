@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+    #ssh-to-aws-host:
+        #image: jnovack/autossh
+        #container_name: autossh-ssh-to-aws-host
+        #environment:
+            #- SSH_HOSTUSER=tart
+            #- SSH_HOSTNAME=tart.elec.ac.nz
+            #- SSH_TUNNEL_REMOTE=2222
+            #- SSH_TUNNEL_HOST=172.17.0.1
+            #- SSH_TUNNEL_LOCAL=22
+        #restart: always
+        #volumes:
+        #- /etc/autossh/id_rsa:/id_rsa
+        #dns:
+            #- 8.8.8.8
+            #- 4.2.2.4
+
+    api_container:
+        build: telescope_web_api
+        ports:
+            - 5000:5000
+        restart: always
+
+    web_app:
+        depends_on:
+            - api_container
+        build: web_app
+        ports: 
+            - 80:80
+        restart: always
+
