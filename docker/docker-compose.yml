@@ -32,7 +32,10 @@ services:
     web_app:
         depends_on:
             - api_container
-        build: web_app
+        build: 
+            context: ./web_app
+            args:
+                tart_name: dev2
         ports: 
             - 80:80
         restart: always
