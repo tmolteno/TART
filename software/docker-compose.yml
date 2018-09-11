@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 services:
     #ssh-to-aws-host:
@@ -18,12 +18,15 @@ services:
             #- 4.2.2.4
 
     api_container:
-        build: telescope_web_api
+        build: 
+            context: ./docker/telescope_web_api
         volumes:
-            - /app
-        devices:
-            - /dev/spidev0.0
+            -   data-volume:/telescope_data
+            -   ~/web_api_store:/app
+#        devices:
+#            - /dev/spidev0.0
         environment:
+            # Change the following to be something secure. You will use this to login to your telescope from the web api.
             - LOGIN_PW=passwd
         ports:
             - 5000:5000
@@ -32,11 +35,19 @@ services:
     web_app:
         depends_on:
             - api_container
+        volumes:
+            -   data-volume:/telescope_data
         build: 
-            context: ./web_app
+            context: ./docker/web_app
             args:
-                tart_name: dev2
+                # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
+                tart_name: dev
         ports: 
             - 80:80
         restart: always
 
+
+volumes:
+    # Mounted on each container as /telescope_data, used for raw data and vis data. This is a hardcoded path in each container.
+    data-volume:
+    

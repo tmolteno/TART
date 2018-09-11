@@ -2,13 +2,14 @@
 FROM node:8 as build-stage
 
 ARG tart_name
-WORKDIR /app
+
+COPY ./web-app /code
+WORKDIR /code
+RUN ls
 
 RUN npm install apidoc -g
 
-COPY ./app /app
 
-RUN ls
 RUN npm install
 
 ARG configuration=production
@@ -19,7 +20,7 @@ RUN npm run ng build -sm --stats-json --base-href /${tart_name}/ --configuration
 FROM nginx:1.15
 ARG tart_name
 
-COPY --from=build-stage /app/dist/ /usr/share/nginx/html
+COPY --from=build-stage /code/dist/ /var/www/html
 
 # Copy the default nginx.conf provided by tiangolo/node-frontend
 COPY ./rpi_nginx.conf /etc/nginx/conf.d/default.conf

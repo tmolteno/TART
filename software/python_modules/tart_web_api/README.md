@@ -25,7 +25,7 @@ where 'password' is a secure password that can be used to log into the telescope
 
 ## Docker
 
-We are transitioning to deployment using docker. There is a Dockerfile for this in the TART/docker/tart_web_api directory.
+We are transitioning to deployment using docker. There is a Dockerfile for this in the TART/software/docker/tart_web_api directory.
 
 ## Twisted
 
