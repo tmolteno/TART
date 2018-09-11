@@ -1,5 +1,9 @@
 .PHONY: doc
-
+# For development purposes, use the 'develop' target to install this package from the source repository (rather than the public python packages). This
+# means that local changes to the code will automatically be used by the package on your machine.
+# To do this type
+#     make develop
+# in this directory.
 develop: doc
 	sudo python setup.py develop
 
