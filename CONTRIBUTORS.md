@@ -10,3 +10,4 @@ The TART project has been developed by:
 * Pat Suggate: Real-time FPGA correlator
 * Tim Miller: Web-App interface
 * Simon Harvey: Web-App interface
+* Mitchell Innes: TART3 FPGA and Xilinx Zync kernel
