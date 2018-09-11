@@ -2,6 +2,9 @@ import json
 import socket
 
 def init_config(manager):
+    
+    www_root = '/telescope_data'
+
     runtime_config = manager.dict()
     runtime_config['spi_speed'] = 32000000
     runtime_config['acquire'] = False
@@ -21,7 +24,7 @@ def init_config(manager):
     runtime_config['raw'] = {
         'save': 1, \
         'N_samples_exp': 20,\
-        'base_path': '/var/www/html/raw'
+        'base_path': '{}/raw'.format(www_root)
     }
     runtime_config['diagnostic'] = {
         'num_ant': 24,\
@@ -35,17 +38,17 @@ def init_config(manager):
         'save' : 1, \
         'chunksize' : 60,\
         'N_samples_exp' : 24,\
-        'vis_prefix' : '/var/www/html/vis/fpga',
+        'vis_prefix' : '{}/vis/fpga'.format(www_root),
     }
-    runtime_config['telescope_config_path'] = '24_ant_setup/telescope_config.json'
+    runtime_config['telescope_config_path'] = '/config_data/telescope_config.json'
     with open(runtime_config['telescope_config_path']) as t_c:
         runtime_config['telescope_config'] = json.load(t_c)
         t_c.close()
 
-    with open('24_ant_setup/calibrated_antenna_positions.json') as t_c:
+    with open('/config_data/calibrated_antenna_positions.json') as t_c:
         runtime_config['antenna_positions'] = json.load(t_c)
         t_c.close()
-    runtime_config['calibration_dir'] = '24_ant_setup/'
-    runtime_config['realtime_image_path'] = '/var/www/html/assets/img/image.png'
+    runtime_config['calibration_dir'] = '/config_data/'
+    runtime_config['realtime_image_path'] = '{}/assets/img/image.png'.format(www_root)
     runtime_config['hostname'] = socket.gethostname()
     return runtime_config

@@ -1,0 +1,53 @@
+version: '2'
+
+services:
+    #ssh-to-aws-host:
+        #image: jnovack/autossh
+        #container_name: autossh-ssh-to-aws-host
+        #environment:
+            #- SSH_HOSTUSER=tart
+            #- SSH_HOSTNAME=tart.elec.ac.nz
+            #- SSH_TUNNEL_REMOTE=2222
+            #- SSH_TUNNEL_HOST=172.17.0.1
+            #- SSH_TUNNEL_LOCAL=22
+        #restart: always
+        #volumes:
+        #- /etc/autossh/id_rsa:/id_rsa
+        #dns:
+            #- 8.8.8.8
+            #- 4.2.2.4
+
+    api_container:
+        build: 
+            context: ./docker/telescope_web_api
+        volumes:
+            -   data-volume:/telescope_data
+            -   ~/web_api_store:/app
+#        devices:
+#            - /dev/spidev0.0
+        environment:
+            # Change the following to be something secure. You will use this to login to your telescope from the web api.
+            - LOGIN_PW=passwd
+        ports:
+            - 5000:5000
+        restart: always
+
+    web_app:
+        depends_on:
+            - api_container
+        volumes:
+            -   data-volume:/telescope_data
+        build: 
+            context: ./docker/web_app
+            args:
+                # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
+                tart_name: dev
+        ports: 
+            - 80:80
+        restart: always
+
+
+volumes:
+    # Mounted on each container as /telescope_data, used for raw data and vis data. This is a hardcoded path in each container.
+    data-volume:
+    
