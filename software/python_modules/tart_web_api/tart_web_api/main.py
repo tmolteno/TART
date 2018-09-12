@@ -26,10 +26,10 @@ def get_config():
     global runtime_config
     return runtime_config
 
-def tart_p():
-    tart_control = TartControl(runtime_config)
+def tart_p(rt_config):
+    tart_control = TartControl(rt_config)
     while True:
-        tart_control.set_state(runtime_config['mode'])
+        tart_control.set_state(rt_config['mode'])
         tart_control.run()
 
 observation_cache_process = multiprocessing.Process(target=cleanup_observation_cache, args=())
@@ -39,7 +39,7 @@ visibility_cache_process = multiprocessing.Process(target=cleanup_visibility_cac
 visibility_cache_process.start()
 
 
-tart_process = multiprocessing.Process(target=tart_p, args=())
+tart_process = multiprocessing.Process(target=tart_p, args=(runtime_config,))
 tart_process.start()
 
 app = Flask(__name__)

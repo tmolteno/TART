@@ -22,9 +22,9 @@ services:
             context: ./docker/telescope_web_api
         volumes:
             -   data-volume:/telescope_data
-            -   ~/web_api_store:/app
-#        devices:
-#            - /dev/spidev0.0
+            -   ~/tart_web_api_store:/app
+        devices:
+            - /dev/spidev0.0
         environment:
             # Change the following to be something secure. You will use this to login to your telescope from the web api.
             - LOGIN_PW=passwd

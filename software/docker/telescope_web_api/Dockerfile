@@ -9,24 +9,11 @@ RUN apt-get upgrade -y
 
 RUN apt-get install -y curl python-pip screen python-numpy python-dateutil python-scipy python-matplotlib
 
-
 RUN apt-get install -y python-yaml python-astropy python-psycopg2 ntp python-jsonrpclib
 
-RUN pip install healpy
+
 # Install tart python packages
-RUN pip install tart tart_web_api tart_hardware_interface requests 
-
-RUN apt-get install -y sqlite3
-
-# # Install latest node
-# RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
-# RUN apt-get install -y nodejs
-# RUN apt-get install -y npm 
-# RUN npm cache clean -f
-# RUN npm install -g n
-# RUN n stable 
-# 
-# RUN npm install apidoc -g
+RUN pip install healpy tart tart_web_api tart_hardware_interface requests 
 
 COPY ./config_data /config_data
 
