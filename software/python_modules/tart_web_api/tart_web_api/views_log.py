@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask import render_template, jsonify, send_file
 
-from tart_web_api.main import app, get_config
+from tart_web_api.main import app
 
 import logging
 from logging.handlers import RotatingFileHandler

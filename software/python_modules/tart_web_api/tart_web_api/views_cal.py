@@ -6,7 +6,7 @@ from flask import Flask, request
 from flask import render_template, jsonify, send_file
 from flask_jwt_extended import jwt_required
 
-from tart_web_api.main import app, get_config
+from tart_web_api.main import app
 from tart_web_api import service
 import tart_web_api.database as db
 
@@ -51,8 +51,8 @@ def set_calibration_antenna_positions():
     """
     utc_date = datetime.datetime.utcnow()
     content = request.get_json(silent=False)
-    runtime_config = get_config()
-    print(content)
+    runtime_config = app.config['CONFIG']
+    app.logger.info(content)
     runtime_config['antenna_positions'] = content
     return jsonify({})
 
@@ -96,7 +96,7 @@ def post_calibration_from_vis():
     @apiSuccess {String} status Status of optimisation process.
     """
     state = db.get_calibration_process_state()
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if state in ['idle', 'preparing']:
         db.update_calibration_process_state('preparing')
         cal_measurements = request.get_json(silent=False)
@@ -104,7 +104,7 @@ def post_calibration_from_vis():
         cal_request_file_name = t.strftime('Cal_%Y-%m-%d_%H-%M.json')
         with open(cal_request_file_name, 'w') as outfile:
             json.dump(cal_measurements, outfile)
-            print 'saved to:', cal_request_file_name
+            app.logger.info('saved to: %s ', cal_request_file_name)
         global minimize_process
         minimize_process = multiprocessing.Process(target=service.calibrate_from_vis, args=(cal_measurements, runtime_config))
         minimize_process.start()

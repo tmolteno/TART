@@ -1,4 +1,8 @@
 
+import logging
+import sys
+logging.basicConfig(level=logging.INFO)
+
 import datetime
 import dateutil.parser
 import os
@@ -34,6 +38,10 @@ msd_vis = []
 sim_vis = []
 N_IT = 0
 
+def mkdirp(directory):
+    if not os.path.isdir(directory):
+        os.makedirs(directory) 
+
 def optimize_phaseNgain(opt_parameters):
     """ Set phase offsets in list of calibrated visibility objects.
         Calculate and return likelihood
@@ -68,7 +76,7 @@ def likelihood_vis_dicts(msd_vis, sim_vis, debug=False):
         sim_v = sim_vis[key]
         bls_meas = meas_v.get_baselines() # flagging based on measured visibilities
         if debug:
-            print 'Number of baselines contributing: ', len(bls_meas)
+            logging.info( 'Number of baselines contributing: {}'.format(len(bls_meas)))
         for bln in bls_meas:
             [ant_i, ant_j] = bln
             ret += vis_diff(meas_v, sim_v, ant_i, ant_j)*np.abs(sim_v.get_visibility(ant_i, ant_j))
@@ -202,6 +210,8 @@ class TartControl():
         self.process_capture = None
         self.cmd_queue_capture = None
         self.vislist = []
+        mkdirp(self.config['vis']['base_path'])
+        mkdirp(self.config['raw']['base_path'])
 
 
     def run(self):
@@ -216,16 +226,18 @@ class TartControl():
 
         elif self.state == 'vis':
             if self.queue_vis is None:
+                logging.info("vis_stream_setup")
                 self.vis_stream_setup()
             else:
                 ret = self.vis_stream_acquire()
                 if ret.has_key('filename'):
+                    logging.info("vis_stream_acquire = {}".format(ret))
                     db.insert_vis_file_handle(ret['filename'], ret['sha256'])
                 time.sleep(0.005)
         elif self.state == 'off':
             time.sleep(0.5)
         else:
-            print 'unknown state'
+            logging.error('unknown state: {}'.format(self.state))
 
     def set_state(self, new_state):
         if new_state == self.state:
@@ -248,22 +260,26 @@ class TartControl():
     def vis_stream_acquire(self):
         ''' Get all available visibities'''
         ret = {}
+
         while self.queue_vis.qsize() > 0:
             vis, means = self.queue_vis.get()
+            logging.info('vis = {}, means={}.'.format(vis, means))
 
             if vis is not None:
-                print 'updating latest visibilities in runtime dict.'
                 self.config['vis_current'] = create_direct_vis_dict(vis)
                 self.vislist.append(vis)
-                if len(self.vislist) == self.config['vis']['chunksize']:
-                    print 'reached chunksize'
-                    if self.config['vis']['save']:
-                        fname = "{}_{}.vis".format(self.config['vis']['vis_prefix'], 
+                logging.info('Updated visibilities N={}.'.format(len(self.vislist)))
+                
+                chunksize = self.config['vis']['chunksize']
+                if len(self.vislist) >= chunksize:
+                    logging.info('reached chunksize of {}'.format(chunksize))
+                    if self.config['vis']['save'] == 1:
+                        fname = "{}/fpga_{}.vis".format(self.config['vis']['base_path'], 
                                                    vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
-                        #fname = self.config['vis']['vis_prefix'] + "_" + 
+                        #fname = self.config['vis']['base_path'] + "_" + 
                             #vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
                         visibility.Visibility_Save(self.vislist, fname)
-                        print("saved {} to {}".format(vis, fname))
+                        logging.info("saved to {}".format(vis, fname))
                         ret['filename'] = fname
                         ret['sha256'] = sha256_checksum(fname)
                     self.vislist = []
@@ -277,7 +293,7 @@ class TartControl():
         self.process_vis_calc.join()
         self.queue_vis = None
         self.vislist = []
-        print 'Stop visibility acquisition processes.'
+        logging.info('Stop visibility acquisition processes.')
 
     def vis_stream_reconfigure(self):
         self.vis_stream_finish()

@@ -2,7 +2,7 @@ from flask import Flask
 from flask import render_template, jsonify, send_file
 from flask_jwt_extended import jwt_required
 
-from tart_web_api.main import app, get_config
+from tart_web_api.main import app
 
 @app.route('/acquire/raw/save/<int:flag>', methods=['PUT'])
 @jwt_required
@@ -17,7 +17,7 @@ def set_raw_save_flag(flag):
     @apiSuccess {String} save Current save flag for raw mode.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     r = runtime_config['raw']
     r['save'] = flag
     runtime_config['raw'] = r
@@ -36,7 +36,7 @@ def set_vis_save_flag(flag):
     @apiSuccess {String} save Current save flag for visibility data acquisition.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     r = runtime_config['vis']
     r['save'] = flag
     runtime_config['vis'] = r
@@ -55,7 +55,7 @@ def set_raw_num_samples_exp(exp):
     @apiSuccess {Number} exp Current exponent of number of samples.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if (exp >= 16) and (exp <= 24):
         r = runtime_config['raw']
         r['N_samples_exp'] = exp
@@ -75,7 +75,7 @@ def set_vis_num_samples_exp(exp):
     @apiSuccess {Number} exp Current exponent of number of samples.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if (exp >= 16) and (exp <= 24):
         r = runtime_config['vis']
         r['N_samples_exp'] = exp
@@ -91,7 +91,7 @@ def get_raw_save_flag():
     @apiName get_raw_save_flag
     @apiSuccess {String} save Current save flag for raw mode.
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     return jsonify({'save':runtime_config['raw']['save']})
 
 @app.route('/acquire/vis/save', methods=['GET'])
@@ -104,7 +104,7 @@ def get_vis_save_flag():
     @apiSuccess {String} save Current save flag for visibility data acquisition.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     return jsonify({'save':runtime_config['vis']['save']})
 
 @app.route('/acquire/raw/num_samples_exp', methods=['GET'])
@@ -117,7 +117,7 @@ def get_raw_num_samples_exp():
     @apiSuccess {Number} exp Current exponent of number of samples.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     return jsonify({'N_samples_exp':runtime_config['raw']['N_samples_exp']})
 
 @app.route('/acquire/vis/num_samples_exp', methods=['GET'])
@@ -130,5 +130,5 @@ def get_vis_num_samples_exp():
     @apiSuccess {Number} exp Current exponent of number of samples.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     return jsonify({'N_samples_exp':runtime_config['vis']['N_samples_exp']})

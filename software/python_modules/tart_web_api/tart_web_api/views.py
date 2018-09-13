@@ -4,7 +4,7 @@ from flask_jwt_extended import JWTManager, jwt_required
 
 import numpy as np
 
-from tart_web_api.main import app, get_config
+from tart_web_api.main import app
 import tart_web_api.database as db
 
 @app.route('/status/fpga', methods=['GET',])
@@ -68,7 +68,7 @@ def get_status_fpga():
       @apiSuccess {Number} VX_SYSTEM.enabled VX_SYSTEM
       @apiSuccess {Number} VX_SYSTEM.overwrite VX_SYSTEM
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if runtime_config.has_key("status"):
         ret = runtime_config["status"]
         ret['hostname'] = runtime_config['hostname']
@@ -86,7 +86,7 @@ def get_status_channel_all():
     @apiSuccess {Object[]} Array of channel information.
     """
 
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if runtime_config.has_key("channels"):
         channel_list = db.get_manual_channel_status()
         ret = runtime_config["channels"]
@@ -129,7 +129,7 @@ def get_status_channel_i(channel_idx):
         }
       }
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if runtime_config.has_key("channels"):
         if (channel_idx < 24) and (channel_idx > -1):
             channel_list = db.get_manual_channel_status()
@@ -151,7 +151,7 @@ def get_current_mode():
     @apiName get_current_mode
     @apiSuccess {String} mode Current mode of the telescope.
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     return jsonify({'mode':runtime_config['mode']})
 
 @app.route('/mode', methods=['GET',])
@@ -163,7 +163,7 @@ def get_mode():
     @apiName get_mode
     @apiSuccess {String[]} modes Available operating modes.
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     return jsonify({'modes':runtime_config['modes_available']})
 
 
@@ -190,7 +190,7 @@ def set_mode(mode):
 
     """
 
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if mode in runtime_config['modes_available']:
         runtime_config['mode'] = mode
         return jsonify({'mode':runtime_config['mode']})
@@ -210,7 +210,7 @@ def set_loop_mode(loop_mode):
     @apiSuccess {String} loop_mode Current mode of the telescope.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if loop_mode in runtime_config['loop_mode_available']:
         runtime_config['loop_mode'] = loop_mode
         return jsonify({'loop_mode':runtime_config['loop_mode']})
@@ -229,7 +229,7 @@ def set_loop_n(loop_n):
     @apiSuccess {String} loop_mode Current mode of the telescope.
 
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     runtime_config['loop_n'] = loop_mode
     return jsonify({'loop_mode':runtime_config['loop_mode']})
 
@@ -242,7 +242,7 @@ def get_latest_vis():
     @apiName get_latest_vis
     @apiSuccess {Object[]} vis Get visibilities.
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     ret = []
     if runtime_config.has_key('vis_current'):
         ret = runtime_config['vis_current']
@@ -266,7 +266,7 @@ def get_imaging_antenna_positions():
     @apiName get_imaging_antenna_positions
     @apiSuccess {Object[]} antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if runtime_config.has_key('antenna_positions'):
         return jsonify(runtime_config['antenna_positions'])
 
@@ -279,7 +279,7 @@ def get_imaging_timestamp():
     @apiName get_imaging_timestamp
     @apiSuccess {String} timestamp Get UTC timestamp  of latest visibilities in isoformat .
     """
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     if runtime_config.has_key('vis_timestamp'):
         return runtime_config['vis_timestamp'].isoformat()[:-3]+'Z'
     else:
@@ -306,7 +306,7 @@ def get_info():
     @apiSuccess {Number} info.name Telescope site name
     """
 
-    runtime_config = get_config()
+    runtime_config = app.config['CONFIG']
     t_c = runtime_config['telescope_config']
     ret = {}
     ret['name'] = t_c['name']

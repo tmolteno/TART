@@ -5,6 +5,7 @@
 # Tim Molteno 2018. tim@elec.ac.nz
 #
 import multiprocessing
+import logging
 
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager
@@ -16,15 +17,6 @@ from tart_web_api.service import cleanup_observation_cache, cleanup_visibility_c
 from tart_web_api.config import init_config
 import tart_web_api.database as db
 
-db.setup_db()
-
-m = multiprocessing.Manager()
-runtime_config = init_config(m)
-runtime_config['sample_delay'] = db.get_sample_delay()
-
-def get_config():
-    global runtime_config
-    return runtime_config
 
 def tart_p(rt_config):
     tart_control = TartControl(rt_config)
@@ -32,20 +24,24 @@ def tart_p(rt_config):
         tart_control.set_state(rt_config['mode'])
         tart_control.run()
 
-observation_cache_process = multiprocessing.Process(target=cleanup_observation_cache, args=())
-observation_cache_process.start()
-
-visibility_cache_process = multiprocessing.Process(target=cleanup_visibility_cache, args=())
-visibility_cache_process.start()
 
 
-tart_process = multiprocessing.Process(target=tart_p, args=(runtime_config,))
-tart_process.start()
+db.setup_db()
 
 app = Flask(__name__)
+
+# Set up logging
+
+@app.before_first_request
+def setup_logging():
+    if not app.debug:
+        # In production mode, add log handler to sys.stderr.
+        app.logger.addHandler(logging.StreamHandler())
+        app.logger.setLevel(logging.INFO)
+
 CORS(app)
 #app.config['SECRET_KEY'] = 'super-secret-cow-key-hsa'
-from datetime import timedelta as td
+#from datetime import timedelta as td
 #app.config['JWT_EXPIRATION_DELTA'] = td(seconds=3600)
 #JWT(app, authenticate, identity)
 
@@ -61,3 +57,21 @@ import tart_web_api.views_cache
 import tart_web_api.views_obs
 #import tart_web_api.views_log
 import tart_web_api.views_channel
+
+#if __name__ == "__main__":
+m = multiprocessing.Manager()
+runtime_config = init_config(m)
+runtime_config['sample_delay'] = db.get_sample_delay()
+app.config['CONFIG'] = runtime_config
+
+observation_cache_process = multiprocessing.Process(target=cleanup_observation_cache, args=())
+observation_cache_process.start()
+
+visibility_cache_process = multiprocessing.Process(target=cleanup_visibility_cache, args=())
+visibility_cache_process.start()
+
+
+tart_process = multiprocessing.Process(target=tart_p, args=(runtime_config,))
+tart_process.start()
+
+#    app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
