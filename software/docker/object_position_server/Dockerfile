@@ -6,7 +6,9 @@ RUN apt-get update -y
 RUN apt-get upgrade -y 
 
 RUN apt-get install -y python-pip screen python-numpy python-dateutil
-RUN pip install flask sgp4 flask-cors pytz requests
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir flask sgp4 flask-cors pytz requests
 
 # setup working directory
 ADD ./app/ /object_position_server

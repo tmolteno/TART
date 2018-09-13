@@ -3,7 +3,7 @@
 #
 #  Author. Tim Molteno. tim@elec.ac.nz (c) 2018.
 #
-FROM debian:stretch
+FROM debian:stretch-slim
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
 RUN apt-get update -y
