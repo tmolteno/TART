@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:stretch-slim
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
 # debian setup
