@@ -7,7 +7,7 @@ def get_raw_data_file_handles():
     """
     @api {GET} /raw/data Get list of latest raw data files
     @apiName get_raw_data_file_handles
-    @apiGroup Acquisiton
+    @apiGroup Acquisition
 
     @apiSuccess {Object}  body
     @apiSuccess {Number[]} body.filename Filename
@@ -26,7 +26,7 @@ def get_vis_data_file_handles():
     """
     @api {GET} /vis/data Get list of latest vis data files
     @apiName get_vis_data_file_handles
-    @apiGroup Acquisiton
+    @apiGroup Acquisition
 
     @apiSuccess {Object}  body
     @apiSuccess {Number[]} body.filename Filename
