@@ -1,5 +1,3 @@
-# This is going to run on a raspberry pi, so the
-# Docker container needs to be created from an armv7 
 FROM debian:buster
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG DEBIAN_FRONTEND=noninteractive
@@ -17,15 +15,11 @@ RUN apt-get install -y python-flask python-flask-script npm
 RUN rm -rf /var/lib/apt/lists/*
 
 # Install tart python packages
-RUN pip install --no-cache-dir healpy tart tart_hardware_interface requests
+RUN pip install --no-cache-dir tart tart_hardware_interface requests healpy
 
 COPY ./tart_web_api /code
 WORKDIR /code
 RUN python setup.py install
-
-RUN npm install apidoc -g
-
-RUN apidoc -i ./ -o /telescope_data/doc
 
 COPY ./config_data /config_data
 WORKDIR /app

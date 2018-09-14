@@ -1,25 +1,9 @@
 version: '2'
 
 services:
-    #ssh-to-aws-host:
-        #image: jnovack/autossh
-        #container_name: autossh-ssh-to-aws-host
-        #environment:
-            #- SSH_HOSTUSER=tart
-            #- SSH_HOSTNAME=tart.elec.ac.nz
-            #- SSH_TUNNEL_REMOTE=2222
-            #- SSH_TUNNEL_HOST=172.17.0.1
-            #- SSH_TUNNEL_LOCAL=22
-        #restart: always
-        #volumes:
-        #- /etc/autossh/id_rsa:/id_rsa
-        #dns:
-            #- 8.8.8.8
-            #- 4.2.2.4
-
     api_container:
         build: 
-            context: ./docker/telescope_web_api
+            context: ./containers/telescope_web_api
         volumes:
             -   data-volume:/telescope_data
             -   ~/tart_web_api_store:/app
@@ -32,19 +16,42 @@ services:
             - 5000:5000
         restart: always
 
+    api_doc_server:
+        build:
+            context: ./containers/telescope_web_api
+            dockerfile: Dockerfile.apidoc 
+        ports: 
+            - 8080:80
+
     web_app:
         depends_on:
             - api_container
+            - api_doc_server
         volumes:
             -   data-volume:/telescope_data
         build: 
-            context: ./docker/web_app
+            context: ./containers/web_app
             args:
                 # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
                 tart_name: dev
         ports: 
             - 80:80
         restart: always
+
+    #http-tunnel:
+        #depends_on:
+            #- web_app
+        #build: 
+            #context: ./containers/autossh
+        #environment:
+            #- SSH_HOSTUSER=tart
+            #- SSH_HOSTNAME=tart.elec.ac.nz
+            #- SSH_TUNNEL_REMOTE=8002
+            #- SSH_TUNNEL_LOCAL=80
+            #- SSH_TUNNEL_HOST=web_app
+        #restart: always
+        #volumes:
+            #- ~/.ssh/id_rsa:/id_rsa
 
 
 volumes:

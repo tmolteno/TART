@@ -1,6 +1,6 @@
 apidoc:
 	sed "s/localhost/`hostname`/g" -i apidoc.json
-	apidoc -i ./ -o /var/www/html/doc
+	apidoc -i ./ -o ./doc
 	sed "s/`hostname`/localhost/g" -i apidoc.json
 public:
 	sed "s/localhost/tart.elec.ac.nz\/dev/g" -i apidoc.json
