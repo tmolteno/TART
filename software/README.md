@@ -1,9 +1,9 @@
 ## TART Software
 
-This tart telescope software is built using Docker. This directory is the top-level of all the software required.
+The telescope software is built using docker software containers. This directory is the top-level of all the software containers. Some of the containers run on the telescope itself (the API and web_app), while others are used for calibration and providing a catalog of known objects.
 
 
-### Installation on a target raspberry pi
+## Installation on a target raspberry pi
 
 The following procedure will install all the necessary TART software on a Raspberry Pi (Model 3) attached to the TART hardware.
 
@@ -32,3 +32,9 @@ This will build all the necessary sofware on the Pi. To run all the software an 
 ### Testing
 
 Point your browser at the target Pi http://<target_pi>/. You should see the TART web interface. Remember to login and change the mode to 'vis'
+
+
+## Calibration
+
+The calibration software is 
+## Object Position Server
