@@ -9,6 +9,7 @@ services:
             - SSH_HOSTNAME=tart.elec.ac.nz
             - SSH_TUNNEL_REMOTE=8002
             - SSH_TUNNEL_LOCAL=80
+            - SSH_TUNNEL_HOST=localhost
         restart: always
         volumes:
             - ~/.ssh/id_rsa:/id_rsa
