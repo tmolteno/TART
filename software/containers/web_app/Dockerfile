@@ -3,15 +3,15 @@ FROM node:8 as build-stage
 
 ARG tart_name
 
-COPY ./web-app/package*.json /code/
-COPY ./web-app/api_imaging/ /code/api_imaging/
-
 WORKDIR /code
+COPY ./web-app .
 RUN ls
+
+ENV \
+    npm_config_jobs=4
 
 RUN npm install
 
-COPY ./web-app .
 RUN ls
 
 ARG configuration=production
