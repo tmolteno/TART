@@ -3,17 +3,20 @@ FROM node:8 as build-stage
 
 ARG tart_name
 
-COPY ./web-app /code
+COPY ./web-app/package*.json /code/
+COPY ./web-app/api_imaging/ /code/api_imaging/
+
 WORKDIR /code
 RUN ls
 
-RUN npm install apidoc -g
-
-
 RUN npm install
 
+COPY ./web-app .
+RUN ls
+
 ARG configuration=production
-RUN npm run ng build -sm --stats-json --base-href /${tart_name}/ --configuration $configuration
+RUN echo run ng build --prod --env=prod -sm --stats-json --base-href /${tart_name}/ 
+RUN npm run ng build -sm --stats-json --base-href /${tart_name}/ 
 
 
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx

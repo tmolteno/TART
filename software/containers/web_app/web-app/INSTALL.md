@@ -1,5 +1,7 @@
 ## TART Web GUI Install
 
+NOTE: The install is moving to using software containers. The following installation instructions are suitable for development environments. For production, have a look at the top-level docker-compose.yml.
+
 ## Development Machine Setup
 
 ### Get latest version of node and npm on debian (may work on ubuntu..)

@@ -1,6 +1,6 @@
 {
   "name": "tart-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "angular-cli": {},
   "scripts": {
@@ -38,7 +38,7 @@
     "zone.js": "^0.7.2"
   },
   "devDependencies": {
-    "@angular/cli": "^1.2.1",
+    "@angular/cli": "^1.7.4",
     "@angular/compiler-cli": "^2.3.1",
     "@types/jasmine": "2.5.38",
     "@types/node": "^6.0.42",
