@@ -1,16 +1,21 @@
 ## Dockerfile for the TART telescope web API
 
-The telescope web API listens for restful requests that are used to condfigure and get data from the telescope.
+The telescope web API listens for restful requests that are used to condfigure and get data from the telescope. 
+The config_data directory contains information about your TART telescope such as it's name. You can change this information.
 
 ### Details
 
-The server listens on port 5000 (on localhost).
+The server listens on port 5000 (on localhost). It is normally deployed using docker-compose from the top level
+docker-compose.yml. 
+
+Because of this, the following instructions are for development only. For normal use, look into the main documentation.
 
 
-## Docker Usage
+## Docker Usage for TESTING ONLY
 
 The easiest way to build this is to use docker. To build the container type
 
+    sh pre_build.sh
     sh build.sh
 
 To execute the container type (where <passwd> will be the password for authorized access to your telescope web api server):
