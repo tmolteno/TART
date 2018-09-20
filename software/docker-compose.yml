@@ -38,20 +38,20 @@ services:
             - 80:80
         restart: always
 
-    #http-tunnel:
-        #depends_on:
-            #- web_app
-        #build: 
-            #context: ./containers/autossh
-        #environment:
-            #- SSH_HOSTUSER=tart
-            #- SSH_HOSTNAME=tart.elec.ac.nz
-            #- SSH_TUNNEL_REMOTE=8002
-            #- SSH_TUNNEL_LOCAL=80
-            #- SSH_TUNNEL_HOST=web_app
-        #restart: always
-        #volumes:
-            #- ~/.ssh/id_rsa:/id_rsa
+    http-tunnel:
+        depends_on:
+            - web_app
+        build: 
+            context: ./containers/autossh
+        environment:
+            - SSH_HOSTUSER=tart
+            - SSH_HOSTNAME=tart.elec.ac.nz
+            - SSH_TUNNEL_REMOTE=8002
+            - SSH_TUNNEL_LOCAL=80
+            - SSH_TUNNEL_HOST=web_app
+        restart: always
+        volumes:
+            - ~/.ssh/id_rsa:/id_rsa
 
 
 volumes:

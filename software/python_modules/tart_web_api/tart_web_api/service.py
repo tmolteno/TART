@@ -1,7 +1,15 @@
+'''
+    Services for the TART web api. These are background processes that 
+    capture visibilities e.t.c.
+    
+    Author. Max Scheel 2017
+            Tim Molteno 2018
+
+'''
 
 import logging
 import sys
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 import datetime
 import dateutil.parser
@@ -263,7 +271,7 @@ class TartControl():
 
         while self.queue_vis.qsize() > 0:
             vis, means = self.queue_vis.get()
-            logging.info('vis = {}, means={}.'.format(vis, means))
+            #logging.info('vis = {}, means={}.'.format(vis, means))
 
             if vis is not None:
                 self.config['vis_current'] = create_direct_vis_dict(vis)
