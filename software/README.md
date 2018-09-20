@@ -11,6 +11,12 @@ The following procedure will install all the necessary TART software on a Raspbe
 
 Install docker on the raspberry pi. This is done by following.
 
+    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+    sudo groupadd docker
+    sudo gpasswd -a $USER docker
+    newgrp docker
+    sudo pip install docker-compose
+
 ### Step 1. Copy code to the Pi
 
     TARGET=pi@tart2-dev

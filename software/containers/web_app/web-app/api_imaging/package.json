@@ -13,11 +13,12 @@
     "zeros": "^1.0.0"
   },
   "devDependencies": {
-    "webpack": "^4.19.1"
+    "webpack": "^4.19.1",
+    "webpack-cli": "^3.1.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-example": "webpack --optimize-minimize ./example/app.js ./example/app.bundle.js"
+    "build-example": "webpack --mode=development ./example/app.js --output ./example/app.bundle.js"
   },
   "author": "Max Scheel, Tim Miller, Tim Molteno",
   "license": "GPLv3"

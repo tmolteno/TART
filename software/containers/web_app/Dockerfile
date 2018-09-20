@@ -1,23 +1,21 @@
+#
+#
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:8 as build-stage
-
+FROM node:10 as build-stage
+MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG tart_name
 
 WORKDIR /code
-COPY ./web-app .
-RUN ls
+COPY ./web-app ./
 
-ENV \
-    npm_config_jobs=4
-
+ENV npm_config_jobs=2
 RUN npm install
 
-RUN ls
+RUN npm run ng -- build -sm --base-href=/${tart_name}/ 
+#RUN npm run ng -- build --prod -sm --base-href=/${tart_name}/ 
 
-ARG configuration=production
-RUN npm run ng -- build --prod -sm --stats-json --base-href=/${tart_name}/ 
-
-
+#
+#
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
 FROM nginx:1.15
 ARG tart_name

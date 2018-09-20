@@ -10,7 +10,7 @@ A TART telescope consists of some telescope hardware connected to a Raspberry Pi
 
 ## Building and testing the radio hardware
 
-IF you are interested in building the telescope contact tim@elec.ac.nz, as we have PCBs here that we are willing to give to anyone interested.
+If you are interested in building the telescope contact tim@elec.ac.nz, as we have PCBs here that we are willing to give to anyone interested.
 
 ### Radio Testing
 
@@ -42,7 +42,7 @@ Now log into the pi and run:
  
 Point your browser to the raspberry pi.
 
-## Set up radio receiver array
+## Set up radio hardware
 
 ### Antenna Location Calibration
 

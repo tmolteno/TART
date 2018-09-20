@@ -12,12 +12,10 @@ npm install
 
 ## Build Example
 
-
-```
-make exa
-```
+    make exa
 
 ## Run example
-```
-firefox ./example/index.html
-```
+
+    firefox ./example/index.html
+
+NOTE: This does not work if webpack uses production mode!
