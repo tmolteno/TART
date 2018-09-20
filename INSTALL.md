@@ -22,8 +22,7 @@ Execute the following commands to copy the necessary software to the target Pi
 
     TARGET=pi@tart2-dev
 
-    rsync -rv web-app ${TARGET}:.
-    rsync -rv docker ${TARGET}:.
+    rsync -rv software ${TARGET}:.
     rsync -rv hardware ${TARGET}:.
 
 Modify the file docker-compose.yml to change the password and the name of your telescope.
@@ -34,10 +33,11 @@ Then install docker and docker-compose on the target raspberry pi
 
     curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
     sudo gpasswd -a $USER docker
+    newgrp docker
     sudo pip install docker-compose
 
 Now log into the pi and run:
-    cd docker
+    cd software
     docker-compose up
  
 Point your browser to the raspberry pi.

@@ -25,8 +25,8 @@ Verilog language is in the hardware/FPGA directory
 
 ## Software 
 
-Software for operation is predominantly written in python and contained in the software/python
-directory. This installs the tart python package that contains all the necessary code. 
+Software for operation is predominantly written in python and contained in the software
+directory. Software containers are used to simplify installation.
 
 The telescope operation is controlled by a RESTful API. There is a web-based front end that can be used to
 monitor telescope operation.
