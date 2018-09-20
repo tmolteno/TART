@@ -1,0 +1,12 @@
+# Run the object position server container. 
+version: '2'
+
+services:
+    object-position-server:
+        build: 
+            context: .
+        ports:
+            - 8876:8876
+        restart: always
+        volumes:
+            - ~/catalog_cache:/object_position_server/orbit_data

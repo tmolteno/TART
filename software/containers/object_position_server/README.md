@@ -9,8 +9,11 @@ Author: Tim Molteno. tim@elec.ac.nz
 
 The easiest way to build this is to use docker. To build the container type
 
-    sh build.sh
-    sh run.sh
+    docker-compose build
+
+To run it (the -d puts it in the background)
+
+    docker-compose up -d
 
 This creates an instance called 'ops'. You can check the logs using 
 
@@ -21,11 +24,9 @@ To exit type Ctrl-p Ctrl-q
     
 To kill the instance
 
-    docker ps -a
-    docker stop ops
-    docker rm ops
+    docker-compose down
 
     
 ## Testing
 
-    wget http://localhost:8876/catalog?lat=-45.85&lon=170.54
+    wget -qO- "http://localhost:8876/catalog?lat=-45.85&lon=170.54"
