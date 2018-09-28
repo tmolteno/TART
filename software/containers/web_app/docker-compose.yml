@@ -1,0 +1,14 @@
+version: '3.5'
+
+services:
+
+  dev-app:
+    container_name: dev-app
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - './web-app:/code'
+      - '/code/node_modules'
+    ports:
+      - '4200:4200'
