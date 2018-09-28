@@ -20,6 +20,7 @@ import 'zone.js/dist/zone';
 
 // Total hack for Angular 6 here. Gets rid of the missing global referenced inside the fft module.
 (window as any).global = window;
+global.Buffer = global.Buffer || require('buffer').Buffer;
 
 // If you need to support the browsers/features below, uncomment the import
 // and run `npm install import-name-here';

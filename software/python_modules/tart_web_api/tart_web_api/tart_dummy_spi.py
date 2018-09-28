@@ -1,3 +1,6 @@
+import time
+import numpy as np
+
 class TartDummySPI:
   '''Dummy object for configuring, and querying TART hardware.'''
 
@@ -63,7 +66,7 @@ class TartDummySPI:
 
   def getbytes(self, reg, num, noisy=False):
     reg = int(reg) & 0x7f
-    res = self.spi.xfer([reg] + [0x0]*(num + self.LATENCY - 1))[self.LATENCY:]
+    res = [0xFF for i in range(num)]
     if noisy:
       for val in res:
         print '%s' % self.show_status(reg, val)
@@ -341,7 +344,7 @@ class TartDummySPI:
         ow = 0x00
       bs  = 0x80 | ow | int(blocksize)
       self.blocksize = blocksize
-      ret = self.spi.xfer([self.WRITE_CMD | self.VX_SYSTEM, bs])
+      ret = 0xFF
       self.pause()
       if noisy:
         print tobin(ret)
@@ -389,6 +392,6 @@ class TartDummySPI:
 
   def load_permute(self, filepath='test', noisy=False):
     '''Load a permutation vector from the file at the given filepath.'''
-    elf.perm = 1
+    self.perm = 1
     return self.perm
 
