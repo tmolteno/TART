@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
-import { NgLoadingBarModule } from 'ng-loading-bar';
+import { LoadingBarHttpModule } from '@ngx-loading-bar/http';
 import { PopoverModule } from 'ngx-popover';
 import { IsoTimestampDisplay } from './pipes/display-timestamp-pipe';
 import { TimeElapsedPipe } from './pipes/time-elapsed-pipe';
@@ -122,7 +122,7 @@ const appRoutes = [
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
-    NgLoadingBarModule.forRoot(),
+    LoadingBarHttpModule,
     BrowserModule,
     FormsModule,
     HttpModule,

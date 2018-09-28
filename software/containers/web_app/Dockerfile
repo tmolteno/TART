@@ -5,13 +5,27 @@ FROM node:10 as build-stage
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG tart_name
 
+RUN mkdir /code
 WORKDIR /code
-COPY ./web-app ./
+
+ENV PATH /code/node_modules/.bin:$PATH
+
+COPY ./web-app/package.json /code/package.json
+COPY ./web-app/api_imaging /code/api_imaging
 
 ENV npm_config_jobs=2
 RUN npm install
 
-RUN npm run ng -- build -sm --base-href=/${tart_name}/ 
+
+COPY ./web-app /code
+
+# WORKDIR /code
+# RUN ls
+# 
+# ENV npm_config_jobs=2
+# RUN npm install
+
+RUN npm run ng -- build --prod --source-map --base-href=/${tart_name}/ 
 #RUN npm run ng -- build --prod -sm --base-href=/${tart_name}/ 
 
 #

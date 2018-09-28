@@ -1,6 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~nouislider/distribute/nouislider.min.css";
-@import "~ng-loading-bar/loading-bar.css";
 body, app-root {
    display: flex;
    min-height: 100vh;

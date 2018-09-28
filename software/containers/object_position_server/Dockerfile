@@ -1,14 +1,18 @@
 FROM debian:stretch-slim
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
+ARG DEBIAN_FRONTEND=noninteractive
 
 # debian setup
 RUN apt-get update -y
 RUN apt-get upgrade -y 
 
-RUN apt-get install -y python-pip screen python-numpy python-dateutil
+RUN apt-get install -y python-numpy python-dateutil
+RUN apt-get install -y python-flask python-sgp4 python-requests python-tz
+RUN apt-get install -y python-pip
+
 RUN rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir flask sgp4 flask-cors pytz requests
+RUN pip install --no-cache-dir flask-cors
 
 # setup working directory
 ADD ./app/ /object_position_server

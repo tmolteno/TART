@@ -6,7 +6,7 @@ import { DebugElement } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PopoverModule } from 'ngx-popover';
 import { RouterModule } from '@angular/router';
-import { NgLoadingBarModule } from 'ng-loading-bar';
+import { LoadingBarHttpModule } from '@ngx-loading-bar/http';
 
 import { LoginComponent } from '../../views/login/login.component';
 import { NavBarComponent } from './nav-bar.component';
@@ -23,7 +23,7 @@ describe('NavBarComponent', () => {
     TestBed.configureTestingModule({
         imports: [
             PopoverModule,
-            NgLoadingBarModule,
+            LoadingBarHttpModule,
             FormsModule,
             RouterModule.forRoot([])
         ],

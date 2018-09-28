@@ -21,7 +21,7 @@ export class ModeService {
         private platformLocation: PlatformLocation
     ) {
         this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
-        this.modes$ = new Observable(observer => {
+        this.modes$ = new Observable<string[]>(observer => {
             this.modeObserver = observer;
         }).share();
     }

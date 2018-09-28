@@ -29,7 +29,7 @@ export class AuthService {
     ) {
         this.apiUrl = platformLocation.getBaseHrefFromDOM() + 'api/v1';
         this.loginStatus = this.isTokenValid();
-        this.login$ = new Observable(observer => {
+        this.login$ = new Observable<boolean>(observer => {
             this.loginObserver = observer;
         }).share();
     }

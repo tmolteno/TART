@@ -18,7 +18,7 @@ export class MockAuthService {
     constructor() {
         this.authToken = 'fake_token';
         this.loginStatus = true;
-        this.login$ = new Observable(observer => {
+        this.login$ = new Observable<boolean>(observer => {
             this.loginObserver = observer;
         }).share();
     }

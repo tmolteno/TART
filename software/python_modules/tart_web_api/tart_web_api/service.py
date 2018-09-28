@@ -27,6 +27,8 @@ from scipy.optimize import minimize
 import tart_web_api.database as db
 
 from tart_hardware_interface.tartspi import TartSPI
+from tart_dummy_spi import TartDummySPI
+
 from tart_hardware_interface.highlevel_modes_api import *
 from tart_hardware_interface.stream_vis import *
 
@@ -209,7 +211,14 @@ def create_direct_vis_dict(vis):
 class TartControl():
     ''' High Level TART Interface'''
     def __init__(self, runtime_config):
-        self.TartSPI = TartSPI()
+        try:
+            self.TartSPI = TartSPI()
+        except Exception as e:
+            logging.error(e.message)
+            logging.warn('USING DUMMY SPI MODULE.')
+
+            self.TartSPI = TartDummySPI()
+
         self.config = runtime_config
         self.state = 'off'
         self.queue_vis = None

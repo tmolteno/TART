@@ -1,5 +1,7 @@
 ## Dockerfile for Telescope Calibration
 
+Author: Tim Molteno
+
 This docker file executes a process that uses known satellite positions to calibrate the telescope. The method of calibration is described in [1].
 
 This instance requires a lot of processing power (approx 1 hour of CPU time on a single core high-end i7) and calibrates the TART telescope using a catalog of known L1-band objects (see object_position_server). These known objects are used as 'guide stars' to work out the gains and phases for each of the telescope antennas.

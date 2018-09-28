@@ -8,8 +8,7 @@ import { InfoService } from '../../services/info.service';
   selector: 'app-nav-bar',
   templateUrl: './nav-bar.component.html',
   styleUrls: [
-      './nav-bar.component.css',
-      '../../../../node_modules/ng-loading-bar/loading-bar.css'
+      './nav-bar.component.css'
   ]
 })
 export class NavBarComponent implements OnInit {

@@ -1,3 +1,2 @@
-./web-app/api_imaging/node_modules
-./web-app/node_modules
-./web-app/dist
+**/node_modules
+**/dist
