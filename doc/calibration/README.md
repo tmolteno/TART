@@ -1,15 +1,16 @@
 ## Guide to Calibration
 
-Author: Tim Molteno tim@elec.ac.nz (c) 2017.
+Author: Tim Molteno tim@elec.ac.nz (c) 2018.
 
 The telescope will not operate without calibration. The calibration will determine the positions of the annteas, as well as the phases of the radio receivers. Once calibrated, the calibration values are available through through the telescope web interface so that images can be made from the data. 
 
 Calibration of the telescope requires two steps. The first is to calibrate the positions of the antennas. This is done only once. The second step is to calculate the radio-receiver gains and phase offsets. This is normally done at regular intervales (every few hours or possibly few days).
 
+**NOTE: Every time the telescope is powered off, the phase calibration will need to be redone**
 
 ### Antenna Positions
 
-A procedure and some software for estimating the antenna positions is described in the positions directory. Once these positions are known, they are entered into a telescope calibration file located [software/telescope_web_api/config_data/calibrated_antenna_positions.json](.././software/telescope_web_api/config_data/calibrated_antenna_positions.json)
+A procedure and some software for estimating the antenna positions is described in the positions directory. Once these positions are known, they are entered into a telescope calibration file located [software/telescope_web_api/config_data/calibrated_antenna_positions.json](../../software/containers/telescope_web_api/config_data/calibrated_antenna_positions.json)
     
 An example of a calibration file is shown below:
 
@@ -18,4 +19,6 @@ An example of a calibration file is shown below:
 This is a list of the coordinates in the East-North plane. 
 
 ### Gains and Phases
+
+There are two methods to calculate the gains and phases. The easiest can be used if the telescope is looking upwards. In this case the gains and phases can be calculated automatically from known satellite positions. Software for doing this automatically is described in [phases/README.md](phases/README.md).
 
