@@ -9,7 +9,7 @@ Calibration of the telescope requires two steps. The first is to calibrate the p
 
 ### Antenna Positions
 
-A procedure and some software for estimating the antenna positions is described in the positions directory. Once these positions are known, they are entered into a telescope calibration file located [software/telescope_web_api/config_data/calibrated_antenna_positions.json](../software/telescope_web_api/config_data/calibrated_antenna_positions.json)
+A procedure and some software for estimating the antenna positions is described in the positions directory. Once these positions are known, they are entered into a telescope calibration file located [software/telescope_web_api/config_data/calibrated_antenna_positions.json](.././software/telescope_web_api/config_data/calibrated_antenna_positions.json)
     
 An example of a calibration file is shown below:
 
