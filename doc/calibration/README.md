@@ -20,5 +20,5 @@ This is a list of the coordinates in the East-North plane.
 
 ### Gains and Phases
 
-There are two methods to calculate the gains and phases. The easiest can be used if the telescope is looking upwards. In this case the gains and phases can be calculated automatically from known satellite positions. Software for doing this automatically is described in [phases/README.md](phases/README.md).
+There are two methods to calculate the gains and phases. The easiest can be used if the telescope is looking upwards. In this case the gains and phases can be calculated automatically from known satellite positions. Software for doing this automatically is described in [phase/README.md](phase/README.md).
 
