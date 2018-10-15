@@ -1,3 +1,8 @@
+# Object Position Server Main API 
+#
+# Author Tim Molteno tim@elec.ac.nz (c) 2013-2018
+
+
 from flask import Flask
 from flask import jsonify, request
 from flask_cors import CORS, cross_origin
@@ -10,6 +15,7 @@ from dateutil import parser
 import sun_object
 
 waas_cache = norad_cache.NORADCache()
+extra_cache = norad_cache.ExtraCache()
 gps_cache = norad_cache.GPSCache()
 galileo_cache = norad_cache.GalileoCache()
 sun = sun_object.SunObject()
@@ -80,6 +86,7 @@ def get_catalog():
     ret = waas_cache.get_az_el(date, lat, lon, alt)
     ret += gps_cache.get_az_el(date, lat, lon, alt)
     ret += galileo_cache.get_az_el(date, lat, lon, alt)
+    ret += extra_cache.get_az_el(date, lat, lon, alt)
     ret += sun.get_az_el(date, lat, lon, alt)
     print ret
     return jsonify(ret)
@@ -100,6 +107,7 @@ def get_pos():
         date = parse_date(request)
         ret = waas_cache.get_positions(date)
         ret += gps_cache.get_positions(date)
+        ret += extra_cache.get_positions(date)
         ret += galileo_cache.get_positions(date)
         return jsonify(ret)
     except Exception as err:
