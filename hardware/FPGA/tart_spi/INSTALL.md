@@ -107,8 +107,8 @@ Once this has finished (which should take around 5-10 minutes), then use `papili
 When the TART hardware has been setup, installed, and connected correctly, then:
 
 > ssh pi@my-tart.xxx
-> cd TART/hardware/rpi
-> sudo python tartdsp.py --status --verbose
+> cd TART/hardware/rpi/tart_cli
+> sudo python low_level_dsp.py --status --verbose
 
 where `my-tart.xxx` is the domain-name/IO-address of your TART-connected Raspberry Pi. The output of these commands should give the current status of the TART FPGA hardware, and the initial state has the capture frontend disabled, raw-data acquisition disabled, and the correlators disabled.
 

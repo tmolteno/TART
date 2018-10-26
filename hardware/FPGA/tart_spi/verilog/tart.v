@@ -106,7 +106,7 @@
  *  5/ go to step 3/,
  * and as an example, this mode can be launched via a Python script:
  * 
- *  > sudo python tartdsp.py --blocksize=22 --monitor --capture
+ *  > sudo python low_level_dsp.py --blocksize=22 --monitor --capture
  * 
  * 
  * Changelog:

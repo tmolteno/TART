@@ -19,8 +19,8 @@ NOTE: Installation instructions can be found within _INSTALL.md_ .
 
 ## Using TART Hardware ##
 **TODO update the list of scripts**
-Python scripts are used to configure, and exchange data with the TART hardware. These are located within the subdirectory `hardware/rpi/` (of the *TART* project root), and contain the following scripts:
-* `tartdsp.py`        -- sets and queries the states for a DSP build of the TART hardware;
+Python scripts are used to configure, and exchange data with the TART hardware. These are located within the subdirectory `hardware/rpi/tart_cli` (of the *TART* project root), and contain the following scripts:
+* `low_level_dsp.py`        -- sets and queries the states for a DSP build of the TART hardware;
 * `calibrate.py`      -- utilities for measuring the phase-delays of each of the antennae;
 * `tart_testbench.py` -- tests the raw-data acquisition and read-back modes of the hardware;
 
@@ -32,12 +32,12 @@ To query the current state of the (connected) TART hardware, first connect to th
 
 and then the FPGA can be interrogated via:
 
-> cd TART/hardware/rpi/
-> sudo python tartdsp.py --status --verbos
+> cd TART/hardware/rpi/tart_cli
+> sudo python low_level_dsp.py --status --verbos
 
 or, for further options:
 
-> sudo python tartdsp.py --help
+> sudo python low_level_dsp.py --help
 
 
 ## Simulation & Testbenches ##
