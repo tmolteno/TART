@@ -15,6 +15,11 @@ services:
         ports:
             - 5000:5000
         restart: always
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
 
     api_doc_server:
         build:
@@ -37,6 +42,11 @@ services:
         ports: 
             - 80:80
         restart: always
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
 
     http-tunnel:
         depends_on:
