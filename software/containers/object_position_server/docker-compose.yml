@@ -10,3 +10,8 @@ services:
         restart: always
         volumes:
             - ~/catalog_cache:/object_position_server/orbit_data
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
