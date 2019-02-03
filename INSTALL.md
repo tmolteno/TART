@@ -22,8 +22,7 @@ Execute the following commands to copy the necessary software to the target Pi
 
     TARGET=pi@tart2-dev
 
-    rsync -rv software ${TARGET}:.
-    rsync -rv hardware ${TARGET}:.
+    rsync -rv --exclude=node_modules software ${TARGET}:.
 
 Modify the file docker-compose.yml to change the password and the name of your telescope.
 

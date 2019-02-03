@@ -31,4 +31,8 @@ directory. Software containers are used to simplify installation.
 The telescope operation is controlled by a RESTful API. There is a web-based front end that can be used to
 monitor telescope operation.
 
+## Installation
+
+See the  [Installation Instructions](INSTALL.md) file for more detail on installation.
+
 [tart_image]: https://github.com/tmolteno/TART/blob/master/doc/img/tart_image.jpg "TART All-Sky Image"
