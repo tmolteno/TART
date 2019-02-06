@@ -13,7 +13,7 @@ The following procedure will install all the necessary TART software on a Raspbe
 
 ### Step 1. Prepare the Pi
 
-Install docker on the raspberry pi. This is done by following.
+Install docker on the raspberry pi. This is done by following commands.
 
     curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
     sudo groupadd docker
@@ -22,6 +22,8 @@ Install docker on the raspberry pi. This is done by following.
     sudo pip install docker-compose
 
 ### Step 1. Copy code to the Pi
+
+This step assumes that the raspberry pi is accessible as the host name 'tart2-dev' on your local network.
 
     TARGET=pi@tart2-dev
 
@@ -51,7 +53,7 @@ Point your browser at the target Pi http://<target_pi>/. You should see the TART
 
 ## Calibration
 
-The calibration software is 
+The calibration software is also packaged with docker, and should run on a reasonably fast machine with access to the radio telescope. It uses the object position server to get a catalog of known objects that should be in the telescope field of view, and calculates gains and phases based on this information. See the [containers/calibration_server](containers/calibration_server/README.md) directory.
 
 ## Object Position Server
 

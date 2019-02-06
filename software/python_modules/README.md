@@ -10,7 +10,6 @@ For everyday use, these can simply be installed using PyPi
 
      sudo pip install tart tart_web_api tart_hardware_interface
 
-
 ## Authors
 
 * Tim Molteno (tim@elec.ac.nz)

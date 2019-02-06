@@ -10,7 +10,7 @@ The process spends the first hour capturing 3 sets of observations at 25 minute 
 
 ## Docker Usage
 
-The easiest way to build this is to use docker. To build the container type
+The easiest way to build this is to use docker. To build the container type:
 
     sh build.sh
 

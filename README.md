@@ -31,6 +31,8 @@ directory. Software containers are used to simplify installation.
 The telescope operation is controlled by a RESTful API. There is a web-based front end that can be used to
 monitor telescope operation.
 
+See the [software/README.md](software/README.md) file further information.
+
 ## Installation
 
 See the  [Installation Instructions](INSTALL.md) file for more detail on installation.
