@@ -4,6 +4,9 @@ This is a python server that will serve positions of objects that transmit in th
 
 Author: Tim Molteno. tim@elec.ac.nz
 
+## Prerequisites
+
+A computer with [docker](https://docker.io) installed, and having external web access to software repositories. We have tested these only on Linux-based computers.
 
 ## Docker For Object Position Server
 
