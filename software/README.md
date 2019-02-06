@@ -43,4 +43,11 @@ Point your browser at the target Pi http://<target_pi>/. You should see the TART
 ## Calibration
 
 The calibration software is 
+
 ## Object Position Server
+
+The object position server runs on a host, and provides a list of known objects for any location on earth and any time. A public server is available at https://tart.elec.ac.nz/catalog. The default installation of the operating software uses this server. You can test it using
+
+    https://tart.elec.ac.nz/catalog/catalog?date=2019-02-07T09:13:28+13:00&lat=-45.85177&lon=170.5456
+
+If you wish to install your own server, you can build the docker container in the [object_position_server](object_position_server/README.md) directory.
