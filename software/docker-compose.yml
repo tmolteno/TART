@@ -7,9 +7,9 @@ services:
         volumes:
             -   data-volume:/telescope_data
             -   ~/tart_web_api_store:/app
-# Uncomment the following line to enable access to the TART hardware - leave it commented to test on a desktop
-#        devices:
-#            - /dev/spidev0.0
+        # Comment the following two lines to disable access to the TART hardware (this allows testing of software on a desktop)
+        devices:
+           - /dev/spidev0.0
         environment:
             # Change the following to be something secure. You will use this to login to your telescope from the web api.
             - LOGIN_PW=passwd
@@ -28,6 +28,7 @@ services:
             dockerfile: Dockerfile.apidoc 
         ports: 
             - 8080:80
+        restart: always
 
     web_app:
         depends_on:
