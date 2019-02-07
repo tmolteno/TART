@@ -3,7 +3,7 @@
 #
 #  Author. Tim Molteno. tim@elec.ac.nz (c) 2018.
 #
-FROM debian:buster
+FROM debian:stretch
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG DEBIAN_FRONTEND=noninteractive
 
