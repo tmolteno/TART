@@ -10,17 +10,20 @@ A TART telescope consists of some telescope hardware connected to a Raspberry Pi
 
 ## Building and testing the radio hardware
 
-If you are interested in building the telescope contact tim@elec.ac.nz, as we have PCBs here that we are willing to give to anyone interested.
+If you are interested in building the telescope contact tim@elec.ac.nz, as we have printed circuit boards, and other components that we are willing to give to anyone interested in deploying their own telescope.
+
+Hardware documentation can be found in [hardware/README.md](hardware/README.md).
+
 
 ### Radio Testing
 
 TODO 
 
-## Installing software on the raspberry Pi
+## Installing software on the Raspberry Pi
 
-Execute the following commands to copy the necessary software to the target Pi
+Execute the following commands to copy the necessary software to the target Pi (assumed to be called 'tart2-dev' below:
 
-    TARGET=pi@tart2-dev
+    TARGET=pi@tart2-dev.local
 
     rsync -rv --exclude=node_modules software ${TARGET}:.
 
@@ -39,13 +42,13 @@ Now log into the pi and run:
     cd software
     docker-compose up
  
-Point your browser to the raspberry pi.
+Point your browser to the raspberry pi (http://tart2-dev.local). You should see the telescope web interface. 
+
+Further software installation information cab be found in [software/README.md](software/README.md).
 
 ## Set up radio hardware
 
-### Antenna Location Calibration
-
-## Calibrating the Telescope
+Once the telescope can be accessed via its web interface, the telescope hardware should be put out in a suitable location. Then the calibration procedure should be followed. This requires two steps that are outlined in the [calibration documentation](doc/calibration/README.md).
 
 ## Other Useful Things
 
