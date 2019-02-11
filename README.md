@@ -29,3 +29,8 @@ Verilog language is in the [hardware/FPGA](hardware/FPGA/README.md) directory
 See the  [Installation Instructions](INSTALL.md) file for more detail on installation.
 
 [tart_image]: https://github.com/tmolteno/TART/blob/master/doc/img/tart_image.jpg "TART All-Sky Image"
+
+
+## Telescope API documentation
+
+The [Telescope API documentation](https://tart.elec.ac.nz/doc/) describes how the TART is controlled via the network for configration and data retrieval. 
