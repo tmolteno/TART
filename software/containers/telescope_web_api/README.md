@@ -8,7 +8,7 @@ The config_data directory contains information about your TART telescope such as
 The server listens on port 5000 (on localhost). It is normally deployed using docker-compose from the top level
 docker-compose.yml. 
 
-Because of this, the following instructions are for development only. For normal use, look into the main documentation.
+**Because of this, the following instructions are for development only**. For normal use, look into the main [software documentation](../README.md).
 
 
 ## Docker Usage for TESTING ONLY

@@ -29,7 +29,7 @@ Install docker on the raspberry pi. This is done by following commands.
 
 ### Step 1. Copy code to the Pi
 
-This step assumes that the raspberry pi is accessible as the host name 'tart2-dev' on your local network.
+This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
 
     TARGET=pi@tart2-dev
 
@@ -56,11 +56,12 @@ Further software installation information cab be found in [software/README.md](s
 
 #### Documentation Server
 
-Point your browser at  http://<target_pi>/doc/. You should see the documentation for the TART web API. 
+Point your browser at  [http:/tart2-dev.local/doc/](http:/tart2-dev.local/doc/). You should see the documentation for the TART web API. 
 
 #### Live Telescope View
 
-Point your browser at the target Pi http://<target_pi>/. You should see the TART web interface. Remember to login and change the mode to 'vis'
+Point your browser at the target Pi [http:/tart2-dev.local/](http:/tart2-dev.local/). You should see the TART web interface. Remember to login and change the mode to 'vis' so that the telescope starts acquiring data.
+
 
 ## Calibration
 
