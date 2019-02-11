@@ -14,9 +14,9 @@ The easiest way to build this is to use docker. To build the container type:
 
     sh build.sh
 
-To execute the container type (where <passwd> is the password to your telescope web api server:
+To execute the container type (where "passwd" is the password to your telescope web api server):
 
-    sh run.sh <passwd>
+    sh run.sh passwd
 
 
 ### Stoping or Killing the instance

@@ -16,22 +16,13 @@ Scheel and Phil Brown. Enquries about the TART should be addressed to Tim Molten
 ## Hardware
 
 The TART hardware is designed using a combination of KiCAD (newest boards) and
-CadSoft's Eagle package. These designs are located in the hardware folder.
+CadSoft's Eagle package. These designs are located in the [hardware](hardware/README.md) folder. 
 
 ## Firmware
 
 The TART uses an FPGA to synchronize data from each receiver. The code for this in the 
-Verilog language is in the hardware/FPGA directory
+Verilog language is in the [hardware/FPGA](hardware/FPGA/README.md) directory
 
-## Software 
-
-Software for operation is predominantly written in python and contained in the software
-directory. Software containers are used to simplify installation.
-
-The telescope operation is controlled by a RESTful API. There is a web-based front end that can be used to
-monitor telescope operation.
-
-See the [software/README.md](software/README.md) file further information.
 
 ## Installation
 

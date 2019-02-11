@@ -6,7 +6,6 @@ The telescope will not operate without calibration. The calibration will determi
 
 Calibration of the telescope requires two steps. The first is to calibrate the positions of the antennas. This is done only once. The second step is to calculate the radio-receiver gains and phase offsets. This is normally done at regular intervales (every few hours or possibly few days).
 
-**NOTE: Every time the telescope is powered off, the phase calibration will need to be redone**
 
 ### Antenna Positions
 
@@ -21,4 +20,8 @@ This is a list of the coordinates in the East-North plane.
 ### Gains and Phases
 
 There are two methods to calculate the gains and phases. The easiest can be used if the telescope is looking upwards. In this case the gains and phases can be calculated automatically from known satellite positions. Software for doing this automatically is described in [phase/README.md](phase/README.md).
+
+**NOTE: Every time the telescope is powered off, the phase calibration will need to be redone**
+
+Because of this, the phase calibration is typically done at regular intervals as a cron job.'
 
