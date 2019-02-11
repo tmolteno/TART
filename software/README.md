@@ -7,7 +7,13 @@ The folder are structured as follows
 * containers - docker images for operation and calibration of the TART
 * python_modules - python modules used by the docker containers.
 
-## Installation on a target raspberry pi
+The Software runs on three different computers. 
+
+* A Raspberry Pi (Model 3) which is plugged into the TART basestation board. This runs the telescope web API server.
+* A calibration server which is a fast desktop that runs a calibration routine at regular intervals (every few hours)
+* An optional object position server. This is a server that provides a catalog of known objects and their elevation/azimuth for any point on earth. A public one is available so you'll only need to provide your own server if you're running a process that requires low-latency access to this information.
+
+## Installation on a target Raspberry Pi
 
 The following procedure will install all the necessary TART software on a Raspberry Pi (Model 3) attached to the TART hardware.
 
@@ -42,6 +48,11 @@ This will build all the necessary sofware on the Pi. To run all the software an 
     docker-compose up -d
 
 ### Testing
+
+Point your browser to the raspberry pi (http://tart2-dev.local). You should see the telescope web interface. 
+
+Further software installation information cab be found in [software/README.md](software/README.md).
+
 
 #### Documentation Server
 
