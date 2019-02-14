@@ -9,7 +9,8 @@ import { TartService } from '../../services/tart.service';
 import { ImagingService } from '../../services/imaging.service';
 import { DataAcquisitionService } from '../../services/data-acquisition.service';
 
-import { Observable } from 'rxjs/Rx';
+//import { Observable } from 'rxjs/Observable';
+import { timer } from 'rxjs';
 import * as moment from 'moment/moment';
 
 @Component({
@@ -75,7 +76,7 @@ export class HomeComponent {
 
     startUpdateFpgaTimer() {
         let updateTime = this.refreshFpgaTime * 1000;
-        this.updateFpgaTimer = Observable.timer(updateTime, updateTime);
+        this.updateFpgaTimer = timer(updateTime, updateTime);
 
         this.fpgaTimerSubscription = this.updateFpgaTimer
             .subscribe(tick => {

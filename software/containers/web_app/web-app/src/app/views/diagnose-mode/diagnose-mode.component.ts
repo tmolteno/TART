@@ -10,7 +10,8 @@ import { AuthService } from '../../services/auth.service';
 import { ModeService } from '../../services/mode.service';
 import { ImagingService } from '../../services/imaging.service';
 
-import { Observable } from 'rxjs/Observable';
+//import { Observable } from 'rxjs/Observable';
+import { timer } from 'rxjs';
 
 @Component({
     selector: 'app-diagnose-mode',
@@ -68,7 +69,7 @@ export class DiagnoseModeComponent {
 
     startUpdateTimer() {
         let updateTime = this.refreshTime * 1000;
-        this.updateStatusTimer = Observable.timer(0, updateTime);
+        this.updateStatusTimer = timer(0, updateTime);
         this.timerSubscription = this.updateStatusTimer
             .subscribe(tick => this.updateStatus());
     }

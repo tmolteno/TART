@@ -13,7 +13,8 @@ import { ColourService } from '../../services/colour.service';
 import { CatalogService } from '../../services/catalog.service';
 import { InfoService } from '../../services/info.service';
 
-import { Observable } from 'rxjs/Rx';
+import { Observable } from 'rxjs/Observable';
+import { timer } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import * as moment from 'moment/moment';
 
@@ -127,7 +128,7 @@ export class ImagingComponent {
     }
 
     startUpdateImageTimer() {
-        this.updateImageTimer = Observable.timer(0, this.refreshTime * 1000);
+        this.updateImageTimer = timer(0, this.refreshTime * 1000);
         this.timerSubscription = this.updateImageTimer
             .subscribe(tick => this.onRefreshTimerTick(tick));
     }
