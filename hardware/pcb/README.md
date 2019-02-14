@@ -4,3 +4,7 @@ At the moment TART consists of three different PCBs:
 2. (4x) Radio hub module (jitter cleaner, power supply, 485 transceiver and base for 6 Radio modules)
 3. (1x) Base station module (485 transceiver, oscillator, power supply, host for acquisition FPGA and Raspberry Pi)
 
+base_station, radio_hub_module and radio_module are the original designs used for all currently built up TART's (as of Feb 2019). The base_station folder is a KIcad project, while radio_hub_module and radio_module are created in Eagle PCB.
+
+The *201902 folder are the above converted and updated to KIcad 5 projects.
+

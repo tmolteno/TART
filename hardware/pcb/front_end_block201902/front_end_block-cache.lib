@@ -1,0 +1,303 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# front_end_block-eagle-import_+UB
+#
+DEF front_end_block-eagle-import_+UB #SUPPLY 0 40 Y Y 1 L P
+F0 "#SUPPLY" 0 0 50 H I C CNN
+F1 "front_end_block-eagle-import_+UB" -75 125 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+C 0 50 50 1 0 10 N
+P 2 1 0 0 -25 50 25 50 N
+P 2 1 0 0 0 25 0 75 N
+X +UB 1 0 -100 100 U 0 0 1 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_BCR135W
+#
+DEF front_end_block-eagle-import_BCR135W T 0 40 Y Y 1 L N
+F0 "T" -285 150 59 H V L BNN
+F1 "front_end_block-eagle-import_BCR135W" -275 -320 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+C 0 0 7 1 0 10 N
+C 0 0 15 1 0 10 N
+C 200 -200 7 1 0 10 N
+C 200 -200 15 1 0 10 N
+T 0 -210 50 42 0 1 0 10k Normal 0 L B
+T 900 -100 -50 42 0 1 0 47k Normal 0 R T
+S 90 -100 120 100 1 0 0 F
+P 2 1 0 0 -200 -25 -200 25 N
+P 2 1 0 0 -200 25 -80 25 N
+P 2 1 0 0 -80 -25 -200 -25 N
+P 2 1 0 0 -80 0 0 0 N
+P 2 1 0 0 -80 25 -80 -25 N
+P 2 1 0 0 -25 -160 25 -160 N
+P 2 1 0 0 -25 -40 -25 -160 N
+P 2 1 0 0 0 -200 200 -200 N
+P 2 1 0 0 0 -160 0 -200 N
+P 2 1 0 0 0 0 0 -40 N
+P 2 1 0 0 0 0 100 0 N
+P 2 1 0 0 25 -160 25 -40 N
+P 2 1 0 0 25 -40 -25 -40 N
+P 2 1 0 0 120 -60 200 -100 N
+P 2 1 0 0 200 -100 200 -200 N
+P 2 1 0 0 200 100 120 60 N
+P 3 1 0 0 170 -60 150 -100 200 -100 F
+X B 1 -300 0 100 R 0 0 1 0 P
+X E 2 200 -300 100 U 0 0 1 0 P
+X C 3 200 200 100 D 0 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_BMIS-202
+#
+DEF ~front_end_block-eagle-import_BMIS-202 S 0 40 Y Y 1 L N
+F0 "S" 0 0 50 H I C CNN
+F1 "front_end_block-eagle-import_BMIS-202" 0 0 50 H I C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+T 900 -700 -200 59 0 1 0 SHIELD Normal 0 L B
+P 2 1 0 0 -700 0 600 0 N
+X GND@0 P$1 -400 -200 200 U 0 0 1 0 W
+X GND@9 P$10 -600 -200 200 U 0 0 1 0 W
+X GND@10 P$11 400 -200 200 U 0 0 1 0 W
+X GND@11 P$12 500 -200 200 U 0 0 1 0 W
+X GND@1 P$2 -300 -200 200 U 0 0 1 0 W
+X GND@2 P$3 -200 -200 200 U 0 0 1 0 W
+X GND@3 P$4 -100 -200 200 U 0 0 1 0 W
+X GND@4 P$5 0 -200 200 U 0 0 1 0 W
+X GND@5 P$6 100 -200 200 U 0 0 1 0 W
+X GND@6 P$7 200 -200 200 U 0 0 1 0 W
+X GND@7 P$8 300 -200 200 U 0 0 1 0 W
+X GND@8 P$9 -500 -200 200 U 0 0 1 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_C-EUC0402
+#
+DEF front_end_block-eagle-import_C-EUC0402 C 0 40 Y Y 1 L N
+F0 "C" 60 15 59 H V L BNN
+F1 "front_end_block-eagle-import_C-EUC0402" 60 -185 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -80 -80 80 -60 1 0 0 F
+S -80 -40 80 -20 1 0 0 F
+P 2 1 0 0 0 -100 0 -80 N
+P 2 1 0 0 0 0 0 -20 N
+X 1 1 0 100 100 D 0 0 1 0 P
+X 2 2 0 -200 100 U 0 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_C-EUC0603
+#
+DEF front_end_block-eagle-import_C-EUC0603 C 0 40 Y Y 1 L N
+F0 "C" 60 15 59 H V L BNN
+F1 "front_end_block-eagle-import_C-EUC0603" 60 -185 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -80 -80 80 -60 1 0 0 F
+S -80 -40 80 -20 1 0 0 F
+P 2 1 0 0 0 -100 0 -80 N
+P 2 1 0 0 0 0 0 -20 N
+X 1 1 0 100 100 D 0 0 1 0 P
+X 2 2 0 -200 100 U 0 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_GNDA
+#
+DEF front_end_block-eagle-import_GNDA #GND 0 40 Y Y 1 L P
+F0 "#GND" 0 0 50 H I C CNN
+F1 "front_end_block-eagle-import_GNDA" -100 -100 59 V V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 1 0 0 -75 0 75 0 N
+P 2 1 0 0 -43 -20 43 -20 N
+X GNDA 1 0 100 100 D 0 0 1 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_LEDCHIP-LED0603
+#
+DEF front_end_block-eagle-import_LEDCHIP-LED0603 LED 0 40 Y Y 1 L N
+F0 "LED" 140 -180 59 V V L BNN
+F1 "front_end_block-eagle-import_LEDCHIP-LED0603" 225 -180 59 V V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 1 0 0 -80 -30 -135 -85 N
+P 2 1 0 0 -75 -75 -130 -130 N
+P 2 1 0 0 0 -100 -50 -100 N
+P 2 1 0 0 0 -100 -50 0 N
+P 2 1 0 0 0 0 -50 0 N
+P 2 1 0 0 0 0 0 -100 N
+P 2 1 0 0 50 -100 0 -100 N
+P 2 1 0 0 50 0 0 -100 N
+P 2 1 0 0 50 0 0 0 N
+P 3 1 0 0 -135 -85 -120 -50 -100 -70 F
+P 3 1 0 0 -130 -130 -115 -95 -95 -115 F
+X A A 0 100 100 D 0 0 1 0 P
+X C C 0 -200 100 U 0 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_MAX2769LPKF
+#
+DEF front_end_block-eagle-import_MAX2769LPKF U 0 40 Y Y 1 L N
+F0 "U" -900 1200 42 H V L BNN
+F1 "front_end_block-eagle-import_MAX2769LPKF" 500 -1200 42 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 1 0 0 -900 -1100 -900 1200 N
+P 2 1 0 0 -900 1200 800 1200 N
+P 2 1 0 0 800 -1100 -900 -1100 N
+P 2 1 0 0 800 1200 800 -1100 N
+X ANTFLAG 1 -1100 -400 200 R 50 50 1 0 O
+X ~CS 10 1000 400 200 L 50 50 1 0 I
+X VCCVCO 11 300 1400 200 D 50 50 1 0 W
+X CPOUT 12 1000 -1000 200 L 50 50 1 0 O
+X VCCCP 13 100 1400 200 D 50 50 1 0 W
+X VCCD 14 -100 1400 200 D 50 50 1 0 W
+X XTAL 15 1000 -600 200 L 50 50 1 0 I
+X CLKOUT 16 1000 -900 200 L 50 50 1 0 O
+X Q1 17 1000 600 200 L 50 50 1 0 O
+X Q0 18 1000 700 200 L 50 50 1 0 O
+X VCCADC 19 -300 1400 200 D 50 50 1 0 W
+X LNAOUT 2 -1100 400 200 R 50 50 1 0 O
+X I0 20 1000 900 200 L 50 50 1 0 O
+X I1 21 1000 1000 200 L 50 50 1 0 O
+X NC@1 22 -1100 -900 200 R 50 50 1 0 N
+X VCCIF 23 -500 1400 200 D 50 50 1 0 W
+X ~IDLE 24 1000 0 200 L 50 50 1 0 I
+X LNA2 25 -1100 600 200 R 50 50 1 0 I
+X PGM 26 1000 -300 200 L 50 50 1 0 I
+X LNA1 27 -1100 800 200 R 50 50 1 0 I
+X NC@2 28 -1100 -1000 200 R 50 50 1 0 O
+X ANTBIAS 3 -1100 -200 200 R 50 50 1 0 O
+X VCCRF 4 500 1400 200 D 50 50 1 0 W
+X MIXIN 5 -1100 100 200 R 50 50 1 0 I
+X LD 6 1000 -400 200 L 50 50 1 0 O
+X ~SHDN 7 1000 -100 200 L 50 50 1 0 I
+X SDATA 8 1000 200 200 L 50 50 1 0 I
+X SCLK 9 1000 300 200 L 50 50 1 0 I
+X GND M 0 -1300 200 U 0 50 1 0 W
+X GND P$4 0 -1300 200 U 0 50 1 0 W
+X GND P$6 0 -1300 200 U 0 50 1 0 W
+X GND P$7 0 -1300 200 U 0 50 1 0 W
+X GND P$9 0 -1300 200 U 0 50 1 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_R-EU_R0402
+#
+DEF front_end_block-eagle-import_R-EU_R0402 R 0 40 Y Y 1 L N
+F0 "R" -150 59 59 H V L BNN
+F1 "front_end_block-eagle-import_R-EU_R0402" -150 -130 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 1 0 0 -100 -35 -100 35 N
+P 2 1 0 0 -100 -35 100 -35 N
+P 2 1 0 0 100 -35 100 35 N
+P 2 1 0 0 100 35 -100 35 N
+X 1 1 -200 0 100 R 0 0 1 0 P
+X 2 2 200 0 100 L 0 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_SMA-142-0701-801_806
+#
+DEF ~front_end_block-eagle-import_SMA-142-0701-801_806 X 0 40 Y Y 2 L N
+F0 "X" 0 -300 59 H V L BNN
+F1 "front_end_block-eagle-import_SMA-142-0701-801_806" -100 -200 59 H I L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+A -98 0 100 115 911 1 0 12 N 0 20 -100 100
+A -98 0 100 -911 -115 1 0 12 N -100 -100 0 -20
+P 2 1 0 0 -100 20 -30 20 N
+P 2 1 0 0 -30 -20 -100 -20 N
+P 2 1 0 0 -30 20 -20 0 N
+P 2 1 0 0 -20 0 -30 -20 N
+P 2 1 0 0 0 -100 -30 -70 N
+P 2 1 0 0 0 0 -20 0 N
+P 2 2 0 0 0 0 0 -200 N
+X 1 1 100 0 100 L 0 0 1 0 P
+X GND G@1 100 -100 100 L 0 0 1 0 W
+X GND@1 G@2 100 0 100 L 0 0 2 0 W
+X GND@2 G@3 100 -100 100 L 0 0 2 0 W
+X GND@3 G@4 100 -200 100 L 0 0 2 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_V+
+#
+DEF front_end_block-eagle-import_V+ #P+ 0 40 Y Y 1 L P
+F0 "#P+" 0 0 50 H I C CNN
+F1 "front_end_block-eagle-import_V+" -100 -100 59 V V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 1 0 0 -35 -50 35 -50 N
+P 2 1 0 0 0 5 -35 -50 N
+P 2 1 0 0 35 -50 0 5 N
+X V+ 1 0 -100 100 U 0 0 1 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_VCC_2
+#
+DEF front_end_block-eagle-import_VCC_2 #P+ 0 40 Y Y 1 L P
+F0 "#P+" 0 0 50 H I C CNN
+F1 "front_end_block-eagle-import_VCC_2" -100 -100 59 V V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 1 0 0 0 0 -50 -75 N
+P 2 1 0 0 0 70 -50 -75 N
+P 2 1 0 0 50 -75 0 0 N
+P 2 1 0 0 50 -75 0 70 N
+X VCC/2 1 0 -100 100 U 0 0 1 0 W
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_WE-CBF_0805
+#
+DEF front_end_block-eagle-import_WE-CBF_0805 L 0 40 Y Y 1 L N
+F0 "L" -150 200 59 H V L BNN
+F1 "front_end_block-eagle-import_WE-CBF_0805" -150 -50 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -100 50 100 150 1 0 0 F
+X 1 1 -200 100 100 R 50 0 1 0 P
+X 2 2 200 100 100 L 50 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+# front_end_block-eagle-import_WE-MK_0402
+#
+DEF front_end_block-eagle-import_WE-MK_0402 L 0 40 Y Y 1 L N
+F0 "L" -150 200 59 H V L BNN
+F1 "front_end_block-eagle-import_WE-MK_0402" -150 -50 59 H V L BNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -100 50 100 150 1 0 0 F
+X 1 1 -200 100 100 R 50 0 1 0 P
+X 2 2 200 100 100 L 50 0 1 0 P
+ENDDRAW
+ENDDEF
+#
+#End Library
