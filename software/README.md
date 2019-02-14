@@ -13,6 +13,12 @@ The Software runs on three different computers.
 * A calibration server which is a fast desktop that runs a calibration routine at regular intervals (every few hours)
 * An optional object position server. This is a server that provides a catalog of known objects and their elevation/azimuth for any point on earth. A public one is available so you'll only need to provide your own server if you're running a process that requires low-latency access to this information.
 
+
+## Local Site Configuration
+
+You should modify the files in software/containers/telescope_web_api/config_data to contain the new telescope configuration information (latitude, longitude, altitude) as 
+well as the callibrated antenna positions.
+
 ## Installation on a target Raspberry Pi
 
 The following procedure will install all the necessary TART software on a Raspberry Pi (Model 3) attached to the TART hardware.
