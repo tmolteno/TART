@@ -28,7 +28,7 @@ To execute the container type (where "passwd" is the password to your telescope 
 
 ### Running this regularly
 
-Add this command as a cron job. Recommended interval is every two hours.
+Add this command as a cron job. Modify the TART_LOGIN_PW and TART_API to refer to the URL of your TART telescope. Recommended interval is every two hours.
 
     docker run -d \
         -e TART_LOGIN_PW=$1 \

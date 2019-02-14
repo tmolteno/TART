@@ -22,10 +22,13 @@ CALIB_OUTPUT=${DIR}/${METHOD}_opt_json.json
 /usr/local/bin/tart_calibrate --api ${TART_API} --file ${CALIB_INPUT} --method ${METHOD} --dir ${DIR}
 
 # Log outputs
-LOGGED_OUTPUT=${WORKING_DIR}/cal_${DATESTR}.json
-mv ${CALIB_OUTPUT} ${LOGGED_OUTPUT}
-echo "Calibration output is in ${LOGGED_OUTPUT}"
-/usr/local/bin/tart_upload_gains --api ${TART_API} --gains ${LOGGED_OUTPUT} --pw ${TART_LOGIN_PW}
+CAL_OUTPUT_FILE=${WORKING_DIR}/cal_${DATESTR}.json
+mv ${CALIB_OUTPUT} ${CAL_OUTPUT_FILE}
+echo "Calibration output is in ${CAL_OUTPUT_FILE}"
+/usr/local/bin/tart_upload_gains --api ${TART_API} --gains ${CAL_OUTPUT_FILE} --pw ${TART_LOGIN_PW}
+
+echo "Uploading new antenna positions"
+/usr/local/bin/tart_upload_antenna_positions --api ${TART_API} --file ${CAL_OUTPUT_FILE} --pw ${TART_LOGIN_PW}
 
 # Clean up
 rm ${DIR}/*
