@@ -1,6 +1,6 @@
 '''
   TART API handler class
-  Tim Molteno 2017 - tim@elec.ac.nz
+  Tim Molteno 2017-2019 - tim@elec.ac.nz
   Max Scheel 2017 - max@max.ac.nz
 '''
 
@@ -24,11 +24,12 @@ class APIhandler:
                                                          config.get_lon(), datestr)
 
     def get(self, path):
-        r = requests.get(self.url(path))
-        return json.loads(r.text)
+        return self.get_url(self.url(path))
+
 
     def get_url(self, url):
         r = requests.get(url)
+        r.raise_for_status()
         return json.loads(r.text)
 
 
@@ -61,6 +62,7 @@ class AuthorizedAPIhandler(APIhandler):
     def __post_payload(self, path, payload_dict):
         ''' Currently only used for login() '''
         r = requests.post(self.url(path), json=payload_dict)
+        r.raise_for_status()
         return json.loads(r.text)
  
     def __get_header(self):
@@ -83,6 +85,7 @@ class AuthorizedAPIhandler(APIhandler):
             if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
                 self.refresh_access_token()
                 return self.post(path, **kwargs)
+        r.raise_for_status()
         return ret
 
     def post_with_token(self, path):
@@ -102,6 +105,7 @@ def download_current_gain(api):
 
 def upload_gain(api, gain_dict):
     resp = api.post_payload_with_token('calibration/gain', gain_dict)
+    print("SUCCESS")
     return resp
 
 def get_config(api):

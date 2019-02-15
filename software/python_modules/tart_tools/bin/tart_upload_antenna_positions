@@ -21,6 +21,6 @@ if __name__ == '__main__':
     if "antenna_positions" in positions_dict:
         api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
         resp = api.post_payload_with_token('calibration/antenna_positions', positions_dict["antenna_positions"])
-        print("Response: {}".format(resp))
+        print("SUCCESS")
     else:
         raise Exception("JSON file should have an element called 'antenna_positions'")
