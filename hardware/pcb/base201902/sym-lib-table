@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name base_station_integrated-rescue)(type Legacy)(uri ${KIPRJMOD}/base_station_integrated-rescue.lib)(options "")(descr ""))
+  (lib (name TART)(type Legacy)(uri ${KIPRJMOD}/libraries/TART.lib)(options "")(descr ""))
+)
