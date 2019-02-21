@@ -334,7 +334,7 @@ exit
 
         restored_image = np.abs(np.fft.ifft2(np.fft.fft2(clean) * np.fft.fft2(b_restore))) # Cropped PSF Restoration
 
-        print 'Clean', info['success'], np.min(restored_image), np.max(restored_image)
+        print('Clean', info['success'], np.min(restored_image), np.max(restored_image))
 
 
     # Do output images

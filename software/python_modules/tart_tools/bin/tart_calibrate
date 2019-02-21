@@ -2,7 +2,10 @@
 """
     Calibrate the Telescope from the RESTful API
 
-    Tim Molteno 2017.
+    Copyright (c) Tim Molteno 2017-2019.
+    
+    This tool uses  high-dimensional optimisation to calculate the gains and phases of the 24 antennas
+    of the telescope.
 """
 import matplotlib
 matplotlib.use('agg')
@@ -68,7 +71,6 @@ def calc_score_aux(opt_parameters, measurements, window_deg, original_positions)
 
     ret_zone = 0.0
     ret_std = 0.0
-    ret_closure = 0.0
     
     ant_idxs = np.arange(24)
         
@@ -79,30 +81,6 @@ def calc_score_aux(opt_parameters, measurements, window_deg, original_positions)
         cv.set_phase_offset(ant_idxs, phase_offsets)
         cv.set_gain(ant_idxs, gains)
         api_imaging.rotate_vis(rot_degrees, cv, original_positions)
-
-        #vis, bl = cv.get_all_visibility()
-        #if (triplets is None):
-            #ants = np.unique(bl[:,0])
-            #bl = bl.tolist()
-            #triplets = np.array(list(itertools.combinations(ants, 3)))
-
-            #i = triplets[:,0]
-            #j = triplets[:,1]
-            #k = triplets[:,2]
-
-            #ij = np.array([i,j]).T
-            #jk = np.array([j,k]).T
-            #ik = np.array([i,k]).T
-
-            #ij_index = np.array([bl.index(z.tolist()) for z in ij])
-            #jk_index = np.array([bl.index(z.tolist()) for z in jk])
-            #ik_index = np.array([bl.index(z.tolist()) for z in ik])
-
-        #v_ij = vis[ij_index]
-        #v_jk = vis[jk_index]
-        #v_ki = np.conjugate(vis[ik_index])
-        #print v_ij[0]*v_jk[0]*v_ki[0]
-        #ret_closure += np.sum(np.abs(np.angle(v_ij*v_jk*v_ki)))
 
         n_bin = 2**7
         cal_ift, cal_extent, n_fft, bin_width = api_imaging.image_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
@@ -125,9 +103,9 @@ def calc_score_aux(opt_parameters, measurements, window_deg, original_positions)
         ret_zone += 2*zone_score
         
     if (N_IT % 100 == 0):
-        print ret_std, ret_zone, ret_closure
+        print("{}, {}, {}".format(ret_std, ret_zone))
 
-    return (ret_std + ret_zone + ret_closure)/len(measurements), ift_scaled, src_list, n_fft, bin_width
+    return (ret_std + ret_zone)/len(measurements), ift_scaled, src_list, n_fft, bin_width
 
 
 def load_data_from_json(vis_json, src_json, config, gains, phases, flag_list, el_threshold):
@@ -151,7 +129,7 @@ def calc_score(opt_parameters, config, measurements, window_deg, original_positi
 
     
     if N_IT%100==0:
-        print N_IT, ret
+        print(N_IT, ret)
         f_vs_iteration.append(ret)
 
     if N_IT%1000==0:
@@ -241,7 +219,7 @@ if __name__ == '__main__':
     ant_pos = calib_info['ant_pos']
     config = settings.from_api_json(info['info'], ant_pos)
 
-    flag_list = [] # [4, 5, 14, 22]
+    flag_list = [] # [4, 5, 14, 22] # optionally remove some unused antennas
 
     method = ARGS.method
     output_directory = ARGS.dir
@@ -250,11 +228,11 @@ if __name__ == '__main__':
     original_positions = deepcopy(config.get_antenna_positions())
 
     gains_json = calib_info['gains']
-    print gains_json['gain']
+    print(gains_json['gain'])
     gains = np.asarray(gains_json['gain'])
     phase_offsets = np.asarray(gains_json['phase_offset'])
-    print gains
-    print phase_offsets
+    print(gains)
+    print(phase_offsets)
     
     if (ARGS.cold_start and ARGS.get_gains):
         raise Exception("ERROR: Cannot Have both cold_start and get-gains specified")
@@ -314,7 +292,7 @@ if __name__ == '__main__':
     output_json['iterations'] = ret.nit
 
     new_positions =  settings.rotate_location(rot_degrees, np.array(original_positions).T)
-    print new_positions
+    print(new_positions)
     pos_list = (np.array(new_positions).T).tolist()
     print(pos_list)
     output_json['antenna_positions'] = pos_list

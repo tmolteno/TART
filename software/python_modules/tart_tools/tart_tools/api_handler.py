@@ -57,7 +57,7 @@ class AuthorizedAPIhandler(APIhandler):
         resp_json = json.loads(r.text)
         if resp_json.has_key('access_token'):
             self.token = resp_json['access_token']
-            print 'refreshed token'
+            print('refreshed token')
        
     def __post_payload(self, path, payload_dict):
         ''' Currently only used for login() '''
@@ -121,9 +121,9 @@ def get_config(api):
     #parser.add_argument('--pw', default='password', type=str, help='API password')
     #ARGS = parser.parse_args()
     #api = AuthorizedAPIhandler(ARGS.host, ARGS.pw)
-    #print api.token
+    #print(api.token)
     #api.refresh_access_token()
-    #print api.token
+    #print(api.token)
     #while 1:
         #time.sleep(100)
         #set_mode(api,'vis')
