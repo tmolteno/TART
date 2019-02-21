@@ -1,38 +1,6 @@
-EESchema Schematic File Version 2
-LIBS:power
-LIBS:device
-LIBS:transistors
-LIBS:conn
-LIBS:linear
-LIBS:regul
-LIBS:74xx
-LIBS:cmos4000
-LIBS:adc-dac
-LIBS:memory
-LIBS:xilinx
-LIBS:special
-LIBS:microcontrollers
-LIBS:dsp
-LIBS:microchip
-LIBS:analog_switches
-LIBS:motorola
-LIBS:texas
-LIBS:intel
-LIBS:audio
-LIBS:interface
-LIBS:digital-audio
-LIBS:philips
-LIBS:display
-LIBS:cypress
-LIBS:siliconi
-LIBS:opto
-LIBS:atmel
-LIBS:contrib
-LIBS:valves
-LIBS:TART
-LIBS:spelsberg_box_template_TR
+EESchema Schematic File Version 4
 LIBS:base_station_integrated-cache
-EELAYER 27 0
+EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -46,13 +14,13 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-Text GLabel 2900 1350 0    60   Input ~ 0
+Text GLabel 1200 1350 0    60   Input ~ 0
 +5V_PI
-Text Label 6550 4200 2    60   ~ 0
+Text Label 4650 3250 2    60   ~ 0
 MISO
-Text Label 6550 4300 2    60   ~ 0
+Text Label 4650 3350 2    60   ~ 0
 MOSI
-Text Label 6550 4400 2    60   ~ 0
+Text Label 4650 3450 2    60   ~ 0
 SCLK
 Text GLabel 9150 1250 0    60   Input ~ 0
 GND
@@ -99,302 +67,303 @@ NoConn ~ 9250 1050
 NoConn ~ 9250 950 
 NoConn ~ 9250 850 
 $Comp
-L CONN_20X2 P1
+L base_station_integrated-rescue:CONN_20X2 P1
 U 1 1 5420D065
 P 9650 1800
 F 0 "P1" H 9650 2850 60  0000 C CNN
 F 1 "CONN_20X2" V 9650 1800 50  0000 C CNN
 F 2 "RASP_PI_B+_TART" H 9650 700 60  0000 C CNN
 F 3 "" H 9650 1800 60  0001 C CNN
+F 4 "S9197-ND" H 0   0   50  0001 C CNN "DIGIKEY"
 	1    9650 1800
 	1    0    0    -1  
 $EndComp
-Text GLabel 2900 1150 0    60   Input ~ 0
+Text GLabel 1200 1150 0    60   Input ~ 0
 +5V
 $Sheet
-S 3000 850  1600 950 
+S 1300 850  1600 950 
 U 5407950D
 F0 "power_supply" 60
 F1 "base_station_power_supply.sch" 60
-F2 "GND" I L 3000 1700 60 
-F3 "+3V3" I L 3000 1550 60 
-F4 "+24V" I L 3000 950 60 
-F5 "+5V" I L 3000 1150 60 
-F6 "+5V_PI" I L 3000 1350 60 
+F2 "GND" I L 1300 1700 60 
+F3 "+3V3" I L 1300 1550 60 
+F4 "+24V" I L 1300 950 60 
+F5 "+5V" I L 1300 1150 60 
+F6 "+5V_PI" I L 1300 1350 60 
 $EndSheet
-Text Label 2500 4450 2    60   ~ 0
+Text Label 800  4450 2    60   ~ 0
 CLK
-Text Label 8150 3600 2    60   ~ 0
+Text Label 6250 2650 2    60   ~ 0
 CLK_OUT_3
-Text Label 8150 3400 2    60   ~ 0
+Text Label 6250 2450 2    60   ~ 0
 DT_1_3
-Text Label 4950 4700 0    60   ~ 0
+Text Label 3250 4700 0    60   ~ 0
 DT_1_3
-Text Label 8150 3300 2    60   ~ 0
+Text Label 6250 2350 2    60   ~ 0
 DT_2_3
-Text Label 4950 4600 0    60   ~ 0
+Text Label 3250 4600 0    60   ~ 0
 DT_2_3
-Text Label 8150 3500 2    60   ~ 0
+Text Label 6250 2550 2    60   ~ 0
 DT_3_3
-Text Label 4950 4500 0    60   ~ 0
+Text Label 3250 4500 0    60   ~ 0
 DT_3_3
-Text Label 8150 3800 2    60   ~ 0
+Text Label 6250 2850 2    60   ~ 0
 DT_4_3
-Text Label 4950 4400 0    60   ~ 0
+Text Label 3250 4400 0    60   ~ 0
 DT_4_3
-Text Label 8150 3900 2    60   ~ 0
+Text Label 6250 2950 2    60   ~ 0
 DT_5_3
-Text Label 4950 4300 0    60   ~ 0
+Text Label 3250 4300 0    60   ~ 0
 DT_5_3
-Text Label 8150 3700 2    60   ~ 0
+Text Label 6250 2750 2    60   ~ 0
 DT_6_3
-Text Label 4950 4200 0    60   ~ 0
+Text Label 3250 4200 0    60   ~ 0
 DT_6_3
 $Sheet
-S 3000 4050 1450 800 
+S 1300 4050 1450 800 
 U 5409247B
 F0 "transceiver_block_3" 60
 F1 "transceiver_block.sch" 60
-F2 "GND_CABLE" I L 3000 4750 60 
-F3 "GND_A" I L 3000 4600 60 
-F4 "+24V" I L 3000 4150 60 
-F5 "+3V3" I L 3000 4300 60 
-F6 "DT_2" I R 4450 4600 60 
-F7 "DT_3" I R 4450 4500 60 
-F8 "DT_4" I R 4450 4400 60 
-F9 "CLK" I L 3000 4450 60 
-F10 "DT_1" I R 4450 4700 60 
-F11 "DT_5" I R 4450 4300 60 
-F12 "DT_6" I R 4450 4200 60 
+F2 "GND_CABLE" I L 1300 4750 60 
+F3 "GND_A" I L 1300 4600 60 
+F4 "+24V" I L 1300 4150 60 
+F5 "+3V3" I L 1300 4300 60 
+F6 "DT_2" I R 2750 4600 60 
+F7 "DT_3" I R 2750 4500 60 
+F8 "DT_4" I R 2750 4400 60 
+F9 "CLK" I L 1300 4450 60 
+F10 "DT_1" I R 2750 4700 60 
+F11 "DT_5" I R 2750 4300 60 
+F12 "DT_6" I R 2750 4200 60 
 $EndSheet
 $Sheet
-S 3000 6450 1450 800 
+S 1300 6450 1450 800 
 U 540924B7
 F0 "transceiver_block_1" 60
 F1 "transceiver_block.sch" 60
-F2 "GND_CABLE" I L 3000 7150 60 
-F3 "GND_A" I L 3000 7000 60 
-F4 "+24V" I L 3000 6550 60 
-F5 "+3V3" I L 3000 6700 60 
-F6 "DT_2" I R 4450 7000 60 
-F7 "DT_3" I R 4450 6900 60 
-F8 "DT_4" I R 4450 6800 60 
-F9 "CLK" I L 3000 6850 60 
-F10 "DT_1" I R 4450 7100 60 
-F11 "DT_5" I R 4450 6700 60 
-F12 "DT_6" I R 4450 6600 60 
+F2 "GND_CABLE" I L 1300 7150 60 
+F3 "GND_A" I L 1300 7000 60 
+F4 "+24V" I L 1300 6550 60 
+F5 "+3V3" I L 1300 6700 60 
+F6 "DT_2" I R 2750 7000 60 
+F7 "DT_3" I R 2750 6900 60 
+F8 "DT_4" I R 2750 6800 60 
+F9 "CLK" I L 1300 6850 60 
+F10 "DT_1" I R 2750 7100 60 
+F11 "DT_5" I R 2750 6700 60 
+F12 "DT_6" I R 2750 6600 60 
 $EndSheet
 $Sheet
-S 3000 5250 1450 800 
+S 1300 5250 1450 800 
 U 54092498
 F0 "transceiver_block_2" 60
 F1 "transceiver_block.sch" 60
-F2 "GND_CABLE" I L 3000 5950 60 
-F3 "GND_A" I L 3000 5800 60 
-F4 "+24V" I L 3000 5350 60 
-F5 "+3V3" I L 3000 5500 60 
-F6 "DT_2" I R 4450 5800 60 
-F7 "DT_3" I R 4450 5700 60 
-F8 "DT_4" I R 4450 5600 60 
-F9 "CLK" I L 3000 5650 60 
-F10 "DT_1" I R 4450 5900 60 
-F11 "DT_5" I R 4450 5500 60 
-F12 "DT_6" I R 4450 5400 60 
+F2 "GND_CABLE" I L 1300 5950 60 
+F3 "GND_A" I L 1300 5800 60 
+F4 "+24V" I L 1300 5350 60 
+F5 "+3V3" I L 1300 5500 60 
+F6 "DT_2" I R 2750 5800 60 
+F7 "DT_3" I R 2750 5700 60 
+F8 "DT_4" I R 2750 5600 60 
+F9 "CLK" I L 1300 5650 60 
+F10 "DT_1" I R 2750 5900 60 
+F11 "DT_5" I R 2750 5500 60 
+F12 "DT_6" I R 2750 5400 60 
 $EndSheet
 $Sheet
-S 3000 2850 1450 800 
+S 1300 2850 1450 800 
 U 540670D5
 F0 "transceiver_block_4" 60
 F1 "transceiver_block.sch" 60
-F2 "GND_CABLE" I L 3000 3550 60 
-F3 "GND_A" I L 3000 3400 60 
-F4 "+24V" I L 3000 2950 60 
-F5 "+3V3" I L 3000 3100 60 
-F6 "DT_2" I R 4450 3400 60 
-F7 "DT_3" I R 4450 3300 60 
-F8 "DT_4" I R 4450 3200 60 
-F9 "CLK" I L 3000 3250 60 
-F10 "DT_1" I R 4450 3500 60 
-F11 "DT_5" I R 4450 3100 60 
-F12 "DT_6" I R 4450 3000 60 
+F2 "GND_CABLE" I L 1300 3550 60 
+F3 "GND_A" I L 1300 3400 60 
+F4 "+24V" I L 1300 2950 60 
+F5 "+3V3" I L 1300 3100 60 
+F6 "DT_2" I R 2750 3400 60 
+F7 "DT_3" I R 2750 3300 60 
+F8 "DT_4" I R 2750 3200 60 
+F9 "CLK" I L 1300 3250 60 
+F10 "DT_1" I R 2750 3500 60 
+F11 "DT_5" I R 2750 3100 60 
+F12 "DT_6" I R 2750 3000 60 
 $EndSheet
-Text Label 4950 6600 0    60   ~ 0
+Text Label 3250 6600 0    60   ~ 0
 DT_6_1
-Text Label 4950 6700 0    60   ~ 0
+Text Label 3250 6700 0    60   ~ 0
 DT_5_1
-Text Label 4950 6800 0    60   ~ 0
+Text Label 3250 6800 0    60   ~ 0
 DT_4_1
-Text Label 4950 6900 0    60   ~ 0
+Text Label 3250 6900 0    60   ~ 0
 DT_3_1
-Text Label 4950 7000 0    60   ~ 0
+Text Label 3250 7000 0    60   ~ 0
 DT_2_1
-Text Label 4950 7100 0    60   ~ 0
+Text Label 3250 7100 0    60   ~ 0
 DT_1_1
-Text GLabel 2900 6550 0    60   Input ~ 0
+Text GLabel 1200 6550 0    60   Input ~ 0
 +24V
-Text GLabel 2900 7000 0    60   Input ~ 0
+Text GLabel 1200 7000 0    60   Input ~ 0
 GND
-Text GLabel 2900 7150 0    60   Input ~ 0
+Text GLabel 1200 7150 0    60   Input ~ 0
 GND_L
-Text Label 2500 6850 2    60   ~ 0
+Text Label 800  6850 2    60   ~ 0
 CLK
-Text GLabel 2900 6700 0    60   Input ~ 0
+Text GLabel 1200 6700 0    60   Input ~ 0
 +3V3
-Text GLabel 2900 5500 0    60   Input ~ 0
+Text GLabel 1200 5500 0    60   Input ~ 0
 +3V3
-Text Label 2500 5650 2    60   ~ 0
+Text Label 800  5650 2    60   ~ 0
 CLK
-Text GLabel 2900 5800 0    60   Input ~ 0
+Text GLabel 1200 5800 0    60   Input ~ 0
 GND
-Text GLabel 2900 5350 0    60   Input ~ 0
+Text GLabel 1200 5350 0    60   Input ~ 0
 +24V
-Text Label 4950 5900 0    60   ~ 0
+Text Label 3250 5900 0    60   ~ 0
 DT_1_2
-Text Label 4950 5800 0    60   ~ 0
+Text Label 3250 5800 0    60   ~ 0
 DT_2_2
-Text Label 4950 5700 0    60   ~ 0
+Text Label 3250 5700 0    60   ~ 0
 DT_3_2
-Text Label 4950 5600 0    60   ~ 0
+Text Label 3250 5600 0    60   ~ 0
 DT_4_2
-Text Label 4950 5500 0    60   ~ 0
+Text Label 3250 5500 0    60   ~ 0
 DT_5_2
-Text Label 4950 5400 0    60   ~ 0
+Text Label 3250 5400 0    60   ~ 0
 DT_6_2
-Text GLabel 2900 4150 0    60   Input ~ 0
+Text GLabel 1200 4150 0    60   Input ~ 0
 +24V
-Text GLabel 2900 4600 0    60   Input ~ 0
+Text GLabel 1200 4600 0    60   Input ~ 0
 GND
-Text GLabel 2900 4750 0    60   Input ~ 0
+Text GLabel 1200 4750 0    60   Input ~ 0
 GND_T
-Text GLabel 2900 4300 0    60   Input ~ 0
+Text GLabel 1200 4300 0    60   Input ~ 0
 +3V3
-Text GLabel 2900 3100 0    60   Input ~ 0
+Text GLabel 1200 3100 0    60   Input ~ 0
 +3V3
-Text Label 2500 3250 2    60   ~ 0
+Text Label 800  3250 2    60   ~ 0
 CLK
-Text GLabel 2800 2250 0    60   Input ~ 0
+Text GLabel 1100 2250 0    60   Input ~ 0
 +3V3
-Text GLabel 2800 2400 0    60   Input ~ 0
+Text GLabel 1100 2400 0    60   Input ~ 0
 GND
-Text Label 4550 2400 0    60   ~ 0
+Text Label 2850 2400 0    60   ~ 0
 CLK
-Text Label 4550 2250 0    60   ~ 0
+Text Label 2850 2250 0    60   ~ 0
 CLK_FPGA
 $Sheet
-S 3000 2150 1300 350 
+S 1300 2150 1300 350 
 U 5407DDC4
 F0 "clock" 60
 F1 "base_station_clock.sch" 60
-F2 "+3V3" I L 3000 2250 60 
-F3 "GND" I L 3000 2400 60 
-F4 "CLK_FPGA" I R 4300 2250 60 
-F5 "CLK_OUT" I R 4300 2400 60 
+F2 "+3V3" I L 1300 2250 60 
+F3 "GND" I L 1300 2400 60 
+F4 "CLK_FPGA" I R 2600 2250 60 
+F5 "CLK_OUT" I R 2600 2400 60 
 $EndSheet
-Text GLabel 2900 3550 0    60   Input ~ 0
+Text GLabel 1200 3550 0    60   Input ~ 0
 GND_T
-Text GLabel 2900 3400 0    60   Input ~ 0
+Text GLabel 1200 3400 0    60   Input ~ 0
 GND
-Text GLabel 2900 2950 0    60   Input ~ 0
+Text GLabel 1200 2950 0    60   Input ~ 0
 +24V
-Text GLabel 2900 950  0    60   Input ~ 0
+Text GLabel 1200 950  0    60   Input ~ 0
 +24V
-Text GLabel 2900 1550 0    60   Input ~ 0
+Text GLabel 1200 1550 0    60   Input ~ 0
 +3V3
-Text GLabel 2900 1700 0    60   Input ~ 0
+Text GLabel 1200 1700 0    60   Input ~ 0
 GND_PWR
-Text GLabel 6100 6350 0    60   Input ~ 0
+Text GLabel 4200 5400 0    60   Input ~ 0
 GND
-Text GLabel 6100 5250 0    60   Input ~ 0
+Text GLabel 4200 4300 0    60   Input ~ 0
 +5V
-NoConn ~ 9750 5350
-NoConn ~ 9750 5450
-NoConn ~ 9750 6150
-NoConn ~ 9750 6250
-NoConn ~ 6550 6250
-NoConn ~ 6550 6150
-NoConn ~ 6550 5450
-NoConn ~ 6550 5350
-Text Label 8150 4600 2    60   ~ 0
+NoConn ~ 7850 4400
+NoConn ~ 7850 4500
+NoConn ~ 7850 5200
+NoConn ~ 7850 5300
+NoConn ~ 4650 5300
+NoConn ~ 4650 5200
+NoConn ~ 4650 4500
+NoConn ~ 4650 4400
+Text Label 6250 3650 2    60   ~ 0
 CLK_FPGA
-NoConn ~ 9950 4100
-NoConn ~ 9950 4000
-Text Label 9750 4200 2    60   ~ 0
+NoConn ~ 8050 3150
+NoConn ~ 8050 3050
+Text Label 7850 3250 2    60   ~ 0
 DT_5_1
-Text Label 9750 4300 2    60   ~ 0
+Text Label 7850 3350 2    60   ~ 0
 DT_4_1
-Text Label 9750 4400 2    60   ~ 0
+Text Label 7850 3450 2    60   ~ 0
 DT_6_1
-Text Label 9750 4500 2    60   ~ 0
+Text Label 7850 3550 2    60   ~ 0
 DT_3_1
-Text Label 9750 4600 2    60   ~ 0
+Text Label 7850 3650 2    60   ~ 0
 DT_1_1
-Text Label 9750 4700 2    60   ~ 0
+Text Label 7850 3750 2    60   ~ 0
 DT_2_1
-Text Label 9750 4800 2    60   ~ 0
+Text Label 7850 3850 2    60   ~ 0
 CLK_OUT_1
-Text Label 9750 3900 2    60   ~ 0
+Text Label 7850 2950 2    60   ~ 0
 DT_5_4
-Text Label 9750 3800 2    60   ~ 0
+Text Label 7850 2850 2    60   ~ 0
 DT_4_4
-Text Label 9750 3700 2    60   ~ 0
+Text Label 7850 2750 2    60   ~ 0
 DT_6_4
-Text Label 9750 3600 2    60   ~ 0
+Text Label 7850 2650 2    60   ~ 0
 CLK_OUT_4
-Text Label 9750 3500 2    60   ~ 0
+Text Label 7850 2550 2    60   ~ 0
 DT_3_4
-Text Label 9750 3400 2    60   ~ 0
+Text Label 7850 2450 2    60   ~ 0
 DT_1_4
-Text Label 9750 3300 2    60   ~ 0
+Text Label 7850 2350 2    60   ~ 0
 DT_2_4
-Text Label 8150 4800 2    60   ~ 0
+Text Label 6250 3850 2    60   ~ 0
 DT_2_2
-Text Label 8150 4700 2    60   ~ 0
+Text Label 6250 3750 2    60   ~ 0
 DT_1_2
-Text Label 8150 4500 2    60   ~ 0
+Text Label 6250 3550 2    60   ~ 0
 DT_3_2
-Text Label 8150 4400 2    60   ~ 0
+Text Label 6250 3450 2    60   ~ 0
 DT_6_2
-Text Label 8150 4300 2    60   ~ 0
+Text Label 6250 3350 2    60   ~ 0
 DT_4_2
-Text Label 8150 4200 2    60   ~ 0
+Text Label 6250 3250 2    60   ~ 0
 DT_5_2
-Text Label 8150 4100 2    60   ~ 0
+Text Label 6250 3150 2    60   ~ 0
 START
-Text Label 8150 4000 2    60   ~ 0
+Text Label 6250 3050 2    60   ~ 0
 CLK_OUT_2
-Text Label 4950 3500 0    60   ~ 0
+Text Label 3250 3500 0    60   ~ 0
 DT_1_4
-Text Label 4950 3400 0    60   ~ 0
+Text Label 3250 3400 0    60   ~ 0
 DT_2_4
-Text Label 4950 3300 0    60   ~ 0
+Text Label 3250 3300 0    60   ~ 0
 DT_3_4
-Text Label 4950 3200 0    60   ~ 0
+Text Label 3250 3200 0    60   ~ 0
 DT_4_4
-Text Label 4950 3100 0    60   ~ 0
+Text Label 3250 3100 0    60   ~ 0
 DT_5_4
-Text Label 4950 3000 0    60   ~ 0
+Text Label 3250 3000 0    60   ~ 0
 DT_6_4
-Text Label 6550 4100 2    60   ~ 0
+Text Label 4650 3150 2    60   ~ 0
 CS0
 Text Label 10300 1950 2    60   ~ 0
 CS0
-Text GLabel 2900 5950 0    60   Input ~ 0
+Text GLabel 1200 5950 0    60   Input ~ 0
 GND_L
-Text GLabel 6800 1150 0    60   Input ~ 0
+Text GLabel 6000 1150 0    60   Input ~ 0
 GND_PWR
-Text GLabel 7700 1150 2    60   Input ~ 0
+Text GLabel 6900 1150 2    60   Input ~ 0
 GND_L
-Text GLabel 6800 900  0    60   Input ~ 0
+Text GLabel 6000 900  0    60   Input ~ 0
 GND_PWR
-Text GLabel 7700 900  2    60   Input ~ 0
+Text GLabel 6900 900  2    60   Input ~ 0
 GND_T
-Text GLabel 6800 1400 0    60   Input ~ 0
+Text GLabel 6000 1400 0    60   Input ~ 0
 GND
-Text GLabel 7600 1400 2    60   Input ~ 0
+Text GLabel 6800 1400 2    60   Input ~ 0
 GND_PWR
-Text GLabel 6800 1650 0    60   Input ~ 0
+Text GLabel 6000 1650 0    60   Input ~ 0
 GND
-Text GLabel 7600 1650 2    60   Input ~ 0
+Text GLabel 6800 1650 2    60   Input ~ 0
 GND_PWR
 Text GLabel 9150 2050 0    60   Input ~ 0
 GND
@@ -404,33 +373,33 @@ Text GLabel 10150 2450 2    60   Input ~ 0
 GND
 Text GLabel 9150 2750 0    60   Input ~ 0
 GND
-NoConn ~ 8150 6250
-NoConn ~ 8150 6150
-NoConn ~ 8150 5450
-NoConn ~ 8150 5350
-NoConn ~ 6750 3300
-NoConn ~ 6750 3400
-NoConn ~ 6750 3500
-NoConn ~ 6750 3600
-NoConn ~ 6750 3700
-NoConn ~ 6750 3800
-NoConn ~ 6750 3900
-NoConn ~ 6750 4000
-NoConn ~ 6750 4500
-NoConn ~ 6750 4600
-NoConn ~ 6750 4700
-NoConn ~ 6750 4800
-NoConn ~ 9950 3600
-NoConn ~ 9950 4800
-NoConn ~ 8350 3600
-NoConn ~ 8350 4000
-NoConn ~ 8350 4100
+NoConn ~ 6250 5300
+NoConn ~ 6250 5200
+NoConn ~ 6250 4500
+NoConn ~ 6250 4400
+NoConn ~ 4850 2350
+NoConn ~ 4850 2450
+NoConn ~ 4850 2550
+NoConn ~ 4850 2650
+NoConn ~ 4850 2750
+NoConn ~ 4850 2850
+NoConn ~ 4850 2950
+NoConn ~ 4850 3050
+NoConn ~ 4850 3550
+NoConn ~ 4850 3650
+NoConn ~ 4850 3750
+NoConn ~ 4850 3850
+NoConn ~ 8050 2650
+NoConn ~ 8050 3850
+NoConn ~ 6450 2650
+NoConn ~ 6450 3050
+NoConn ~ 6450 3150
 Wire Wire Line
-	2900 1350 3000 1350
+	1200 1350 1300 1350
 Wire Wire Line
-	6750 4200 6550 4200
+	4850 3250 4650 3250
 Wire Wire Line
-	6750 4400 6550 4400
+	4850 3450 4650 3450
 Wire Wire Line
 	10050 1750 10150 1750
 Wire Wire Line
@@ -440,157 +409,157 @@ Wire Wire Line
 Wire Wire Line
 	9250 1850 8950 1850
 Wire Wire Line
-	2900 1150 3000 1150
+	1200 1150 1300 1150
 Wire Wire Line
-	3000 4450 2500 4450
+	1300 4450 800  4450
 Wire Wire Line
-	4450 4600 4950 4600
+	2750 4600 3250 4600
 Wire Wire Line
-	4450 4400 4950 4400
+	2750 4400 3250 4400
 Wire Wire Line
-	4450 4200 4950 4200
+	2750 4200 3250 4200
 Wire Wire Line
-	2900 4600 3000 4600
+	1200 4600 1300 4600
 Wire Wire Line
-	2900 4150 3000 4150
+	1200 4150 1300 4150
 Wire Wire Line
-	8350 3800 8150 3800
+	6450 2850 6250 2850
 Wire Wire Line
-	8350 3400 8150 3400
+	6450 2450 6250 2450
 Wire Wire Line
-	3000 2250 2800 2250
+	1300 2250 1100 2250
 Wire Wire Line
-	4550 2400 4300 2400
+	2850 2400 2600 2400
 Wire Wire Line
-	2900 3550 3000 3550
+	1200 3550 1300 3550
 Wire Wire Line
-	2900 3400 3000 3400
+	1200 3400 1300 3400
 Wire Wire Line
-	2900 1700 3000 1700
+	1200 1700 1300 1700
 Wire Wire Line
-	2900 950  3000 950 
+	1200 950  1300 950 
 Wire Wire Line
-	9950 4700 9750 4700
+	8050 3750 7850 3750
 Wire Wire Line
-	9950 4500 9750 4500
+	8050 3550 7850 3550
 Wire Wire Line
-	9950 4300 9750 4300
+	8050 3350 7850 3350
 Wire Wire Line
-	9950 3900 9750 3900
+	8050 2950 7850 2950
 Wire Wire Line
-	9950 3700 9750 3700
+	8050 2750 7850 2750
 Wire Wire Line
-	9950 3500 9750 3500
+	8050 2550 7850 2550
 Wire Wire Line
-	9950 3300 9750 3300
+	8050 2350 7850 2350
 Wire Wire Line
-	8350 4700 8150 4700
+	6450 3750 6250 3750
 Wire Wire Line
-	8350 4500 8150 4500
+	6450 3550 6250 3550
 Wire Wire Line
-	8350 4300 8150 4300
+	6450 3350 6250 3350
 Wire Wire Line
-	4450 3400 4950 3400
+	2750 3400 3250 3400
 Wire Wire Line
-	4450 3200 4950 3200
+	2750 3200 3250 3200
 Wire Wire Line
-	4450 3000 4950 3000
+	2750 3000 3250 3000
 Wire Wire Line
-	4450 3100 4950 3100
+	2750 3100 3250 3100
 Wire Wire Line
-	4450 3300 4950 3300
+	2750 3300 3250 3300
 Wire Wire Line
-	4450 3500 4950 3500
+	2750 3500 3250 3500
 Wire Wire Line
-	8350 4200 8150 4200
+	6450 3250 6250 3250
 Wire Wire Line
-	8350 4400 8150 4400
+	6450 3450 6250 3450
 Wire Wire Line
-	8350 4600 8150 4600
+	6450 3650 6250 3650
 Wire Wire Line
-	8350 4800 8150 4800
+	6450 3850 6250 3850
 Wire Wire Line
-	9950 3400 9750 3400
+	8050 2450 7850 2450
 Wire Wire Line
-	9950 3800 9750 3800
+	8050 2850 7850 2850
 Wire Wire Line
-	9950 4200 9750 4200
+	8050 3250 7850 3250
 Wire Wire Line
-	9950 4400 9750 4400
+	8050 3450 7850 3450
 Wire Wire Line
-	9950 4600 9750 4600
+	8050 3650 7850 3650
 Wire Wire Line
-	2900 1550 3000 1550
+	1200 1550 1300 1550
 Wire Wire Line
-	2900 2950 3000 2950
+	1200 2950 1300 2950
 Wire Wire Line
-	2500 3250 3000 3250
+	800  3250 1300 3250
 Wire Wire Line
-	4300 2250 4550 2250
+	2600 2250 2850 2250
 Wire Wire Line
-	3000 2400 2800 2400
+	1300 2400 1100 2400
 Wire Wire Line
-	2900 3100 3000 3100
+	1200 3100 1300 3100
 Wire Wire Line
-	2900 5950 3000 5950
+	1200 5950 1300 5950
 Wire Wire Line
-	2900 5800 3000 5800
+	1200 5800 1300 5800
 Wire Wire Line
-	4450 5800 4950 5800
+	2750 5800 3250 5800
 Wire Wire Line
-	4450 5600 4950 5600
+	2750 5600 3250 5600
 Wire Wire Line
-	4450 5400 4950 5400
+	2750 5400 3250 5400
 Wire Wire Line
-	4450 5500 4950 5500
+	2750 5500 3250 5500
 Wire Wire Line
-	4450 5700 4950 5700
+	2750 5700 3250 5700
 Wire Wire Line
-	4450 5900 4950 5900
+	2750 5900 3250 5900
 Wire Wire Line
-	2900 5350 3000 5350
+	1200 5350 1300 5350
 Wire Wire Line
-	2500 5650 3000 5650
+	800  5650 1300 5650
 Wire Wire Line
-	2900 5500 3000 5500
+	1200 5500 1300 5500
 Wire Wire Line
-	2900 6700 3000 6700
+	1200 6700 1300 6700
 Wire Wire Line
-	2500 6850 3000 6850
+	800  6850 1300 6850
 Wire Wire Line
-	2900 6550 3000 6550
+	1200 6550 1300 6550
 Wire Wire Line
-	4450 7100 4950 7100
+	2750 7100 3250 7100
 Wire Wire Line
-	4450 6900 4950 6900
+	2750 6900 3250 6900
 Wire Wire Line
-	4450 6700 4950 6700
+	2750 6700 3250 6700
 Wire Wire Line
-	4450 6600 4950 6600
+	2750 6600 3250 6600
 Wire Wire Line
-	4450 6800 4950 6800
+	2750 6800 3250 6800
 Wire Wire Line
-	4450 7000 4950 7000
+	2750 7000 3250 7000
 Wire Wire Line
-	2900 7000 3000 7000
+	1200 7000 1300 7000
 Wire Wire Line
-	8350 3300 8150 3300
+	6450 2350 6250 2350
 Wire Wire Line
-	8350 3500 8150 3500
+	6450 2550 6250 2550
 Wire Wire Line
-	8350 3700 8150 3700
+	6450 2750 6250 2750
 Wire Wire Line
-	8350 3900 8150 3900
+	6450 2950 6250 2950
 Wire Wire Line
-	2900 4300 3000 4300
+	1200 4300 1300 4300
 Wire Wire Line
-	2900 4750 3000 4750
+	1200 4750 1300 4750
 Wire Wire Line
-	4450 4300 4950 4300
+	2750 4300 3250 4300
 Wire Wire Line
-	4450 4500 4950 4500
+	2750 4500 3250 4500
 Wire Wire Line
-	4450 4700 4950 4700
+	2750 4700 3250 4700
 Wire Wire Line
 	9250 1750 8950 1750
 Wire Wire Line
@@ -602,21 +571,21 @@ Wire Wire Line
 Wire Wire Line
 	9250 1250 9150 1250
 Wire Wire Line
-	6750 4300 6550 4300
+	4850 3350 4650 3350
 Wire Wire Line
-	6750 4100 6550 4100
+	4850 3150 4650 3150
 Wire Wire Line
 	10050 1950 10300 1950
 Wire Wire Line
-	2900 7150 3000 7150
+	1200 7150 1300 7150
 Wire Wire Line
-	7700 1150 6800 1150
+	6900 1150 6000 1150
 Wire Wire Line
-	7700 900  6800 900 
+	6900 900  6000 900 
 Wire Wire Line
-	6800 1400 7600 1400
+	6000 1400 6800 1400
 Wire Wire Line
-	6800 1650 7600 1650
+	6000 1650 6800 1650
 Wire Wire Line
 	9150 2050 9250 2050
 Wire Wire Line
@@ -626,63 +595,83 @@ Wire Wire Line
 Wire Wire Line
 	9150 2750 9250 2750
 Wire Wire Line
-	8150 5550 7950 5550
+	6250 4600 6050 4600
 Wire Wire Line
-	6100 5250 6550 5250
+	4200 4300 4450 4300
 Wire Wire Line
-	6100 6350 6550 6350
+	4200 5400 4350 5400
 Wire Wire Line
-	7950 6350 8150 6350
+	6050 5400 6250 5400
 Wire Wire Line
-	6350 6050 6550 6050
+	4450 5100 4650 5100
 Wire Wire Line
-	9550 6350 9750 6350
+	7650 5400 7850 5400
 Wire Wire Line
-	9750 5550 9550 5550
+	7850 4600 7650 4600
 $Comp
-L PAPILIO_TART U1
+L TART:PAPILIO_TART U1
 U 1 1 54238645
-P 7950 4150
-F 0 "U1" H 7950 4150 10  0001 C CNN
-F 1 "PAPILIO_TART" H 8750 1200 60  0001 C CNN
-F 2 "PAPILIO_TART" H 10850 2250 60  0000 C CNN
-F 3 "" H 7950 4150 60  0001 C CNN
-F 4 "PAPILIO" H 8750 1300 60  0000 C CNN "NAME"
-	1    7950 4150
+P 6050 3200
+F 0 "U1" H 6050 3200 10  0001 C CNN
+F 1 "PAPILIO_TART" H 6850 250 60  0001 C CNN
+F 2 "PAPILIO_TART" H 8950 1300 60  0000 C CNN
+F 3 "" H 6050 3200 60  0001 C CNN
+F 4 "PAPILIO" H 6850 350 60  0000 C CNN "NAME"
+	1    6050 3200
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	9550 5000 9550 6350
+	7650 4050 7650 4600
 Wire Wire Line
-	6350 5000 9550 5000
+	4450 4050 6050 4050
 Wire Wire Line
-	7950 5000 7950 6350
-Connection ~ 9550 5550
-Connection ~ 7950 5550
+	6050 4050 6050 4600
+Connection ~ 7650 4600
+Connection ~ 6050 4600
 Wire Wire Line
-	6350 5000 6350 6050
-Connection ~ 7950 5000
-Connection ~ 6350 5250
+	4450 4050 4450 4300
+Connection ~ 6050 4050
+Connection ~ 4450 4300
 Wire Wire Line
-	6550 5550 6250 5550
+	4650 4600 4350 4600
 Wire Wire Line
-	6250 5550 6250 7050
-Connection ~ 6250 6350
+	4350 4600 4350 5400
+Connection ~ 4350 5400
 Wire Wire Line
-	6250 7050 9400 7050
+	4350 6100 5900 6100
 Wire Wire Line
-	7800 7050 7800 5250
+	5900 6100 5900 5100
 Wire Wire Line
-	7800 5250 8150 5250
+	5900 4300 6250 4300
 Wire Wire Line
-	8150 6050 7800 6050
-Connection ~ 7800 6050
+	6250 5100 5900 5100
+Connection ~ 5900 5100
 Wire Wire Line
-	9400 7050 9400 5250
+	7500 6100 7500 5100
 Wire Wire Line
-	9400 6050 9750 6050
-Connection ~ 7800 7050
+	7500 5100 7850 5100
+Connection ~ 5900 6100
 Wire Wire Line
-	9400 5250 9750 5250
-Connection ~ 9400 6050
+	7500 4300 7850 4300
+Connection ~ 7500 5100
+Wire Wire Line
+	7650 4600 7650 5400
+Wire Wire Line
+	6050 4600 6050 5400
+Wire Wire Line
+	6050 4050 7650 4050
+Wire Wire Line
+	4450 4300 4650 4300
+Wire Wire Line
+	4450 4300 4450 5100
+Wire Wire Line
+	4350 5400 4650 5400
+Wire Wire Line
+	4350 5400 4350 6100
+Wire Wire Line
+	5900 5100 5900 4300
+Wire Wire Line
+	5900 6100 7500 6100
+Wire Wire Line
+	7500 5100 7500 4300
 $EndSCHEMATC
