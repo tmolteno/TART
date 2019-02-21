@@ -27,7 +27,7 @@ def hilbert(s, debug=False):
     s_0 = time.time()
     S = np.fft.fft(s)
     if debug:
-        print 'fft', time.time()-s_0
+        print('fft', time.time()-s_0)
     s_1 = time.time()
 
     n = len(s)
@@ -37,11 +37,11 @@ def hilbert(s, debug=False):
     h[1:n/2] = 2.
     #h[n/2+1:] = 0.
     if debug:
-        print 'setup', time.time()-s_1
+        print('setup', time.time()-s_1)
     s_2 = time.time()
     ret = np.fft.ifft(h*S)[:n].imag
     if debug:
-        print 'ifft', time.time()-s_2
+        print('ifft', time.time()-s_2)
 
     return ret
 
@@ -83,7 +83,7 @@ def hilbert_fftw(s, debug=False, dtype='complex64'):
         pyfftw.import_wisdom(wisdom)
     except:
         write_wisdom = True
-        print 'no wisdom file'
+        print('no wisdom file')
 
     fft_in = pyfftw.empty_aligned(n, dtype=dtype, n=align)
     fft_out = pyfftw.empty_aligned(n, dtype=dtype, n=align)
@@ -100,7 +100,7 @@ def hilbert_fftw(s, debug=False, dtype='complex64'):
     fft_in[:] = s
     S = fft_machine()
     if debug:
-        print 'fft', time.time()-s_0
+        print('fft', time.time()-s_0)
 
     s_1 = time.time()
     h = np.zeros(n)
@@ -108,12 +108,12 @@ def hilbert_fftw(s, debug=False, dtype='complex64'):
     h[n/2] = 1.
     h[1:n/2] = 2.
     if debug:
-        print 'setup', time.time()-s_1
+        print('setup', time.time()-s_1)
     s_2 = time.time()
     ifft_in[:] = h*S
     ret = ifft_machine()
     if debug:
-        print 'ifft', time.time()-s_2
+        print('ifft', time.time()-s_2)
     return -ret[:n].imag
 
 
@@ -121,18 +121,18 @@ if __name__ == '__main__':
     x = np.random.randint(0, 2, 2**21)*2-1
     start = time.time()
     a = -hilbert(x)
-    print 'hilbert took', time.time()-start
+    print('hilbert took', time.time()-start)
     start = time.time()
     b = hilbert_fftw(x, debug=False)
-    print 'max took', time.time()-start
+    print('max took', time.time()-start)
 
     start = time.time()
     c = scipy_fftpack_hilbert(x)
-    print 'hilbert fftw took', time.time()-start
+    print('hilbert fftw took', time.time()-start)
 
     a = np.sign(a)
     b = np.sign(b)
     c = np.sign(c)
-    print np.allclose(a, b)
-    print np.allclose(b, c)
-    print np.allclose(a, c)
+    print(np.allclose(a, b))
+    print(np.allclose(b, c))
+    print(np.allclose(a, c))

@@ -18,9 +18,9 @@ def antennas_signal(antennas, ant_models, sources, timebase):
         working = np.zeros(len(timebase))
         for src in sources:
             delta = ant.get_geo_delay_horizontal(src)
-            #print "Delay %s: %g" % (ant, dt)
+            #print("Delay %s: %g" % (ant, dt))
             gain = ant_models[i].get_gain(src.elevation, src.azimuth)
-            #print 'Antenna: %i Gain: %1.1f el: %1.1f az: %1.1f' % (i, gain, src.elevation.to_degrees(), src.azimuth.to_degrees())
+            #print('Antenna: %i Gain: %1.1f el: %1.1f az: %1.1f' % (i, gain, src.elevation.to_degrees(), src.azimuth.to_degrees()))
             working += src.s(timebase + delta) * gain
         ret[i, :] = working
     return ret
@@ -55,7 +55,7 @@ def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl
     for i in range(0, num_ant):
         for j in range(i+1, num_ant):
             vi = noise[i]+noise[j]
-            # print vi
+            # print(vi)
             for src in sources:
                 gain0 = ant_models[i].get_gain(src.elevation, src.azimuth)
                 gain1 = ant_models[j].get_gain(src.elevation, src.azimuth)
@@ -115,7 +115,7 @@ class Antenna(object):
         r    = np.linalg.norm(object_vector_ant_pov)
         path_diff =    r - r_0
         delay = path_diff / constants.V_LIGHT
-        #print delay
+        #print(delay)
         return delay
 
 
@@ -144,5 +144,5 @@ def get_geo_delay_horizontal(a0, a1, src):
 def get_UVW(a0, a1, utc_time, ra, dec):
     uvw0 = a0.calcUVW(utc_time, ra, dec)
     uvw1 = a1.calcUVW(utc_time, ra, dec)
-    #print uvw0, uvw1, uvw1 - uvw0
+    #print(uvw0, uvw1, uvw1 - uvw0)
     return uvw0-uvw1

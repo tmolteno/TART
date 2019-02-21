@@ -38,7 +38,7 @@ class TestCorrelator(unittest.TestCase):
     vis_a = cor.correlate(o,mode='roll')
     #vis_b = cor.correlate_roll(o)
     vis_c = cor.correlate(o,mode='fftw_hilbert')
-    #print vis_a.vis(0,1), vis_b.vis(0,1), vis_c.vis(0,1)
+    #print(vis_a.vis(0,1), vis_b.vis(0,1), vis_c.vis(0,1))
 
     sample_duration = 16.02e-1
     sample_duration = 4e-1
@@ -59,7 +59,7 @@ class TestCorrelator(unittest.TestCase):
 
     for fraction in np.random.uniform(-np.pi/3,np.pi/3,10):
       dt = ((2.*np.pi)/src.omega)*fraction
-      print 'dt', dt
+      print('dt', dt)
       antsig2 = (src.s_baseband(rad.baseband_timebase+dt) * int_sig * np.exp(1.0j*src.omega*dt))
 
       antsig1 = add_noise(antsig1.real)
@@ -73,12 +73,12 @@ class TestCorrelator(unittest.TestCase):
       vis_c = cor.correlate(o,mode='fftw_hilbert')
       vis_d = cor.correlate(o,mode='fftw_hilbert_sign')
       
-      #print vis_a.vis(0,1),vis_b.vis(0,1)
-      print vis_a.vis(0,1),vis_c.vis(0,1)
-      print vis_a.vis(0,1),vis_d.vis(0,1)
-      #print vis_b.vis(0,1),vis_c.vis(0,1)
-      #print vis_b.vis(0,1),vis_d.vis(0,1)
-      print vis_c.vis(0,1),vis_d.vis(0,1)
+      #print(vis_a.vis(0,1),vis_b.vis(0,1))
+      print(vis_a.vis(0,1),vis_c.vis(0,1))
+      print(vis_a.vis(0,1),vis_d.vis(0,1))
+      #print(vis_b.vis(0,1),vis_c.vis(0,1))
+      #print(vis_b.vis(0,1),vis_d.vis(0,1))
+      print(vis_c.vis(0,1),vis_d.vis(0,1))
       
       #self.assertAlmostEqual(vis_a.vis(0,1),vis_b.vis(0,1),4)
       self.assertAlmostEqual(vis_a.vis(0,1),vis_c.vis(0,1),4)
@@ -92,22 +92,22 @@ class TestCorrelator(unittest.TestCase):
       vis = cor.correlate(obs,mode='roll')
       cor_out = angle.from_dms(angle.wrap_360(np.angle(vis.v[0], deg=True)))
       input_angle = angle.from_dms(angle.wrap_360(dt*src.omega*180./np.pi)) #.to_degrees()
-      #print cor_out, input_angle
-      #print type(cor_out),  type(input_angle)
-      #print cor_out - input_angle
+      #print(cor_out, input_angle)
+      #print(type(cor_out),  type(input_angle))
+      #print(cor_out - input_angle)
       self.assertLess(np.abs((cor_out - input_angle).to_degrees()), 30.)
 
       #d = [sig2binary(antsig1),sig2binary(antsig2)]
       #obs = observation.Observation(t,c,d)
       #vis = cor.correlate(obs,mode='fftw_hilbert')
       #cor_out = angle.wrap_360(np.angle(vis.v[0], deg=True))
-      #print cor_out, input_angle
+      #print(cor_out, input_angle)
       #self.assertTrue(np.abs(cor_out - input_angle) < 20.)
 
 class TestHilbert(unittest.TestCase):
   def test_hilbert(self):
     import scipy.signal
-    print 'hilbert'
+    print('hilbert')
     x = np.sin(np.arange(10000))
     h_scipy = scipy.signal.hilbert(x)
     h_pyfftw = hilbert(x)

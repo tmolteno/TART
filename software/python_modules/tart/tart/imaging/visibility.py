@@ -1,6 +1,9 @@
 import numpy as np
 
-import cPickle as pickle
+try:
+   import cPickle as pickle
+except:
+   import pickle
 
 from tart.util import angle
 from tart.util import skyloc

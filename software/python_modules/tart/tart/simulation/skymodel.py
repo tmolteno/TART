@@ -115,19 +115,19 @@ class Skymodel(object):
           if (l==0) or (src['name'] in self.l1_allowed['names']):
             if (l!=0):
               s_str = self.l1_allowed['strength_log10'][self.l1_allowed['names'].index(src['name'])]
-              #print s_str, type(s_str)
+              #print(s_str, type(s_str))
               amplitude = np.power(10,s_str)
             else:
               amplitude = 1.
-            print src['name'], src['az'], src['el']
+            print(src['name'], src['az'], src['el'])
             sources.append(simulation_source.SimulationSource(\
             r = src['r'],
             amplitude = amplitude, \
             azimuth = angle.from_dms(src['az']), elevation = angle.from_dms(src['el']), sample_duration = radio.n_samples/radio.ref_freq))
-            #print 'here'
+            #print('here')
 
     for src in self.known_objects:
-      print 'extra',src
+      print('extra',src)
       #for src in self.get_src_objects(location.get_loc(config), utc_date):
       ra, declination = src.radec(utc_date)
       dx, dy = np.random.multivariate_normal([0., 0.], np.identity(2)*np.power(src.width, 2.), n_samp).T
@@ -138,7 +138,7 @@ class Skymodel(object):
           r = src.r,
           amplitude = src.jansky(utc_date)/self.get_int_src_flux(utc_date)*1./n_samp, \
           azimuth = az, elevation = el, sample_duration = radio.n_samples/radio.ref_freq))
-    print len(sources)
+    print(len(sources))
     return sources
 
 
@@ -178,7 +178,7 @@ class Skymodel(object):
         if (el.to_degrees() > threshold):
           ret.append(src)
       except:
-        print 'No position for', src
+        print('No position for', src)
         self.del_src(src)
     return ret
 
@@ -217,7 +217,7 @@ class Skymodel(object):
           l_name.append(str(src))
           # l_name.append('%s %2.2f %1.1e' % (str(src), el.to_degrees(), src.jansky(utc_date)))
       except:
-        print 'no position', src
+        print('no position', src)
     return l_el, l_az, l_name
 
   def true_image(self, location, utc_date, nside):

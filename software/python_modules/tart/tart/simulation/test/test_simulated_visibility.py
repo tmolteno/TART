@@ -58,8 +58,8 @@ class TestSimulatedVisibility(unittest.TestCase):
 
   def test_compare_vis(self):
     d = self.full_vis - self.sim_vis
-    print d
-    print 'relative diffs', relative_diff(self.full_vis, self.sim_vis)
+    print(d)
+    print('relative diffs', relative_diff(self.full_vis, self.sim_vis))
     self.assertLess(abs(d.max()), 0.3)
     self.assertLess(d.std(), 0.1)
 

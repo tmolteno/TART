@@ -64,13 +64,13 @@ class Settings(object):
                 ant_pos['calibrated'] = json.loads(fr.read())
                 fr.close()
         except:
-                print 'could not load ' + cal_ant_positions_file
+                print('could not load ' + cal_ant_positions_file)
         try:
             with open(design_antenna_positions_file, 'r') as fr:
                 ant_pos['design'] = json.loads(fr.read())
                 fr.close()
         except:
-            print 'could not load ' + design_antenna_positions_file
+            print('could not load ' + design_antenna_positions_file)
         self.Dict['antenna_positions'] = ant_pos
 
     def get_antenna_positions(self, key='calibrated'):

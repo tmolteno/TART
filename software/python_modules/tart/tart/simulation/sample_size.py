@@ -50,7 +50,7 @@ if __name__ == '__main__':
   [ 49, 39, 29, 19, 9, 0, -9, -19, -29, -39, -49]])
  
   zero_off, max_size, base_size = sample_size(ref_freq, freq_mult, sample_duration, sample_delay)
-  print 'Jump this many places from left to find phase zero position for each sample'
-  print zero_off
-  print 'The base size is ', base_size
-  print 'Length of sample required to accommodate all phase changes is ', max_size
+  print('Jump this many places from left to find phase zero position for each sample')
+  print(zero_off)
+  print('The base size is ', base_size)
+  print('Length of sample required to accommodate all phase changes is ', max_size)

@@ -47,8 +47,8 @@ def process_file(dirname, fname, orientation_degrees, spacing, sample_duration, 
     v = Visibility(nobs)
     return date, hours, v, visibility[0]
   except Exception as inst:
-    print(type(inst)     # the exception instance)
-    print(inst.args      # arguments stored in .args)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
     print(inst)
     print(sample_duration)
     print(traceback.format_exc())

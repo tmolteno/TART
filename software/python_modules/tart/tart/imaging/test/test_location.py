@@ -82,9 +82,9 @@ class TestLocation(unittest.TestCase):
         self.assertAlmostEqual(y, 0.) 
         self.assertAlmostEqual(z, 0.) 
         x,y,z = Dunedin.get_XYZ(0., 10., 0.) # 100m north
-        print x, y, z
+        print(x, y, z)
         dx,dy,dz = Dunedin.get_ecef_delta_from_enu(0., 10., 0.)
-        print dx, dy, dz
+        print(dx, dy, dz)
         self.assertAlmostEqual(x, dx, 1) 
         self.assertAlmostEqual(y, dy, 1) 
         self.assertAlmostEqual(z, dz, 1) 
@@ -95,7 +95,7 @@ class TestLocation(unittest.TestCase):
     '''
 
     def test_get_ecef_delta_from_enu(self):
-        #print 'Testing ECEF2ENU2ECEF'
+        #print('Testing ECEF2ENU2ECEF')
         x,y,z = Dunedin.get_ecef()
         e,n,u = Dunedin.ecef_to_enu(x,y,z)
         x2,y2,z2 = Dunedin.get_ecef_delta_from_enu(e,n,u)
@@ -129,10 +129,10 @@ class TestLocation(unittest.TestCase):
                 ra, dec = Dunedin.horizontal_to_equatorial(self.utc_date, el_i, az_i)
                 el_f, az_f = Dunedin.equatorial_to_horizontal(self.utc_date, ra, dec)
                 
-                #print Dunedin
-                #print 'INIT: el az:', el_i, az_i
-                #print 'RA, DEC', ra, dec
-                #print 'FINAL: el az:', el_f, az_f
+                #print(Dunedin)
+                #print('INIT: el az:', el_i, az_i)
+                #print('RA, DEC', ra, dec)
+                #print('FINAL: el az:', el_f, az_f)
 
                 self.assertTrue((el_i - el_f) < angle.from_dms(0.01))
                 if (abs(el) != 90):
@@ -182,7 +182,7 @@ class TestLocation(unittest.TestCase):
         datee = datetime.datetime.utcnow()
 
         dnd.date = datee
-        #print dnd.date
+        #print(dnd.date)
 
         objectlist = [ephem.Sun(),ephem.Mercury(),ephem.Venus(),ephem.Mars(),ephem.Jupiter(),ephem.Saturn(),ephem.Uranus(),ephem.Neptune()]
         for j in objectlist:
@@ -247,10 +247,10 @@ class TestLocation(unittest.TestCase):
             utc_date = start_date + datetime.timedelta(seconds=t)
             LST = loc.LST(utc_date)
             h,m,s = LST.to_hms()
-            print LST.to_hours(), h,m,s
+            print(LST.to_hours(), h,m,s)
             obstime = time.Time(utc_date, scale='utc')
             st = obstime.sidereal_time('mean', longitude=eloc.lon) 
-            print st
+            print(st)
             self.assertAlmostEqual(h, st.hms.h,    5)
             self.assertAlmostEqual(m, st.hms.m,    5)
             self.assertAlmostEqual(s, st.hms.s,    5)
@@ -275,7 +275,7 @@ class TestLocation(unittest.TestCase):
 
         obstime = time.Time(utc_date, scale='utc')
         st = obstime.sidereal_time('apparent', 'greenwich') 
-        print st
+        print(st)
         self.assertAlmostEqual(gst_h, st.hms.h,    5)
         self.assertAlmostEqual(gst_m, st.hms.m,    5)
         self.assertAlmostEqual(gst_s, int(st.hms.s),    5)

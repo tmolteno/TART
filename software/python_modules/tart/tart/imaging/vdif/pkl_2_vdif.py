@@ -71,10 +71,10 @@ testthreadid=411
 teststationid=123
 
 w0 = str(invalid())+str(legacymode())+seconds_from_ref_epoch(testdate)
-print w0, len(w0) # Word 0
+print(w0, len(w0) # Word 0)
 w1 = unassigned()+ref_epoch(testdate)+data_frame_no_within_second(testframeno)
-print w1, len(w1) # Word 1
+print(w1, len(w1) # Word 1)
 w2 = vdif_version_number() + log2_number_of_channels_in_data_array(testnumberofchannels) + data_frame_length()
-print w2, len(w2) # Word 2
+print(w2, len(w2) # Word 2)
 w3 = data_type() + bits_per_sample_minus1(testbitspersample) + thread_id(testthreadid) + station_id(teststationid)
-print w3, len(w3) # Word 3
+print(w3, len(w3) # Word 3)

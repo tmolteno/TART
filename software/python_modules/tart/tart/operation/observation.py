@@ -1,6 +1,9 @@
 import numpy as np
 import datetime
-import cPickle
+try:
+   import cPickle as pickle
+except:
+   import pickle
 import math
 import gzip
 
@@ -70,7 +73,7 @@ def Observation_Load(filename):
         load_data = gzip.open(filename, 'rb')
         d = cPickle.load(load_data)
     except:
-        print 'not gzipped'
+        print('not gzipped')
         load_data = open(filename, 'rb')
         d = cPickle.load(load_data)
     finally:

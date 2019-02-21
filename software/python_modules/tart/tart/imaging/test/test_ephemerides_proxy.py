@@ -15,7 +15,7 @@ class TestEphemeridesProxy(unittest.TestCase):
       pos_remote = self.ep.get_remote_position(t, sv)
       diff = np.array(pos) - np.array(pos_remote)
       dr = np.sqrt(diff.dot(diff))
-      print t, dr
+      print(t, dr)
       self.assertLess(dr, 3.0) # Maximum difference of 3 meters
 
   # TODO sp3 orbit interpolation from the precise sp3 positions
@@ -40,7 +40,7 @@ class TestEphemeridesProxy(unittest.TestCase):
       p2 = self.ep.get_sv_position(t, sv)
       diff = np.array(p2) - np.array(p1)
       dr = np.sqrt(diff.dot(diff))
-      print "%i %s %f" % (i, p2, dr)
+      print("%i %s %f" % (i, p2, dr))
       self.assertLess(dr, 3000.0*(i+1))
 
   def test_sp3_proxying(self):
@@ -52,6 +52,6 @@ class TestEphemeridesProxy(unittest.TestCase):
       pos_remote = self.ep.get_remote_position(t, sv)
       diff = np.array(pos) - np.array(pos_remote)
       dr = np.sqrt(diff.dot(diff))
-      print i, t, dr
+      print(i, t, dr)
       self.assertLess(dr, 1.0) # Maximum difference of 1 meters
 

@@ -50,7 +50,7 @@ class Max2769B(Radio):
     self.sampling_rate = self.ref_freq * self.freq_mult
     self.baseband_timebase = np.arange(0, self.n_samples) * 1.0/self.ref_freq
     self.int_freq = self.ref_freq / self.ref_div * 4
-    # print self.int_freq
+    # print(self.int_freq)
 
   def sampled_signal(self, ant_signal, ant_index, sample_duration, debug = True):
     # t = np.linspace(0, self.sample_duration, len(ant_signal))
@@ -62,18 +62,18 @@ class Max2769B(Radio):
     lo_omega = lo_freq*2*np.pi # LO in radians/s
     lo = np.sin(lo_omega*t) # Produce sinusoidal LO signal of reqd length
 
-    if debug: print "LO Frequency: %f" % lo_freq
-    if debug: print "Intermediate Frequency: %f" % self.int_freq
+    if debug: print("LO Frequency: %f" % lo_freq)
+    if debug: print("Intermediate Frequency: %f" % self.int_freq)
 
     # Mix the incoming signal with LO to generate the IF
     if_sig = lo * ant_signal
-    # if debug: print 'if_sig\n', if_sigk         json
+    # if debug: print('if_sig', if_sigk         json)
 
     # Need anti-aliasing filter BEFORE downsampling. See http://en.wikipedia.org/wiki/Downsampling
     # This is a low pass filter with a cutoff of ref_freq / 2.
     cutoff_freq = self.int_freq*1.5
     samp_rate=float(len(ant_signal)) / sample_duration
-    # print samp_rate
+    # print(samp_rate)
     # The Nyquist rate of the signal.
     nyq_rate = samp_rate / 2.0
     width = 2e6/nyq_rate
@@ -84,7 +84,7 @@ class Max2769B(Radio):
 
     # Decimate the signal data by a factor of freq_mult
     samp_sig = alias_sig[::self.freq_mult]
-    if debug: print 'samp_sig\n', samp_sig
+    if debug: print('samp_sig', samp_sig)
 
     if (self.noise_level[ant_index] > 0.0):
       noise = np.random.normal(0, self.noise_level[ant_index], samp_sig.size)
@@ -92,12 +92,12 @@ class Max2769B(Radio):
 
      #Implement 5th order Butterworth filter as used by the max2769B
     filt_sig = butter_filter.butter_bandpass_filter(samp_sig, self.int_freq-self.bandwidth/2, self.int_freq+self.bandwidth/2, self.ref_freq, self.order)
-    if debug: print 'filt_sig\n', filt_sig
+    if debug: print('filt_sig', filt_sig)
 
     # Convert the filtered and sampled signal to one bit NRZ binary format
     filt_sig1 = np.sign(filt_sig) # -1 if negative, 0 if 0, +1 if positive
     filt_sig1[filt_sig == 0] = 1 # Replace 0 with 1 - true NRZ
-    if debug: print 'filt_sig1\n', filt_sig1
+    if debug: print('filt_sig1', filt_sig1)
 
     return filt_sig1
 
@@ -189,5 +189,5 @@ if __name__ == '__main__':
     # plt.figure()
     # plt.plot(freqs, (spec_simp-spec_full)/spec_full)
 
-    print len(obs_full.get_antenna(0)), obs_full.get_antenna(0).mean()
-    print len(obs_simp.get_antenna(0)), obs_simp.get_antenna(0).mean()
+    print(len(obs_full.get_antenna(0)), obs_full.get_antenna(0).mean())
+    print(len(obs_simp.get_antenna(0)), obs_simp.get_antenna(0).mean())

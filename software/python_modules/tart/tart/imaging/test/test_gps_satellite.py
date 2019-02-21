@@ -46,7 +46,7 @@ class TestGpsSatellite(unittest.TestCase):
       sv = GpsSatellite(svnum, location.Dunedin)
       ra, dec = sv.radec(t)
 
-      print angle.wrap_360(ra.to_degrees())
+      print(angle.wrap_360(ra.to_degrees()))
       self.assertAlmostEqual(ra.to_degrees(), ra_e.to_degrees(), 0)
       self.assertAlmostEqual(dec.to_degrees(), dec_e.to_degrees(), 0)
 
