@@ -2,7 +2,7 @@
 # TART web api main file.
 #
 # Maximilian Scheel (c) 2017 max@max.ac.nz
-# Tim Molteno 2018. tim@elec.ac.nz
+# Tim Molteno 2018-2019. tim@elec.ac.nz
 #
 import multiprocessing
 import logging

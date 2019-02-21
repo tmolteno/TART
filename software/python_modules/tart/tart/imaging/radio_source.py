@@ -15,7 +15,7 @@ from tart.util import skyloc
 import numpy as np
 
 
-class RadioSource:
+class RadioSource(object):
     '''This is the base class for all possible radio sources'''
     def __init__(self, r, jy=1000.0, width=0.01):
         self.flux = jy

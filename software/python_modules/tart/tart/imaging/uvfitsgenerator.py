@@ -78,7 +78,7 @@ class UVFitsGenerator(object):
             for uu,vv,ww, b in zip(uu_a, vv_a, ww_a, bls):
                 baseline = {}
                 [i,j] = b
-                # print (np.array(a1.enu) - np.array(a0.enu)), uu, vv, ww
+                # print((np.array(a1.enu) - np.array(a0.enu)), uu, vv, ww)
                 # arcane units of UVFITS require u,v,w in nanoseconds
                 baseline['UU'] = uu*constants.L1_WAVELENGTH/constants.V_LIGHT
                 baseline['VV'] = vv*constants.L1_WAVELENGTH/constants.V_LIGHT

@@ -14,7 +14,7 @@ def boolean_mean(x_bool_arr):
     return ret
 
 
-class Observation:
+class Observation(object):
 
     '''Antenna positions are going to be in meters from the array reference position.
     They will be in 3D ENU co-ordinates'''

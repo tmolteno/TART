@@ -8,7 +8,7 @@ from tart.util import constants
 
 from tart.operation import observation
 
-class Visibility:
+class Visibility(object):
     """
     A container class for visibilities from a single observation.
     """
@@ -67,7 +67,7 @@ class Visibility:
             # tg is t_a1 - t_a0
             # (negative if a1 is closer to source than a0)
 
-            # print b, omega*tg
+            # print(b, omega*tg)
             v = v * np.exp(-1.0j * omega * tg)
             stopped_vis.append(v)
 
@@ -117,7 +117,7 @@ def Visibility_Load(filename):
             else:
                 ret.append(v)
         if err_count>0:
-            print 'Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)
+            print('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count))
         return ret
 
 def Visibility_Lsq(vis1, vis2):

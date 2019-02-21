@@ -1,7 +1,7 @@
 import time
 import numpy as np
 
-class TartDummySPI:
+class TartDummySPI(object):
   '''Dummy object for configuring, and querying TART hardware.'''
 
   ##--------------------------------------------------------------------------
@@ -50,7 +50,7 @@ class TartDummySPI:
 
   def pause(self, duration=0.005, noisy=False):
     if noisy:
-      print ' pausing for %1.3fs' % duration
+      print(' pausing for %1.3fs' % duration)
     time.sleep(duration)
 
 
@@ -69,7 +69,7 @@ class TartDummySPI:
     res = [0xFF for i in range(num)]
     if noisy:
       for val in res:
-        print '%s' % self.show_status(reg, val)
+        print('%s' % self.show_status(reg, val))
     return res
 
   def setbit(self, reg, bit, noisy=False):
@@ -98,8 +98,8 @@ class TartDummySPI:
     '''Issue a global reset to the TART hardware.'''
     ret = self.setbyte(self.SPI_RESET, 0x01)
     if noisy:
-      print tobin([ret])
-      print ' reset issued.'
+      print(tobin([ret]))
+      print(' reset issued.')
     self.pause()
     return 1
 
@@ -114,7 +114,7 @@ class TartDummySPI:
       val = self.getbyte(reg)
       vals.append(val)
       if noisy:
-        print self.show_status(reg, val)
+        print(self.show_status(reg, val))
     return vals
 
   def show_status(self, reg, val):
@@ -196,7 +196,7 @@ class TartDummySPI:
 
     ret = self.setbyte(self.TC_SYSTEM, val)
     if noisy:
-      print ' capture %s' % flg
+      print(' capture %s' % flg)
     self.pause()
     return ret
 
@@ -216,11 +216,11 @@ class TartDummySPI:
         val = val & 0xbf
       ret = self.setbyte(self.TC_DEBUG, val)
       if noisy:
-        print ' debug now ON'
+        print(' debug now ON')
     else:
       val = self.clrbit(self.TC_DEBUG, 7, noisy)
       if noisy:
-        print ' debug now OFF'
+        print(' debug now OFF')
     self.pause()
     return 1
 
@@ -244,7 +244,7 @@ class TartDummySPI:
     '''Read back the data sampling delays.'''
     val = self.getbyte(self.TC_CENTRE, noisy) & 0x0f
     if noisy:
-      print self.show_status(self.TC_CENTRE, val)
+      print(self.show_status(self.TC_CENTRE, val))
     self.pause()
     return val
 
@@ -257,11 +257,11 @@ class TartDummySPI:
       self.pause()
       if noisy:
         self.getbyte(self.TC_CENTRE, True)
-        # print tobin(ret)
+        # print(tobin(ret))
       return True
     else:
       if noisy:
-        print 'WARNING: phase value (%d) not within [0,5]' % phase
+        print('WARNING: phase value (%d) not within [0,5]' % phase)
       return False
 
   def read_phase_delay(self, noisy=False):
@@ -269,7 +269,7 @@ class TartDummySPI:
     ret = self.getbyte(self.TC_STATUS, noisy)
     val = ret & 0x0f
     if noisy:
-      print tobin([ret])
+      print(tobin([ret]))
     self.pause()
     return val
 
@@ -280,7 +280,7 @@ class TartDummySPI:
     for val in ret:
       res.append(val & 0x0f)
     if noisy:
-      print tobin(res)
+      print(tobin(res))
     self.pause()
     return res
 
@@ -294,14 +294,14 @@ class TartDummySPI:
     ret = self.setbyte(self.AQ_SYSTEM, old | 0x80)
     val = self.getbit (self.AQ_SYSTEM, 7)
     if noisy:
-      print ' attempting to set acquisition-mode to ON'
-      print tobin([old])
-      print tobin([ret])
+      print(' attempting to set acquisition-mode to ON')
+      print(tobin([old]))
+      print(tobin([ret]))
     if val:
       self.pause(sleeptime)       # optionally wait for acquisition to end
       res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
-        print self.show_status(self.AQ_SYSTEM, res)
+        print(self.show_status(self.AQ_SYSTEM, res))
       fin = res & 0x07 > 2
     self.pause()
     return val and fin
@@ -347,7 +347,7 @@ class TartDummySPI:
       ret = 0xFF
       self.pause()
       if noisy:
-        print tobin(ret)
+        print(tobin(ret))
       return 1
     else:
       return 0
@@ -356,7 +356,7 @@ class TartDummySPI:
     '''Get the (exponent of the) correlator block-size.'''
     ret = self.getbyte(self.VX_SYSTEM)
     if noisy:
-      print self.show_status(self.VX_SYSTEM,ret)
+      print(self.show_status(self.VX_SYSTEM,ret))
     return ret & 0x1f
 
   def read_visibilities(self, noisy=True):
@@ -365,13 +365,13 @@ class TartDummySPI:
     val = self.vis_convert(res)
     if noisy:
       tim = time.time()
-      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val))
+      print(" Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val)))
     return val
 
   def vis_ready(self, noisy=False):
     rdy = self.getbit(self.VX_STATUS, 7)
     if noisy:
-      print '\tready = %s' % rdy
+      print('\tready = %s' % rdy)
     return rdy
 
   def vis_read(self, noisy=False):

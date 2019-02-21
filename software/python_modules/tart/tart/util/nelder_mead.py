@@ -14,7 +14,7 @@ import numpy as np
 # np.array((N+1,N))
 
 
-class NelderMead:
+class NelderMead(object):
     def __init__(self, f, debug=False):
          self.fun = f
          self.debug = debug

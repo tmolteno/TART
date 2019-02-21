@@ -10,7 +10,7 @@ import requests
 
 from tart.operation import settings
 
-class APIhandler:
+class APIhandler(object):
     def __init__(self, api_root):
         self.root = api_root
         self.token = None

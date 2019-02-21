@@ -2,11 +2,11 @@
 # An object that represents a location in the Elevation and Azimuth, and
 # handles projection into the l,m plane.
 #
-# Tim Molteno 2017
+# Tim Molteno 2017-2019
 #
 import numpy as np
 
-class ElAz:
+class ElAz(object):
     
     def __init__(self, el, az):
         self.el_r = np.radians(el)
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     
     old = np.array(old)
     new = np.array(new)*np.max(old)
-    print new.shape, old.shape
+    print(new.shape, old.shape)
     plt.figure()
     plt.scatter(old[:,0], old[:,1], label="old", alpha=1.0)
     plt.scatter(new[:,0], new[:,1], label="new", alpha=0.5)

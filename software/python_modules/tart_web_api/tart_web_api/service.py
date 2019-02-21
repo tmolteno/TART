@@ -3,7 +3,7 @@
     capture visibilities e.t.c.
     
     Author. Max Scheel 2017
-            Tim Molteno 2018
+            Tim Molteno 2018-2019
 
 '''
 
@@ -27,7 +27,7 @@ from scipy.optimize import minimize
 import tart_web_api.database as db
 
 from tart_hardware_interface.tartspi import TartSPI
-from tart_dummy_spi import TartDummySPI
+from tart_web_api.tart_dummy_spi import TartDummySPI
 
 from tart_hardware_interface.highlevel_modes_api import *
 from tart_hardware_interface.stream_vis import *
@@ -70,7 +70,7 @@ def optimize_phaseNgain(opt_parameters):
     N_IT += 1
     if N_IT%20 == 0:
         db.update_calibration_process_state(str(ret))
-        print ret#, phase_offsets, gains
+        print(ret) #, phase_offsets, gains
     return ret
 
 def vis_diff(vis1, vis2, ant_a, ant_b):
@@ -164,14 +164,14 @@ def cleanup_observation_cache():
 
                 try:
                     db.remove_raw_file_handle_by_Id(entry['Id'])
-                    print 'removed', entry['Id'], entry['filename'], entry['checksum']
+                    print('removed', entry['Id'], entry['filename'], entry['checksum'])
                 except:
-                    print 'couldnt remove handle from database'
+                    print('couldnt remove handle from database')
                     pass
                 try:
                     os.remove(entry['filename'])
                 except:
-                    print 'couldnt remove file'
+                    print('couldnt remove file')
                     pass
         else:
             db.update_observation_cache_process_state('OK')
@@ -184,14 +184,14 @@ def cleanup_visibility_cache():
             for entry in resp[10:]:
                 try:
                     db.remove_vis_file_handle_by_Id(entry['Id'])
-                    print 'removed', entry['Id'], entry['filename'], entry['checksum']
+                    print('removed', entry['Id'], entry['filename'], entry['checksum'])
                 except:
-                    print 'couldnt remove handle from database'
+                    print('couldnt remove handle from database')
                     pass
                 try:
                     os.remove(entry['filename'])
                 except:
-                    print 'couldnt remove file'
+                    print('couldnt remove file')
                     pass
 
         else:

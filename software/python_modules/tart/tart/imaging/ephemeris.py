@@ -1,9 +1,9 @@
-# Copyright (C) Tim Molteno 2008-2013. All rights reserved
+# Copyright (C) Tim Molteno 2008-2019. All rights reserved
 
 import math
 from tart.simulation.util import Util
 
-class Ephemeris:
+class Ephemeris(object):
   GM = 3.986005e14  # earth's universal gravitational parameter m^3/s^2
   WGS84_EARTH_ROTATION_RATE = 7.2921151467e-5;  # earth rotation rate, rad/s
 
@@ -165,7 +165,7 @@ class Ephemeris:
       x=(x2*y-x*y1)/(y-y1)
     ek=x
 
-    print "  E0 -> ", ek
+    print("  E0 -> ", ek)
     return ek
 
   def getE(self, sow):

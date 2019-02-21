@@ -11,7 +11,7 @@ def tobin(arr):
   return [bin(i) for i in arr]
 
 
-class TartSPI:
+class TartSPI(object):
   '''Command for configuring, and querying TART hardware.'''
 
   ##--------------------------------------------------------------------------
