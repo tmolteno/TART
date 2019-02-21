@@ -36,15 +36,17 @@ class FileCache(sky_object.SkyObject):
         except:
             pass
         try:
-            if (self.last_download_attempt.has_key(url)):
+            if (url in self.last_download_attempt):
+                print("Download Attempt {}".format(self.last_download_attempt))
                 last_try = self.last_download_attempt[url]
+                print("last_try {}".format(last_try))
                 delta_seconds = (datetime.datetime.now() - last_try).total_seconds()
                 if last_try and (delta_seconds < 3600):
                     raise "Error ({} -> {}: Already attempted ({last_try})".format(url, local_file, last_try)
 
             logging.info("starting download ({} -> {}".format(url, local_file))
             self.last_download_attempt[url] = datetime.datetime.now()
-            dat = urllib.urlopen(url)
+            dat = urllib.request.urlopen(url)
             with open(local_file, 'wb') as w:
                 w.write(dat.read())
                 w.close()
@@ -60,7 +62,7 @@ class FileCache(sky_object.SkyObject):
         utc_date = utc.to_utc(date)
 
         fname = self.get_local_filename(utc_date)
-        if self.cache.has_key(fname):
+        if fname in self.cache:
             return self.cache[fname]
 
         try:

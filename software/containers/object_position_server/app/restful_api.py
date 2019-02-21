@@ -21,7 +21,7 @@ galileo_cache = norad_cache.GalileoCache()
 sun = sun_object.SunObject()
 
 def parse_date(request):
-    if request.args.has_key('date'):
+    if 'date' in request.args:
         try:
             date_string = request.args.get('date')
             # Deal with a URL that has a + sign replaced by a space
@@ -39,7 +39,7 @@ def parse_date(request):
     return d
 
 def get_required_parameter(request, param_name):
-    if request.args.has_key(param_name):
+    if param_name in request.args:
         return request.args.get(param_name)
     else:
         #app.logger.error("Missing Required Parameter {}".format(param_name))
@@ -88,7 +88,6 @@ def get_catalog():
     ret += galileo_cache.get_az_el(date, lat, lon, alt)
     ret += extra_cache.get_az_el(date, lat, lon, alt)
     ret += sun.get_az_el(date, lat, lon, alt)
-    print ret
     return jsonify(ret)
 
 """

@@ -133,4 +133,4 @@ class GalileoCache(EphemerisFileCache):
     
 if __name__=="__main__":
     cache = NORADCache()
-    print cache.get_positions(utc.now())
+    print(cache.get_positions(utc.now()))
