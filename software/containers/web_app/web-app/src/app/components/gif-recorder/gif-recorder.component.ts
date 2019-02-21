@@ -7,7 +7,7 @@ import {
     EventEmitter,
     HostListener
 } from '@angular/core';
-const gifshot = require('gifshot/build/gifshot');
+const gifshot = require('gifshot');
 import * as moment from 'moment/moment';
 
 @Component({
