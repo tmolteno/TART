@@ -31,7 +31,7 @@ def get_vis_object(data, runtime_config):
     corr_cos_i_cos_j = get_corr(xnor_cos, n_samples)
     corr_cos_i_sin_j = get_corr(xnor_sin, n_samples)
     means = (data[-24:])/float(n_samples)*2.-1
-    #print means
+    #print(means)
     for i in range(0, num_ant):
         for j in range(i+1, num_ant):
             idx = len(baselines)
@@ -71,11 +71,11 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
             d, d_json = get_status_json(tart)
             runtime_config['status'] = d
             process_queue.put(data)
-            print  'Capture Loop: Acquired', data[0]
+            print( 'Capture Loop: Acquired', data[0])
         except Exception, e:
             logger.error( "Capture Loop Error %s" % str(e))
             logger.error(traceback.format_exc())
-    print 'Done acquisition. Closing Capture Loop.'
+    print('Done acquisition. Closing Capture Loop.')
     return 1
 
 def update_means(means,ts,runtime_config):
@@ -99,18 +99,18 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                 if cmd == 'stop':
                     active = 0
             if (process_queue.empty() == False):
-                #print 'Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize())
+                #print('Status: ProcessQ: %i ResultQ: %i' % (process_queue.qsize(), vis_queue.qsize()))
                 data = process_queue.get()
                 vis, means, timestamp = get_vis_object(data, runtime_config)
-                #print vis, means, timestamp
+                #print(vis, means, timestamp)
                 #update_means(means, timestamp, runtime_config)
-                #print means
-                #print  'Process Loop:', # vis
+                #print(means)
+                #print( 'Process Loop:', # vis)
                 vis_queue.put((vis, means))
         except Exception, e:
             logger.error( "Processing Error %s" % str(e))
             logger.error(traceback.format_exc())
-    print 'process_loop finished'
+    print('process_loop finished')
     return 1
 
 def stream_vis_to_queue(tart, runtime_config):
@@ -158,7 +158,7 @@ def gen_calib_image(vislist, calibration_dir):
                       flagged_bl.append([i,j])
           cv.set_flagged_baselines(flagged_bl)
           if MIN:
-              print 'fmin'
+              print('fmin')
           else:
               for i in range(1,6):
                   a_i = np.abs(cv.get_visibility(0,i))
@@ -167,7 +167,7 @@ def gen_calib_image(vislist, calibration_dir):
                   cv.set_phase_offset(i, ang_i)
           cv.to_json(cal_file)
         else:
-            #print 'loading.. calibration'
+            #print('loading.. calibration')
             cv = calibration.from_JSON_file(vis, cal_file)
             CAL_MEASURE_VIS_LIST.append(cv)
     CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
@@ -184,12 +184,12 @@ def vis_to_latest_image(tart_instance, runtime_config,):
     time.sleep(0.05)
     while vis_q.qsize()>0:
         vis, means = vis_q.get()
-        #print 'here', vis
+        #print('here', vis)
     if vis is not None:
         res, ex = gen_calib_image([vis,], runtime_config['calibration_dir'])
         res = np.abs(res)
         rescaled = (255.0 / res.max() * (res - res.min())).astype(np.uint8)
-        print rescaled, 'shape', np.shape(rescaled)
+        print(rescaled, 'shape', np.shape(rescaled))
         im = Image.fromarray(rescaled)
         im.save(runtime_config['realtime_image_path'])
-        print 'saved file'
+        print('saved file')

@@ -6,7 +6,7 @@ with open('README.txt') as f:
 
 setup(
     name='tart_hardware_interface',
-    version='0.1.5',
+    version='0.1.6',
     description='Transient Array Radio Telescope Low-Level hardware interface',
     long_description=readme,
     packages=['tart_hardware_interface'],
