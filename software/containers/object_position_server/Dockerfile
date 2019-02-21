@@ -3,12 +3,10 @@ MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG DEBIAN_FRONTEND=noninteractive
 
 # debian setup
-RUN apt-get update -y
-RUN apt-get upgrade -y 
-
-RUN apt-get install -y python-numpy python-dateutil
-RUN apt-get install -y python-flask python-sgp4 python-requests python-tz
-RUN apt-get install -y python-pip
+RUN apt-get update && apt-get install -y \
+    python-numpy python-dateutil \
+    python-flask python-sgp4 python-requests python-tz \
+    python-pip
 
 RUN rm -rf /var/lib/apt/lists/*
 
