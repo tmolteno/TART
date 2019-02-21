@@ -72,7 +72,7 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
             runtime_config['status'] = d
             process_queue.put(data)
             print( 'Capture Loop: Acquired', data[0])
-        except Exception, e:
+        except Exception as e:
             logger.error( "Capture Loop Error %s" % str(e))
             logger.error(traceback.format_exc())
     print('Done acquisition. Closing Capture Loop.')
@@ -107,7 +107,7 @@ def process_loop(process_queue, vis_queue, cmd_queue, runtime_config, logger=Non
                 #print(means)
                 #print( 'Process Loop:', # vis)
                 vis_queue.put((vis, means))
-        except Exception, e:
+        except Exception as e:
             logger.error( "Processing Error %s" % str(e))
             logger.error(traceback.format_exc())
     print('process_loop finished')
