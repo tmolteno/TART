@@ -137,8 +137,8 @@ class CalibratedVisibility(object):
 
 def from_dict(vis, calib_dict):
     ret = CalibratedVisibility(vis)
-    ret.set_phase_offset(range(ret.get_config().num_antenna),np.array(calib_dict['phase_offset']))
-    ret.set_gain(range(ret.get_config().num_antenna),np.array(calib_dict['gain']))
+    ret.set_phase_offset(range(ret.get_config().get_num_antenna()),np.array(calib_dict['phase_offset']))
+    ret.set_gain(range(ret.get_config().get_num_antenna()),np.array(calib_dict['gain']))
     ret.set_flagged_baselines(calib_dict['flagged_baselines'])
     return ret
 

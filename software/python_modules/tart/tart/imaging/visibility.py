@@ -125,7 +125,7 @@ def Visibility_Load(filename):
 
 def Visibility_Lsq(vis1, vis2):
     """ Return least square based on the phases of 2 visibilities """
-    if vis1.config.num_antenna == vis2.config.num_antenna:
+    if vis1.config.get_num_antenna() == vis2.config.get_num_antenna():
         difflist = []
         for v1, v2 in zip(vis1.v, vis2.v):
             diff = np.abs(np.angle(v1) - np.angle(v2))

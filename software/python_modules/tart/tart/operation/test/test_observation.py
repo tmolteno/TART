@@ -13,7 +13,7 @@ class TestObservation(unittest.TestCase):
         self.config = settings.from_file('tart/test/test_telescope_config.json')
         self.test_len = 2**16
         # generate some fake data
-        self.data = [np.random.randint(0,2,self.test_len)*2-1 for _ in range(self.config.num_antenna)]
+        self.data = [np.random.randint(0,2,self.test_len)*2-1 for _ in range(self.config.get_num_antenna())]
         self.obs = Observation(ts, self.data, self.config)
 
 
