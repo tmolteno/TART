@@ -18,34 +18,19 @@ def boolean_mean(x_bool_arr):
 
 
 class Observation(object):
-
     '''Antenna positions are going to be in meters from the array reference position.
     They will be in 3D ENU co-ordinates'''
+    
+    
     def __init__(self, timestamp, config, data=None, savedata=None):
+        '''
+            Create an observation from binary (boolean 0...1) data
+            
+        '''
         self.timestamp = timestamp
         self.config = config
         self.data = np.asarray(data)
         self.savedata = savedata
-
-    def save(self, filename):
-
-        d = {}
-        d['config'] = self.config.Dict
-        d['timestamp'] = self.timestamp
-
-        if self.savedata is None:
-            #self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
-            self.savedata = np.array(self.data, dtype=np.uint8)
-
-        t = []
-        for ant in self.savedata:
-            t.append(np.packbits(ant))
-
-        d['data'] = t
-
-        save_ptr = gzip.open(filename, 'wb')
-        pickle.dump(d, save_ptr, pickle.HIGHEST_PROTOCOL)
-        save_ptr.close()
 
     def get_means(self):
         '''Calculate and return means of antenna data'''
@@ -68,7 +53,31 @@ class Observation(object):
     def get_mjd(self):
         return tart_util.get_mjd(self.timestamp)
 
+    def save(self, filename):
+        ''' Save the Observation object,
+            Data is saved as one bit
+        '''
+        d = {}
+        d['config'] = self.config.Dict
+        d['timestamp'] = self.timestamp
+
+        if self.savedata is None:
+            #self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
+            self.savedata = np.array(self.data, dtype=np.uint8)
+
+        t = []
+        for ant in self.savedata:
+            t.append(np.packbits(ant))
+
+        d['data'] = t
+
+        save_ptr = gzip.open(filename, 'wb')
+        pickle.dump(d, save_ptr, pickle.HIGHEST_PROTOCOL)
+        save_ptr.close()
+
+
 def Observation_Load(filename):
+    
     try:
         load_data = gzip.open(filename, 'rb')
         d = pickle.load(load_data)
@@ -78,10 +87,12 @@ def Observation_Load(filename):
         d = pickle.load(load_data)
     finally:
         load_data.close()
-    bipolar_data = []
+
+    unipolar_data = []
     for i in d['data']:
         unpacked_ints = np.asarray(np.unpackbits(i), dtype=np.uint8)
-        bipolar_data.append(unpacked_ints)
-    # this is an array of bipolar radio signals.
-    ret = Observation(timestamp=d['timestamp'], config=settings.from_dict(d['config']), data=bipolar_data)
+        unipolar_data.append(unpacked_ints)
+        # this is an array of unipolar 0,1 radio signals.
+
+    ret = Observation(timestamp=d['timestamp'], config=settings.from_dict(d['config']), data=unipolar_data)
     return ret
