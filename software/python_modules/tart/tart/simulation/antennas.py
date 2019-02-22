@@ -47,7 +47,7 @@ def antennas_simp_vis(antennas, ant_models, sources, utc_date, config, noise_lvl
     vis = []
     baselines = []
     num_ant = len(antennas)
-    # noise = np.random.uniform(0.,np.sqrt(noise_lvl),config.num_antennas) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antennas))
+    # noise = np.random.uniform(0.,np.sqrt(noise_lvl),config.num_antenna) * np.exp(2.0j*np.pi*np.random.uniform(-1.,1.,config.num_antenna))
     if noise_lvl.__gt__(0.).all():
         noise = np.random.normal(0., noise_lvl) * np.exp(2.0j*np.pi*np.random.uniform(-1., 1., num_ant))
     else:
