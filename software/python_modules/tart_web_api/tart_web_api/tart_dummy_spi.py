@@ -177,7 +177,7 @@ class TartDummySPI(object):
     }
     ret = {}
     for reg,reg_s,val in zip(self.regs, self.regs_s, vals):
-        if extractors.has_key(reg):
+        if reg in extractors:
             ret[reg_s] = extractors[reg](val)
     return ret
 

@@ -238,7 +238,7 @@ class TartControl():
 
         elif self.state == 'raw':
             ret = run_acquire_raw(self.TartSPI, self.config)
-            if ret.has_key('filename'):
+            if 'filename' in ret:
                 db.insert_raw_file_handle(ret['filename'], ret['sha256'])
 
         elif self.state == 'vis':
@@ -247,7 +247,7 @@ class TartControl():
                 self.vis_stream_setup()
             else:
                 ret = self.vis_stream_acquire()
-                if ret.has_key('filename'):
+                if 'filename' in ret:
                     logging.info("vis_stream_acquire = {}".format(ret))
                     db.insert_vis_file_handle(ret['filename'], ret['sha256'])
                 time.sleep(0.005)

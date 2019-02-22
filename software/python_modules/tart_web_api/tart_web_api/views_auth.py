@@ -9,7 +9,7 @@ from flask_jwt_extended import jwt_required, \
 from tart_web_api.main import app, jwt
 
 import os
-if os.environ.has_key('LOGIN_PW'):
+if 'LOGIN_PW' in os.environ:
   pw = os.environ['LOGIN_PW']
 else:
   pw = 'password'

@@ -45,7 +45,7 @@ class AuthorizedAPIhandler(APIhandler):
     def login(self):
         payload_dict = {'username': 'admin', 'password': self.pw}
         resp_json = self.__post_payload('/auth', payload_dict=payload_dict)
-        if resp_json.has_key('access_token'):
+        if 'access_token' in resp_json:
             self.token = resp_json['access_token']
             self.refresh_token = resp_json['refresh_token']
         else:
@@ -55,7 +55,7 @@ class AuthorizedAPIhandler(APIhandler):
         r = requests.post(self.url('refresh'),
                           headers=self.__get_refresh_header())
         resp_json = json.loads(r.text)
-        if resp_json.has_key('access_token'):
+        if 'access_token' in resp_json:
             self.token = resp_json['access_token']
             print('refreshed token')
        
@@ -81,7 +81,7 @@ class AuthorizedAPIhandler(APIhandler):
     def post(self, path, **kwargs):
         r = requests.post(self.url(path), headers=self.__get_header(), **kwargs)
         ret = json.loads(r.text)
-        if ret.has_key('status') and ret.has_key('sub_status'):
+        if 'status' in ret and 'sub_status' in ret:
             if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
                 self.refresh_access_token()
                 return self.post(path, **kwargs)

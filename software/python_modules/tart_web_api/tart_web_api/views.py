@@ -69,7 +69,7 @@ def get_status_fpga():
       @apiSuccess {Number} VX_SYSTEM.overwrite VX_SYSTEM
     """
     runtime_config = app.config['CONFIG']
-    if runtime_config.has_key("status"):
+    if "status" in runtime_config:
         ret = runtime_config["status"]
         ret['hostname'] = runtime_config['hostname']
         return jsonify(ret)
@@ -87,7 +87,7 @@ def get_status_channel_all():
     """
 
     runtime_config = app.config['CONFIG']
-    if runtime_config.has_key("channels"):
+    if "channels" in runtime_config:
         channel_list = db.get_manual_channel_status()
         ret = runtime_config["channels"]
         for ch in ret:
@@ -130,7 +130,7 @@ def get_status_channel_i(channel_idx):
       }
     """
     runtime_config = app.config['CONFIG']
-    if runtime_config.has_key("channels"):
+    if "channels" in runtime_config:
         if (channel_idx < 24) and (channel_idx > -1):
             channel_list = db.get_manual_channel_status()
             ret = runtime_config["channels"][channel_idx]
@@ -244,7 +244,7 @@ def get_latest_vis():
     """
     runtime_config = app.config['CONFIG']
     ret = []
-    if runtime_config.has_key('vis_current'):
+    if 'vis_current' in runtime_config:
         ret = runtime_config['vis_current']
         channel_list = db.get_manual_channel_status()
         active_channels = np.zeros(len(channel_list))
@@ -267,7 +267,7 @@ def get_imaging_antenna_positions():
     @apiSuccess {Object[]} antenna_positions Array of antenna positions in East-North-Up Coordinate system [[e,n,u],[e,n,u],..]].
     """
     runtime_config = app.config['CONFIG']
-    if runtime_config.has_key('antenna_positions'):
+    if 'antenna_positions' in runtime_config:
         return jsonify(runtime_config['antenna_positions'])
 
 @app.route('/imaging/timestamp')
@@ -280,7 +280,7 @@ def get_imaging_timestamp():
     @apiSuccess {String} timestamp Get UTC timestamp  of latest visibilities in isoformat .
     """
     runtime_config = app.config['CONFIG']
-    if runtime_config.has_key('vis_timestamp'):
+    if 'vis_timestamp' in runtime_config:
         return runtime_config['vis_timestamp'].isoformat()[:-3]+'Z'
     else:
         return jsonify({})
@@ -302,7 +302,7 @@ def get_info():
     @apiSuccess {Number} info.baseband_frequency Baseband frequency of the radio
     @apiSuccess {Number} info.sampling_frequency Sampling frequency of the radio
     @apiSuccess {Number} info.bandwidth Bandwidth of the radio
-    @apiSuccess {Number} info.num_antenna Number of antennas in the telescope
+    @apiSuccess {Number} info.get_num_antenna() Number of antennas in the telescope
     @apiSuccess {Number} info.name Telescope site name
     """
 
