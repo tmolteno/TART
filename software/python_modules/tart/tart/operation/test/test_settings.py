@@ -22,4 +22,4 @@ class TestSettings(unittest.TestCase):
     def test_load(self):
         ts = datetime.datetime.utcnow()
         config = from_file('tart/test/test_telescope_config.json')
-        self.assertEqual(config.Dict)
+        self.assertTrue(config.Dict is not None)

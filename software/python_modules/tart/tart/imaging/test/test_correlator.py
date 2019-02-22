@@ -33,7 +33,7 @@ class TestCorrelator(unittest.TestCase):
     c = settings.from_file(TEST_SCOPE_CONFIG)
     c.Dict['num_antenna'] = 2
     d = [a0,a1]
-    o = observation.Observation(t,c,d)
+    o = observation.Observation(timestamp=t, config=c, data=d)
     
     cor = Correlator(van_vleck_corr=True)
     vis_a = cor.correlate(o,mode='roll')
@@ -67,7 +67,7 @@ class TestCorrelator(unittest.TestCase):
       antsig2 = add_noise(antsig2.real)
 
       d = [sig2binary(antsig1),sig2binary(antsig2)]
-      obs = observation.Observation(t,c,d)
+      obs = observation.Observation(timestamp=t, config=c, data=d)
 
       vis_a = cor.correlate(o,mode='roll')
       #vis_b = cor.correlate_roll(o)
@@ -99,7 +99,7 @@ class TestCorrelator(unittest.TestCase):
       self.assertLess(np.abs((cor_out - input_angle).to_degrees()), 30.)
 
       #d = [sig2binary(antsig1),sig2binary(antsig2)]
-      #obs = observation.Observation(t,c,d)
+      #obs = observation.Observation(timestamp=t, config=c, data=d)
       #vis = cor.correlate(obs,mode='fftw_hilbert')
       #cor_out = angle.wrap_360(np.angle(vis.v[0], deg=True))
       #print(cor_out, input_angle)

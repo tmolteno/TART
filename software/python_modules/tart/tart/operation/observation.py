@@ -80,8 +80,8 @@ def Observation_Load(filename):
         load_data.close()
     bipolar_data = []
     for i in d['data']:
-        unpacked_ints = np.asarray(np.unpackbits(i), dtype=bool)
+        unpacked_ints = np.asarray(np.unpackbits(i), dtype=np.uint8)
         bipolar_data.append(unpacked_ints)
     # this is an array of bipolar radio signals.
-    ret = Observation(d['timestamp'], settings.from_dict(d['config']), data=bipolar_data)
+    ret = Observation(timestamp=d['timestamp'], config=settings.from_dict(d['config']), data=bipolar_data)
     return ret

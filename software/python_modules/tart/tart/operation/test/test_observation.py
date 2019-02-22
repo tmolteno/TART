@@ -12,7 +12,7 @@ class TestObservation(unittest.TestCase):
 
         ts = datetime.datetime.utcnow()
         self.config = settings.from_file('tart/test/test_telescope_config.json')
-        self.test_len = 2**16
+        self.test_len = 2**8
         # generate some fake data
         self.data = [np.random.randint(0,2,self.test_len)*2-1 for _ in range(self.config.get_num_antenna())]
         self.obs = Observation(timestamp=ts, config=self.config, data=self.data)
@@ -22,6 +22,8 @@ class TestObservation(unittest.TestCase):
         self.obs.save('data.txt')
 
         nobs = Observation_Load('data.txt')
+        print(nobs.data)
+        print(self.data)
         self.assertTrue((self.data == nobs.data).all())
         self.assertTrue((self.obs.get_antenna(1) == nobs.get_antenna(1)).all())
         self.assertEqual(self.obs.get_julian_date(), nobs.get_julian_date())
