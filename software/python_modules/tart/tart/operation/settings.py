@@ -74,8 +74,8 @@ class Settings(object):
         self.Dict['antenna_positions'] = ant_pos
 
     def get_antenna_positions(self, key='calibrated'):
-        if self.Dict.has_key('antenna_positions'):
-            if self.Dict['antenna_positions'].has_key(key):
+        if 'antenna_positions' in self.Dict:
+            if key in self.Dict['antenna_positions']:
                 return self.Dict['antenna_positions'][key]
 
     def to_json(self):

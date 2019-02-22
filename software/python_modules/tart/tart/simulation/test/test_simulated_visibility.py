@@ -14,8 +14,9 @@ from tart.simulation import antennas
 from tart.util import angle
 from tart.imaging import correlator
 
-TEST_CONFIG='../test/test_telescope_config.json'
-TEST_ANTENNA_POSITIONS='../test/test_calibrated_antenna_positions.json'
+TEST_CONFIG='./tart/test/test_telescope_config.json'
+TEST_ANTENNA_POSITIONS='./tart/test/test_calibrated_antenna_positions.json'
+
 def relative_diff(l1, l2):
   return (l1-l2)/np.sqrt(np.power(l1, 2) + np.power(l2, 2))
 

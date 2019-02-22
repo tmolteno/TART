@@ -29,7 +29,7 @@ class TestSimulationSource(unittest.TestCase):
 
 
     plt.legend()
-    plt.show()
+    #plt.show()
 
   def test_signal_deterministic(self):
     samp_freq = 16.e6

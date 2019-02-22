@@ -11,7 +11,7 @@ from tart.util import constants
 
 from tart.operation import observation
 
-class Visibility(object):
+class Visibility:
     """
     A container class for visibilities from a single observation.
     """
@@ -110,7 +110,7 @@ def Visibility_Save(vis, filename):
 
 def Visibility_Load(filename):
         load_data = open(filename, 'rb')
-        vis_list = pickle.load(load_data)
+        vis_list = pickle.load(load_data, encoding='bytes')
         load_data.close()
         err_count = 0
         ret = []

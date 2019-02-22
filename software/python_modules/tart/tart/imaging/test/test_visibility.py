@@ -5,15 +5,16 @@ from tart.util import angle
 import unittest
 import numpy as np
 
+VIS_DATA_FILE='tart/test/test_data/measured_visibility.vis'
+
 class TestVisibility(unittest.TestCase):
 
   def setUp(self):
-    self.v_array = Visibility_Load('test_data/measured_visibility.vis')
+    self.v_array = Visibility_Load(VIS_DATA_FILE)
 
 
   def test_zero_rotation(self):
-    v_array = Visibility_Load('test_data/measured_visibility.vis')
-    for v in v_array:
+    for v in self.v_array:
       v_before = np.array(v.v) # Copy the visibilities
       el1 = v.phase_el
       az1 = v.phase_az

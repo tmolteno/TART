@@ -18,7 +18,7 @@ from tart.simulation.radio import *
 class TestMax2769B(unittest.TestCase):
   def setUp(self):
     self.config = settings.from_file('./tart/test/test_telescope_config.json')
-    self.config.load_antenna_positions(cal_ant_positions_file='./tart/test_calibrated_antenna_positions.json')
+    self.config.load_antenna_positions(cal_ant_positions_file='./tart/test/test_calibrated_antenna_positions.json')
     # noiselvls =  0.1.*np.ones(config.num_antennas)
     num_ant = self.config.get_num_antenna()
     noiselvls =  0. * np.ones(num_ant)

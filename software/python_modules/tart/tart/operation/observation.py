@@ -44,7 +44,7 @@ class Observation(object):
         d['data'] = t
 
         save_ptr = gzip.open(filename, 'wb')
-        cPickle.dump(d, save_ptr, cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(d, save_ptr, pickle.HIGHEST_PROTOCOL)
         save_ptr.close()
 
     def get_means(self):
@@ -71,11 +71,11 @@ class Observation(object):
 def Observation_Load(filename):
     try:
         load_data = gzip.open(filename, 'rb')
-        d = cPickle.load(load_data)
+        d = pickle.load(load_data)
     except:
         print('not gzipped')
         load_data = open(filename, 'rb')
-        d = cPickle.load(load_data)
+        d = pickle.load(load_data)
     finally:
         load_data.close()
     bipolar_data = []

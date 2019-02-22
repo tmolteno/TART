@@ -1,7 +1,7 @@
 
 # from tart.imaging import radio_source
 # from tart.imaging.ephemerides_proxy import EphemeridesProxy
-# from tart.imaging import location
+from tart.imaging import location
 # from tart.util import utc
 # from tart.util import constants
 # from tart.util import vector

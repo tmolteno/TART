@@ -3,6 +3,11 @@ import numpy as np
 from multiprocessing import Pool
 from tart.simulation import antennas
 import time
+try:
+   import cPickle as pickle
+except:
+   import pickle
+
 
 def get_vis_parallel(sky, cor, rad, ants, ant_models, config, time, mode='simp'):
   p = Pool()
@@ -50,7 +55,6 @@ def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', see
 
 
 def get_vis_parallel_segmented(sky, cor, rad, ants, ant_models, config, time, mode='simp', segment_dir='temp/'):
-  import cPickle as pickle
   vis_per_segment = 1000
   num_segments = int(np.ceil(len(sky)/float(vis_per_segment)))
 

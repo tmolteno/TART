@@ -1,3 +1,5 @@
+import pickle
+
 from tart.imaging import uvfitsgenerator
 from tart.imaging import radio_source
 from tart.imaging import location
@@ -84,8 +86,7 @@ class Synthesis_Imaging(object):
     def get_grid_idxs(self,uu_a, vv_a, num_bin, nw):
         try:
             if self.grid_idx is None:
-                import cPickle
-                self.grid_idx = cPickle.load(open(self.grid_file, 'rb'))
+                self.grid_idx = pickle.load(open(self.grid_file, 'rb'))
                 #print('finished loading ' + self.grid_file)
         except:
             print('generating...')
@@ -100,7 +101,7 @@ class Synthesis_Imaging(object):
                 grid_idx.append([i,j,i2,j2])
             self.grid_idx = np.array(grid_idx)
             save_ptr = open(self.grid_file, 'wb')
-            cPickle.dump(self.grid_idx, save_ptr, cPickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.grid_idx, save_ptr, pickle.HIGHEST_PROTOCOL)
             save_ptr.close()
         return self.grid_idx
 

@@ -89,7 +89,7 @@ def gen_interpolation_map(points, values, antenna_num, nside_exp):
 
   dic = {}
   for i, p in enumerate(pix):
-    if dic.has_key(p)==False:
+    if dic.get(p) is None:
       dic[p] = []
     dic[p].append(values[i])
 

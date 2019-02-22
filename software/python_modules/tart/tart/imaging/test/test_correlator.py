@@ -7,6 +7,7 @@ from scipy.signal import hilbert
 
 from tart.imaging.correlator import *
 
+TEST_SCOPE_CONFIG = 'tart/test/test_telescope_config.json'
 
 import unittest
 class TestCorrelator(unittest.TestCase):
@@ -29,7 +30,7 @@ class TestCorrelator(unittest.TestCase):
     from tart.operation import settings
     import datetime
     t = datetime.datetime.utcnow()
-    c = settings.from_file('../../../../hardware/rpi/24_ant_setup/telescope_config.json')
+    c = settings.from_file(TEST_SCOPE_CONFIG)
     c.Dict['num_antenna'] = 2
     d = [a0,a1]
     o = observation.Observation(t,c,d)
@@ -42,7 +43,7 @@ class TestCorrelator(unittest.TestCase):
 
     sample_duration = 16.02e-1
     sample_duration = 4e-1
-    config = settings.from_file('../../../../hardware/rpi/24_ant_setup/telescope_config.json')
+    config = settings.from_file(TEST_SCOPE_CONFIG)
     rad = radio.Max2769B(noise_level = np.ones(config.get_num_antenna()))
     src = simulation_source.SimulationSource(amplitude = 1., azimuth = angle.from_dms(0.), elevation = angle.from_dms(5.), sample_duration = sample_duration)
     fc0 = rad.int_freq
