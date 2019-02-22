@@ -1,4 +1,5 @@
 import numpy as np
+import json
 
 try:
    import cPickle as pickle
@@ -99,18 +100,32 @@ class Visibility:
         return ret
 
 def Visibility_From_Conf(config, timestamp, phase_el, phase_az):
-        obs = observation.Observation(timestamp=timestamp, config=config)
-        vis = Visibility(obs, phase_el, phase_az)
-        return vis
+    obs = observation.Observation(timestamp=timestamp, config=config)
+    vis = Visibility(obs, phase_el, phase_az)
+    return vis
 
 def Visibility_Save(vis, filename):
-        save_data = open(filename, 'wb')
-        pickle.dump(vis, save_data, pickle.HIGHEST_PROTOCOL)
-        save_data.close()
+    save_data = open(filename, 'wb')
+    pickle.dump(vis, save_data, pickle.HIGHEST_PROTOCOL)
+    save_data.close()
+
+
+def Visibility_Save_JSON(vis, filename):
+    json_data = {}
+    json_data['timestamp'] = vis.timestamp
+    json_data['phase_el'] = vis.phase_el.to_degrees()
+    json_data['phase_az'] = vis.phase_az.to_degrees()
+    json_data['config'] = vis.config.Dict
+    json_data['baselines'] = vis.baselines
+    json_data['vis'] = vis.v
+    with open(filename, 'w') as outfile:
+        # The default=str handles datetime objects as strings
+        json.dump(json_data, outfile, default=str, \
+            sort_keys=True, indent=4, separators=(',', ': '))
 
 def Visibility_Load(filename):
         load_data = open(filename, 'rb')
-        vis_list = pickle.load(load_data, encoding='bytes')
+        vis_list = pickle.load(load_data, encoding='latin1')
         load_data.close()
         err_count = 0
         ret = []

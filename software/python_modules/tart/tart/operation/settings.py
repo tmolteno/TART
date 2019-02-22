@@ -40,14 +40,14 @@ def from_api_json(config_json, ant_pos_json):
     ret = Settings()
     ret.Dict['num_antenna'] = config_json['num_antenna']
     ret.Dict['sampling_frequency'] = config_json['sampling_frequency']
-    ret.Dict['operating_frequency'] = config_json['operating_frequency']
+    ret.Dict['frequency'] = config_json['operating_frequency']
     ret.Dict['bandwidth'] = config_json['bandwidth']
     ret.set_antenna_positions(ant_pos_json)
     loc = config_json['location']
     ret.set_geo(loc['lat'], loc['lon'], loc['alt'])
     return ret
 
-class Settings(object):
+class Settings:
     def __init__(self):
         self.Dict = {}
 
@@ -113,7 +113,7 @@ class Settings(object):
         return self.Dict['sampling_frequency']
 
     def get_operating_frequency(self):
-        return self.Dict['operating_frequency']
+        return self.Dict['frequency']
 
     def get_bandwidth(self):
         return self.Dict['bandwidth']
