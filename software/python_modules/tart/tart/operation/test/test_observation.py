@@ -22,8 +22,8 @@ class TestObservation(unittest.TestCase):
         self.obs.save('data.txt')
 
         nobs = Observation_Load('data.txt')
-        print(nobs.data)
-        print(self.data)
+        print(nobs.data[0])
+        print(self.data[0])
         self.assertTrue((self.data == nobs.data).all())
         self.assertTrue((self.obs.get_antenna(1) == nobs.get_antenna(1)).all())
         self.assertEqual(self.obs.get_julian_date(), nobs.get_julian_date())

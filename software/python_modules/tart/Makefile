@@ -7,7 +7,7 @@ lint:
 	pylint tart
 
 test:
-	python3 setup.py test
+	python3 setup.py test --test-suite=tart.operation.test.test_observation.TestObservation
 
 doc:
 	pandoc --to=rst  README.md > README.txt
