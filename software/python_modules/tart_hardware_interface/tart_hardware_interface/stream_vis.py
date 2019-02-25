@@ -137,59 +137,59 @@ def stream_vis_to_queue(tart, runtime_config):
     return vis_queue, vis_calc_process, capture_process, vis_calc_cmd_queue, capture_cmd_queue
 
 
-from PIL import Image
-import time
-from tart.imaging import calibration
-from tart.imaging import synthesis
+#from PIL import Image
+#import time
+#from tart.imaging import calibration
+#from tart.imaging import synthesis
 
-def gen_calib_image(vislist, calibration_dir):
-    CAL_MEASURE_VIS_LIST = []
-    cal_file = calibration_dir + 'monitor_vis_calibration.json'
-    MIN = True
-    for vis in vislist[:1]:
-        if not os.path.exists(cal_file):
-          cv = calibration.CalibratedVisibility(vis)
-          flagged_bl = []
-          #dead = [0,2,4,7,9,14,20,22]
-          for i in range(0,24-1):
-              for j in range(i+1,24):
-		  if (i > 5) or (j > 5):
-                  #if (i in dead) or (j in dead):
-                      flagged_bl.append([i,j])
-          cv.set_flagged_baselines(flagged_bl)
-          if MIN:
-              print('fmin')
-          else:
-              for i in range(1,6):
-                  a_i = np.abs(cv.get_visibility(0,i))
-                  ang_i = np.angle(cv.get_visibility(0,i))
-                  cv.set_gain(i, 1./a_i)
-                  cv.set_phase_offset(i, ang_i)
-          cv.to_json(cal_file)
-        else:
-            #print('loading.. calibration')
-            cv = calibration.from_JSON_file(vis, cal_file)
-            CAL_MEASURE_VIS_LIST.append(cv)
-    CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
-    CAL_SYN.set_grid_file(calibration_dir + 'monitor_vis_grid.idx')
-    #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
-    CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift_simp(nw=20, num_bin=2**7)
-    return CAL_IFT, CAL_EXTENT
+#def gen_calib_image(vislist, calibration_dir):
+    #CAL_MEASURE_VIS_LIST = []
+    #cal_file = calibration_dir + 'monitor_vis_calibration.json'
+    #MIN = True
+    #for vis in vislist[:1]:
+        #if not os.path.exists(cal_file):
+          #cv = calibration.CalibratedVisibility(vis)
+          #flagged_bl = []
+          ##dead = [0,2,4,7,9,14,20,22]
+          #for i in range(0,24-1):
+              #for j in range(i+1,24):
+                  #if (i > 5) or (j > 5):
+                  ##if (i in dead) or (j in dead):
+                      #flagged_bl.append([i,j])
+          #cv.set_flagged_baselines(flagged_bl)
+          #if MIN:
+              #print('fmin')
+          #else:
+              #for i in range(1,6):
+                  #a_i = np.abs(cv.get_visibility(0,i))
+                  #ang_i = np.angle(cv.get_visibility(0,i))
+                  #cv.set_gain(i, 1./a_i)
+                  #cv.set_phase_offset(i, ang_i)
+          #cv.to_json(cal_file)
+        #else:
+            ##print('loading.. calibration')
+            #cv = calibration.from_JSON_file(vis, cal_file)
+            #CAL_MEASURE_VIS_LIST.append(cv)
+    #CAL_SYN = synthesis.Synthesis_Imaging(CAL_MEASURE_VIS_LIST)
+    #CAL_SYN.set_grid_file(calibration_dir + 'monitor_vis_grid.idx')
+    ##CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift(nw=20, num_bin=2**7, use_kernel=False)
+    #CAL_IFT, CAL_EXTENT = CAL_SYN.get_ift_simp(nw=20, num_bin=2**7)
+    #return CAL_IFT, CAL_EXTENT
 
 
-def vis_to_latest_image(tart_instance, runtime_config,):
-    '''take vis off queue and synthesize and image'''
-    vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
-    vis = None
-    time.sleep(0.05)
-    while vis_q.qsize()>0:
-        vis, means = vis_q.get()
-        #print('here', vis)
-    if vis is not None:
-        res, ex = gen_calib_image([vis,], runtime_config['calibration_dir'])
-        res = np.abs(res)
-        rescaled = (255.0 / res.max() * (res - res.min())).astype(np.uint8)
-        print(rescaled, 'shape', np.shape(rescaled))
-        im = Image.fromarray(rescaled)
-        im.save(runtime_config['realtime_image_path'])
-        print('saved file')
+#def vis_to_latest_image(tart_instance, runtime_config,):
+    #'''take vis off queue and synthesize and image'''
+    #vis_q, vis_calc_p, capture_p, vis_calc_cmd_q, capture_cmd_q = stream_vis_to_queue(tart_instance, runtime_config)
+    #vis = None
+    #time.sleep(0.05)
+    #while vis_q.qsize()>0:
+        #vis, means = vis_q.get()
+        ##print('here', vis)
+    #if vis is not None:
+        #res, ex = gen_calib_image([vis,], runtime_config['calibration_dir'])
+        #res = np.abs(res)
+        #rescaled = (255.0 / res.max() * (res - res.min())).astype(np.uint8)
+        #print(rescaled, 'shape', np.shape(rescaled))
+        #im = Image.fromarray(rescaled)
+        #im.save(runtime_config['realtime_image_path'])
+        #print('saved file')
