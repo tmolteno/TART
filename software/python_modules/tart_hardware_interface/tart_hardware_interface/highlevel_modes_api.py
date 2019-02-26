@@ -15,11 +15,11 @@ Helper functions
 def get_psd(d, fs, nfft):
   power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
   num_bins = 128
-  window_width = len(power)/num_bins
+  window_width = len(power)//num_bins
   power_ret = []
   freq_ret = []
   for i in range(num_bins):
-    start = i*window_width
+    start = int(i*window_width)
     stop = start + window_width 
     power_ret.append(power[start:stop].max())
     freq_ret.append(freq[start:stop].mean())
