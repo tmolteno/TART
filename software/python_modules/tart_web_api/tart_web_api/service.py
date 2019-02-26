@@ -214,7 +214,7 @@ class TartControl():
         try:
             self.TartSPI = TartSPI()
         except Exception as e:
-            logging.error(e.message)
+            logging.exception(e)
             logging.warn('USING DUMMY SPI MODULE.')
 
             self.TartSPI = TartDummySPI()
