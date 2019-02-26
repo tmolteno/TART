@@ -1,38 +1,6 @@
-EESchema Schematic File Version 2
-LIBS:power
-LIBS:device
-LIBS:transistors
-LIBS:conn
-LIBS:linear
-LIBS:regul
-LIBS:74xx
-LIBS:cmos4000
-LIBS:adc-dac
-LIBS:memory
-LIBS:xilinx
-LIBS:special
-LIBS:microcontrollers
-LIBS:dsp
-LIBS:microchip
-LIBS:analog_switches
-LIBS:motorola
-LIBS:texas
-LIBS:intel
-LIBS:audio
-LIBS:interface
-LIBS:digital-audio
-LIBS:philips
-LIBS:display
-LIBS:cypress
-LIBS:siliconi
-LIBS:opto
-LIBS:atmel
-LIBS:contrib
-LIBS:valves
-LIBS:TART
-LIBS:spelsberg_box_template_TR
+EESchema Schematic File Version 4
 LIBS:base_station_integrated-cache
-EELAYER 27 0
+EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -47,31 +15,33 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L XTAL_DRIVER_TART IC26
+L TART:XTAL_DRIVER_TART IC26
 U 1 1 5418D7D2
 P 7050 3650
 F 0 "IC26" H 7050 3670 50  0000 C CNN
-F 1 "XTAL_DRIVER_TART" H 7050 4030 50  0001 C CNN
-F 2 "6TSSOP_TART" H 7070 3190 50  0000 C CNN
+F 1 "74AUP1Z125GW,125" H 7050 4030 50  0001 C CNN
+F 2 "6TSSOP_TART" H 7050 3300 50  0000 C CNN
 F 3 "DOCUMENTATION" H 7050 3270 50  0001 C CNN
 F 4 "XTAL_DRIVER" H 7060 3860 50  0000 C CNN "NAME"
+F 5 "1727-6861-1-ND" H 0   0   50  0001 C CNN "DIGIKEY"
 	1    7050 3650
 	1    0    0    -1  
 $EndComp
 $Comp
-L TCXO_TART X1
+L TART:TCXO_TART X1
 U 1 1 5418D7A5
 P 4200 3650
 F 0 "X1" H 4200 3550 50  0000 C CNN
-F 1 "TCXO_TART" H 4210 4190 50  0001 C CNN
+F 1 "16.368MHz" H 4210 4190 50  0001 C CNN
 F 2 "4_SMD_TART" H 4190 4010 50  0000 C CNN
 F 3 "DOCUMENTATION" H 4200 4100 50  0001 C CNN
 F 4 "TCXO" H 4190 3750 50  0000 C CNN "NAME"
+F 5 "1664-1258-1-ND" H 0   0   50  0001 C CNN "DIGIKEY"
 	1    4200 3650
 	1    0    0    -1  
 $EndComp
 $Comp
-L PWR_FLAG #FLG04
+L power:PWR_FLAG #FLG04
 U 1 1 540E3753
 P 8000 3300
 F 0 "#FLG04" H 8000 3395 30  0001 C CNN
@@ -82,7 +52,7 @@ F 3 "" H 8000 3300 60  0001 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L PWR_FLAG #FLG05
+L power:PWR_FLAG #FLG05
 U 1 1 540E3734
 P 6100 3650
 F 0 "#FLG05" H 6100 3745 30  0001 C CNN
@@ -98,7 +68,7 @@ Connection ~ 2700 2700
 Wire Wire Line
 	2500 2650 2500 2700
 Wire Wire Line
-	2500 2700 2850 2700
+	2500 2700 2700 2700
 Wire Wire Line
 	8000 2650 8000 2800
 Wire Wire Line
@@ -117,7 +87,7 @@ Wire Wire Line
 Wire Wire Line
 	6100 3650 6100 3950
 Wire Wire Line
-	5650 3750 6300 3750
+	5650 3750 5850 3750
 Wire Wire Line
 	4950 3750 5250 3750
 Connection ~ 5850 3750
@@ -128,16 +98,16 @@ Wire Wire Line
 Wire Wire Line
 	7800 3650 8000 3650
 Wire Wire Line
-	8000 3300 8000 4000
+	8000 3300 8000 3650
 Connection ~ 8000 3650
 Wire Wire Line
-	5850 3300 5850 3950
+	5850 3300 5850 3750
 Wire Wire Line
 	7800 3750 8300 3750
 Wire Wire Line
 	3450 3650 3250 3650
 Wire Wire Line
-	3250 3650 3250 4650
+	3250 3650 3250 3750
 Wire Wire Line
 	2850 4650 2850 4500
 Wire Wire Line
@@ -147,7 +117,7 @@ Wire Wire Line
 Wire Wire Line
 	2850 2700 2850 2650
 $Comp
-L VCC #PWR06
+L power:VCC #PWR06
 U 1 1 5408E937
 P 2850 2650
 F 0 "#PWR06" H 2850 2750 30  0001 C CNN
@@ -158,7 +128,7 @@ F 3 "" H 2850 2650 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L VDD #PWR07
+L power:VDD #PWR07
 U 1 1 5408E92E
 P 2700 2650
 F 0 "#PWR07" H 2700 2750 30  0001 C CNN
@@ -169,7 +139,7 @@ F 3 "" H 2700 2650 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L VDD #PWR08
+L power:VDD #PWR08
 U 1 1 5408E909
 P 3250 2650
 F 0 "#PWR08" H 3250 2750 30  0001 C CNN
@@ -180,7 +150,7 @@ F 3 "" H 3250 2650 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L VCC #PWR09
+L power:VCC #PWR09
 U 1 1 5408E8FA
 P 8000 2650
 F 0 "#PWR09" H 8000 2750 30  0001 C CNN
@@ -191,7 +161,7 @@ F 3 "" H 8000 2650 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L VCC #PWR010
+L power:VCC #PWR010
 U 1 1 5408E8F1
 P 5850 2650
 F 0 "#PWR010" H 5850 2750 30  0001 C CNN
@@ -204,7 +174,7 @@ $EndComp
 Text HLabel 2850 4500 1    60   Input ~ 0
 GND
 $Comp
-L GND #PWR011
+L base_station_integrated-rescue:GND #PWR011
 U 1 1 5408E894
 P 2850 4650
 F 0 "#PWR011" H 2850 4650 30  0001 C CNN
@@ -215,7 +185,7 @@ F 3 "" H 2850 4650 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L GND #PWR012
+L base_station_integrated-rescue:GND #PWR012
 U 1 1 5408E850
 P 3250 4650
 F 0 "#PWR012" H 3250 4650 30  0001 C CNN
@@ -230,7 +200,7 @@ CLK_FPGA
 Text HLabel 8300 3750 2    60   Input ~ 0
 CLK_OUT
 $Comp
-L GND #PWR013
+L base_station_integrated-rescue:GND #PWR013
 U 1 1 5408E752
 P 8000 4600
 F 0 "#PWR013" H 8000 4600 30  0001 C CNN
@@ -241,7 +211,7 @@ F 3 "" H 8000 4600 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L GND #PWR014
+L base_station_integrated-rescue:GND #PWR014
 U 1 1 5408E6DB
 P 6100 4600
 F 0 "#PWR014" H 6100 4600 30  0001 C CNN
@@ -252,7 +222,7 @@ F 3 "" H 6100 4600 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L GND #PWR015
+L base_station_integrated-rescue:GND #PWR015
 U 1 1 5408E6B1
 P 5850 4600
 F 0 "#PWR015" H 5850 4600 30  0001 C CNN
@@ -264,51 +234,53 @@ F 3 "" H 5850 4600 60  0001 C CNN
 $EndComp
 NoConn ~ 6300 3550
 $Comp
-L C C25
+L base_station_integrated-rescue:C C25
 U 1 1 5407E135
 P 8000 4200
+AR Path="/5407E135" Ref="C25"  Part="1" 
+AR Path="/5407DDC4/5407E135" Ref="C25"  Part="1" 
 F 0 "C25" H 8050 4300 50  0000 L CNN
 F 1 "0.1u" H 8050 4100 50  0000 L CNN
-F 2 "SM0603" H 8000 4200 60  0000 C CNN
+F 2 "SM0603" V 7850 4150 60  0000 C CNN
 F 3 "" H 8000 4200 60  0001 C CNN
 	1    8000 4200
 	1    0    0    -1  
 $EndComp
 $Comp
-L R R29
+L base_station_integrated-rescue:R R29
 U 1 1 5407E128
 P 8000 3050
 F 0 "R29" V 8080 3050 50  0000 C CNN
 F 1 "0" V 8000 3050 50  0000 C CNN
-F 2 "SM0603" H 8000 3050 60  0000 C CNN
+F 2 "SM0603" V 7900 3050 60  0000 C CNN
 F 3 "" H 8000 3050 60  0001 C CNN
 	1    8000 3050
 	1    0    0    -1  
 $EndComp
 $Comp
-L R R30
+L base_station_integrated-rescue:R R30
 U 1 1 5407E121
 P 6100 4200
 F 0 "R30" V 6180 4200 50  0000 C CNN
 F 1 "0" V 6100 4200 50  0000 C CNN
-F 2 "SM0603" H 6100 4200 60  0000 C CNN
+F 2 "SM0603" H 6200 3700 60  0000 C CNN
 F 3 "" H 6100 4200 60  0001 C CNN
 	1    6100 4200
 	1    0    0    -1  
 $EndComp
 $Comp
-L R R31
+L base_station_integrated-rescue:R R31
 U 1 1 5407E115
 P 5850 4200
 F 0 "R31" V 5930 4200 50  0000 C CNN
 F 1 "10k" V 5850 4200 50  0000 C CNN
-F 2 "SM0603" H 5850 4200 60  0000 C CNN
+F 2 "SM0603" H 5800 3700 60  0000 C CNN
 F 3 "" H 5850 4200 60  0001 C CNN
 	1    5850 4200
 	1    0    0    -1  
 $EndComp
 $Comp
-L R R32
+L base_station_integrated-rescue:R R32
 U 1 1 5407E105
 P 5850 3050
 F 0 "R32" V 5930 3050 50  0000 C CNN
@@ -319,18 +291,20 @@ F 3 "" H 5850 3050 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L C C26
+L base_station_integrated-rescue:C C26
 U 1 1 5407E0F8
 P 5450 3750
+AR Path="/5407E0F8" Ref="C26"  Part="1" 
+AR Path="/5407DDC4/5407E0F8" Ref="C26"  Part="1" 
 F 0 "C26" H 5500 3850 50  0000 L CNN
 F 1 "2200p" H 5500 3650 50  0000 L CNN
-F 2 "SM0603" H 5450 3750 60  0000 C CNN
+F 2 "SM0603" V 5300 3750 60  0000 C CNN
 F 3 "" H 5450 3750 60  0001 C CNN
 	1    5450 3750
 	0    -1   -1   0   
 $EndComp
 $Comp
-L GND #PWR016
+L base_station_integrated-rescue:GND #PWR016
 U 1 1 54DD2F01
 P 5450 5750
 F 0 "#PWR016" H 5450 5750 30  0001 C CNN
@@ -343,11 +317,11 @@ $EndComp
 Wire Wire Line
 	4950 5550 4950 5650
 Wire Wire Line
-	4950 5650 6100 5650
+	4950 5650 5000 5650
 Wire Wire Line
 	5900 5650 5900 5550
 Wire Wire Line
-	5450 5550 5450 5750
+	5450 5550 5450 5650
 Connection ~ 5450 5650
 Wire Wire Line
 	5000 5550 5000 5650
@@ -401,13 +375,14 @@ Wire Wire Line
 	5850 5550 5850 5650
 Connection ~ 5850 5650
 $Comp
-L BMIS-105_BMIS-205 U2
+L TART:BMIS-105_BMIS-205 U2
 U 1 1 54DF59A6
 P 5450 5350
 F 0 "U2" H 5550 5250 0   0001 C CNN
 F 1 "BMIS-105_BMIS-205" H 5550 5250 0   0001 C CNN
 F 2 "~" H 5550 5250 60  0000 C CNN
 F 3 "~" H 5550 5250 60  0000 C CNN
+F 4 "903-1010-1-ND" H 0   0   50  0001 C CNN "DIGIKEY"
 	1    5450 5350
 	1    0    0    -1  
 $EndComp
@@ -423,4 +398,60 @@ Connection ~ 6000 5650
 Wire Wire Line
 	6100 5650 6100 5550
 Connection ~ 6050 5650
+Wire Wire Line
+	2700 2700 2850 2700
+Wire Wire Line
+	3250 3750 3250 4650
+Wire Wire Line
+	5850 3750 6300 3750
+Wire Wire Line
+	5850 3750 5850 3950
+Wire Wire Line
+	8000 3650 8000 4000
+Wire Wire Line
+	5450 5650 5500 5650
+Wire Wire Line
+	5450 5650 5450 5750
+Wire Wire Line
+	5000 5650 5050 5650
+Wire Wire Line
+	5050 5650 5100 5650
+Wire Wire Line
+	5100 5650 5150 5650
+Wire Wire Line
+	5150 5650 5200 5650
+Wire Wire Line
+	5200 5650 5250 5650
+Wire Wire Line
+	5250 5650 5300 5650
+Wire Wire Line
+	5300 5650 5350 5650
+Wire Wire Line
+	5350 5650 5400 5650
+Wire Wire Line
+	5400 5650 5450 5650
+Wire Wire Line
+	5500 5650 5550 5650
+Wire Wire Line
+	5550 5650 5600 5650
+Wire Wire Line
+	5600 5650 5650 5650
+Wire Wire Line
+	5650 5650 5700 5650
+Wire Wire Line
+	5700 5650 5750 5650
+Wire Wire Line
+	5750 5650 5800 5650
+Wire Wire Line
+	5800 5650 5850 5650
+Wire Wire Line
+	5850 5650 5900 5650
+Wire Wire Line
+	5900 5650 5950 5650
+Wire Wire Line
+	5950 5650 6000 5650
+Wire Wire Line
+	6000 5650 6050 5650
+Wire Wire Line
+	6050 5650 6100 5650
 $EndSCHEMATC

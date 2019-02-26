@@ -12,7 +12,7 @@ import argparse
 
 def update(frame_number):    
     #r = requests.get('https://tart.elec.ac.nz/lab/api/v1/imaging/vis')
-    r = requests.get('http://{}/api/v1/imaging/vis'.format(args.host))
+    r = requests.get('{}/api/v1/imaging/vis'.format(args.api))
     r_d = json.loads(r.text)
 
     for v in r_d['data']:
@@ -32,18 +32,18 @@ def update(frame_number):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Monitor TART visibilities.')
     parser.add_argument('--i', type=int, default=0, help='i')
     parser.add_argument('--j', type=int, default=1, help='j')
-    parser.add_argument('--interval', type=int, default=500, help='ms between vis requests')
-    parser.add_argument('--num', type=int, default=500, help='number of consecutive datapoints being plotted in time')
-    parser.add_argument('--host', type=str, default='tart2-orange', help='telescope hostname')
+    parser.add_argument('--interval', type=int, default=500, help='Interval in ms, between vis requests')
+    parser.add_argument('--num', type=int, default=500, help='Number of consecutive datapoints being plotted in time')
+    parser.add_argument('--api', type=str, default='https://tart.elec.ac.nz/signal', help='Telescope API URL')
     
     args = parser.parse_args()
     
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(211)
-    ax.set_title("Channel {}-{}".format(args.i,args.j))
+    ax.set_title("Antenna Pair: {}-{}".format(args.i,args.j))
     ax2 = fig.add_subplot(212)
 
     ax.set_xlim(-1, 1)

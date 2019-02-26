@@ -15,25 +15,25 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Sheet
-S 1000 1000 750  600 
+S 2700 2450 750  600 
 U 5C5B9DC8
 F0 "Power Supply" 50
 F1 "RadioHub2.1_1.sch" 50
 $EndSheet
 $Sheet
-S 3000 1000 750  600 
+S 5900 2450 750  600 
 U 5C5BA189
 F0 "Comms and Power In" 50
 F1 "RadioHub2.1_2.sch" 50
 $EndSheet
 $Sheet
-S 5000 1000 800  600 
+S 2650 4050 800  600 
 U 5C5BA35B
 F0 "RS485 Drivers" 50
 F1 "RadioHub2.1_3.sch" 50
 $EndSheet
 $Sheet
-S 7000 1000 800  600 
+S 5900 4050 800  600 
 U 5C5BA587
 F0 "Clock Distribution" 50
 F1 "RadioHub2.1_4.sch" 50

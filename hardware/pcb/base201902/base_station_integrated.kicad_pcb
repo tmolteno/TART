@@ -9568,7 +9568,7 @@
   (gr_text PWR (at 181.8 107.4 90) (layer F.SilkS)
     (effects (font (size 1.524 1.524) (thickness 0.3048)))
   )
-  (gr_text "TART Base Station \nElectronics Research\nPhysics Dept\nOtago University\nelec.ac.nz (c)2015" (at 55.3 102.5 90) (layer F.SilkS)
+  (gr_text "TART Base Station \nElectronics Research\nPhysics Dept\nOtago University\nelec.ac.nz (c)2015" (at 62 99 90) (layer F.SilkS)
     (effects (font (size 2.032 1.524) (thickness 0.3048)))
   )
   (gr_text +/- (at 198.161 162.123) (layer F.SilkS) (tstamp 547FCC59)
