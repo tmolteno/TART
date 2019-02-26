@@ -38,7 +38,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title ""
-Date "8 dec 2014"
+Date "13 feb 2015"
 Rev ""
 Comp ""
 Comment1 ""
@@ -46,18 +46,6 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-$Comp
-L PAPILIO_TART U1
-U 1 1 54238645
-P 7950 4150
-F 0 "U1" H 7950 4150 10  0001 C CNN
-F 1 "PAPILIO_TART" H 8750 1200 60  0001 C CNN
-F 2 "" H 7950 4150 60  0001 C CNN
-F 3 "" H 7950 4150 60  0001 C CNN
-F 4 "PAPILIO" H 8750 1300 60  0000 C CNN "NAME"
-	1    7950 4150
-	1    0    0    -1  
-$EndComp
 Text GLabel 2900 1350 0    60   Input ~ 0
 +5V_PI
 Text Label 6550 4200 2    60   ~ 0
@@ -84,8 +72,6 @@ Text Label 8950 1850 0    60   ~ 0
 MISO
 Text Label 8950 1950 0    60   ~ 0
 SCLK
-NoConn ~ 10050 850 
-NoConn ~ 10050 1050
 NoConn ~ 10050 1150
 NoConn ~ 10050 1250
 NoConn ~ 10050 1350
@@ -118,7 +104,7 @@ U 1 1 5420D065
 P 9650 1800
 F 0 "P1" H 9650 2850 60  0000 C CNN
 F 1 "CONN_20X2" V 9650 1800 50  0000 C CNN
-F 2 "" H 9650 1800 60  0001 C CNN
+F 2 "RASP_PI_B+_TART" H 9650 700 60  0000 C CNN
 F 3 "" H 9650 1800 60  0001 C CNN
 	1    9650 1800
 	1    0    0    -1  
@@ -316,23 +302,14 @@ Text GLabel 2900 1550 0    60   Input ~ 0
 +3V3
 Text GLabel 2900 1700 0    60   Input ~ 0
 GND_PWR
-Text GLabel 9550 6050 0    60   Input ~ 0
+Text GLabel 6100 6350 0    60   Input ~ 0
 GND
-Text GLabel 9550 5250 0    60   Input ~ 0
-GND
-Text GLabel 6350 6050 0    60   Input ~ 0
-GND
-Text GLabel 6350 5550 0    60   Input ~ 0
+Text GLabel 6100 5250 0    60   Input ~ 0
 +5V
-Text GLabel 6350 5250 0    60   Input ~ 0
-GND
 NoConn ~ 9750 5350
 NoConn ~ 9750 5450
-NoConn ~ 9750 5550
 NoConn ~ 9750 6150
 NoConn ~ 9750 6250
-NoConn ~ 9750 6350
-NoConn ~ 6550 6350
 NoConn ~ 6550 6250
 NoConn ~ 6550 6150
 NoConn ~ 6550 5450
@@ -415,6 +392,39 @@ Text GLabel 6800 1400 0    60   Input ~ 0
 GND
 Text GLabel 7600 1400 2    60   Input ~ 0
 GND_PWR
+Text GLabel 6800 1650 0    60   Input ~ 0
+GND
+Text GLabel 7600 1650 2    60   Input ~ 0
+GND_PWR
+Text GLabel 9150 2050 0    60   Input ~ 0
+GND
+Text GLabel 10150 2250 2    60   Input ~ 0
+GND
+Text GLabel 10150 2450 2    60   Input ~ 0
+GND
+Text GLabel 9150 2750 0    60   Input ~ 0
+GND
+NoConn ~ 8150 6250
+NoConn ~ 8150 6150
+NoConn ~ 8150 5450
+NoConn ~ 8150 5350
+NoConn ~ 6750 3300
+NoConn ~ 6750 3400
+NoConn ~ 6750 3500
+NoConn ~ 6750 3600
+NoConn ~ 6750 3700
+NoConn ~ 6750 3800
+NoConn ~ 6750 3900
+NoConn ~ 6750 4000
+NoConn ~ 6750 4500
+NoConn ~ 6750 4600
+NoConn ~ 6750 4700
+NoConn ~ 6750 4800
+NoConn ~ 9950 3600
+NoConn ~ 9950 4800
+NoConn ~ 8350 3600
+NoConn ~ 8350 4000
+NoConn ~ 8350 4100
 Wire Wire Line
 	2900 1350 3000 1350
 Wire Wire Line
@@ -446,8 +456,6 @@ Wire Wire Line
 Wire Wire Line
 	8350 3800 8150 3800
 Wire Wire Line
-	8350 3600 8150 3600
-Wire Wire Line
 	8350 3400 8150 3400
 Wire Wire Line
 	3000 2250 2800 2250
@@ -461,14 +469,6 @@ Wire Wire Line
 	2900 1700 3000 1700
 Wire Wire Line
 	2900 950  3000 950 
-Wire Wire Line
-	6550 6050 6350 6050
-Wire Wire Line
-	6550 5250 6350 5250
-Wire Wire Line
-	9750 6050 9550 6050
-Wire Wire Line
-	9750 5250 9550 5250
 Wire Wire Line
 	9950 4700 9750 4700
 Wire Wire Line
@@ -490,8 +490,6 @@ Wire Wire Line
 Wire Wire Line
 	8350 4300 8150 4300
 Wire Wire Line
-	8350 4100 8150 4100
-Wire Wire Line
 	4450 3400 4950 3400
 Wire Wire Line
 	4450 3200 4950 3200
@@ -504,8 +502,6 @@ Wire Wire Line
 Wire Wire Line
 	4450 3500 4950 3500
 Wire Wire Line
-	8350 4000 8150 4000
-Wire Wire Line
 	8350 4200 8150 4200
 Wire Wire Line
 	8350 4400 8150 4400
@@ -516,8 +512,6 @@ Wire Wire Line
 Wire Wire Line
 	9950 3400 9750 3400
 Wire Wire Line
-	9950 3600 9750 3600
-Wire Wire Line
 	9950 3800 9750 3800
 Wire Wire Line
 	9950 4200 9750 4200
@@ -525,10 +519,6 @@ Wire Wire Line
 	9950 4400 9750 4400
 Wire Wire Line
 	9950 4600 9750 4600
-Wire Wire Line
-	9950 4800 9750 4800
-Wire Wire Line
-	6550 5550 6350 5550
 Wire Wire Line
 	2900 1550 3000 1550
 Wire Wire Line
@@ -623,22 +613,10 @@ Wire Wire Line
 	7700 1150 6800 1150
 Wire Wire Line
 	7700 900  6800 900 
-Text GLabel 6800 1650 0    60   Input ~ 0
-GND
-Text GLabel 7600 1650 2    60   Input ~ 0
-GND_PWR
 Wire Wire Line
 	6800 1400 7600 1400
 Wire Wire Line
 	6800 1650 7600 1650
-Text GLabel 9150 2050 0    60   Input ~ 0
-GND
-Text GLabel 10150 2250 2    60   Input ~ 0
-GND
-Text GLabel 10150 2450 2    60   Input ~ 0
-GND
-Text GLabel 9150 2750 0    60   Input ~ 0
-GND
 Wire Wire Line
 	9150 2050 9250 2050
 Wire Wire Line
@@ -647,22 +625,64 @@ Wire Wire Line
 	10050 2450 10150 2450
 Wire Wire Line
 	9150 2750 9250 2750
-Text GLabel 7950 6050 0    60   Input ~ 0
-GND
-NoConn ~ 8150 6350
-NoConn ~ 8150 6250
-NoConn ~ 8150 6150
-Wire Wire Line
-	8150 6050 7950 6050
-Text GLabel 7950 5550 0    60   Input ~ 0
-+5V
-Text GLabel 7950 5250 0    60   Input ~ 0
-GND
-NoConn ~ 8150 5450
-NoConn ~ 8150 5350
-Wire Wire Line
-	8150 5250 7950 5250
 Wire Wire Line
 	8150 5550 7950 5550
+Wire Wire Line
+	6100 5250 6550 5250
+Wire Wire Line
+	6100 6350 6550 6350
+Wire Wire Line
+	7950 6350 8150 6350
+Wire Wire Line
+	6350 6050 6550 6050
+Wire Wire Line
+	9550 6350 9750 6350
+Wire Wire Line
+	9750 5550 9550 5550
+$Comp
+L PAPILIO_TART U1
+U 1 1 54238645
+P 7950 4150
+F 0 "U1" H 7950 4150 10  0001 C CNN
+F 1 "PAPILIO_TART" H 8750 1200 60  0001 C CNN
+F 2 "PAPILIO_TART" H 10850 2250 60  0000 C CNN
+F 3 "" H 7950 4150 60  0001 C CNN
+F 4 "PAPILIO" H 8750 1300 60  0000 C CNN "NAME"
+	1    7950 4150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9550 5000 9550 6350
+Wire Wire Line
+	6350 5000 9550 5000
+Wire Wire Line
+	7950 5000 7950 6350
+Connection ~ 9550 5550
+Connection ~ 7950 5550
+Wire Wire Line
+	6350 5000 6350 6050
+Connection ~ 7950 5000
+Connection ~ 6350 5250
+Wire Wire Line
+	6550 5550 6250 5550
+Wire Wire Line
+	6250 5550 6250 7050
+Connection ~ 6250 6350
+Wire Wire Line
+	6250 7050 9400 7050
+Wire Wire Line
+	7800 7050 7800 5250
+Wire Wire Line
+	7800 5250 8150 5250
+Wire Wire Line
+	8150 6050 7800 6050
+Connection ~ 7800 6050
+Wire Wire Line
+	9400 7050 9400 5250
+Wire Wire Line
+	9400 6050 9750 6050
+Connection ~ 7800 7050
+Wire Wire Line
+	9400 5250 9750 5250
+Connection ~ 9400 6050
 $EndSCHEMATC
-
