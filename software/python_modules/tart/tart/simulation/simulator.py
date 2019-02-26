@@ -3,6 +3,11 @@ import numpy as np
 from multiprocessing import Pool
 from tart.simulation import antennas
 import time
+try:
+   import cPickle as pickle
+except:
+   import pickle
+
 
 def get_vis_parallel(sky, cor, rad, ants, ant_models, config, time, mode='simp'):
   p = Pool()
@@ -23,7 +28,7 @@ def get_vis_parallel(sky, cor, rad, ants, ant_models, config, time, mode='simp')
         ret_vis_list.append(vis)
     p.terminate()
   except KeyboardInterrupt:
-    print 'control-c pressed'
+    print('control-c pressed')
     p.terminate()
   return ret_vis_list
 
@@ -31,8 +36,8 @@ def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', see
   np.random.seed(seed=seed)
   sources = sky.gen_photons_per_src(timestamp, radio=rad, config=config, n_samp=1)
   # sources = sky.gen_n_photons(config, timestamp, radio=rad, n=10)
-  # print 'debug: total flux',  np.array([src.jansky(timestamp) for src in self.known_objects]).sum()
-  # print 'debug: total amplitude', np.array([src.amplitude for src in sources]).sum()
+  # print('debug: total flux',  np.array([src.jansky(timestamp) for src in self.known_objects]).sum())
+  # print('debug: total amplitude', np.array([src.amplitude for src in sources]).sum())
 
   if mode == 'full':
     timebase = np.arange(0, rad.sample_duration, 1.0/rad.sampling_rate)
@@ -50,22 +55,21 @@ def get_vis(sky, cor, rad, ants, ant_models, config, timestamp, mode='simp', see
 
 
 def get_vis_parallel_segmented(sky, cor, rad, ants, ant_models, config, time, mode='simp', segment_dir='temp/'):
-  import cPickle as pickle
   vis_per_segment = 1000
   num_segments = int(np.ceil(len(sky)/float(vis_per_segment)))
 
   for i in range(num_segments):
-    print 'computing segment %i of %i' %(i, num_segments)
+    print('computing segment %i of %i' %(i, num_segments))
     start_idx = i*vis_per_segment
     end_idx = (i+1)*vis_per_segment
     vis_seg = get_vis_parallel(sky[start_idx:end_idx], cor, rad, ants, ant_models, config, time, mode='simp')
     pickle.dump( vis_seg, open( segment_dir+'segment_%010i.pkl' %i, "wb" ) )
 
-  #//print 'now combining segments.'
+  #//print('now combining segments.')
   ret = []
-  #print num_segments
+  #print(num_segments)
   #for i in range(num_segments):
-    #print i
+    #print(i)
     #vis_seg = pickle.load( open( segment_dir+'segment_%010i.pkl' %i, "rb" ) )
     #ret += vis_seg
   return ret

@@ -11,7 +11,7 @@ def tobin(arr):
   return [bin(i) for i in arr]
 
 
-class TartSPI:
+class TartSPI(object):
   '''Command for configuring, and querying TART hardware.'''
 
   ##--------------------------------------------------------------------------
@@ -64,12 +64,12 @@ class TartSPI:
   def close(self, noisy=False):
     self.spi.close()
     if noisy:
-      print 'SPI <-> TART interface closed.'
+      print('SPI <-> TART interface closed.')
     return 1
 
   def pause(self, duration=0.005, noisy=False):
     if noisy:
-      print ' pausing for %1.3fs' % duration
+      print(' pausing for %1.3fs' % duration)
     time.sleep(duration)
 
 
@@ -87,7 +87,7 @@ class TartSPI:
     reg = int(reg) & 0x7f
     res = self.spi.xfer([reg] + [0x0]*self.LATENCY)[self.LATENCY]
     if noisy:
-      print '%s' % self.show_status(reg, res)
+      print('%s' % self.show_status(reg, res))
     return res
 
   def getbytes(self, reg, num, noisy=False):
@@ -95,7 +95,7 @@ class TartSPI:
     res = self.spi.xfer([reg] + [0x0]*(num + self.LATENCY - 1))[self.LATENCY:]
     if noisy:
       for val in res:
-        print '%s' % self.show_status(reg, val)
+        print('%s' % self.show_status(reg, val))
     return res
 
   def setbit(self, reg, bit, noisy=False):
@@ -124,8 +124,8 @@ class TartSPI:
     '''Issue a global reset to the TART hardware.'''
     ret = self.setbyte(self.SPI_RESET, 0x01)
     if noisy:
-      print tobin([ret])
-      print ' reset issued.'
+      print(tobin([ret]))
+      print(' reset issued.')
     self.pause()
     return 1
 
@@ -140,7 +140,7 @@ class TartSPI:
       val = self.getbyte(reg)
       vals.append(val)
       if noisy:
-        print self.show_status(reg, val)
+        print(self.show_status(reg, val))
     return vals
 
   def show_status(self, reg, val):
@@ -203,7 +203,7 @@ class TartSPI:
     }
     ret = {}
     for reg,reg_s,val in zip(self.regs, self.regs_s, vals):
-        if extractors.has_key(reg):
+        if reg in extractors:
             ret[reg_s] = extractors[reg](val)
     return ret
 
@@ -222,7 +222,7 @@ class TartSPI:
 
     ret = self.setbyte(self.TC_SYSTEM, val)
     if noisy:
-      print ' capture %s' % flg
+      print(' capture %s' % flg)
     self.pause()
     return ret
 
@@ -242,11 +242,11 @@ class TartSPI:
         val = val & 0xbf
       ret = self.setbyte(self.TC_DEBUG, val)
       if noisy:
-        print ' debug now ON'
+        print(' debug now ON')
     else:
       val = self.clrbit(self.TC_DEBUG, 7, noisy)
       if noisy:
-        print ' debug now OFF'
+        print(' debug now OFF')
     self.pause()
     return 1
 
@@ -270,7 +270,7 @@ class TartSPI:
     '''Read back the data sampling delays.'''
     val = self.getbyte(self.TC_CENTRE, noisy) & 0x0f
     if noisy:
-      print self.show_status(self.TC_CENTRE, val)
+      print(self.show_status(self.TC_CENTRE, val))
     self.pause()
     return val
 
@@ -283,11 +283,11 @@ class TartSPI:
       self.pause()
       if noisy:
         self.getbyte(self.TC_CENTRE, True)
-        # print tobin(ret)
+        # print(tobin(ret))
       return True
     else:
       if noisy:
-        print 'WARNING: phase value (%d) not within [0,5]' % phase
+        print('WARNING: phase value (%d) not within [0,5]' % phase)
       return False
 
   def read_phase_delay(self, noisy=False):
@@ -295,7 +295,7 @@ class TartSPI:
     ret = self.getbyte(self.TC_STATUS, noisy)
     val = ret & 0x0f
     if noisy:
-      print tobin([ret])
+      print(tobin([ret]))
     self.pause()
     return val
 
@@ -306,7 +306,7 @@ class TartSPI:
     for val in ret:
       res.append(val & 0x0f)
     if noisy:
-      print tobin(res)
+      print(tobin(res))
     self.pause()
     return res
 
@@ -320,14 +320,14 @@ class TartSPI:
     ret = self.setbyte(self.AQ_SYSTEM, old | 0x80)
     val = self.getbit (self.AQ_SYSTEM, 7)
     if noisy:
-      print ' attempting to set acquisition-mode to ON'
-      print tobin([old])
-      print tobin([ret])
+      print(' attempting to set acquisition-mode to ON')
+      print(tobin([old]))
+      print(tobin([ret]))
     if val:
       self.pause(sleeptime)       # optionally wait for acquisition to end
       res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
-        print self.show_status(self.AQ_SYSTEM, res)
+        print(self.show_status(self.AQ_SYSTEM, res))
       fin = res & 0x07 > 2
     self.pause()
     return val and fin
@@ -373,7 +373,7 @@ class TartSPI:
       ret = self.spi.xfer([self.WRITE_CMD | self.VX_SYSTEM, bs])
       self.pause()
       if noisy:
-        print tobin(ret)
+        print(tobin(ret))
       return 1
     else:
       return 0
@@ -382,7 +382,7 @@ class TartSPI:
     '''Get the (exponent of the) correlator block-size.'''
     ret = self.getbyte(self.VX_SYSTEM)
     if noisy:
-      print self.show_status(self.VX_SYSTEM,ret)
+      print(self.show_status(self.VX_SYSTEM,ret))
     return ret & 0x1f
 
   def read_visibilities(self, noisy=True):
@@ -391,13 +391,13 @@ class TartSPI:
     val = self.vis_convert(res)
     if noisy:
       tim = time.time()
-      print " Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val))
+      print(" Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val)))
     return val
 
   def vis_ready(self, noisy=False):
     rdy = self.getbit(self.VX_STATUS, 7)
     if noisy:
-      print '\tready = %s' % rdy
+      print('\tready = %s' % rdy)
     return rdy
 
   def vis_read(self, noisy=False):

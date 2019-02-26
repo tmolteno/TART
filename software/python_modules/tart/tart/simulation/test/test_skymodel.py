@@ -15,8 +15,8 @@ class TestSkymodel(unittest.TestCase):
     state = sm.get_state_vector()
     sm2 = from_state_vector(state)
     state2 = sm2.get_state_vector()
-    print state
-    print state2
+    print(state)
+    print(state2)
 
     # sv_init = np.array([15, 0, 90, -60, 2, 2, 0.5, 0.1])
     # model = from_state_vector(sv_init)

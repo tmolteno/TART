@@ -20,7 +20,7 @@ dt_ant = norm(delta_nez) / c
 
 dt = dt_ant - dt_0
 
-print simplify(dt)
+print(simplify(dt))
 
 from math import sin,cos
 def delay(r, el, az, a_n, a_e, a_z):
@@ -33,9 +33,9 @@ def delay(r, el, az, a_n, a_e, a_z):
 def assert_equal(x,y):
   dx = abs(x-y)
   if  dx > 1e-5*(abs(x) + abs(y)):
-    print "FAIL %g != %g (%f)" % (x,y,dx)
+    print("FAIL %g != %g (%f)" % (x,y,dx))
   else:
-    print "PASS %g == %g (%f)" % (x,y,dx)
+    print("PASS %g == %g (%f)" % (x,y,dx))
    
 r = 1e10
 def to_rad(xx):

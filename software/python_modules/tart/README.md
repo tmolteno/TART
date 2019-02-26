@@ -18,3 +18,7 @@ If you are developing this package, this should be installed using
 in which case changes to the source-code will be immediately available to projects using it.
 
     
+## NEWS
+
+* Version 0.15.0. Python3 changes.
+* Version 0.15.1. Major overhaul of tests

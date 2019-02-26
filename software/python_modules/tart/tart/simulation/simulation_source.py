@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     timebase = np.arange(0,1e-5,1e-6)
     for t in timebase:
-        print "s(t)=%g s(t-tg)=%g" % (crab.s(t), crab.s(t-1e-11))
+        print("s(t)=%g s(t-tg)=%g" % (crab.s(t), crab.s(t-1e-11)))
 
     sample_duration = 1e-4
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
 
     radio_sampling_rate = 4.19e9
-    print "Radio Sampling Rate %g" % radio_sampling_rate
+    print("Radio Sampling Rate %g" % radio_sampling_rate)
 
     timebase = np.arange(0, sample_duration, 1.0/radio_sampling_rate)
     crab_signal = crab.s(timebase)

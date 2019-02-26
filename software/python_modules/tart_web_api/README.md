@@ -25,7 +25,7 @@ where 'password' is a secure password that can be used to log into the telescope
 
 ## Docker
 
-We are transitioning to deployment using docker. There is a Dockerfile for this in the TART/software/docker/tart_web_api directory.
+We are now using to deployment using docker. There is a Dockerfile for this in the TART/software/docker/tart_web_api directory.
 
 ## Twisted
 
@@ -35,8 +35,11 @@ We are transitioning to deployment using docker. There is a Dockerfile for this 
     
 If you are developing this package, this should be installed using
 
-    python setyp.py develop
+    python3 setyp.py develop
 
 in which case changes to the source-code will be immediately available to projects using it.
 
     
+## NEWS
+
+* Version 0.1.8 Python3 compatability

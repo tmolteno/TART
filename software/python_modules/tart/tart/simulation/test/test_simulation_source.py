@@ -29,7 +29,7 @@ class TestSimulationSource(unittest.TestCase):
 
 
     plt.legend()
-    plt.show()
+    #plt.show()
 
   def test_signal_deterministic(self):
     samp_freq = 16.e6
@@ -44,7 +44,7 @@ class TestSimulationSource(unittest.TestCase):
     dt = 0.5/(16.e6)
     b = self.crab.s_baseband(samp_time+dt)
     for i in range(1,100):
-      print i
+      print(i)
       if a[i+1] - a[i] > 0:
         self.assertTrue(a[i+1] - a[i] > a[i+1] - b[i])
         self.assertTrue(a[i+1] - a[i] > b[i] - a[i])

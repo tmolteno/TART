@@ -1,6 +1,6 @@
 
 import unittest
-from tart.imaging.test.test_antenna_model import TestAntennaModel
+
 from tart.imaging.test.test_correlator import TestCorrelator
 from tart.imaging.test.test_correlator import TestHilbert
 from tart.imaging.test.test_correlator import TestFxCorrelator

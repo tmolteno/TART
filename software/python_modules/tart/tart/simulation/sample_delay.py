@@ -14,4 +14,4 @@ if __name__ == '__main__':
     displacement = -5
     angle = 45
     delay = sample_delay(displacement, angle)
-    print delay
+    print(delay)

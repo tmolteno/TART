@@ -1,6 +1,6 @@
 import math
 
-class Util:
+class Util(object):
   PI  = 3.1415926535897932
   PI2 = 6.2831853071795864
   C   = 2.99793e8

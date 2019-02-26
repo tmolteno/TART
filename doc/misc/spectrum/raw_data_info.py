@@ -46,7 +46,7 @@ def plot_spectrum(power, freq, ax=None, fontsize=10, linestyle='-', color='blue'
 
 def calc_ant_spec(i,fs,nfft):
   power, freq = get_psd(d_corrected[i], fs, nfft=nfft)
-  print 'Done', i
+  print('Done', i)
   return [power, freq]
 
 
@@ -75,27 +75,27 @@ if __name__ == '__main__':
 
   nobs = observation.Observation_Load(fname)
   NUM_ANTENNAS = nobs.config.get_num_antenna()
-  print "Date %s " % str(nobs.timestamp)
-  print "Number of Points %d " % len(nobs.data[0])
-  print "Number of Antenna %d" % NUM_ANTENNAS
+  print("Date %s " % str(nobs.timestamp))
+  print("Number of Points %d " % len(nobs.data[0]))
+  print("Number of Antenna %d" % NUM_ANTENNAS)
   fs =  nobs.get_sampling_rate()
-  print "Sampling rate %d" % fs
-  print nobs.get_antenna(0)
+  print("Sampling rate %d" % fs)
+  print(nobs.get_antenna(0))
 
 
   d_corrected = []
   for i in range(NUM_ANTENNAS):
     d = nobs.get_antenna(i)
     d_corrected.append(d - d.mean())
-  print 'done mean correction'
+  print('done mean correction')
 
   #from plotpresets import PlotPresets
   #pp = PlotPresets()
 
   if ARGS.means:
     for i, x in enumerate(nobs.config.ant_positions):
-      print nobs.get_means()
-      print "   %d ant loc %s, mean %g" % (i, x, nobs.get_antenna(i).mean())
+      print(nobs.get_means())
+      print("   %d ant loc %s, mean %g" % (i, x, nobs.get_antenna(i).mean()))
 
   title = "TART data (%s)" % str(nobs.timestamp)
   if (ARGS.plot):
@@ -124,7 +124,7 @@ if __name__ == '__main__':
       sns.set(style="whitegrid")
       sns.set_palette('hls', n_colors=24)
     except:
-      print 'no seaborn found'
+      print('no seaborn found')
 
     f, axarr = plt.subplots(4, 6, sharey=True, sharex=True)
     f.suptitle(title)
@@ -137,7 +137,7 @@ if __name__ == '__main__':
       ret = []
       try:
         for i in range(NUM_ANTENNAS):
-          print 'deployed', i
+          print('deployed', i)
           resultList.append(p.apply_async(calc_ant_spec, (i,fs,2**ARGS.exp)))
         p.close()
         p.join()
@@ -145,13 +145,13 @@ if __name__ == '__main__':
           res = sv_thread.get()
           if (res != None):
             ret.append(res)
-            print '.',
+            print('.',)
             sys.stdout.flush()
         p.terminate()
       except KeyboardInterrupt:
-        print 'control-c pressed'
+        print('control-c pressed')
         p.terminate()
-      print ret
+      print(ret)
       for i in range(NUM_ANTENNAS):
         power, freq = ret[i]
         ax = axarr.ravel()[i]
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
     else:
       for i in range(NUM_ANTENNAS):
-        print i
+        print(i)
         ax = axarr.ravel()[i]
         d = nobs.get_antenna(i)
         d_corrected = d - d.mean()
@@ -175,11 +175,11 @@ if __name__ == '__main__':
     f.subplots_adjust(wspace=0.0, hspace=0.0)
     PLOT_FNAME = "snapshot_spectrum_grid.pdf"
     f.savefig(PLOT_FNAME)
-    print 'saved to: ', PLOT_FNAME
+    print('saved to: ', PLOT_FNAME)
     PLOT_FNAME = "snapshot_spectrum_multiple.pdf"
     f2.tight_layout()
     f2.savefig(PLOT_FNAME)
-    print 'saved to: ', PLOT_FNAME
+    print('saved to: ', PLOT_FNAME)
 
   if ARGS.show:
     plt.show()

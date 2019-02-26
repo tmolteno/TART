@@ -23,10 +23,10 @@ class TestCatalog(unittest.TestCase):
         ans = self.request(datetime.datetime.utcnow())
         
         for sv in ans:
-            self.assertTrue(sv.has_key('r'))
-            self.assertTrue(sv.has_key('el'))
-            self.assertTrue(sv.has_key('az'))
-            self.assertTrue(sv.has_key('jy'))
+            self.assertTrue('r' in sv)
+            self.assertTrue('el' in sv)
+            self.assertTrue('az' in sv)
+            self.assertTrue('jy' in sv)
 
     def test_future_date(self):
         t = datetime.datetime.utcnow() # utc.utc_datetime(2002, 10, 31, 2, 2, 2)
@@ -44,9 +44,9 @@ class TestCatalog(unittest.TestCase):
             t += dt
         
             #for sv in ans:
-                #self.assertTrue(sv.has_key('r'))
-                #self.assertTrue(sv.has_key('el'))
-                #self.assertTrue(sv.has_key('az'))
+                #self.assertTrue('r' in sv)
+                #self.assertTrue('el' in sv)
+                #self.assertTrue('az' in sv)
 
 
 

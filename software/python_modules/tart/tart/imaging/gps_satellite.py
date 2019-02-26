@@ -14,7 +14,7 @@ class GpsSatellite(radio_source.RadioSource):
   '''This is a class describing a GPS satellite as observed from
      a particular location on Earth.'''
   def __init__(self, sv, location, jy=2.5e6):
-    radio_source.RadioSource.__init__(self, jy=jy)
+    radio_source.RadioSource.__init__(self, r=20.0e6, jy=jy)
     self.sv = sv
     self.location = location
     self.ep = EphemeridesProxy.Instance()

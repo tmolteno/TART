@@ -30,7 +30,7 @@ class CalibratedVisibility(object):
         if bl not in self.flagged_baselines:
             #vis_idx = self.vis.baselines.index(bl)
             self.flagged_baselines.append(bl)
-            # print 'flagged', vis_idx, bl
+            # print('flagged', vis_idx, bl)
 
     def flag_antenna(self, i):
         for bl in self.vis.baselines:
@@ -72,7 +72,7 @@ class CalibratedVisibility(object):
 
     def get_baseline_lengths(self):
         pos = self.get_config().get_antenna_positions()
-        #print pos
+        #print(pos)
         ret = []
         for bln in self.get_baselines():
             [i,j] = bln
@@ -137,8 +137,8 @@ class CalibratedVisibility(object):
 
 def from_dict(vis, calib_dict):
     ret = CalibratedVisibility(vis)
-    ret.set_phase_offset(range(ret.get_config().num_antennas),np.array(calib_dict['phase_offset']))
-    ret.set_gain(range(ret.get_config().num_antennas),np.array(calib_dict['gain']))
+    ret.set_phase_offset(range(ret.get_config().get_num_antenna()),np.array(calib_dict['phase_offset']))
+    ret.set_gain(range(ret.get_config().get_num_antenna()),np.array(calib_dict['gain']))
     ret.set_flagged_baselines(calib_dict['flagged_baselines'])
     return ret
 
@@ -165,14 +165,14 @@ if __name__ == '__main__':
   vis = visibility.Visibility_Load(args.vis) #[:20]
 
   cal_vis = CalibratedVisibility(vis[0])
-  #print cal_vis.get_visibility(0,1)
-  #print cal_vis.get_baselines()
-  #print len(cal_vis.get_baselines())
+  #print(cal_vis.get_visibility(0,1))
+  #print(cal_vis.get_baselines())
+  #print(len(cal_vis.get_baselines()))
 
   cal_vis.flag_baseline(0,1)
 
-  #print cal_vis.get_baselines()
-  #print len(cal_vis.get_baselines())
+  #print(cal_vis.get_baselines())
+  #print(len(cal_vis.get_baselines()))
 
 
   def gen_tile_vis_list(tile_no,vis):
@@ -205,9 +205,9 @@ if __name__ == '__main__':
 
 
   # ift_arr = np.array(ift_arr)
-  # print ift_arr
+  # print(ift_arr)
   # plt.figure()
   # plt.imshow(np.prod(np.abs(ift_arr),axis=0))
 
 
-  # print cal_vis.get_visibility(0,1)
+  # print(cal_vis.get_visibility(0,1))

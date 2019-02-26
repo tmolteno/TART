@@ -8,8 +8,8 @@ Calculate the position in horizontal coordinates for the sun.
 #
 import datetime
 import math
-import location
 
+from tart.imaging import location
 from tart.imaging import radio_source
 from tart.imaging import tart_util
 from tart.util import angle

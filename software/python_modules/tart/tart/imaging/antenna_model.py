@@ -1,4 +1,3 @@
-import cPickle
 
 import numpy as np
 import healpy as hp
@@ -7,7 +6,7 @@ from tart.imaging import location
 from tart.util import angle
 from tart.util.db import db_connect
 
-class AntennaModel:
+class AntennaModel(object):
   '''Base class for all Antenna models.'''
 
   def get_gain(self, el, az):
@@ -49,7 +48,7 @@ def hp_interpolator(map_, el, az, n_pix=4):
     filled = np.where(map_[pixels] > -1.)[0]
     l = len(filled)
     if l >= n_pix:
-      # print i, l
+      # print(i, l)
       filled_pixel = pixels[filled]
       filled_pixel_directions = hp.pix2vec(NSide, filled_pixel)
       angular_distance = hp.rotator.angdist(direction, filled_pixel_directions)
@@ -65,7 +64,7 @@ def hp_interpolator(map_, el, az, n_pix=4):
     #else:
       #lmax = hp.Alm.getlmax(len(hp_alm),mmax=mmax)
 
-    #print lmax, mmax
+    #print(lmax, mmax)
     #out = 0.
     #azimutal_angle = az.to_rad()
     #polar_angle = el.to_rad()-np.pi/2.
@@ -90,7 +89,7 @@ def gen_interpolation_map(points, values, antenna_num, nside_exp):
 
   dic = {}
   for i, p in enumerate(pix):
-    if dic.has_key(p)==False:
+    if dic.get(p) is None:
       dic[p] = []
     dic[p].append(values[i])
 
@@ -141,7 +140,7 @@ class EmpiricalAntenna(AntennaModel):
         self.norm_map = self.i_map
       else:
         alms = hp.sphtfunc.map2alm(hp.ma(self.i_map), lmax=lmax, mmax=mmax, iter=10, pol=False)
-        print hp.Alm.getlmax(len(alms), mmax=mmax)
+        print(hp.Alm.getlmax(len(alms), mmax=mmax))
         norm_map = hp.sphtfunc.alm2map(alms, np.power(2, nside_exp_syn), lmax=lmax, mmax=mmax, pixwin=False, pol=False)
         norm_map_min = norm_map.min()
         norm_map = norm_map-norm_map_min
@@ -181,7 +180,7 @@ class EmpiricalAntenna(AntennaModel):
     #c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND el>15 AND correlation<6 AND date<%(ph)s"), (antenna_num, "2013-11-25"))
     # c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND date<%(ph)s"), (antenna_num, "2013-11-25"))
     pval = c.fetchall()
-    print len(pval), ' entries'
+    print(len(pval), ' entries')
     points = []
     values = []
     times = []

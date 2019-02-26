@@ -16,7 +16,7 @@ def van_vleck_correction(R):
 def combine_real_imag(v_real, v_imag):
   return v_real-1j*v_imag
 
-class Correlator:
+class Correlator(object):
   def __init__(self, van_vleck_corr=True):
     self.vv = van_vleck_corr
 
@@ -55,7 +55,7 @@ class Correlator:
 
     for i in range(0, num_antenna):
       for j in range(i+1, num_antenna):
-        print len(baselines)
+        print(len(baselines))
         v.append(self.V(data[i],data[j],data_hilb[j]))
         baselines.append([i,j])
     return v, baselines
@@ -85,7 +85,7 @@ class Correlator:
         #if debug:
           #progress = len(baselines)
           #if (progress%10==0):
-            #print progress
+            #print(progress)
         ##cos_i = data[i][1:]
         ##cos_j = data[j][1:]
         ##sin_j = data[j][:-1]

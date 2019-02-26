@@ -14,10 +14,10 @@ def telescope_signals(ref_freq, freq_mult, sample_duration, baseline, angle_1, a
   sample_delay_1 = int(delay_1 * (ref_freq * freq_mult))
   sample_delay_2 = int(delay_2 * (ref_freq * freq_mult))
   
-  print 'delay_1 = ', delay_1
-  print 'delay_2 = ', delay_2
-  print 'sample_delay_1 = ', sample_delay_1
-  print 'sample_delay_2 = ', sample_delay_2
+  print('delay_1 = ', delay_1)
+  print('delay_2 = ', delay_2)
+  print('sample_delay_1 = ', sample_delay_1)
+  print('sample_delay_2 = ', sample_delay_2)
   
   # Calculate the number of points required
   n = int(ref_freq * freq_mult * sample_duration)

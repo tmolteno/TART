@@ -7,7 +7,7 @@ lint:
 	pylint tart
 
 test:
-	python -m unittest discover
+	python3 setup.py test --test-suite=tart.imaging.test.test_visibility.TestVisibility
 
 doc:
 	pandoc --to=rst  README.md > README.txt

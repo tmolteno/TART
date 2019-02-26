@@ -25,7 +25,7 @@ class TestSun(unittest.TestCase):
 
     def test_horizontal(self):
         el, az = self.s.to_horizontal(location.Dunedin, self.t)
-        print "El %f    Az %f" % (el.to_degrees(), az.to_degrees())
+        print("El %f    Az %f" % (el.to_degrees(), az.to_degrees()))
         self.assertAlmostEqual(el.to_degrees(), 57.848294, 3)
         self.assertAlmostEqual(az.to_degrees(), 8.943156, 1)
 
@@ -33,7 +33,7 @@ class TestSun(unittest.TestCase):
         t = utc.now()
         s = Sun()
         el, az = s.to_horizontal(location.Dunedin, t)
-        print "El %f    Az %f" % (el.to_degrees(), az.to_degrees())
+        print("El %f    Az %f" % (el.to_degrees(), az.to_degrees()))
 
     def test_radec(self):
         Dunedin = location.Dunedin

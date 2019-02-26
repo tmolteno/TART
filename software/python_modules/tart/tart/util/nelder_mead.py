@@ -14,7 +14,7 @@ import numpy as np
 # np.array((N+1,N))
 
 
-class NelderMead:
+class NelderMead(object):
     def __init__(self, f, debug=False):
          self.fun = f
          self.debug = debug
@@ -24,7 +24,7 @@ class NelderMead:
         self.function_eval_count += 1
         y = self.fun(x)
         if self.debug:
-            print y
+            print(y)
         return y
 
     ''' A Nelder Mead minimization algorithm
@@ -105,7 +105,7 @@ class NelderMead:
             
             # finally try a shrink step
             if (self.debug):
-                print "Doing a shrink step"
+                print("Doing a shrink step")
             half = 0.5
             center = amoeba[smallest_vertex]
             for vertex in range(n+1):
@@ -113,9 +113,9 @@ class NelderMead:
                     amoeba[vertex] = center + (amoeba[vertex]-center)*half
                     f[vertex] = self.func(amoeba[vertex])
                 
-        print "Nelder-Mead Complete"
-        print "Iteration Count: " + str(iteration_count)
-        print "Function Evaluations: " + str(self.function_eval_count)
+        print("Nelder-Mead Complete")
+        print("Iteration Count: " + str(iteration_count))
+        print("Function Evaluations: " + str(self.function_eval_count))
 
         return amoeba[smallest_vertex]
     
@@ -139,4 +139,4 @@ if __name__ == '__main__':
     start = gen_simplex([1000.0, 1.1, -1.0], 1)
     result = nm.solve(start, tolerance=1e-5, max_iterations=10240)
 
-    print result
+    print(result)

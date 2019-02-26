@@ -13,8 +13,8 @@ import tartdsp
 
 
 if __name__ == '__main__':
-  print "\nTART antenna calibration tool."
-  print " Copyright Tim Molteno, Max Scheel, and Patrick Suggate, 2016 ."
+  print("TART antenna calibration tool.")
+  print(" Copyright Tim Molteno, Max Scheel, and Patrick Suggate, 2016 .")
 
   parser = argparse.ArgumentParser(description='Test bench for TART commuication via SPI.')
   parser.add_argument('--speed', default=32, type=float, help='Specify the SPI CLK speed (in MHz)')
@@ -39,11 +39,12 @@ if __name__ == '__main__':
   ##------------------------------------------------------------------------##
   ##  Set up a signal-capture source.
   ##------------------------------------------------------------------------##
-  print "\nSetting TART's data-capture mode."
+  print("
+Setting TART's data-capture mode.")
 
   # Prevent trying to lock all zeros.
   if not args.acquire and not args.shifter and not args.counter:
-    print 'Using an MFSR for fake signal data.'
+    print('Using an MFSR for fake signal data.')
     args.shifter = True
 
   tart.debug(on=not args.acquire, shift=args.shifter, count=args.counter,
@@ -64,10 +65,10 @@ if __name__ == '__main__':
         tart.read_status(True)
       ticks = ticks + 1
       if ticks % 100 == 0 and args.verbose:
-        print ' ticks =\t%5d\r' % ticks
+        print(' ticks =	%5d\r' % ticks)
       tart.pause()
 
-    print 'Lock-ticks = %d (%g seconds)' % (ticks, ticks*0.005)
+    print('Lock-ticks = %d (%g seconds)' % (ticks, ticks*0.005))
     exit(0)
 
 
@@ -98,7 +99,7 @@ if __name__ == '__main__':
 
     phases = tart.read_phases(SAMPLES)
     if args.verbose:
-      print '%s' % phases
+      print('%s' % phases)
     minphase  = min(minphase, min(phases))
     maxphase  = max(maxphase, max(phases))
     sumphase += sum(phases)
@@ -114,8 +115,8 @@ if __name__ == '__main__':
   ##  Show the computed phase values.
   ##------------------------------------------------------------------------##
   avgphase = float(sumphase) / (float(SAMPLES) * len(channels))
-  print 'Average phase = %d (%g)' % (round(avgphase), avgphase)
-  print 'Minimum phase = %d'      %  minphase
-  print 'Maximum phase = %d'      %  maxphase
+  print('Average phase = %d (%g)' % (round(avgphase), avgphase))
+  print('Minimum phase = %d'      %  minphase)
+  print('Maximum phase = %d'      %  maxphase)
 
   tart.close()

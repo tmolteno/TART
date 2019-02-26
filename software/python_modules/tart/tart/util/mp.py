@@ -16,7 +16,7 @@ def parallelized_for_i_in(ilist, func):
                 ret.append(result)
         pool.terminate()
     except KeyboardInterrupt:
-        print 'control-c pressed'
+        print('control-c pressed')
         pool.terminate()
     return ret
 

@@ -15,11 +15,11 @@ Helper functions
 def get_psd(d, fs, nfft):
   power, freq = mlab.psd(d, Fs=fs, NFFT=nfft)
   num_bins = 128
-  window_width = len(power)/num_bins
+  window_width = len(power)//num_bins
   power_ret = []
   freq_ret = []
   for i in range(num_bins):
-    start = i*window_width
+    start = int(i*window_width)
     stop = start + window_width 
     power_ret.append(power[start:stop].max())
     freq_ret.append(freq[start:stop].mean())
@@ -75,9 +75,9 @@ def get_status_json(tart_instance):
 def run_diagnostic(tart, runtime_config):
 
     pp = tart.load_permute()
-    print "Enabling DEBUG mode"
+    print("Enabling DEBUG mode")
     tart.debug(on=not runtime_config['acquire'] , shift=runtime_config['shifter'], count=runtime_config['counter'], noisy=runtime_config['verbose'])
-    print "Setting capture registers:"
+    print("Setting capture registers:")
 
     num_ant = runtime_config['diagnostic']['num_ant']
     N_samples = runtime_config['diagnostic']['N_samples']       # Number of samples for each antenna
@@ -103,13 +103,13 @@ def run_diagnostic(tart, runtime_config):
     for i in range(num_ant):
       mean_phases.append(phases[i]['measured'])
 
-    print 'median:', np.median(mean_phases)
+    print('median:', np.median(mean_phases))
     delay_to_be_set = (np.median(mean_phases) + 6) %12
-    print 'set delay to:', delay_to_be_set
+    print('set delay to:', delay_to_be_set)
 
     runtime_config['sample_delay'] = delay_to_be_set
 
-    print 'small test acquisition'
+    print('small test acquisition')
     tart.reset()
     tart.debug(on=False, noisy=runtime_config['verbose'])
     tart.set_sample_delay(delay_to_be_set)
@@ -121,13 +121,13 @@ def run_diagnostic(tart, runtime_config):
 
     while not tart.data_ready():
       tart.pause(duration=0.005, noisy=True)
-    print '\nAcquisition complete, beginning read-back.'
+    print('\nAcquisition complete, beginning read-back.')
     #tart.capture(on=False, noisy=runtime_config['verbose'])
-    print runtime_config['diagnostic']['spectre']['N_samples_exp']
+    print(runtime_config['diagnostic']['spectre']['N_samples_exp'])
     data = tart.read_data(num_words=2**runtime_config['diagnostic']['spectre']['N_samples_exp'])
     data = np.asarray(data,dtype=np.uint8)
     ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
-    print ant_data[:,:10]
+    print(ant_data[:,:10])
     radio_means = []
     mean_threshold = 0.2
     for i in range(num_ant):
@@ -154,7 +154,7 @@ def run_diagnostic(tart, runtime_config):
     runtime_config['status'] = d
 
 
-    print "\nDone."
+    print("\nDone.")
 '''
 RUN TART in raw data acquisition mode
 '''
@@ -174,7 +174,7 @@ def run_acquire_raw(tart, runtime_config):
 
     while not tart.data_ready():
       tart.pause(duration=0.005, noisy=True)
-    print '\nAcquisition complete, beginning read-back.'
+    print('\nAcquisition complete, beginning read-back.')
     #tart.capture(on=False, noisy=runtime_config['verbose'])
 
     data = tart.read_data(num_words=np.power(2, runtime_config['raw']['N_samples_exp']))
@@ -183,21 +183,21 @@ def run_acquire_raw(tart, runtime_config):
     runtime_config['status'] = d
     tart.reset()
 
-    print 'reshape antenna data'
+    print('reshape antenna data')
     data = np.asarray(data,dtype=np.uint8)
     ant_data = np.flipud(np.unpackbits(data).reshape(-1,24).T)
-    print ant_data
+    print(ant_data)
 
     if runtime_config['raw']['save']:
         from tart.operation import observation
         from tart.operation import settings
         config = settings.from_file(runtime_config['telescope_config_path'])
         filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.pkl'
-        print 'create observation object'
+        print('create observation object')
         obs = observation.Observation(t_stmp, config, savedata=ant_data)
         obs.save(filename)
-        print 'saved to: ', filename
+        print('saved to: ', filename)
         return {'filename':filename, 'sha256':sha256_checksum(filename)}
     return {}
-    print '\nDone.'
+    print('\nDone.')
 

@@ -40,14 +40,14 @@ def from_api_json(config_json, ant_pos_json):
     ret = Settings()
     ret.Dict['num_antenna'] = config_json['num_antenna']
     ret.Dict['sampling_frequency'] = config_json['sampling_frequency']
-    ret.Dict['operating_frequency'] = config_json['operating_frequency']
+    ret.Dict['frequency'] = config_json['operating_frequency']
     ret.Dict['bandwidth'] = config_json['bandwidth']
     ret.set_antenna_positions(ant_pos_json)
     loc = config_json['location']
     ret.set_geo(loc['lat'], loc['lon'], loc['alt'])
     return ret
 
-class Settings(object):
+class Settings:
     def __init__(self):
         self.Dict = {}
 
@@ -64,18 +64,18 @@ class Settings(object):
                 ant_pos['calibrated'] = json.loads(fr.read())
                 fr.close()
         except:
-                print 'could not load ' + cal_ant_positions_file
+                print('could not load ' + cal_ant_positions_file)
         try:
             with open(design_antenna_positions_file, 'r') as fr:
                 ant_pos['design'] = json.loads(fr.read())
                 fr.close()
         except:
-            print 'could not load ' + design_antenna_positions_file
+            print('could not load ' + design_antenna_positions_file)
         self.Dict['antenna_positions'] = ant_pos
 
     def get_antenna_positions(self, key='calibrated'):
-        if self.Dict.has_key('antenna_positions'):
-            if self.Dict['antenna_positions'].has_key(key):
+        if 'antenna_positions' in self.Dict:
+            if key in self.Dict['antenna_positions']:
                 return self.Dict['antenna_positions'][key]
 
     def to_json(self):
@@ -113,7 +113,7 @@ class Settings(object):
         return self.Dict['sampling_frequency']
 
     def get_operating_frequency(self):
-        return self.Dict['operating_frequency']
+        return self.Dict['frequency']
 
     def get_bandwidth(self):
         return self.Dict['bandwidth']

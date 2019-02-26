@@ -22,5 +22,6 @@ rsync -rv --exclude=node_modules ../software ${TARGET}:.
 
 # Now log into the pi and run:
 #   cd software
+#   docker-compose build
 #   docker-compose up
 # Point your browser to the raspberry pi.

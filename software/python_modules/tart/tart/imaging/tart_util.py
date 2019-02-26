@@ -1,3 +1,4 @@
+import math
 import datetime
 
 def get_utc_hours(timestamp):
@@ -6,7 +7,7 @@ def get_utc_hours(timestamp):
     return hours
 
 def sign(x):
-    return cmp(x,0)
+    return math.copysign(1, x)
 
 def get_julian_date(timestamp):
     YY=timestamp.year

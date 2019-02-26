@@ -17,9 +17,9 @@ from tart.simulation.radio import *
 
 class TestMax2769B(unittest.TestCase):
   def setUp(self):
-    self.config = settings.from_file('../test/test_telescope_config.json')
-    self.config.load_antenna_positions(cal_ant_positions_file='../test/test_calibrated_antenna_positions.json')
-    # noiselvls =  0.1.*np.ones(config.num_antennas)
+    self.config = settings.from_file('./tart/test/test_telescope_config.json')
+    self.config.load_antenna_positions(cal_ant_positions_file='./tart/test/test_calibrated_antenna_positions.json')
+    # noiselvls =  0.1.*np.ones(config.get_num_antenna())
     num_ant = self.config.get_num_antenna()
     noiselvls =  0. * np.ones(num_ant)
     self.rad = Max2769B(noise_level = noiselvls)
@@ -52,10 +52,10 @@ class TestMax2769B(unittest.TestCase):
     plt.plot(freqs, (spec_simp-spec_full)/spec_full)
     plt.show()
 
-    print len(obs_full.get_antenna(1)), obs_full.get_antenna(1).mean()
-    print len(obs_simp.get_antenna(1)), obs_simp.get_antenna(1).mean()
+    print(len(obs_full.get_antenna(1)), obs_full.get_antenna(1).mean())
+    print(len(obs_simp.get_antenna(1)), obs_simp.get_antenna(1).mean())
 
-    # self.assertEqual(self.settings.num_antennas, 5)
+    # self.assertEqual(self.settings.get_num_antenna(), 5)
     # self.assertLess(d.std(), 0.1)
 
 if __name__ == '__main__':

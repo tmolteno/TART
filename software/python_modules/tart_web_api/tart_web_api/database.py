@@ -9,9 +9,9 @@ def connect_to_db():
         con = sqlite3.connect(dbfile)
         c = con.cursor()
     except Exception as e:
-        print type(e)     # the exception instance
-        print e.args      # arguments stored in .args
-        print e
+        print(type(e))     # the exception instance
+        print(e.args)      # arguments stored in .args
+        print(e)
     return con, c
 
 def setup_db():

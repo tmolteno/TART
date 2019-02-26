@@ -47,14 +47,14 @@ def process_file(dirname, fname, orientation_degrees, spacing, sample_duration, 
     v = Visibility(nobs)
     return date, hours, v, visibility[0]
   except Exception as inst:
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
-    print sample_duration
-    print traceback.format_exc()
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
+    print(sample_duration)
+    print(traceback.format_exc())
     return None, None, None, None
   except KeyboardInterrupt:
-    print inst
+    print(inst)
     return None, None, None, None
 
 def get_correlation(dirname, orientation_degrees, spacing, sample_duration, simulate_vis=True):
@@ -82,10 +82,10 @@ def get_correlation(dirname, orientation_degrees, spacing, sample_duration, simu
           times.append(hours)
           vis.append(v)
           simvis.append(sv)
-          #print "%g %g %g" % (times[-1], vis[-1], simvis[-1])
+          #print("%g %g %g" % (times[-1], vis[-1], simvis[-1]))
       p.terminate()
     except KeyboardInterrupt:
-      print 'control-c pressed'
+      print('control-c pressed')
       p.terminate()
 
   else:
@@ -97,7 +97,7 @@ def get_correlation(dirname, orientation_degrees, spacing, sample_duration, simu
         vis.append(v)
         simvis.append(sv)
         
-        print "%g %s %s" % (times[-1], v.v, simvis)
+        print("%g %s %s" % (times[-1], v.v, simvis))
       
   #vis = np.array(vis)
   simvis = np.array(simvis)  
@@ -122,11 +122,11 @@ if __name__ == '__main__':
     
         date, times, vis, simvis = get_correlation(dirname, theta, r, sample_duration)
         corr = sum(vis * simvis)
-        print "Correlation @%f %f %f" % (theta, r, corr)
+        print("Correlation @%f %f %f" % (theta, r, corr))
   else:
     date, times, vis, simvis = get_correlation(dirname, orientation_degrees, spacing, sample_duration)
     corr = sum(vis * simvis)
-    print "Correlation @%f %f %f" % (orientation_degrees, spacing, corr)
+    print("Correlation @%f %f %f" % (orientation_degrees, spacing, corr))
    
     plt.subplot(2,1,1)
     title = "Visibility Data from %s (th=%f, dx=%f)" % (str(date), orientation_degrees, spacing)

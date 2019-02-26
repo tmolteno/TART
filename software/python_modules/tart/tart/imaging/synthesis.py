@@ -1,3 +1,5 @@
+import pickle
+
 from tart.imaging import uvfitsgenerator
 from tart.imaging import radio_source
 from tart.imaging import location
@@ -37,7 +39,7 @@ class Synthesis_Imaging(object):
             self.phase_center = radio_source.CosmicSource(ra, dec, 1e10)
         self.grid_file = 'grid.idx'
         self.grid_idx = None
-        #print 'debug:' , self.phase_center.to_horizontal(vt.config.get_loc(),vt.timestamp)
+        #print('debug:' , self.phase_center.to_horizontal(vt.config.get_loc(),vt.timestamp))
 
     def set_grid_file(self,fpath):
         self.grid_file = fpath
@@ -57,7 +59,7 @@ class Synthesis_Imaging(object):
 
             # ra, dec = vis_part[0].config.get_loc().horizontal_to_equatorial(vis_part[0].timestamp, angle.from_dms(90.), angle.from_dms(0.))
             # self.phase_center = radio_source.CosmicSource(ra, dec)
-            # print ra, dec
+            # print(ra, dec)
 
             uvgen = uvfitsgenerator.UVFitsGenerator(vis_part, self.phase_center) # FIXME
             uvgen.write(fits_name)
@@ -84,11 +86,10 @@ class Synthesis_Imaging(object):
     def get_grid_idxs(self,uu_a, vv_a, num_bin, nw):
         try:
             if self.grid_idx is None:
-                import cPickle
-                self.grid_idx = cPickle.load(open(self.grid_file, 'rb'))
-                #print 'finished loading ' + self.grid_file
+                self.grid_idx = pickle.load(open(self.grid_file, 'rb'))
+                #print('finished loading ' + self.grid_file)
         except:
-            print 'generating...'
+            print('generating...')
             uu_edges = np.linspace(-nw, nw, num_bin+1)
             vv_edges = np.linspace(-nw, nw, num_bin+1)
             grid_idx = []
@@ -100,7 +101,7 @@ class Synthesis_Imaging(object):
                 grid_idx.append([i,j,i2,j2])
             self.grid_idx = np.array(grid_idx)
             save_ptr = open(self.grid_file, 'wb')
-            cPickle.dump(self.grid_idx, save_ptr, cPickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.grid_idx, save_ptr, pickle.HIGHEST_PROTOCOL)
             save_ptr.close()
         return self.grid_idx
 
@@ -193,15 +194,15 @@ class Synthesis_Imaging(object):
             for uu, vv, v_l in zip(uu_a, vv_a, vis_l):
                 i = uu_edges.__lt__(uu).sum()-1
                 j = vv_edges.__lt__(vv).sum()-1
-                # print 'u', mid_points_uv[0][i-1,0], mid_points_uv[0][i,0], mid_points_uv[0][i+1,0], uu
-                # print 'v', mid_points_uv[1][0,j], vv
+                # print('u', mid_points_uv[0][i-1,0], mid_points_uv[0][i,0], mid_points_uv[0][i+1,0], uu)
+                # print('v', mid_points_uv[1][0,j], vv)
                 for i_offset in offsets:
                     for j_offset in offsets:
                         r = np.sqrt(np.power(uu-mid_points_uv[0][i+i_offset,0],2) + np.power(vv-mid_points_uv[1][0,j+j_offset],2))
-                        # print 'u', uu- mid_points_uv[0][i+i_offset,0], r , grid_kernel_r_pixels/pixels_per_wavelength
-                        # print 'v', vv- mid_points_uv[1][0,j+j_offset], r , grid_kernel_r_pixels/pixels_per_wavelength
+                        # print('u', uu- mid_points_uv[0][i+i_offset,0], r , grid_kernel_r_pixels/pixels_per_wavelength)
+                        # print('v', vv- mid_points_uv[1][0,j+j_offset], r , grid_kernel_r_pixels/pixels_per_wavelength)
                         n_arr[j+j_offset, i+i_offset] += v_l * np.exp(-(r**2. / (grid_kernel_r_wavelength)**2.))
-                        # print i,j, i_offset, j_offset, r, v_l * np.exp(-(r**2. / (grid_kernel_r_pixels/pixels_per_wavelength)**2.))
+                        # print(i,j, i_offset, j_offset, r, v_l * np.exp(-(r**2. / (grid_kernel_r_pixels/pixels_per_wavelength)**2.)))
                 i = uu_edges.__lt__(-uu).sum()-1
                 j = vv_edges.__lt__(-vv).sum()-1
                 for i_offset in offsets:

@@ -12,7 +12,7 @@ from tart.imaging import ephemeris
 from tart.imaging import sp3_interpolator
 
 @Singleton
-class EphemeridesProxy:
+class EphemeridesProxy(object):
 
   def __init__(self, server='localhost'):
     self.server = jsonrpclib.Server('http://%s:8876/rpc/gps' % server)
@@ -40,7 +40,7 @@ class EphemeridesProxy:
       eph_hash = self.server.get_ephemeris(utc_date.isoformat(), sv)
       eph = ephemeris.Ephemeris(eph_hash)
       self.cache[h] = eph
-      print "Cache miss %s, %d" % (utc_date, sv)
+      print("Cache miss %s, %d" % (utc_date, sv))
     return eph
 
   def get_sp3_interpolator(self, utc_date):
@@ -52,7 +52,7 @@ class EphemeridesProxy:
       pts = self.server.get_interp_points(utc_date.isoformat())
       sp3 = sp3_interpolator.Sp3Interpolator(gpst, pts)
       self.sp3_cache[h] = sp3
-      print "sp3 Cache miss %s" % (utc_date)
+      print("sp3 Cache miss %s" % (utc_date))
     return sp3
 
   def get_sv_position(self, utc_date, sv):
