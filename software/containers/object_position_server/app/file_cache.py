@@ -74,7 +74,7 @@ class FileCache(sky_object.SkyObject):
             self.cache[fname] = self.create_object_from_file(local_path)
             return self.cache[fname]
         except Exception as error:
-            # Something went horribly wrong. Print out the exception and use data from a day ago
+            # Something went horribly wrong. print(out the exception and use data from a day ago)
             tb = traceback.format_exc()
             logging.error(tb)
             logging.error("Something went wrong. Using old orbit information")

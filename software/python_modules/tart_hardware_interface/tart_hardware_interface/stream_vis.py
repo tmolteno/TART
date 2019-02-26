@@ -14,7 +14,7 @@ from tart.imaging import visibility
 from tart.imaging import correlator
 from tart.util import angle
 
-from highlevel_modes_api import get_status_json
+from tart_hardware_interface.highlevel_modes_api import get_status_json
 
 def get_corr(xnor_sum, n_samples):
     return 2*xnor_sum/float(n_samples)-1

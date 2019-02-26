@@ -10,11 +10,11 @@ WORKDIR /code
 
 ENV PATH /code/node_modules/.bin:$PATH
 
-COPY ./web-app/package.json /code/package.json
+COPY ./web-app/package*.json /code/
 COPY ./web-app/api_imaging /code/api_imaging
 
 ENV npm_config_jobs=2
-RUN npm install
+RUN npm ci
 
 
 COPY ./web-app /code

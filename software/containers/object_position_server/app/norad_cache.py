@@ -30,7 +30,7 @@ class Sp4Ephemerides:
         f = open(local_path, "r")
         lines = f.readlines()
         for i, l in enumerate(lines):
-            #print i, l
+            #print(i, l)
             if (i % 3 == 0):
                 name = l.strip()
             
@@ -58,7 +58,7 @@ class Sp4Ephemerides:
     def get_az_el(self, date, lat, lon, alt):
         ret = []
         loc = location.Location(lat, lon, alt)
-        #print "Location {}".format(loc)
+        #print("Location {}".format(loc))
         
         for sv in self.satellites:
             _r,_el,_az = sv.get_az_el(date, loc)

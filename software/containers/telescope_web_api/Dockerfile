@@ -3,23 +3,30 @@ MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG DEBIAN_FRONTEND=noninteractive
 
 # debian setup
-RUN apt-get update -y
-RUN apt-get upgrade -y 
-
-RUN apt-get install -y curl python-pip screen python-numpy python-dateutil python-scipy python-matplotlib
-
-RUN apt-get install -y python-yaml python-astropy python-psycopg2 ntp python-jsonrpclib
-
-RUN apt-get install -y python-flask python-flask-script npm
+RUN apt-get update -y && apt-get install -y \
+    curl ntp screen \
+    python3-requests \
+    python3-pip python3-dateutil python3-matplotlib \
+    python3-yaml python3-psycopg2 python3-jsonrpclib-pelix \
+    python3-flask python3-flask-script \
+    python3-astropy  python3-healpy 
 
 RUN rm -rf /var/lib/apt/lists/*
 
 # Install tart python packages
-RUN pip install --no-cache-dir tart tart_hardware_interface requests healpy
+#RUN pip3 install --no-cache-dir tart tart_hardware_interface
 
-COPY ./tart_web_api /code
-WORKDIR /code
-RUN python setup.py install
+COPY ./tart /tart_code
+WORKDIR /tart_code
+RUN python3 setup.py install
+
+COPY ./tart_hardware_interface /hardware_code
+WORKDIR /hardware_code
+RUN python3 setup.py install
+
+COPY ./tart_web_api /web_api_code
+WORKDIR /web_api_code
+RUN python3 setup.py install
 
 COPY ./config_data /config_data
 WORKDIR /app
