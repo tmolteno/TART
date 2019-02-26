@@ -1,6 +1,9 @@
 import time
 import numpy as np
 
+def tobin(arr):
+  return [bin(i) for i in arr]
+
 class TartDummySPI(object):
   '''Dummy object for configuring, and querying TART hardware.'''
 
@@ -347,7 +350,7 @@ class TartDummySPI(object):
       ret = 0xFF
       self.pause()
       if noisy:
-        print(tobin(ret))
+        print(tobin([ret]))
       return 1
     else:
       return 0
