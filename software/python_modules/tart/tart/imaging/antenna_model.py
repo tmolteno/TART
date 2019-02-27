@@ -11,7 +11,7 @@ class AntennaModel(object):
 
   def get_gain(self, el, az):
     '''Dummy method. All base classes should override this'''
-    raise "You should be using a subclass of AntennaModel"
+    raise RuntimeError("You should be using a subclass of AntennaModel")
 
   def get_gain_equatorial(self, loc, utc_time, ra, decl):
     '''Return the gain from equatorial co-ordinates'''

@@ -135,7 +135,7 @@ def Visibility_Load(filename):
             else:
                 ret.append(v)
         if err_count>0:
-            print('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count))
+            print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
         return ret
 
 def Visibility_Lsq(vis1, vis2):

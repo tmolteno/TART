@@ -14,7 +14,7 @@ from tart.simulation import butter_filter
 
 class Radio(object):
   def sampled_signal(ant_signal):
-    raise 'Radio must implement a function filtered_signal that returns the '
+    raise RuntimeError('Radio must implement a function sampled_signal() that returns the sampled signal.')
 
 class Max2769B(Radio):
   '''

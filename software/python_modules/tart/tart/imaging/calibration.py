@@ -85,7 +85,7 @@ class CalibratedVisibility(object):
     def flag_tile(self, tile_idx):
         for bln in self.get_baselines():
             [i,j] = bln
-            if ((i/6) == tile_idx) or ((j/6) == tile_idx):
+            if ((i//6) == tile_idx) or ((j//6) == tile_idx):
                 self.flag_baseline(i,j)
 
     def leave_parallel_baselines(self,ew_threshold=10,ns_threshold=10):
@@ -100,7 +100,7 @@ class CalibratedVisibility(object):
         ant_positions = np.array(self.get_config().get_antenna_positions())
         for bln in self.get_baselines():
           [i,j] = bln
-          if ((i/6) != (j/6)):
+          if ((i//6) != (j//6)):
             self.flag_baseline(i,j)
 
     def set_phase_offset(self, i, val):
@@ -116,7 +116,7 @@ class CalibratedVisibility(object):
         return self.tile_phase_offset[i]
 
     def get_tile_phase_offset_for_antenna(self, ant_idx):
-        return self.tile_phase_offset[np.asarray(ant_idx)/6]
+        return self.tile_phase_offset[np.asarray(ant_idx)//6]
 
     def set_gain(self, i, val):
         self.gain[i] = val
@@ -137,8 +137,8 @@ class CalibratedVisibility(object):
 
 def from_dict(vis, calib_dict):
     ret = CalibratedVisibility(vis)
-    ret.set_phase_offset(range(ret.get_config().get_num_antenna()),np.array(calib_dict['phase_offset']))
-    ret.set_gain(range(ret.get_config().get_num_antenna()),np.array(calib_dict['gain']))
+    ret.set_phase_offset(list(range(ret.get_config().get_num_antenna())),np.array(calib_dict['phase_offset']))
+    ret.set_gain(list(range(ret.get_config().get_num_antenna())),np.array(calib_dict['gain']))
     ret.set_flagged_baselines(calib_dict['flagged_baselines'])
     return ret
 
