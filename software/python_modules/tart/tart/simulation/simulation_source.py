@@ -37,7 +37,7 @@ class SimulationSource(HorizontalSource):
         return self.s_baseband(t) * np.cos(self.omega * t)
 
 if __name__ == '__main__':
-    import spectrum
+    from . import spectrum
     import pylab
     from tart.util import angle
     import matplotlib.pyplot as plt

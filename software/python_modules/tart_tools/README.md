@@ -37,3 +37,4 @@ in which case changes to the source-code will be immediately available to projec
 ## NEWS
 
 * Version 0.1.5. Python3 compatability changes
+* Version 0.1.6-7. More Python3 changes.

@@ -83,8 +83,8 @@ class GpsSatellite(radio_source.RadioSource):
     range1 = np.linalg.norm(np.array(p0) - self.location.get_ecef())
     range2 = np.linalg.norm(np.array(p1) - self.location.get_ecef())
 
-    assert type(range1) is np.float64, "range1 is not an float: %r" % range1
-    assert type(range2) is np.float64, "range2 is not an float: %r" % range2
+    assert isinstance(range1, np.float64), "range1 is not an float: %r" % range1
+    assert isinstance(range2, np.float64), "range2 is not an float: %r" % range2
 
     velocity = (range1 - range2)
     return velocity / constants.L1_WAVELENGTH

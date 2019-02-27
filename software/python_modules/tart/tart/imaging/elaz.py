@@ -62,7 +62,7 @@ def from_json(source_json, el_limit=0.0, jy_limit=1e5):
             if (src['el'] > el_limit) and (src['jy'] > jy_limit):
                 src_list.append(ElAz(src['el'], src['az']))
         except:
-            print("ERROR in catalog src={}".format(src))
+            print(("ERROR in catalog src={}".format(src)))
 
     return src_list
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     
     old = np.array(old)
     new = np.array(new)*np.max(old)
-    print(new.shape, old.shape)
+    print((new.shape, old.shape))
     plt.figure()
     plt.scatter(old[:,0], old[:,1], label="old", alpha=1.0)
     plt.scatter(new[:,0], new[:,1], label="new", alpha=0.5)

@@ -15,7 +15,7 @@ with open('README.txt') as f:
             #yield arg
 
 setup(name='tart',
-    version='0.15.0',
+    version='0.15.2',
     description='Transient Array Radio Telescope Imaging and Operation Library',
     long_description=readme,
     url='http://github.com/tmolteno/TART',

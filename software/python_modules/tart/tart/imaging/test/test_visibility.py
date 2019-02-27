@@ -12,7 +12,7 @@ class TestVisibility(unittest.TestCase):
     def setUp(self):
         self.v_array = Visibility_Load(VIS_DATA_FILE)
         print("Object")
-        print(self.v_array[0].config.Dict.keys())
+        print((list(self.v_array[0].config.Dict.keys())))
 
     def test_load_save(self):
         Visibility_Save_JSON(self.v_array[0], 'test_vis_save.json')

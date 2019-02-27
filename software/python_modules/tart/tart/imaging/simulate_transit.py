@@ -2,27 +2,28 @@
 # Simulate the known radio sources during an entire day's observing 
 # Calculate visibilities and compare them to the observed visibilities
 #
-# Copyright (c) Tim Molteno 2013. tim@elec.ac.nz
+# Copyright (c) Tim Molteno 2013-2019. tim@elec.ac.nz
 #
-import numpy as np
+import traceback
+import argparse
+import math
+import utc
 
-from ..operation import observation
+import numpy as np
+from multiprocessing import Pool
+
 
 import datetime
 
 import matplotlib.pyplot as plt
-import argparse
-import math
 from tart.util import angle
 
 import forward_map
-import location
-import utc
 
-from visibility import *
+from .visibility import *
+from . import location
+from ..operation import observation
 
-from multiprocessing import Pool
-import traceback
 
   
 def process_file(dirname, fname, orientation_degrees, spacing, sample_duration, simulate_vis=True):

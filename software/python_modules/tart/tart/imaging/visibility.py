@@ -130,7 +130,7 @@ def Visibility_Load(filename):
         err_count = 0
         ret = []
         for v in vis_list:
-            if type(v) is tuple:
+            if isinstance(v, tuple):
                 err_count += 1
             else:
                 ret.append(v)

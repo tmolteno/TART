@@ -262,6 +262,6 @@ def save_fits_image(img, fname, timestamp, out_dir, header_dict={}):
     DATE    = '2013-01-15T15:21:51.222000' /Date FITS file was written              
     ORIGIN  = 'CASA casacore alma-evla '           
     '''
-    for k in header_dict.keys():
+    for k in list(header_dict.keys()):
         prihdr.set(k, header_dict[k])
     hdulist.writeto(os.path.join(out_dir, fname))

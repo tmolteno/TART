@@ -58,8 +58,8 @@ def optimize_phaseNgain(opt_parameters):
     """
     global msd_vis, sim_vis, N_IT
     gains, phase_offsets = opt_parameters[:23], opt_parameters[23:]
-    for key in msd_vis.keys():
-        ant_idxs = range(1, 24)
+    for key in list(msd_vis.keys()):
+        ant_idxs = list(range(1, 24))
         for i, g in enumerate(gains):
             if g < 0:
                 gains[i] = -g
@@ -81,7 +81,7 @@ def vis_diff(vis1, vis2, ant_a, ant_b):
 def likelihood_vis_dicts(msd_vis, sim_vis, debug=False):
     """Calculate likelihood from lists of measured and simulated visibilities"""
     ret = 0.
-    for key in msd_vis.keys():
+    for key in list(msd_vis.keys()):
         meas_v = msd_vis[key]
         sim_v = sim_vis[key]
         bls_meas = meas_v.get_baselines() # flagging based on measured visibilities
@@ -149,8 +149,9 @@ def calibrate_from_vis(cal_measurements, runtime_config):
     RES = minimize(optimize_phaseNgain, opt_param)
 
     utc_date = datetime.datetime.utcnow()
-    phases = msd_vis.values()[0].get_phase_offset(np.arange(24))
-    gains = msd_vis.values()[0].get_gain(np.arange(24))
+    phases = list(msd_vis.values())[0].get_phase_offset(np.arange(24))
+    gains = list(msd_vis.values())[0].get_gain(np.arange(24))
+
     #content =  msd_vis.values()[0].to_json(filename='/dev/null')
     db.insert_gain(utc_date, gains, phases)
     db.update_calibration_process_state('idle')
