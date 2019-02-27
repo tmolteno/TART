@@ -1,6 +1,5 @@
-.PHONY: doc
 
-develop: doc
+develop:
 	sudo python setup.py develop
 
 lint:
@@ -9,13 +8,10 @@ lint:
 test:
 	python3 setup.py test --test-suite=tart.imaging.test.test_visibility.TestVisibility
 
-doc:
-	pandoc --to=rst  README.md > README.txt
-	
-test_upload: doc
+test_upload:
 	python setup.py sdist
 	twine upload --repository testpypi dist/*
 
-upload: doc
+upload:
 	python setup.py sdist
 	twine upload --repository pypi dist/*

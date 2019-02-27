@@ -1,14 +1,13 @@
-# python setup.py develop
-# from distutils.core import setup
 from setuptools import setup, find_packages
 
-with open('README.txt') as f:
+with open('README.md') as f:
     readme = f.read()
 
 setup(name='tart_tools',
-    version='0.1.7',
+    version='0.1.8',
     description='Transient Array Radio Telescope Command Line Tools',
     long_description=readme,
+    long_description_content_type="text/markdown",
     url='http://github.com/tmolteno/TART',
     author='Tim Molteno',
     author_email='tim@elec.ac.nz',

@@ -1,14 +1,14 @@
 from setuptools import setup
 
-with open('README.txt') as f:
+with open('README.md') as f:
     readme = f.read()
-
 
 setup(
     name='tart_hardware_interface',
-    version='0.1.8',
+    version='0.1.9',
     description='Transient Array Radio Telescope Low-Level hardware interface',
     long_description=readme,
+    long_description_content_type="text/markdown",
     packages=['tart_hardware_interface'],
     install_requires=[
         'spidev',

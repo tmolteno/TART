@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 
-with open('README.txt') as f:
+with open('README.md') as f:
     readme = f.read()
-
 
 setup(
     name='tart_web_api',
     description='Transient Array Radio Telescope High-level HTTP Interface',
     long_description=readme,
-    version='0.1.9',
+    long_description_content_type="text/markdown",
+    version='0.2.0',
     packages=['tart_web_api'],
     include_package_data=True,
     install_requires=[

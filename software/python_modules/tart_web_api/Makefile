@@ -5,7 +5,7 @@
 # The lint target requires pylint, and python-pylint-flask
 # to be installed.
 #
-.PHONY: doc, lint
+.PHONY: lint
 
 develop: lint
 	sudo python3 setup.py develop
@@ -13,13 +13,10 @@ develop: lint
 lint:
 	pylint --extension-pkg-whitelist=numpy --load-plugins pylint_flask tart_web_api
 
-doc:
-	pandoc --to=rst  README.md > README.txt
-	
-test_upload: doc
+test_upload:
 	sudo python3 setup.py sdist
 	twine upload --repository testpypi dist/*
 
-upload: doc
+upload:
 	sudo python3 setup.py sdist
 	twine upload --repository pypi dist/*
