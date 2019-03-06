@@ -20,5 +20,8 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
+Changelogs:
+
 * Version 0.15.0. Python3 changes.
 * Version 0.15.1. Major overhaul of tests, more python3 fixes.
+* Version 0.15.5. Added EPHEMERIS_SERVER_HOST environment variable.
