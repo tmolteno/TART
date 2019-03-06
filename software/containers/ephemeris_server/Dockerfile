@@ -8,29 +8,22 @@ RUN /sbin/ip route | awk '/default/ { print "Acquire::http { Proxy \"http://"$3"
 
 # debian setup
 RUN apt-get update && apt-get install -y \
-    gcc g++ make ruby-dev ruby-nokogiri
+    gcc g++ make ruby-dev \
+    build-essential zlib1g-dev
 
-RUN apt-get install -y thin
+# RUN apt-get install -y ruby-bundler
 
 RUN rm -rf /var/lib/apt/lists/*
 
-RUN gem update
-# RUN gem install -q -no-rdoc --no-ri thin 
-RUN gem install -q -no-rdoc --no-ri rack-rpc 
-RUN gem install -q -no-rdoc --no-ri jimson 
-RUN gem install -q -no-rdoc --no-ri sinatra 
-RUN gem install -q -no-rdoc --no-ri sinatra-cors
+RUN gem update -q --no-document 
+RUN gem install -q --no-document  bundler
 
 # setup working directory
 ADD ./code/ /ephemeris_server
 WORKDIR /ephemeris_server
 
-EXPOSE 8876
-# 
-# RUN mkdir -p /etc/thin-server
-# ADD startup.sh /etc/thin-server/startup.sh
-# ENTRYPOINT ["/bin/bash",  "/etc/thin-server/startup.sh"]
-# CMD ["-p", "40000", "-e", "production"]
+RUN bundle install
 
-#CMD ["thin", "-C", "thin_config.yml", "-R", "config.ru", "start"]
-CMD ["thin", "-R", "config.ru", "--debug", "start"]
+
+EXPOSE 8876
+CMD ["ruby", "RackServer.rb"]

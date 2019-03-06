@@ -58,7 +58,7 @@ end
 
 class BrdcHandler
   def initialize
-    @brdc_root = "./freenas/brdc"
+    @brdc_root = "/freenas/brdc"
 
     # Keep a list of last download attempts to avoid spamming the NASA server
     # This should be a hash of the URL and attempt
@@ -203,7 +203,7 @@ end
 # We are after igrwwwwd.sp3.Z
 class Sp3Handler
   def initialize
-    @sp3_root = "./freenas/igr"
+    @sp3_root = "/freenas/igr"
 
     # Keep a list of last download attempts to avoid spamming the NASA server
     # This should be a hash of the URL and attempt
@@ -329,7 +329,7 @@ end
 
 require 'jimson'
 
-class RackServe
+class RackServer
     extend Jimson::Handler 
 
   def initialize()
@@ -373,6 +373,6 @@ class RackServe
   end
 
 end
-server = Jimson::Server.new(RackServe.new, opts = {:port => 8876})
+server = Jimson::Server.new(RackServer.new, opts = {:port => 8876, :server => 'thin'})
 server.start # serve with webrick on http://0.0.0.0:8999/
 # Run via Rack. see config.ru and Makefile

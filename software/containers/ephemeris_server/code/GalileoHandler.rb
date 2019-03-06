@@ -7,7 +7,7 @@ require 'BaseHandler'
 class GalileoHandler  < BaseHandler
     def initialize
         @name = "GAL"
-        @galileo_root = "./freenas/galileo"
+        @galileo_root = "/freenas/galileo"
 
         # Keep a list of last download attempts to avoid spamming the Almanac server
         # This should be a hash of the URL and attempt

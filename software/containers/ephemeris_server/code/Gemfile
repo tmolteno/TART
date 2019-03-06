@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+
+gem "rack", ">= 1.4.5", "~>1"
+gem "thin"
+gem "jimson"
+gem "nokogiri"
+# gem "sinatra"
+# gem "sinatra-cors"

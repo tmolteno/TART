@@ -10,7 +10,7 @@ services:
         restart: always
         volumes:
             - ~/catalog_cache/orbit_data:/ephemeris_server/orbit_data
-            - ~/catalog_cache/logs:/ephemeris_server/logs
+            - ~/catalog_cache/freenas:/freenas
         logging:
             driver: "json-file"
             options:

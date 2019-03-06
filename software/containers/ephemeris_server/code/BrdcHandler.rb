@@ -32,7 +32,7 @@ end
 class BrdcHandler < BaseHandler
     def initialize
         @name = "GPS"
-        @brdc_root = "./freenas/brdc"
+        @brdc_root = "/freenas/brdc"
 
         # Keep a list of last download attempts to avoid spamming the NASA server
         # This should be a hash of the URL and attempt
