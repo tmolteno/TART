@@ -9,7 +9,8 @@ services:
             - 8876:8876
         restart: always
         volumes:
-            - ~/catalog_cache:/object_position_server/orbit_data
+            - ~/catalog_cache/orbit_data:/ephemeris_server/orbit_data
+            - ~/catalog_cache/logs:/ephemeris_server/logs
         logging:
             driver: "json-file"
             options:

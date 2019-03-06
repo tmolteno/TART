@@ -327,9 +327,11 @@ class Sp3Handler
 
 end
 
-require 'rack/rpc'
+require 'jimson'
 
-class RackServer < Rack::RPC::Server
+class RackServe
+    extend Jimson::Handler 
+
   def initialize()
     @brdc = BrdcHandler.new
     @sp3 = Sp3Handler.new
@@ -339,45 +341,38 @@ class RackServer < Rack::RPC::Server
   def get_sv_position_sp3(date, sv)
     @sp3.get_sv_position(date,sv)
   end
-  rpc 'get_sv_position_sp3' => :get_sv_position_sp3
   
   def get_sv_positions_sp3(date)
     @sp3.get_sv_positions(date)
   end
-  rpc 'get_sv_positions_sp3' => :get_sv_positions_sp3
 
   def get_interp_points(date)
     @sp3.get_sp3(date)
   end
-  rpc 'get_interp_points' => :get_interp_points
 
   # BRDC routines (using ephemerides)
   def get_sv_position(date, sv)
     @brdc.get_sv_position(date,sv)
   end
-  rpc 'get_sv_position' => :get_sv_position
   
   def get_sv_positions(date)
     @brdc.get_sv_positions(date)
   end
-  rpc 'get_sv_positions' => :get_sv_positions
 
   def get_all_ephemeris(date)
     @brdc.get_all_ephemeris(date)
   end
-  rpc 'get_all_ephemeris' => :get_all_ephemeris
 
   def get_sv_azel(date, lat, lon, alt)
     @brdc.get_sv_azel(date, lat, lon, alt)
   end
-  rpc 'get_sv_azel' => :get_sv_azel
   
   def get_ephemeris(date, sv)
     eph = @brdc.get_ephemeris(date,sv)
     return eph.to_hash()
   end
-  rpc 'get_ephemeris' => :get_ephemeris
 
 end
-
+server = Jimson::Server.new(RackServe.new, opts = {:port => 8876})
+server.start # serve with webrick on http://0.0.0.0:8999/
 # Run via Rack. see config.ru and Makefile
