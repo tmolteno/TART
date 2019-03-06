@@ -1,0 +1,10 @@
+address: localhost
+port: 8876
+servers: 1
+max_conns: 1024
+max_persistent_conns: 512
+timeout: 30
+environment: production
+pid: tmp/pids/thin-production.pid
+log: log/thin-production.log
+daemonize: true 

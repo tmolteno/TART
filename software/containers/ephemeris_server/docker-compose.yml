@@ -1,0 +1,17 @@
+# Run the ephemeris server container. 
+version: '2'
+
+services:
+    ephemeris-server:
+        build: 
+            context: .
+        ports:
+            - 8876:8876
+        restart: always
+        volumes:
+            - ~/catalog_cache:/object_position_server/orbit_data
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"

@@ -1,0 +1,7 @@
+{
+  "name": "L1 Transient Radio Source Catalog",
+  "version": "0.0.3",
+  "description": "Restful API to return positions of moving objects in the radio sky",
+  "title": "L1 Transient Radio Source Catalog",
+  "url" : "https://tart.elec.ac.nz/catalog"
+}
