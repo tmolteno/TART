@@ -30,4 +30,14 @@ ADD ./code/ /ephemeris_server
 
 EXPOSE 8876
 #CMD ["ruby", "RackServer.rb"]
-CMD ["thin", "-C", "thin_config.yml", "-R", "config.ru", "start"]
+CMD ["thin", "--port", "8876", "-R", "config.ru", "start"]
+# address: localhost
+# port: 8876
+# servers: 1
+# max_conns: 1024
+# max_persistent_conns: 512
+# timeout: 30
+# environment: development
+# pid: tmp/pids/thin-production.pid
+# log: logs/thin-production.log
+# daemonize: no
