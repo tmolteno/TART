@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN gem update
-RUN gem install thin rack-rpc jimson sinatra sinatra-cors nokogiri
+RUN gem install thin rack-rpc jimson sinatra sinatra-cors
 
 # setup working directory
 ADD ./code/ /ephemeris_server
