@@ -7,3 +7,4 @@ timeout: 30
 environment: development
 pid: tmp/pids/thin-production.pid
 log: logs/thin-production.log
+daemonize: false

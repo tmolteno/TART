@@ -18,12 +18,16 @@ RUN rm -rf /var/lib/apt/lists/*
 RUN gem update -q --no-document 
 RUN gem install -q --no-document  bundler
 
-# setup working directory
-ADD ./code/ /ephemeris_server
+# Install Dependencies
+RUN mkdir /ephemeris_server
 WORKDIR /ephemeris_server
+COPY ./code/Gemfile* /ephemeris_server/
 
 RUN bundle install
 
+# Put the code in there
+ADD ./code/ /ephemeris_server
 
 EXPOSE 8876
-CMD ["ruby", "RackServer.rb"]
+#CMD ["ruby", "RackServer.rb"]
+CMD ["thin", "-C", "thin_config.yml", "-R", "config.ru", "start"]
