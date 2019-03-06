@@ -4,7 +4,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # If host is running squid-deb-proxy on port 8000, populate /etc/apt/apt.conf.d/30proxy
 # sudo apt install -y squid-deb-proxy
-RUN /sbin/ip route | awk '/default/ { print "Acquire::http { Proxy \"http://"$3":8000\";} "};' | head -1 >> /etc/apt/apt.conf.d/30proxy
+#RUN /sbin/ip route | awk '/default/ { print "Acquire::http { Proxy \"http://"$3":8000\";} "};' | head -1 >> /etc/apt/apt.conf.d/30proxy
 
 # debian setup
 RUN apt-get update && apt-get install -y \
