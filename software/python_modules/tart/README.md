@@ -20,8 +20,9 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
-Changelogs:
+Changelog:
 
 * Version 0.15.0. Python3 changes.
 * Version 0.15.1. Major overhaul of tests, more python3 fixes.
-* Version 0.15.5. Added EPHEMERIS_SERVER_HOST environment variable.
+* Version 0.15.5. Added EPHEMERIS_SERVER_HOST, POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD environment variable.
+* Version 0.15.6. Added POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD environment variable.
