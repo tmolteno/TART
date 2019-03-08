@@ -85,10 +85,10 @@ class Observation(object):
         with h5py.File(filename, "w") as h5f:
             dt = h5py.special_dtype(vlen=bytes)
             
-            conf_dset = h5f.create_dataset('config', (100,), dtype=dt)
+            conf_dset = h5f.create_dataset('config', (1,), dtype=dt)
             conf_dset[0] = self.config.to_json()
 
-            ts_dset = h5f.create_dataset('timestamp', (100,), dtype=dt)
+            ts_dset = h5f.create_dataset('timestamp', (1,), dtype=dt)
             ts_dset[0] = self.timestamp.isoformat()
 
             if self.savedata is None:

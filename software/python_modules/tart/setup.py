@@ -4,7 +4,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='tart',
-    version='1.0.0',
+    version='1.1.0',
     description='Transient Array Radio Telescope Imaging and Operation Library',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -12,7 +12,7 @@ setup(name='tart',
     author='Tim Molteno',
     author_email='tim@elec.ac.nz',
     license='GPLv3',
-    install_requires=['numpy', 'matplotlib', 'healpy', 'astropy'],
+    install_requires=['numpy', 'matplotlib', 'healpy', 'astropy', 'h5py'],
     packages=['tart', 'tart.imaging', 'tart.simulation', 'tart.operation', 'tart.util',\
             'tart.test',  'tart.imaging.test', 'tart.simulation.test', 'tart.operation.test', 'tart.util.test'],
     classifiers=[
