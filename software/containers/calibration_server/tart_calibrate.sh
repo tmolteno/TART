@@ -16,7 +16,7 @@ CALIB_INPUT=${DIR}/calib_data.json
 CALIB_OUTPUT=${DIR}/${METHOD}_opt_json.json
 
 # Get calibration data
-/usr/local/bin/tart_calibration_data --api ${TART_API} --n 3 --i 25 --file ${CALIB_INPUT}
+/usr/local/bin/tart_calibration_data --api ${TART_API} --n 6 --i 45 --file ${CALIB_INPUT}
 
 # Perform optimization
 /usr/local/bin/tart_calibrate --api ${TART_API} --file ${CALIB_INPUT} --method ${METHOD} --dir ${DIR}

@@ -26,3 +26,4 @@ Changelog:
 * Version 0.15.1. Major overhaul of tests, more python3 fixes.
 * Version 0.15.5. Added EPHEMERIS_SERVER_HOST, POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD environment variable.
 * Version 0.15.6. Added POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD environment variable.
+* Version 0.2.0. Rework database stuff for empirical antennas. New tests.

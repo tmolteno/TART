@@ -1,20 +1,23 @@
 import unittest
 import numpy as np
+import datetime
 
 from tart.imaging.antenna_model import *
+from tart.util.db import *
 
 def create_empirical_antenna():
+    sv = 1
     ant = EmpiricalAntenna(1)
     for e in np.arange(0., 89., 2.0):
         for a in np.arange(0., 359., 5.0):
             el = angle.from_dms(e)
             az = angle.from_dms(a)
-            ant.add_measurement(el,az, e*(1+np.cos(np.pi/180.*a)))
+            ant.add_measurement(el,az, e*(1+np.cos(np.pi/180.*a)), sv)
     for e in np.arange(0., -89., -2.0):
         for a in np.arange(0., 359., 5.0):
             el = angle.from_dms(e)
             az = angle.from_dms(a)
-            ant.add_measurement(el,az, 0.0)
+            ant.add_measurement(el,az, 0.0, sv)
     return ant
 
 class TestAntennaModel(unittest.TestCase):
@@ -58,3 +61,14 @@ class TestAntennaModel(unittest.TestCase):
                 el = angle.from_dms(e)
                 az = angle.from_dms(a)
                 self.assertAlmostEqual(ant.get_gain(el, az), ant2.get_gain(el, az), 3)
+
+    def test_db_load(self):
+        ant = create_empirical_antenna()
+        ant.to_db(utc_date=datetime.datetime.utcnow(), db_file='test.db')
+        ant2 = EmpiricalAntenna.from_db(antenna_num=ant.antenna_num, db_file='test.db')
+        for e in np.arange(0, 89, 3.0):
+            for a in np.arange(0, 359, 8.0):
+                el = angle.from_dms(e)
+                az = angle.from_dms(a)
+                self.assertAlmostEqual(ant.get_gain(el, az), ant2.get_gain(el, az), 3)
+

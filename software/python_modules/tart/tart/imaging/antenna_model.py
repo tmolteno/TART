@@ -9,7 +9,9 @@ import healpy as hp
 
 from tart.imaging import location
 from tart.util import angle
-from tart.util.db import db_connect
+from tart.util.db import db_connect, db_remove_antenna_measurements, db_insert_row
+
+
 
 class AntennaModel(object):
     '''Base class for all Antenna models.'''
@@ -112,6 +114,11 @@ def gen_interpolation_map(points, values, antenna_num, nside_exp):
     return (hp_map_avg, pixel_dict)
 
 
+
+
+
+
+
 class EmpiricalAntenna(AntennaModel):
     '''An antenna model that has a radiation pattern built up
          from measured GPS signal correlation amplitudes. This
@@ -122,15 +129,19 @@ class EmpiricalAntenna(AntennaModel):
     '''
 
     def __init__(self, antenna_num):
+        self.sv = []        # A list of sv numbers - essentially an identifier
+        self.distances = [] # A list of sv distances - essentially an identifier
         self.points = []    # The data is stored as a list of el, az.
         self.values = []    # The data is stored as a list of amplitudes.
         self.recalculate = True
         self.antenna_num = antenna_num
         self.interpolation_cache = []
 
-    def add_measurement(self, el, az, amplitude):
+    def add_measurement(self, el, az, amplitude, sv=-1, distance=-1):
         self.points.append([el.to_degrees(), az.to_degrees()])
         self.values.append(amplitude)
+        self.sv.append(sv)
+        self.distances.append(distance)
         self.recalculate = True
 
     def get_gain(self, el, az, n_pix=4, nside_exp_grid=10, nside_exp_syn=10, lmax=4, mmax=4, interpolate='default'):
@@ -158,10 +169,23 @@ class EmpiricalAntenna(AntennaModel):
 
     def to_json(self, filename):
         import json
-        ret = json.dumps({'antenna_num': self.antenna_num, 'points': self.points, 'values': self.values}, indent=4, separators=(',', ': '))
+        ret = json.dumps({'antenna_num': self.antenna_num, 'sv': self.sv, 'distances': self.distances, 'points': self.points, 'values': self.values}, indent=4, separators=(',', ': '))
         f = open(filename, 'w')
         f.write(ret)
         f.close()
+
+    def to_db(self, utc_date, db_file=None, table='gps_signals'):
+        conn, sql = db_connect(db_file, table=table)
+        
+        db_remove_antenna_measurements(conn, sql, utc_date, self.antenna_num, table=table)
+        cursor = conn.cursor()
+        for p, v, sv, distance in zip(self.points, self.values, self.sv, self.distances):
+            el, az = p
+            correlation = v
+            db_insert_row(cursor, sql, utc_date, self.antenna_num, sv, el, az, correlation, distance, table=table)
+
+        conn.commit()
+        conn.close()
 
     @classmethod
     def from_json(self, filename):
@@ -173,6 +197,8 @@ class EmpiricalAntenna(AntennaModel):
         ret = EmpiricalAntenna(x['antenna_num'])
         ret.points = x['points']
         ret.values = x['values']
+        ret.sv = x['sv']
+        ret.distances = x['distances']
         ret.recalculate = True
         return ret
 
@@ -181,21 +207,28 @@ class EmpiricalAntenna(AntennaModel):
         ret = EmpiricalAntenna(antenna_num)
         conn, sql = db_connect(db_file, table=table)
         c = conn.cursor()
-        c.execute(sql("SELECT el, az, correlation, date FROM "+table+" WHERE (antenna=%(ph)s)"), (antenna_num, ))
+        c.execute(sql("SELECT el, az, correlation, date, sv, distance FROM "+table+" WHERE (antenna=%(ph)s)"), (antenna_num, ))
         #c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND el>15 AND correlation<6 AND date<%(ph)s"), (antenna_num, "2013-11-25"))
         # c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND date<%(ph)s"), (antenna_num, "2013-11-25"))
         pval = c.fetchall()
-        print(len(pval), ' entries')
+        print("Database has {} entries".format(len(pval)))
         points = []
+        sv = []
         values = []
         times = []
+        distances = []
         for p in pval:
-            if -np.isnan(p[2]):
+            if ~np.isnan(p[2]):
                 points.append((p[0],p[1]))
                 values.append(p[2])
                 times.append(p[3])
+                sv.append(p[4])
+                distances.append(p[5])
         ret.times = times
         ret.points = points
         ret.values = values
+        ret.sv = sv
+        ret.distances = distances
         ret.recalculate = True
+        conn.close()
         return ret

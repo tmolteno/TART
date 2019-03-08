@@ -6,10 +6,29 @@
 '''
 
 import sqlite3
+import os
+
 try:
     import psycopg2
 except Exception as e:
     pass
+
+
+def db_remove_antenna_measurements(conn, sql, utc_date, antenna, table='gps_data'):
+    '''
+        Delete a measurement from the database
+    '''
+    c = conn.cursor()
+    c.execute(sql("DELETE FROM "+table+" WHERE (date=%(ph)s) AND (antenna=%(ph)s)"), (utc_date, antenna))
+    conn.commit()
+
+def db_insert_row(cursor, sql, utc_date, antenna, sv, el, az, correlation, distance, table='gps_data'):
+    '''
+        Insert a row into the database
+    '''
+    cursor.execute(sql("INSERT INTO "+table+" VALUES (%(ph)s,%(ph)s,%(ph)s,%(ph)s,%(ph)s,%(ph)s,%(ph)s)"),\
+        (utc_date, sv, antenna, el, az, correlation, distance))
+
 
 def db_connect(dbfile=None, table='gps_data'):
     if (dbfile != None):
