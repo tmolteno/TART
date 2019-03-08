@@ -28,6 +28,16 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(self.obs.get_julian_date(), nobs.get_julian_date())
 
 
+    def test_htf5_load_save(self):
+        self.obs.to_hdf5('data.hdf')
+
+        nobs = Observation.from_hdf5('data.hdf')
+
+        self.assertTrue((self.obs.get_antenna(1) == nobs.get_antenna(1)).all())
+        self.assertEqual(self.obs.get_julian_date(), nobs.get_julian_date())
+        self.assertTrue((self.data == nobs.data).all())
+
+
     #def test_str2bits(self):
         #init = '101000'
         #res = np.array([1,0,1,0,0,0])

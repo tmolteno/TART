@@ -6,6 +6,8 @@ except:
    import pickle
 import math
 import gzip
+import h5py
+import dateutil.parser
 
 from tart.imaging import tart_util
 
@@ -75,6 +77,49 @@ class Observation(object):
         pickle.dump(d, save_ptr, pickle.HIGHEST_PROTOCOL)
         save_ptr.close()
 
+
+    def to_hdf5(self, filename):
+        ''' Save the Observation object,
+            in a portable HDF5 format
+        '''
+        with h5py.File(filename, "w") as h5f:
+            dt = h5py.special_dtype(vlen=bytes)
+            
+            conf_dset = h5f.create_dataset('config', (100,), dtype=dt)
+            conf_dset[0] = self.config.to_json()
+
+            ts_dset = h5f.create_dataset('timestamp', (100,), dtype=dt)
+            ts_dset[0] = self.timestamp.isoformat()
+
+            if self.savedata is None:
+                #self.savedata = np.array((self.data+1)/2,dtype=np.uint8)
+                self.savedata = np.array(self.data, dtype=np.uint8)
+
+            t = []
+            for ant in self.savedata:
+                t.append(np.packbits(ant))
+
+            h5f.create_dataset('data', data=t)
+
+    @classmethod
+    def from_hdf5(self, filename):
+        ''' Load the Observation object,
+            in a portable HDF5 format
+        '''
+        with h5py.File(filename, "r") as h5f:
+            config_json = np.string_(h5f['config'][0])
+            config = settings.from_json(config_json)
+            timestamp = dateutil.parser.parse(h5f['timestamp'][0])
+            
+            hdf_data = h5f['data'][:]
+            unipolar_data = []
+            for i in hdf_data:
+                unpacked_ints = np.asarray(np.unpackbits(i), dtype=np.uint8)
+                unipolar_data.append(unpacked_ints)
+                # this is an array of unipolar 0,1 radio signals.
+
+        ret = Observation(timestamp=timestamp, config=config, data=unipolar_data)
+        return ret
 
 def Observation_Load(filename):
     

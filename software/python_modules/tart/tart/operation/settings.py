@@ -81,7 +81,8 @@ class Settings:
     def to_json(self):
         from copy import deepcopy
         configdict = deepcopy(self.Dict)
-        configdict.popitem('antenna_positions')
+        if 'antenna_positions' in configdict:
+            configdict.pop('antenna_positions')
         json_str = json.dumps(configdict)
         return json_str
 
