@@ -5,19 +5,16 @@ from astropy import time
 from astropy.time import Time 
 
 from tart.imaging.tart_util import *
+from tart.util.utc import now
 
 class TestTartUtil(unittest.TestCase):
 
-  def test_jdl(self):
-    utcd = datetime.datetime.now()
-    jd1 = JulianDay(utcd)
-    jd2 = get_julian_date(utcd)
-    self.assertAlmostEqual(jd1, jd2, 7)
+    def test_astropy(self):
+        utcd = now()
+        obstime = time.Time(utcd, scale='utc')
 
-  def test_astropy(self):
-    utcd = datetime.datetime.now()
-    obstime = time.Time(utcd, scale='utc')
+        jd = JulianDay(utcd)
+        
+        self.assertAlmostEqual(obstime.jd, jd, 4)
 
-    jd = JulianDay(utcd)
-    
-    self.assertAlmostEqual(obstime.jd, jd, 5)
+
