@@ -130,9 +130,9 @@ class Location(object):
     def ecef_to_enu(self, x_in, y_in, z_in):
         lon = self.lon
         lat = self.lat
-        e = -x_in*lon.sin()                    + y_in*lon.cos()
+        e = -x_in*lon.sin()           + y_in*lon.cos()
         n = -x_in*lon.cos()*lat.sin() - y_in*lon.sin()*lat.sin() + z_in*lat.cos()
-        u =    x_in*lon.cos()*lat.cos() + y_in*lon.sin()*lat.cos() + z_in*lat.sin()
+        u =  x_in*lon.cos()*lat.cos() + y_in*lon.sin()*lat.cos() + z_in*lat.sin()
         return [e, n, u]
 
     def get_ecef_delta_from_enu(self, e_in, n_in, u_in):
@@ -140,8 +140,8 @@ class Location(object):
         lat = self.lat
         lon = self.lon
         x = -lon.sin() * e_in - lon.cos()*lat.sin()*n_in + lon.cos()*lat.cos()*u_in
-        y =    lon.cos() * e_in - lon.sin()*lat.sin()*n_in + lon.sin()*lat.cos()*u_in
-        z = lat.cos() * n_in + lat.sin() * u_in
+        y =  lon.cos() * e_in - lon.sin()*lat.sin()*n_in + lon.sin()*lat.cos()*u_in
+        z =  lat.cos() * n_in + lat.sin() * u_in
         return [x, y, z]
 
     # http://www.navipedia.net/index.php/Transformations_between_ECEF_and_ENU_coordinates
@@ -192,7 +192,7 @@ class Location(object):
         ''' Return the Greenwich Sidereal Time'''
         JD = tart_util.JulianDay(utc_date)
         D = JD - 2451545.0
-        T = int(D / 36525)
+        T = int(D // 36525)
 
         GMST = 18.697374558 + 24.06570982441908*D
 
