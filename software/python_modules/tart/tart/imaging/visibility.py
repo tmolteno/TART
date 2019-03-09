@@ -161,7 +161,7 @@ def Visibility_Lsq(vis1, vis2):
 
 def to_hdf5(vis, filename):
     ''' Save the Observation object,
-        in a portable HDF5 format
+        to a portable HDF5 format
     '''
     with h5py.File(filename, "w") as h5f:
         dt = h5py.special_dtype(vlen=bytes)
@@ -179,7 +179,7 @@ def to_hdf5(vis, filename):
 
 def from_hdf5(filename):
     ''' Load the Visibility object,
-        in a portable HDF5 format
+        from a portable HDF5 format
     '''
     with h5py.File(filename, "r") as h5f:
         config_json = np.string_(h5f['config'][0])

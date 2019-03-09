@@ -3,17 +3,17 @@ import datetime
 import h5py
 import numpy as np
 
-from tart.imaging.visibility import Visibility, Visibility_Load, Visibility_Save_JSON, to_hdf5, from_hdf5
 from tart.util import skyloc
 from tart.util import angle
 
 import tart.operation.settings as settings
+import tart.imaging.visibility as visibility
 
 VIS_DATA_FILE='tart/test/test_data/fpga_2019-02-22_05_11_41.765212.vis'
 
 def dummy_vis():
     config = settings.from_file('tart/test/test_telescope_config.json')
-    ret = Visibility(config=config, timestamp=datetime.datetime.utcnow())
+    ret = visibility.Visibility(config=config, timestamp=datetime.datetime.utcnow())
     b = []
     v = []
     for j in range(24):
@@ -27,22 +27,22 @@ def dummy_vis():
 class TestVisibility(unittest.TestCase):
 
     def setUp(self):
-        self.v_array = Visibility_Load(VIS_DATA_FILE)
-        print("Object")
-        print((list(self.v_array[0].config.Dict.keys())))
+        self.v_array = visibility.Visibility_Load(VIS_DATA_FILE)
 
     def test_load_save(self):
-        Visibility_Save_JSON(self.v_array[0], 'test_vis_save.json')
+        dut = dummy_vis()
+        visibility.Visibility_Save_JSON(self.v_array[0], 'test_vis_save.json')
         
         pass
     
     def test_hdf5(self):
         dut = dummy_vis()
-        to_hdf5(dut, 'test_vis_save.hdf')
-        dut2 = from_hdf5('test_vis_save.hdf')
+        visibility.to_hdf5(dut, 'test_vis_save.hdf')
+        dut2 = visibility.from_hdf5('test_vis_save.hdf')
         
         self.assertTrue((dut.v == dut2.v).all())
         self.assertTrue((dut.baselines == dut2.baselines).all())
+        self.assertEqual(dut.config.Dict, dut2.config.Dict)
     
     def test_zero_rotation(self):
         for v in self.v_array:
