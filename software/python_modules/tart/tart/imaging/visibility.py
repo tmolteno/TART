@@ -1,5 +1,7 @@
 import numpy as np
 import json
+import h5py
+import dateutil
 
 try:
    import cPickle as pickle
@@ -11,6 +13,7 @@ from tart.util import skyloc
 from tart.util import constants
 
 from tart.operation import observation
+from tart.operation import settings
 
 class Visibility:
     """
@@ -104,11 +107,19 @@ def Visibility_From_Conf(config, timestamp, phase_el, phase_az):
     vis = Visibility(obs, phase_el, phase_az)
     return vis
 
-def Visibility_Save(vis, filename):
+def to_pkl(vis, filename):
     save_data = open(filename, 'wb')
     pickle.dump(vis, save_data, pickle.HIGHEST_PROTOCOL)
     save_data.close()
 
+def from_pkl(filename):
+    with open(filename, 'rb') as load_data:
+        ret = pickle.load(load_data, encoding='latin1')
+    return ret
+
+
+def Visibility_Save(vis, filename):
+    to_pkl(vis, filename)
 
 def Visibility_Save_JSON(vis, filename):
     json_data = {}
@@ -124,19 +135,17 @@ def Visibility_Save_JSON(vis, filename):
             sort_keys=True, indent=4, separators=(',', ': '))
 
 def Visibility_Load(filename):
-        load_data = open(filename, 'rb')
-        vis_list = pickle.load(load_data, encoding='latin1')
-        load_data.close()
-        err_count = 0
-        ret = []
-        for v in vis_list:
-            if isinstance(v, tuple):
-                err_count += 1
-            else:
-                ret.append(v)
-        if err_count>0:
-            print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
-        return ret
+    vis_list = from_pkl(filename)
+    err_count = 0
+    ret = []
+    for v in vis_list:
+        if isinstance(v, tuple):
+            err_count += 1
+        else:
+            ret.append(v)
+    if err_count>0:
+        print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
+    return ret
 
 def Visibility_Lsq(vis1, vis2):
     """ Return least square based on the phases of 2 visibilities """
@@ -150,3 +159,40 @@ def Visibility_Lsq(vis1, vis2):
         diffarr = np.array(difflist)
         return np.power(diffarr,2).sum()
 
+def to_hdf5(vis, filename):
+    ''' Save the Observation object,
+        in a portable HDF5 format
+    '''
+    with h5py.File(filename, "w") as h5f:
+        dt = h5py.special_dtype(vlen=bytes)
+        
+        conf_dset = h5f.create_dataset('config', (1,), dtype=dt)
+        conf_dset[0] = vis.config.to_json()
+
+        ts_dset = h5f.create_dataset('timestamp', (1,), dtype=dt)
+        ts_dset[0] = vis.timestamp.isoformat()
+
+        h5f.create_dataset('baselines', data=vis.baselines)
+        h5f.create_dataset('vis', data=vis.v)
+
+        h5f.create_dataset('phase_elaz', data=[vis.phase_el.to_degrees(), vis.phase_az.to_degrees()])
+
+def from_hdf5(filename):
+    ''' Load the Visibility object,
+        in a portable HDF5 format
+    '''
+    with h5py.File(filename, "r") as h5f:
+        config_json = np.string_(h5f['config'][0])
+        config = settings.from_json(config_json)
+        timestamp = dateutil.parser.parse(h5f['timestamp'][0])
+        
+        hdf_vis = h5f['vis'][:]
+        hdf_baselines = h5f['baselines'][:]
+        hdf_phase_elaz = h5f['phase_elaz'][:]
+
+    ret = Visibility(config=config, timestamp=timestamp)
+    ret.set_visibilities(v=hdf_vis, b=hdf_baselines)
+    ret.phase_el = hdf_phase_elaz[0]
+    ret.phase_az = hdf_phase_elaz[1]
+    
+    return ret

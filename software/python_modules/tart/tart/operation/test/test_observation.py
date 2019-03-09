@@ -28,7 +28,7 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(self.obs.get_julian_date(), nobs.get_julian_date())
 
 
-    def test_htf5_load_save(self):
+    def test_hdf5_load_save(self):
         self.obs.to_hdf5('data.hdf')
 
         nobs = Observation.from_hdf5('data.hdf')
