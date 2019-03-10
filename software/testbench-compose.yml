@@ -9,6 +9,7 @@ services:
         restart: always
         volumes:
             - ~/catalog_cache:/ephemeris_server/orbit_data
+            - ~/catalog_cache/freenas:/freenas
         logging:
             driver: "json-file"
             options:
@@ -19,7 +20,7 @@ services:
         depends_on:
             - ephemeris_server
         environment:
-            - EPHEMERIS_SERVER_HOST='ephemeris_server'
+            EPHEMERIS_SERVER_HOST: ephemeris_server
         build: 
             context: ./
             dockerfile: Dockerfile.testbench
