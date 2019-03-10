@@ -25,8 +25,8 @@ COPY ./python_modules /code/
 WORKDIR /code/tart
 RUN python3 setup.py install
 
-WORKDIR /code/tart_hardware_interface
-RUN python3 setup.py install
+# WORKDIR /code/tart_hardware_interface
+# RUN python3 setup.py install
 
 WORKDIR /code/tart/
 CMD python3 setup.py test --test-suite=tart.imaging.test.test_ephemerides_proxy
