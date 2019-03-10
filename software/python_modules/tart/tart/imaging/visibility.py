@@ -15,6 +15,8 @@ from tart.util import constants
 from tart.operation import observation
 from tart.operation import settings
 
+from tart.simulation.simulation_source import HorizontalSource
+
 class Visibility:
     """
     A container class for visibilities from a single observation.
@@ -57,20 +59,22 @@ class Visibility:
 
      <N(t) N^*(t)> = v(0,1) e^{+j \omega t_g^{01}}
     '''
-    def rotate(self, sloc):
+    def rotate(self, sky_location):
         from tart.simulation import antennas
         stopped_vis = []
         omega = self.config.get_operating_frequency()*2.0*np.pi
         # Now we must do fringe stopping
+
         loc = self.config.get_loc()
-        el, az = loc.equatorial_to_horizontal(self.timestamp, sloc.ra, sloc.dec)
+        el, az = loc.equatorial_to_horizontal(self.timestamp, sky_location.ra, sky_location.dec)
+        hsource =  HorizontalSource(r=9.0e99, azimuth=az, elevation=el)
 
         ant_pos = self.config.get_antenna_positions()
         for v, b in zip(self.v, self.baselines):
             a0 = antennas.Antenna(loc, ant_pos[b[0]])
             a1 = antennas.Antenna(loc, ant_pos[b[1]])
 
-            tg = antennas.get_geo_delay_horizontal(a0, a1, sloc)
+            tg = antennas.get_geo_delay_horizontal(a0, a1, hsource)
             # tg is t_a1 - t_a0
             # (negative if a1 is closer to source than a0)
 

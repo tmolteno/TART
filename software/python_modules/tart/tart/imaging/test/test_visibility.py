@@ -10,6 +10,7 @@ import tart.operation.settings as settings
 import tart.imaging.visibility as visibility
 
 VIS_DATA_FILE='tart/test/test_data/fpga_2019-02-22_05_11_41.765212.vis'
+ANT_POS_FILE='tart/test/test_calibrated_antenna_positions.json'
 
 def dummy_vis():
     config = settings.from_file('tart/test/test_telescope_config.json')
@@ -28,7 +29,8 @@ class TestVisibility(unittest.TestCase):
 
     def setUp(self):
         self.v_array = visibility.Visibility_Load(VIS_DATA_FILE)
-
+        self.v_array[0].config.load_antenna_positions(cal_ant_positions_file=ANT_POS_FILE)
+        
     def test_load_save(self):
         dut = dummy_vis()
         visibility.Visibility_Save_JSON(self.v_array[0], 'test_vis_save.json')
@@ -45,18 +47,20 @@ class TestVisibility(unittest.TestCase):
         self.assertEqual(dut.config.Dict, dut2.config.Dict)
     
     def test_zero_rotation(self):
-        for v in self.v_array:
-            v_before = np.array(v.v) # Copy the visibilities
-            el1 = v.phase_el
-            az1 = v.phase_az
+        v = self.v_array[0]
+        v_before = np.array(v.v) # Copy the visibilities
+        el1 = v.phase_el
+        az1 = v.phase_az
 
-            ra, decl = v.config.get_loc().horizontal_to_equatorial(v.timestamp, el1, az1)
-            v.rotate(skyloc.Skyloc(ra, decl))
-            v_after = np.array(v.v)
-            self.assertEqual(v.phase_el.to_degrees(), el1.to_degrees())
-            # self.assertEqual(v.phase_az.to_degrees(), az1.to_degrees())
-            for x,y in zip(v_before, v_after):
-                self.assertAlmostEqual(x,y)
+        ra, decl = v.config.get_loc().horizontal_to_equatorial(v.timestamp, el1, az1)
+        
+        v.rotate(skyloc.Skyloc(ra, decl))
+        
+        v_after = np.array(v.v)
+        self.assertEqual(v.phase_el.to_degrees(), el1.to_degrees())
+
+        for x,y in zip(v_before, v_after):
+            self.assertAlmostEqual(np.abs(x), np.abs(y), 4)
 
     def test_full_rotation(self):
         v = self.v_array[0]

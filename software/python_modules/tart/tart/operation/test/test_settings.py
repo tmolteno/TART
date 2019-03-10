@@ -18,7 +18,6 @@ class TestSettings(unittest.TestCase):
         self.assertAlmostEqual(r_e, 0, 5)
         self.assertAlmostEqual(r_n, 1, 5)
 
-
     def test_load(self):
         ts = datetime.datetime.utcnow()
         config = from_file('tart/test/test_telescope_config.json')

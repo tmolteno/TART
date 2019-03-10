@@ -6,6 +6,7 @@ from tart.util import constants
 from tart.operation import observation
 from tart.imaging import location
 from tart.imaging import visibility
+from tart.simulation.simulation_source import HorizontalSource
 
 def antennas_signal(antennas, ant_models, sources, timebase):
     ''' TODO think about introducing uncorrelated system noise at each antenna.'''
@@ -132,6 +133,7 @@ class Antenna(object):
 
 
 def get_geo_delay_horizontal(a0, a1, src):
+    assert (isinstance(src, HorizontalSource))
     '''
     The delay is negative if a1 is closer to the source than a0
 
