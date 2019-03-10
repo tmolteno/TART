@@ -4,17 +4,19 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # debian setup
 RUN apt-get update -y && apt-get install -y \
-    curl ntp screen \
+    curl \
     python3-requests \
-    python3-pip python3-dateutil python3-matplotlib \
-    python3-yaml python3-psycopg2 python3-jsonrpclib-pelix \
+    python3-dateutil \
+    python3-matplotlib \
+    python3-yaml \
+    python3-psycopg2 \
+    python3-jsonrpclib-pelix \
     python3-flask python3-flask-script \
-    python3-astropy  python3-healpy 
+    python3-h5py \
+    python3-astropy \
+    python3-healpy 
 
 RUN rm -rf /var/lib/apt/lists/*
-
-# Install tart python packages
-#RUN pip3 install --no-cache-dir tart tart_hardware_interface
 
 COPY ./tart /tart_code
 WORKDIR /tart_code

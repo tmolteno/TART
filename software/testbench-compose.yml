@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+
+    # Need a GPS ephemeris proxy
+    ephemeris_server:
+        build: 
+            context: ./containers/ephemeris_server/.
+        restart: always
+        volumes:
+            - ~/catalog_cache:/ephemeris_server/orbit_data
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
+
+    tart_tests:
+        depends_on:
+            - ephemeris_server
+        environment:
+            - EPHEMERIS_SERVER_HOST='ephemeris_server'
+        build: 
+            context: ./
+            dockerfile: Dockerfile.testbench
