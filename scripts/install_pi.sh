@@ -9,8 +9,9 @@
 #
 #   Author: Tim Molteno tim@elec.ac.nz (c) 2018-2019
 #
-TARGET=pi@tart2-dev
+TARGET=pi@tart2-pear
 
+(cd ../software/containers/telescope_web_api && sh pre_build.sh);
 
 rsync -rv --exclude=node_modules ../software ${TARGET}:.
 

@@ -24,3 +24,4 @@ in which case changes to the source-code will be immediately available to projec
 * Version 0.1.6. Python3 support
 * Version 0.1.7. Further python3 support
 * Version 0.1.8. Remove unused routines, no implicit import paths
+* Version 0.2.0. Save RAW data as .hdf5 files

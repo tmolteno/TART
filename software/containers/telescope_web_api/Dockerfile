@@ -5,6 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # debian setup
 RUN apt-get update -y && apt-get install -y \
     curl \
+    python3-pip \
     python3-requests \
     python3-dateutil \
     python3-matplotlib \
