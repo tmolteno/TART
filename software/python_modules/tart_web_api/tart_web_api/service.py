@@ -233,29 +233,34 @@ class TartControl():
 
 
     def run(self):
-        if self.state == 'diag':
-            run_diagnostic(self.TartSPI, self.config)
-            db.insert_sample_delay(self.config['channels_timestamp'], self.config['sample_delay'])
+        try:
+            if self.state == 'diag':
+                run_diagnostic(self.TartSPI, self.config)
+                db.insert_sample_delay(self.config['channels_timestamp'], self.config['sample_delay'])
 
-        elif self.state == 'raw':
-            ret = run_acquire_raw(self.TartSPI, self.config)
-            if 'filename' in ret:
-                db.insert_raw_file_handle(ret['filename'], ret['sha256'])
-
-        elif self.state == 'vis':
-            if self.queue_vis is None:
-                logging.info("vis_stream_setup")
-                self.vis_stream_setup()
-            else:
-                ret = self.vis_stream_acquire()
+            elif self.state == 'raw':
+                ret = run_acquire_raw(self.TartSPI, self.config)
                 if 'filename' in ret:
-                    logging.info("vis_stream_acquire = {}".format(ret))
-                    db.insert_vis_file_handle(ret['filename'], ret['sha256'])
-                time.sleep(0.005)
-        elif self.state == 'off':
-            time.sleep(0.5)
-        else:
-            logging.error('unknown state: {}'.format(self.state))
+                    db.insert_raw_file_handle(ret['filename'], ret['sha256'])
+
+            elif self.state == 'vis':
+                if self.queue_vis is None:
+                    logging.info("vis_stream_setup")
+                    self.vis_stream_setup()
+                else:
+                    ret = self.vis_stream_acquire()
+                    if 'filename' in ret:
+                        logging.info("vis_stream_acquire = {}".format(ret))
+                        db.insert_vis_file_handle(ret['filename'], ret['sha256'])
+                    time.sleep(0.005)
+            elif self.state == 'off':
+                time.sleep(0.5)
+            else:
+                logging.error('unknown state: {}'.format(self.state))
+        except Exception as err:
+            logging.error('Error: {}'.format(self.state))
+            logging.exception(err)
+
 
     def set_state(self, new_state):
         if new_state == self.state:

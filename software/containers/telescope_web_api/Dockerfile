@@ -36,6 +36,8 @@ WORKDIR /app
 ENV FLASK_APP=tart_web_api.main
 #ENV FLASK_DEBUG=1
 
+RUN pip3 list
+
 EXPOSE 5000
 
 CMD flask run --no-reload -h0.0.0.0
