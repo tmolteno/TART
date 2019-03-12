@@ -65,9 +65,11 @@ class GpsTime
   def self.from_time(utc_date)
     return GpsTime.new(utc_date.year(), utc_date.month(), utc_date.day(), utc_date.hour(), utc_date.min(), utc_date.sec())
   end
-  
+
   # I don't think that the UTC offset works correctly.
   def utc_offset(t)
+    return 18 if (t >= Time.utc(2017, 1, 1))
+    return 17 if (t >= Time.utc(2015, 7, 1))
     return 16 if (t >= Time.utc(2012, 7, 1))
     return 15 if (t >= Time.utc(2009, 1, 1))
     return 14 if (t >= Time.utc(2006, 1, 1))

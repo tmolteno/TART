@@ -1,0 +1,9 @@
+address: localhost
+port: 8876
+#servers: 1
+#max_conns: 1024
+#max_persistent_conns: 512
+#timeout: 30
+environment: development
+log: /ephemeris_server/orbit_data/logs/thin-production.log
+daemonize: false

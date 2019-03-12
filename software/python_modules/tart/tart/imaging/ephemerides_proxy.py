@@ -41,6 +41,7 @@ class EphemeridesProxy(object):
 
     def get_ephemeris(self, utc_date, sv):
         h = self.get_date_hash(utc_date,sv)
+        print("hash({}".format(h))
         try:
             eph = self.cache[h]
         except KeyError:
@@ -64,19 +65,20 @@ class EphemeridesProxy(object):
 
     def get_sv_position(self, utc_date, sv):
         gpst = gps_time.GpsTime.from_time(utc_date)
-        eph =    self.get_ephemeris(utc_date, sv)
+        eph = self.get_ephemeris(utc_date, sv)
         pos = eph.get_sv_position(gpst)
+        print("get_sv_position({}, {}, {}) -> {}".format(utc_date,  gpst, sv, pos))
         return np.array(pos)
 
     def get_sv_position_sp3(self, utc_date, sv):
         gpst = gps_time.GpsTime.from_time(utc_date)
-        sp3 =    self.get_sp3_interpolator(utc_date)
+        sp3 = self.get_sp3_interpolator(utc_date)
         pos = sp3.get_sv_position(gpst,sv)
         return np.array(pos)
 
     def get_sv_velocity(self, utc_date, sv):
         gpst = gps_time.GpsTime.from_time(utc_date)
-        eph =    self.get_ephemeris(utc_date, sv)
+        eph = self.get_ephemeris(utc_date, sv)
         return eph.get_velocity(gpst.sow())
 
 

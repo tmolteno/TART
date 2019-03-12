@@ -7,7 +7,7 @@ class Ephemeris(object):
     GM = 3.986005e14    # earth's universal gravitational parameter m^3/s^2
     WGS84_EARTH_ROTATION_RATE = 7.2921151467e-5;    # earth rotation rate, rad/s
 
-    def __init__(self,in_hash):
+    def __init__(self, in_hash):
         self.a0, self.a1, self.a2, self.a3 = in_hash['a'] # alpha parameters for ionospheric model
         self.b0, self.b1, self.b2, self.b3 = in_hash['b'] # beta parameters for ionospheric model
 
@@ -59,7 +59,7 @@ class Ephemeris(object):
 
 
     def to_s(self):
-        return "Ephemeris SV=#{self.svprn}, toc=#{self.toc}, a0=#{self.a0}, ecc=#{self.ecc}, m0=#{self.m0}, roota=#{self.roota}"
+        return "Ephemeris: SV={}, toe={}, toc={}, a0={}, ecc={}, m0={}, roota={}".format(self.svprn, self.toe, self.toc, self.a0, self.ecc, self.m0, self.roota)
 
 
     def to_hash(self):
@@ -123,9 +123,9 @@ class Ephemeris(object):
     def get_tk(self, sow):
         tk = Util.check_t(sow-self.toe) #        Time from ephemeris reference epoch (1)
         if (tk < -302400.0):
-            raise "Invalid time %f" % tk
+            raise RuntimeError("Invalid time %f" % tk)
         if (tk > 302400.0):
-            raise "Invalid time %f" % tk
+            raise RuntimeError("Invalid time %f" % tk)
         return tk
 
     # http://home-2.worldonline.nl/~samsvl/satpos.htm
@@ -165,22 +165,22 @@ class Ephemeris(object):
             x=(x2*y-x*y1)/(y-y1)
         ek=x
 
-        print("    E0 -> {}".format(ek))
+        print(("    E0 -> {}".format(ek)))
         return ek
 
     def getE(self, sow):
         a = self.roota*self.roota
         tk = self.get_tk(sow)
-        n0 = math.sqrt(Ephemeris.GM/(a**3)) #        Computed mean motion
-        n = n0+self.deltan                        #        Corrected mean motion
-        m = self.m0+n*tk                            #        Mean anomaly
+        n0 = math.sqrt(Ephemeris.GM/(a**3)) #  Computed mean motion
+        n = n0+self.deltan                  #  Corrected mean motion
+        m = self.m0+n*tk                    #  Mean anomaly
 
         #test = self.getE0(sow)
         m = Util.rem2pi(m + Util.PI2)
         e = m
         for i in range(0,15):
             e_old = e
-            e = m + self.ecc*math.sin(e)
+            e = m + self.ecc*math.sin(e_old)
             dE = Util.rem2pi(e - e_old)
             if (abs(dE) < 1.0e-15):
                 break
@@ -198,7 +198,8 @@ class Ephemeris(object):
 
     def get_location(self, sow):
         a = self.roota*self.roota        # Semi major axis
-        tk = self.get_tk(sow)
+        tk = self.get_tk(sow) #     tk = sow-@toe
+
 
         e = self.getE(sow)
 
@@ -213,14 +214,56 @@ class Ephemeris(object):
         u = phi + self.cuc*cosphi2+self.cus*sinphi2
         r = a*(1.0-self.ecc*math.cos(e)) + self.crc*cosphi2+self.crs*sinphi2
         i = self.i0+self.idot*tk + self.cic*cosphi2+self.cis*sinphi2
-        om = self.omega_c + (self.omegadot - Ephemeris.WGS84_EARTH_ROTATION_RATE)*tk - Ephemeris.WGS84_EARTH_ROTATION_RATE*self.toe
+        om = self.omega_c + (self.omegadot - Ephemeris.WGS84_EARTH_ROTATION_RATE)*tk - \
+            Ephemeris.WGS84_EARTH_ROTATION_RATE*self.toe
         om = Util.rem2pi(om + Util.PI2)
+        print(("w_c={}, wdot={}, om={}".format(self.omega_c, self.omegadot, om)))
         x1 = math.cos(u)*r
         y1 = math.sin(u)*r
 
         x = x1*math.cos(om) - y1*math.cos(i)*math.sin(om)
         y = x1*math.sin(om) + y1*math.cos(i)*math.cos(om)
         z = y1*math.sin(i)
+        print(("ephemeris.get_location({}) tk={}, {} -> x:{}".format(sow, tk, self.to_s(), x)))
+        return [x,y,z]
+
+    
+    def get_location_new(self, sow):
+        ''' A sanity check from a different source
+            http://gnsstk.sourceforge.net/gps_8c-source.html
+            https://gssc.esa.int/navipedia/index.php/GPS_and_Galileo_Satellite_Coordinates_Computation
+        '''
+        a = self.roota*self.roota        # Semi major axis
+        tk = Util.check_t(sow - self.toe)
+
+        Mk =  self.m0 + (math.sqrt(Ephemeris.GM/(a**3)) + self.deltan)*tk
+
+        E_0 = Mk
+        for _ in range(7):
+            E_k = Mk + self.ecc*math.sin(E_0)
+            E_0 = E_k
+
+        v_k = math.atan(math.sqrt(1.0-(self.ecc**2))*math.sin(E_k)/math.cos(E_k)-self.ecc)
+
+        phi = v_k+self.omega
+        phi2 = 2.0*phi
+
+        cosphi2 = math.cos(phi2)
+        sinphi2 = math.sin(phi2)
+
+        u_k = phi + self.cuc*cosphi2 + self.cus*sinphi2
+        r_k = a*(1.0 - self.ecc*math.cos(E_k)) + self.crc*cosphi2 + self.crs*sinphi2
+        i_k = self.i0 + self.idot*tk + self.cic*cosphi2 + self.cis*sinphi2
+        
+        lambda_k = self.omega_c + (self.omegadot - Ephemeris.WGS84_EARTH_ROTATION_RATE)*tk - \
+            Ephemeris.WGS84_EARTH_ROTATION_RATE*self.toe
+
+        x1 = math.cos(u_k)*r_k
+        y1 = math.sin(u_k)*r_k
+
+        x = x1*math.cos(lambda_k) - y1*math.cos(i_k)*math.sin(lambda_k)
+        y = x1*math.sin(lambda_k) + y1*math.cos(i_k)*math.cos(lambda_k)
+        z = y1*math.sin(i_k)
         return [x,y,z]
 
     def get_velocity(self, sow):

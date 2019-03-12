@@ -29,8 +29,8 @@ RUN bundle install
 ADD ./code/ /ephemeris_server
 
 EXPOSE 8876
-#CMD ["ruby", "RackServer.rb"]
-CMD ["thin", "--port", "8876", "-R", "config.ru", "start"]
+CMD ["ruby", "RackServer.rb"]
+#CMD ["thin", "-C", "thin_config.yml", "-R", "config.ru", "start"]
 # address: localhost
 # port: 8876
 # servers: 1

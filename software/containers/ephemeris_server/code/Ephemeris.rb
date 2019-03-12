@@ -224,6 +224,7 @@ class Ephemeris
     y = x1*Math.sin(om) + y1*Math.cos(i)*Math.cos(om)
     z = y1*Math.sin(i)
 
+    puts "Ephemeris:get_location(#{sow}) -> [#{x}}"
     return [x,y,z]
   end
 	
