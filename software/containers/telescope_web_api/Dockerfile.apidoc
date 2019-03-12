@@ -4,7 +4,7 @@ MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
 RUN npm install apidoc -g
 
-COPY ./tart_web_api /code
+COPY ./python_code/tart_web_api /code
 
 WORKDIR /code/tart_web_api
 RUN sed "s/localhost/`hostname`/g" -i apidoc.json
