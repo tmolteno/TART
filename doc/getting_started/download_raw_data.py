@@ -42,6 +42,8 @@ if __name__ == '__main__':
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     parser.add_argument('--pw', default='password', type=str, help='API password')
     parser.add_argument('--dir', type=str, default=".", help='local directory to download')
+    parser.add_argument('--raw', action='store_true', help='Download Raw Data in HDF format')
+    parser.add_argument('--vis', action='store_true', help='Download Visibility Data in HDF format')
 
     ARGS = parser.parse_args()
 
@@ -52,8 +54,12 @@ if __name__ == '__main__':
     tart_endpoint = ARGS.api + "/"
 
     while True:
-        resp_raw = api.get('raw/data')
-        resp_vis = api.get('vis/data')
+        resp_vis = []
+        resp_raw = []
+        if (ARGS.vis):
+            resp_vis = api.get('vis/data')
+        if (ARGS.raw):
+            resp_raw = api.get('raw/data')
 
         try:
             for entry in resp_raw+resp_vis:
@@ -69,6 +75,7 @@ if __name__ == '__main__':
                             download_file(data_url, entry['checksum'])
                     else:
                         download_file(data_url, entry['checksum'])
+
         except Exception as e:
             print("Exception "+str(e))
         finally:
