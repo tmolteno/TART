@@ -77,7 +77,7 @@ def capture_loop(tart, process_queue, cmd_queue, runtime_config, logger=None,):
             d, d_json = get_status_json(tart)
             runtime_config['status'] = d
             process_queue.put(data)
-            print('Capture Loop: Acquired', data[0])
+            print(('Capture Loop: Acquired', data[0]))
         except Exception as e:
             logger.error("Capture Loop Error %s" % str(e))
             logger.error(traceback.format_exc())

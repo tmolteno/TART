@@ -1,5 +1,8 @@
 import numpy as np
 import datetime
+
+import os
+
 try:
    import cPickle as pickle
 except:
@@ -81,6 +84,10 @@ class Observation(object):
     def to_hdf5(self, filename):
         ''' Save the Observation object,
             in a portable HDF5 format
+            
+            obs = observation.Observation(t_stmp, config, savedata=ant_data)
+            obs.to_hdf5(filename)
+
         '''
         with h5py.File(filename, "w") as h5f:
             dt = h5py.special_dtype(vlen=bytes)
@@ -122,22 +129,27 @@ class Observation(object):
         return ret
 
 def Observation_Load(filename):
+    _, file_extension = os.path.splitext(filename)
+
+    if ('.pkl' == file_extension):
+        try:
+            load_data = gzip.open(filename, 'rb')
+            d = pickle.load(load_data)
+        except:
+            print('not gzipped')
+            load_data = open(filename, 'rb')
+            d = pickle.load(load_data)
+        finally:
+            load_data.close()
+
+        unipolar_data = []
+        for i in d['data']:
+            unpacked_ints = np.asarray(np.unpackbits(i), dtype=np.uint8)
+            unipolar_data.append(unpacked_ints)
+            # this is an array of unipolar 0,1 radio signals.
+
+        return Observation(timestamp=d['timestamp'], config=settings.from_dict(d['config']), data=unipolar_data)
+    if ('.hdf' == file_extension):
+        return Observation.from_hdf5(filename)
     
-    try:
-        load_data = gzip.open(filename, 'rb')
-        d = pickle.load(load_data)
-    except:
-        print('not gzipped')
-        load_data = open(filename, 'rb')
-        d = pickle.load(load_data)
-    finally:
-        load_data.close()
-
-    unipolar_data = []
-    for i in d['data']:
-        unpacked_ints = np.asarray(np.unpackbits(i), dtype=np.uint8)
-        unipolar_data.append(unpacked_ints)
-        # this is an array of unipolar 0,1 radio signals.
-
-    ret = Observation(timestamp=d['timestamp'], config=settings.from_dict(d['config']), data=unipolar_data)
-    return ret
+    raise RuntimeError("Unknown file extension {}".format(file_extension))

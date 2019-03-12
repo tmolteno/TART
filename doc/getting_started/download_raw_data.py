@@ -9,6 +9,7 @@ import json
 
 import os
 import hashlib
+import shutil
 import urllib.request, urllib.error, urllib.parse
 import time
 
@@ -24,28 +25,16 @@ def sha256_checksum(filename, block_size=65536):
 def download_file(url, checksum=0):
     print("Download_file({}, {})".format(url, checksum))
     file_name = url.split('/')[-1]
-    u = urllib.request.urlopen(url)
-    
     file_path = os.path.join(ARGS.dir, file_name)
-    f = open(file_path, 'wb')
-    meta = u.info()
-    file_size = int(meta.get_all("Content-Length")[0])
-    print("Downloading: %s Bytes: %s" % (file_path, file_size))
-
-    file_size_dl = 0
-    block_sz = 8192
-    while True:
-        buffer = u.read(block_sz)
-        if not buffer:
-            break
-        file_size_dl += len(buffer)
-        f.write(buffer)
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-        status = status + chr(8)*(len(status)+1)
-        print(status, end=' ')
-    f.close()
+    
+    # Download the file from `url` and save it locally under `file_path`:
+    with urllib.request.urlopen(url) as response, open(file_path, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+    
     if checksum:
-        if (sha256_checksum(file_path) != checksum):
+        downloaded_checksum = sha256_checksum(file_path)
+        if (downloaded_checksum != checksum):
+            print("Removing file: Checksum failed\n{}\n{}".format(checksum, downloaded_checksum))
             os.remove(file_path)
 
 if __name__ == '__main__':
@@ -53,20 +42,24 @@ if __name__ == '__main__':
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     parser.add_argument('--pw', default='password', type=str, help='API password')
     parser.add_argument('--dir', type=str, default=".", help='local directory to download')
+    parser.add_argument('--raw', action='store_true', help='Download Raw Data in HDF format')
+    parser.add_argument('--vis', action='store_true', help='Download Visibility Data in HDF format')
 
     ARGS = parser.parse_args()
 
     api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
-    #resp = api.post_payload_with_token('calibration/antenna_positions', positions_dict["antenna_positions"])
+
     print("Raw Data Downloader")
 
     tart_endpoint = ARGS.api + "/"
-    ##tart_endpoint = "http://tart2-pear/signal/"
-    ##tart_endpoint = "https://tart.elec.ac.nz/dev/"
-    #api_endpoint = tart_endpoint+"api/v1"
+
     while True:
-        resp_raw = api.get('raw/data')
-        resp_vis = api.get('vis/data')
+        resp_vis = []
+        resp_raw = []
+        if (ARGS.vis):
+            resp_vis = api.get('vis/data')
+        if (ARGS.raw):
+            resp_raw = api.get('raw/data')
 
         try:
             for entry in resp_raw+resp_vis:
@@ -82,6 +75,7 @@ if __name__ == '__main__':
                             download_file(data_url, entry['checksum'])
                     else:
                         download_file(data_url, entry['checksum'])
+
         except Exception as e:
             print("Exception "+str(e))
         finally:

@@ -52,18 +52,18 @@ if __name__ == '__main__':
 #   data = tart.read_data(num_words=num_words, blocksize=800)
   data = tart.read_data(num_words=num_words, blocksize=1024)
   t1   = time.time()
-  print('elapsed time:\t%2.3f' % (t1-t0))
+  print(('elapsed time:\t%2.3f' % (t1-t0)))
   base = convert(data[0])
   t2   = time.time()
   if args.verbose:
-    print('base = %d (%x)\n\n' % (base, base))
-    print('time for convert:\t%2.3f' % (t2-t1))
+    print(('base = %d (%x)\n\n' % (base, base)))
+    print(('time for convert:\t%2.3f' % (t2-t1)))
 
   if args.dump:
     for x in data:
       val = convert(x)
       off = val - base
-      print('off = %d (0x%06x)' % (off, val))
+      print(('off = %d (0x%06x)' % (off, val)))
 
   # Display just the status flags, if results aren't wanted.
   if args.noresults:
@@ -74,16 +74,16 @@ if __name__ == '__main__':
     # Check the returned data.
     print('generate 24bit integer')
     resp_dec = (np.array(data[:,0],dtype='uint32')<<16) + (np.array(data[:,1], dtype='uint32')<<8) + (np.array(data[:,2],dtype='uint32'))
-    print(np.info(resp_dec))
+    print((np.info(resp_dec)))
     print('done')
-    print('first 10: ', resp_dec[:10])
-    print('last 10: ', resp_dec[-10:])
+    print(('first 10: ', resp_dec[:10]))
+    print(('last 10: ', resp_dec[-10:]))
 
     diffs = (resp_dec[1:]-resp_dec[:-1])
     diffssum = diffs.__ne__(1).sum()
     print(diffs)
-    print('yo,', resp_dec[diffs.__ne__(1)])
-    print('sum_of_errors: ', diffssum)
+    print(('yo,', resp_dec[diffs.__ne__(1)]))
+    print(('sum_of_errors: ', diffssum))
     index = np.arange(len(diffs))
-    print(diffs[diffs.__ne__(1)])
-    print(index[diffs.__ne__(1)])
+    print((diffs[diffs.__ne__(1)]))
+    print((index[diffs.__ne__(1)]))

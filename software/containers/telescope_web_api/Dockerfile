@@ -5,6 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # debian setup
 RUN apt-get update -y && apt-get install -y \
     curl \
+    python3-pip \
     python3-requests \
     python3-dateutil \
     python3-matplotlib \
@@ -18,16 +19,15 @@ RUN apt-get update -y && apt-get install -y \
 
 RUN rm -rf /var/lib/apt/lists/*
 
-COPY ./tart /tart_code
-WORKDIR /tart_code
+COPY ./python_code /python_code
+
+WORKDIR /python_code/tart
 RUN python3 setup.py install
 
-COPY ./tart_hardware_interface /hardware_code
-WORKDIR /hardware_code
+WORKDIR /python_code/tart_hardware_interface
 RUN python3 setup.py install
 
-COPY ./tart_web_api /web_api_code
-WORKDIR /web_api_code
+WORKDIR /python_code/tart_web_api
 RUN python3 setup.py install
 
 COPY ./config_data /config_data

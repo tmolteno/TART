@@ -68,8 +68,8 @@ class TartSPI(object):
     return 1
 
   def pause(self, duration=0.005, noisy=False):
-    if noisy:
-      print(' pausing for %1.3fs' % duration)
+    #if noisy:
+      #print((' pausing for %1.3fs' % duration))
     time.sleep(duration)
 
 
@@ -87,7 +87,7 @@ class TartSPI(object):
     reg = int(reg) & 0x7f
     res = self.spi.xfer([reg] + [0x0]*self.LATENCY)[self.LATENCY]
     if noisy:
-      print('%s' % self.show_status(reg, res))
+      print(('%s' % self.show_status(reg, res)))
     return res
 
   def getbytes(self, reg, num, noisy=False):
@@ -95,7 +95,7 @@ class TartSPI(object):
     res = self.spi.xfer([reg] + [0x0]*(num + self.LATENCY - 1))[self.LATENCY:]
     if noisy:
       for val in res:
-        print('%s' % self.show_status(reg, val))
+        print(('%s' % self.show_status(reg, val)))
     return res
 
   def setbit(self, reg, bit, noisy=False):
@@ -124,7 +124,7 @@ class TartSPI(object):
     '''Issue a global reset to the TART hardware.'''
     ret = self.setbyte(self.SPI_RESET, 0x01)
     if noisy:
-      print(tobin([ret]))
+      print((tobin([ret])))
       print(' reset issued.')
     self.pause()
     return 1
@@ -140,7 +140,7 @@ class TartSPI(object):
       val = self.getbyte(reg)
       vals.append(val)
       if noisy:
-        print(self.show_status(reg, val))
+        print((self.show_status(reg, val)))
     return vals
 
   def show_status(self, reg, val):
@@ -183,23 +183,23 @@ class TartSPI(object):
   def extract(self,vals):
     unpack = lambda x: np.unpackbits(np.array([x,],dtype=np.uint8))[::-1]
     extractors = {
-        self.TC_CENTRE:  lambda val: dict(zip(['centre','drift','invert','delay'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
-        self.TC_STATUS:  lambda val: dict(zip(['delta','phase'], [(val >>4) & 0x0f, val & 0x0f])),
-        self.TC_DEBUG:   lambda val: dict(zip(['debug','count','shift','numantenna'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
-        self.TC_SYSTEM:  lambda val: dict(zip(['enabled','error','locked','source'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,])),
+        self.TC_CENTRE:  lambda val: dict(list(zip(['centre','drift','invert','delay'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,]))),
+        self.TC_STATUS:  lambda val: dict(list(zip(['delta','phase'], [(val >>4) & 0x0f, val & 0x0f]))),
+        self.TC_DEBUG:   lambda val: dict(list(zip(['debug','count','shift','numantenna'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,]))),
+        self.TC_SYSTEM:  lambda val: dict(list(zip(['enabled','error','locked','source'], unpack(val)[[7,6,5]].tolist()+[val & 0x1f,]))),
 
-        self.AQ_STREAM:  lambda val: dict(zip(['data',], [val,])),
-        self.AQ_SYSTEM:  lambda val: dict(zip(['enabled','error','SDRAM_ready','512Mb','overflow','state'],  unpack(val)[[7,6,5,4,3]].tolist()+[val & 0x07,])),
+        self.AQ_STREAM:  lambda val: dict(list(zip(['data',], [val,]))),
+        self.AQ_SYSTEM:  lambda val: dict(list(zip(['enabled','error','SDRAM_ready','512Mb','overflow','state'],  unpack(val)[[7,6,5,4,3]].tolist()+[val & 0x07,]))),
 
-        self.VX_STREAM:  lambda val: dict(zip(['data',], [val,])),
-        self.VX_STATUS:  lambda val: dict(zip(['available','accessed','overflow','bank'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,])),
-        self.VX_DEBUG:   lambda val: dict(zip(['stuck','limp'], unpack(val)[[7,6]].tolist())),
-        self.VX_SYSTEM:  lambda val: dict(zip(['enabled','overwrite','blocksize'], unpack(val)[[7,6]].tolist() + [val & 0x1f,])),
+        self.VX_STREAM:  lambda val: dict(list(zip(['data',], [val,]))),
+        self.VX_STATUS:  lambda val: dict(list(zip(['available','accessed','overflow','bank'], unpack(val)[[7,6,5]].tolist() + [val & 0x0f,]))),
+        self.VX_DEBUG:   lambda val: dict(list(zip(['stuck','limp'], unpack(val)[[7,6]].tolist()))),
+        self.VX_SYSTEM:  lambda val: dict(list(zip(['enabled','overwrite','blocksize'], unpack(val)[[7,6]].tolist() + [val & 0x1f,]))),
 
-        self.SYS_STATS:  lambda val: dict(zip(['viz_en','viz_pend','cap_en','cap_debug','acq_en','state'], unpack(val)[[7,6,5,4,3]].tolist() + [val & 0x07,])),
+        self.SYS_STATS:  lambda val: dict(list(zip(['viz_en','viz_pend','cap_en','cap_debug','acq_en','state'], unpack(val)[[7,6,5,4,3]].tolist() + [val & 0x07,]))),
 
-        self.SPI_STATS:  lambda val: dict(zip(['FIFO_overflow','FIFO_underrun','spi_busy'],unpack(val)[[7,6,0]].tolist())),
-        self.SPI_RESET:  lambda val: dict(zip(['reset',],[unpack(val)[0],])),
+        self.SPI_STATS:  lambda val: dict(list(zip(['FIFO_overflow','FIFO_underrun','spi_busy'],unpack(val)[[7,6,0]].tolist()))),
+        self.SPI_RESET:  lambda val: dict(list(zip(['reset',],[unpack(val)[0],]))),
     }
     ret = {}
     for reg,reg_s,val in zip(self.regs, self.regs_s, vals):
@@ -222,7 +222,7 @@ class TartSPI(object):
 
     ret = self.setbyte(self.TC_SYSTEM, val)
     if noisy:
-      print(' capture %s' % flg)
+      print((' capture %s' % flg))
     self.pause()
     return ret
 
@@ -270,7 +270,7 @@ class TartSPI(object):
     '''Read back the data sampling delays.'''
     val = self.getbyte(self.TC_CENTRE, noisy) & 0x0f
     if noisy:
-      print(self.show_status(self.TC_CENTRE, val))
+      print((self.show_status(self.TC_CENTRE, val)))
     self.pause()
     return val
 
@@ -287,7 +287,7 @@ class TartSPI(object):
       return True
     else:
       if noisy:
-        print('WARNING: phase value (%d) not within [0,5]' % phase)
+        print(('WARNING: phase value (%d) not within [0,5]' % phase))
       return False
 
   def read_phase_delay(self, noisy=False):
@@ -295,7 +295,7 @@ class TartSPI(object):
     ret = self.getbyte(self.TC_STATUS, noisy)
     val = ret & 0x0f
     if noisy:
-      print(tobin([ret]))
+      print((tobin([ret])))
     self.pause()
     return val
 
@@ -306,7 +306,7 @@ class TartSPI(object):
     for val in ret:
       res.append(val & 0x0f)
     if noisy:
-      print(tobin(res))
+      print((tobin(res)))
     self.pause()
     return res
 
@@ -321,13 +321,13 @@ class TartSPI(object):
     val = self.getbit (self.AQ_SYSTEM, 7)
     if noisy:
       print(' attempting to set acquisition-mode to ON')
-      print(tobin([old]))
-      print(tobin([ret]))
+      print((tobin([old])))
+      print((tobin([ret])))
     if val:
       self.pause(sleeptime)       # optionally wait for acquisition to end
       res = self.getbyte(self.AQ_SYSTEM)
       if noisy:
-        print(self.show_status(self.AQ_SYSTEM, res))
+        print((self.show_status(self.AQ_SYSTEM, res)))
       fin = res & 0x07 > 2
     self.pause()
     return val and fin
@@ -373,7 +373,7 @@ class TartSPI(object):
       ret = self.spi.xfer([self.WRITE_CMD | self.VX_SYSTEM, bs])
       self.pause()
       if noisy:
-        print(tobin(ret))
+        print((tobin(ret)))
       return 1
     else:
       return 0
@@ -382,7 +382,7 @@ class TartSPI(object):
     '''Get the (exponent of the) correlator block-size.'''
     ret = self.getbyte(self.VX_SYSTEM)
     if noisy:
-      print(self.show_status(self.VX_SYSTEM,ret))
+      print((self.show_status(self.VX_SYSTEM,ret)))
     return ret & 0x1f
 
   def read_visibilities(self, noisy=True):
@@ -391,13 +391,13 @@ class TartSPI(object):
     val = self.vis_convert(res)
     if noisy:
       tim = time.time()
-      print(" Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val)))
+      print((" Visibilities (@t = %g):\n%s (sum = %d)" % (tim, val[self.perm]-int(2**(self.blocksize-1)), sum(val))))
     return val
 
   def vis_ready(self, noisy=False):
     rdy = self.getbit(self.VX_STATUS, 7)
     if noisy:
-      print('\tready = %s' % rdy)
+      print(('\tready = %s' % rdy))
     return rdy
 
   def vis_read(self, noisy=False):
