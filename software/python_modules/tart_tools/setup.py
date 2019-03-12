@@ -4,7 +4,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='tart_tools',
-    version='0.1.8',
+    version='0.2.0b2',
     description='Transient Array Radio Telescope Command Line Tools',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -24,8 +24,6 @@ setup(name='tart_tools',
         "Topic :: Scientific/Engineering",
         "Topic :: Communications :: Ham Radio",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         "Intended Audience :: Science/Research"])

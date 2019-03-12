@@ -194,7 +194,6 @@ def run_acquire_raw(tart, runtime_config):
         filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.hdf'
         print('create observation object')
         obs = observation.Observation(t_stmp, config, savedata=ant_data)
-        print(('obs: ', dir(obs)))
         obs.to_hdf5(filename)
         print(('saved to: ', filename))
         return {'filename':filename, 'sha256':sha256_checksum(filename)}
