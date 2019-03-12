@@ -81,6 +81,10 @@ class Observation(object):
     def to_hdf5(self, filename):
         ''' Save the Observation object,
             in a portable HDF5 format
+            
+            obs = observation.Observation(t_stmp, config, savedata=ant_data)
+            obs.to_hdf5(filename)
+
         '''
         with h5py.File(filename, "w") as h5f:
             dt = h5py.special_dtype(vlen=bytes)

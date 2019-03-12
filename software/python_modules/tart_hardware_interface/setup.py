@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setup(
     name='tart_hardware_interface',
-    version='0.2.0b',
+    version='0.2.0b1',
     description='Transient Array Radio Telescope Low-Level hardware interface',
     long_description=readme,
     long_description_content_type="text/markdown",

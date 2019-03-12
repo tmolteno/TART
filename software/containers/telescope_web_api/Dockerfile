@@ -35,7 +35,7 @@ WORKDIR /app
 ENV FLASK_APP=tart_web_api.main
 #ENV FLASK_DEBUG=1
 
-RUN pip3 list
+RUN python3 --version
 
 EXPOSE 5000
 

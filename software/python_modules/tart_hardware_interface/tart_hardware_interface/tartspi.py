@@ -68,8 +68,8 @@ class TartSPI(object):
     return 1
 
   def pause(self, duration=0.005, noisy=False):
-    if noisy:
-      print((' pausing for %1.3fs' % duration))
+    #if noisy:
+      #print((' pausing for %1.3fs' % duration))
     time.sleep(duration)
 
 
