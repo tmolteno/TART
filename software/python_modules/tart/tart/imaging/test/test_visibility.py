@@ -22,13 +22,13 @@ def dummy_vis():
             if i > j:
                 b.append([j,i])
                 v.append(np.random.uniform(0,1) + np.random.uniform(0,1)*(1.0j))
-    ret.set_visibilities(b=b, v=v)
+    ret.set_visibilities(b=b, v=np.array(v))
     return ret 
 
 def dummy_vis_list():
     ret = []
     for i in range(10):
-        ret.append(dummy_vis)
+        ret.append(dummy_vis())
     return ret 
 
 class TestVisibility(unittest.TestCase):
@@ -38,10 +38,14 @@ class TestVisibility(unittest.TestCase):
         self.v_array[0].config.load_antenna_positions(cal_ant_positions_file=ANT_POS_FILE)
     
     def check_vis(self, dut, dut2):
-        self.assertTrue((dut.v == dut2.v).all())
-        self.assertTrue((dut.baselines == dut2.baselines).all())
-        self.assertEqual(dut.config.Dict, dut2.config.Dict)
+        delta = np.sum(np.abs(np.array(dut.v) - np.array(dut2.v)))
+        self.assertTrue( delta <= 1.0e10 )
+        self.assertTrue((np.array(dut.baselines) == np.array(dut2.baselines)).all())
         
+        keys = dut.config.Dict.keys()
+        for k in keys:
+            self.assertEqual(dut.config.Dict[k], dut2.config.Dict[k])
+            
     def test_load_save(self):
         dut = dummy_vis()
         visibility.Visibility_Save_JSON(self.v_array[0], 'test_vis.json')
@@ -50,8 +54,9 @@ class TestVisibility(unittest.TestCase):
     
     def test_list_load_save_hdf(self):
         dut_list = dummy_vis_list()
-        visibility.list_save(self.v_array, 'test_vis_list_io.hdf')
-        dut2_list = visibility.list_load('test_vis_list_io.hdf')
+        fname = 'test_vis_list_io.hdf'
+        visibility.list_save(self.v_array, fname)
+        dut2_list = visibility.list_load(fname)
         for dut, dut2 in zip(dut_list, dut2_list):
             self.check_vis(dut, dut2)
     
