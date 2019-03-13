@@ -1,7 +1,9 @@
-import numpy as np
 import json
 import h5py
 import dateutil
+import os
+
+import numpy as np
 
 try:
    import cPickle as pickle
@@ -106,24 +108,26 @@ class Visibility:
             ret += " V(%s)=%g, I%g" % (str(b), np.abs(self.v[i]), np.angle(self.v[i]))
         return ret
 
+
+
+def Visibility_Lsq(vis1, vis2):
+    """ Return least square based on the phases of 2 visibilities """
+    if vis1.config.get_num_antenna() == vis2.config.get_num_antenna():
+        difflist = []
+        for v1, v2 in zip(vis1.v, vis2.v):
+            diff = np.abs(np.angle(v1) - np.angle(v2))
+            if diff > np.pi:
+                diff = 2.*np.pi-diff
+            difflist.append(diff)
+        diffarr = np.array(difflist)
+        return np.power(diffarr,2).sum()
+
+
 def Visibility_From_Conf(config, timestamp, phase_el, phase_az):
     obs = observation.Observation(timestamp=timestamp, config=config)
     vis = Visibility(obs, phase_el, phase_az)
     return vis
 
-def to_pkl(vis, filename):
-    save_data = open(filename, 'wb')
-    pickle.dump(vis, save_data, pickle.HIGHEST_PROTOCOL)
-    save_data.close()
-
-def from_pkl(filename):
-    with open(filename, 'rb') as load_data:
-        ret = pickle.load(load_data, encoding='latin1')
-    return ret
-
-
-def Visibility_Save(vis, filename):
-    to_pkl(vis, filename)
 
 def Visibility_Save_JSON(vis, filename):
     json_data = {}
@@ -138,7 +142,25 @@ def Visibility_Save_JSON(vis, filename):
         json.dump(json_data, outfile, default=str, \
             sort_keys=True, indent=4, separators=(',', ': '))
 
-def Visibility_Load(filename):
+
+'''
+    Load and save lists of visibilities. Use filename extensions to deal with the deprecated .pkl files (or .vis files)
+'''
+
+def list_save(vis_list, filename):
+    _, file_extension = os.path.splitext(filename)
+
+    if ('.pkl' == file_extension):
+        to_pkl(vis_list, filename)
+    elif ('.vis' == file_extension):
+        to_pkl(vis_list, filename)
+    elif ('.hdf' == file_extension):
+        to_pkl(vis_list, filename)
+    else:
+        raise RuntimeError("Unknown visibility file extension {}".format(file_extension))
+
+def list_load(filename):
+    #return from_pkl(filename)
     vis_list = from_pkl(filename)
     err_count = 0
     ret = []
@@ -151,17 +173,45 @@ def Visibility_Load(filename):
         print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
     return ret
 
-def Visibility_Lsq(vis1, vis2):
-    """ Return least square based on the phases of 2 visibilities """
-    if vis1.config.get_num_antenna() == vis2.config.get_num_antenna():
-        difflist = []
-        for v1, v2 in zip(vis1.v, vis2.v):
-            diff = np.abs(np.angle(v1) - np.angle(v2))
-            if diff > np.pi:
-                diff = 2.*np.pi-diff
-            difflist.append(diff)
-        diffarr = np.array(difflist)
-        return np.power(diffarr,2).sum()
+    #_, file_extension = os.path.splitext(filename)
+
+    #if ('.pkl' == file_extension):
+        #vis_list = from_pkl(filename)
+        #err_count = 0
+        #ret = []
+        #for v in vis_list:
+            #if isinstance(v, tuple):
+                #err_count += 1
+            #else:
+                #ret.append(v)
+        #if err_count>0:
+            #print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
+        #return ret
+    #if ('.hdf' == file_extension):
+        #pass
+    
+    #raise RuntimeError("Unknown file extension {}".format(file_extension))
+
+'''
+    Deal with Pickle files (Deprecated in favour of HDF5 files)
+'''
+
+def to_pkl(vis, filename):
+    save_data = open(filename, 'wb')
+    pickle.dump(vis, save_data, pickle.HIGHEST_PROTOCOL)
+    save_data.close()
+
+def from_pkl(filename):
+    with open(filename, 'rb') as load_data:
+        ret = pickle.load(load_data, encoding='latin1')
+    return ret
+
+
+
+
+'''
+    Deal with HDF5 Files
+'''
 
 def to_hdf5(vis, filename):
     ''' Save the Observation object,

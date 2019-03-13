@@ -297,10 +297,8 @@ class TartControl():
                 if len(self.vislist) >= chunksize:
                     logging.info('reached chunksize of {}'.format(chunksize))
                     if self.config['vis']['save'] == 1:
-                        fname = "{}/fpga_{}.vis".format(self.config['vis']['base_path'], 
+                        fname = "{}/vis_{}.vis".format(self.config['vis']['base_path'], 
                                                    vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
-                        #fname = self.config['vis']['base_path'] + "_" + 
-                            #vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f')+".vis"
                         visibility.Visibility_Save(self.vislist, fname)
                         logging.info("saved to {}".format(vis, fname))
                         ret['filename'] = fname

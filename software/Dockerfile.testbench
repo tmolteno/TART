@@ -29,5 +29,5 @@ WORKDIR /code/tart_hardware_interface
 RUN python3 setup.py install
 
 WORKDIR /code/tart/
-CMD python3 setup.py test --test-suite=tart.imaging.test.test_ephemerides_proxy
+CMD python3 setup.py test --test-suite=tart.imaging.test.test_visibility
 

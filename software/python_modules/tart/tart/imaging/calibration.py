@@ -162,7 +162,7 @@ if __name__ == '__main__':
   parser.add_argument('--vis', default="/freenas2/tart/visibility/vis_2015_08_10.vis",required=False, help="")
   args = parser.parse_args()
 
-  vis = visibility.Visibility_Load(args.vis) #[:20]
+  vis = visibility.list_load(args.vis) #[:20]
 
   cal_vis = CalibratedVisibility(vis[0])
   #print(cal_vis.get_visibility(0,1))
