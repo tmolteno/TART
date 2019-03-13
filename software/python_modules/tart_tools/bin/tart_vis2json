@@ -26,7 +26,7 @@ if __name__ == '__main__':
     if len(ARGS.vis)!=0:
         VIS_LIST = []
         for vis_file in ARGS.vis:
-            VIS_LIST += visibility.Visibility_Load(vis_file)
+            VIS_LIST += visibility.list_load(vis_file)
 
     for vis in VIS_LIST:
         vis_dict = create_direct_vis_dict(vis)

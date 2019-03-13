@@ -191,8 +191,11 @@ def run_acquire_raw(tart, runtime_config):
 
     if runtime_config['raw']['save']:
         config = settings.from_file(runtime_config['telescope_config_path'])
-        filename = path + t_stmp.strftime('%H_%M_%S.%f') + '_data.hdf'
-        print('create observation object')
+        
+        fname = "data_{}.hdf".format(t_stmp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
+        
+        filename = path + fname
+
         obs = observation.Observation(t_stmp, config, savedata=ant_data)
         obs.to_hdf5(filename)
         print(('saved to: ', filename))
