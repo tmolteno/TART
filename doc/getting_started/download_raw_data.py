@@ -22,10 +22,10 @@ def sha256_checksum(filename, block_size=65536):
             sha256.update(block)
     return sha256.hexdigest()
 
-def download_file(url, checksum=0):
+def download_file(url, checksum=0, directory="."):
     print("Download_file({}, {})".format(url, checksum))
     file_name = url.split('/')[-1]
-    file_path = os.path.join(ARGS.dir, file_name)
+    file_path = os.path.join(directory, file_name)
     
     # Download the file from `url` and save it locally under `file_path`:
     with urllib.request.urlopen(url) as response, open(file_path, 'wb') as out_file:
@@ -50,7 +50,8 @@ if __name__ == '__main__':
     api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
 
     print("Downloading Raw Data from {}".format(ARGS.api))
-
+    os.makedirs(ARGS.dir, exist_ok=True)
+    
     tart_endpoint = ARGS.api + "/"
 
     if not (ARGS.raw or ARGS.vis):
@@ -75,9 +76,9 @@ if __name__ == '__main__':
                         else:
                             print('Corrupted File', file_name)
                             os.remove(file_name)
-                            download_file(data_url, entry['checksum'])
+                            download_file(data_url, entry['checksum'], ARGS.dir)
                     else:
-                        download_file(data_url, entry['checksum'])
+                        download_file(data_url, entry['checksum'], ARGS.dir)
 
         except Exception as e:
             print("Exception "+str(e))
