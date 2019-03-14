@@ -34,7 +34,7 @@ def dummy_vis_list():
 class TestVisibility(unittest.TestCase):
 
     def setUp(self):
-        self.v_array = visibility.list_load(VIS_DATA_FILE)
+        self.v_array = dummy_vis_list()
         self.v_array[0].config.load_antenna_positions(cal_ant_positions_file=ANT_POS_FILE)
     
     def check_vis(self, dut, dut2):
@@ -62,15 +62,16 @@ class TestVisibility(unittest.TestCase):
     
     def test_list_load_save_pkl(self):
         dut_list = dummy_vis_list()
-        visibility.list_save(self.v_array, 'test_vis_list_io.pkl')
-        dut2_list = visibility.list_load('test_vis_list_io.pkl')
+        fname = 'test_vis_list_io.pkl'
+        visibility.list_save(self.v_array, fname)
+        dut2_list = visibility.list_load(fname)
         for dut, dut2 in zip(dut_list, dut2_list):
             self.check_vis(dut, dut2)
     
     def test_hdf5(self):
         dut = dummy_vis()
-        visibility.to_hdf5(dut, 'test_vis_list_io.hdf')
-        dut2 = visibility.from_hdf5('test_vis_list_io.hdf')
+        visibility.to_hdf5(dut, 'test_vis.hdf')
+        dut2 = visibility.from_hdf5('test_vis.hdf')
         self.check_vis(dut, dut2)
     
     def test_pkl(self):

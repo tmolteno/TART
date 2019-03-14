@@ -176,8 +176,10 @@ def list_load(filename):
         return ret
     elif ('.vis' == file_extension):
         vis_list = from_pkl(filename)
+        return vis_list
     elif ('.hdf' == file_extension):
         vis_list = from_pkl(filename)
+        return vis_list
     else:
         raise RuntimeError("Unknown file extension {}".format(file_extension))
 
