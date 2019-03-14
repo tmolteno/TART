@@ -2,9 +2,14 @@
     
 This module provides command line tools for operating Transient Array Radio Telescope (TART). These tools are
 
-* tart_image
 * tart_calibrate
 * tart_calibration_data
+* tart_download_antenna_positions
+* tart_download_data
+* tart_download_gains
+* tart_image
+* tart_upload_gains
+
 
 To generate an image from a telescope, try the following command which should display the current view from a telescope
 on top of Signal-Hill near Dunedin New Zealand.
