@@ -22,7 +22,7 @@ For more information see the [TART Github repository](https://github.com/tmolten
 
 tart_tools is available from standard python package repositories. Try:
 
-    pip install tart_tools
+    pip3 install tart_tools
 
 
 ## Authors
