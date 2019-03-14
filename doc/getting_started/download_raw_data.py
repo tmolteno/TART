@@ -38,7 +38,7 @@ def download_file(url, checksum=0):
             os.remove(file_path)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Get RAW data from the telescope', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='Download data from the telescope', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
     parser.add_argument('--pw', default='password', type=str, help='API password')
     parser.add_argument('--dir', type=str, default=".", help='local directory to download')

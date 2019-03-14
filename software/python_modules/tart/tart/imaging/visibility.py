@@ -160,37 +160,26 @@ def list_save(vis_list, filename):
         raise RuntimeError("Unknown visibility file extension {}".format(file_extension))
 
 def list_load(filename):
-    #return from_pkl(filename)
-    vis_list = from_pkl(filename)
-    err_count = 0
-    ret = []
-    for v in vis_list:
-        if isinstance(v, tuple):
-            err_count += 1
-        else:
-            ret.append(v)
-    if err_count>0:
-        print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
-    return ret
+    _, file_extension = os.path.splitext(filename)
 
-    #_, file_extension = os.path.splitext(filename)
-
-    #if ('.pkl' == file_extension):
-        #vis_list = from_pkl(filename)
-        #err_count = 0
-        #ret = []
-        #for v in vis_list:
-            #if isinstance(v, tuple):
-                #err_count += 1
-            #else:
-                #ret.append(v)
-        #if err_count>0:
-            #print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
-        #return ret
-    #if ('.hdf' == file_extension):
-        #pass
-    
-    #raise RuntimeError("Unknown file extension {}".format(file_extension))
+    if ('.pkl' == file_extension):
+        vis_list = from_pkl(filename)
+        err_count = 0
+        ret = []
+        for v in vis_list:
+            if isinstance(v, tuple):
+                err_count += 1
+            else:
+                ret.append(v)
+        if err_count>0:
+            print(('Warning. Visibility file: %s had %i visibilities missing' % (filename, err_count)))
+        return ret
+    elif ('.vis' == file_extension):
+        vis_list = from_pkl(filename)
+    elif ('.hdf' == file_extension):
+        vis_list = from_pkl(filename)
+    else:
+        raise RuntimeError("Unknown file extension {}".format(file_extension))
 
 '''
     Deal with Pickle files (Deprecated in favour of HDF5 files)
