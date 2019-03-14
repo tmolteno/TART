@@ -40,7 +40,7 @@ def download_file(url, checksum=0):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download data from the telescope', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
-    parser.add_argument('--pw', default='password', type=str, help='API password')
+    parser.add_argument('--pw', default='password', required=True, type=str, help='API password')
     parser.add_argument('--dir', type=str, default=".", help='local directory to download')
     parser.add_argument('--raw', action='store_true', help='Download Raw Data in HDF format')
     parser.add_argument('--vis', action='store_true', help='Download Visibility Data in HDF format')
@@ -49,10 +49,13 @@ if __name__ == '__main__':
 
     api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
 
-    print("Raw Data Downloader")
+    print("Downloading Raw Data from {}".format(ARGS.api))
 
     tart_endpoint = ARGS.api + "/"
 
+    if not (ARGS.raw or ARGS.vis):
+        raise RuntimeError("Either --raw or --vis must be specified")
+    
     while True:
         resp_vis = []
         resp_raw = []
@@ -79,5 +82,6 @@ if __name__ == '__main__':
         except Exception as e:
             print("Exception "+str(e))
         finally:
+            print("Pausing.")
             time.sleep(2)
 
