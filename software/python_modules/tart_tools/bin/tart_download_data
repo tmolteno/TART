@@ -6,7 +6,7 @@
 
 import argparse
 import json
-
+import logging
 import os
 import hashlib
 import shutil
@@ -14,6 +14,8 @@ import urllib.request, urllib.error, urllib.parse
 import time
 
 from tart_tools.api_handler import AuthorizedAPIhandler
+
+logger = logging.getLogger()
 
 def sha256_checksum(filename, block_size=65536):
     sha256 = hashlib.sha256()
@@ -23,7 +25,7 @@ def sha256_checksum(filename, block_size=65536):
     return sha256.hexdigest()
 
 def download_file(url, checksum=0, directory="."):
-    print("Download_file({}, {})".format(url, checksum))
+    logger.info("Download_file({}, {})".format(url, checksum))
     file_name = url.split('/')[-1]
     file_path = os.path.join(directory, file_name)
     
@@ -34,7 +36,7 @@ def download_file(url, checksum=0, directory="."):
     if checksum:
         downloaded_checksum = sha256_checksum(file_path)
         if (downloaded_checksum != checksum):
-            print("Removing file: Checksum failed\n{}\n{}".format(checksum, downloaded_checksum))
+            logger.info("Removing file: Checksum failed\n{}\n{}".format(checksum, downloaded_checksum))
             os.remove(file_path)
 
 if __name__ == '__main__':
@@ -47,9 +49,20 @@ if __name__ == '__main__':
 
     ARGS = parser.parse_args()
 
+    logger.setLevel(logging.DEBUG)
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    # create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # add formatter to ch
+    ch.setFormatter(formatter)
+    # add ch to logger
+    logger.addHandler(ch)
+
     api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
 
-    print("Downloading Raw Data from {}".format(ARGS.api))
+    logger.info("Downloading Raw Data from {}".format(ARGS.api))
     os.makedirs(ARGS.dir, exist_ok=True)
     
     tart_endpoint = ARGS.api + "/"
@@ -72,17 +85,17 @@ if __name__ == '__main__':
                     file_name = data_url.split('/')[-1]
                     if os.path.isfile(file_name):
                         if (sha256_checksum(file_name) == entry['checksum']):
-                            print('Skipping', file_name)
+                            logger.info('Skipping', file_name)
                         else:
-                            print('Corrupted File', file_name)
+                            logger.info('Corrupted File', file_name)
                             os.remove(file_name)
                             download_file(data_url, entry['checksum'], ARGS.dir)
                     else:
                         download_file(data_url, entry['checksum'], ARGS.dir)
 
         except Exception as e:
-            print("Exception "+str(e))
+            logger.info("Exception "+str(e))
         finally:
-            print("Pausing.")
+            logger.info("Pausing.")
             time.sleep(2)
 
