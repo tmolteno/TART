@@ -103,7 +103,7 @@ def calc_score_aux(opt_parameters, measurements, window_deg, original_positions)
         ret_zone += 2*zone_score
         
     if (N_IT % 100 == 0):
-        print("{}, {}, {}".format(ret_std, ret_zone))
+        print("{}, {}".format(ret_std, ret_zone))
 
     return (ret_std + ret_zone)/len(measurements), ift_scaled, src_list, n_fft, bin_width
 
