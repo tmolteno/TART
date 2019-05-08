@@ -78,6 +78,16 @@ class AuthorizedAPIhandler(APIhandler):
     # TODO catch the requests result that corresponds to a failed login (authorization expired)
     # and re-authorize automatically.
 
+    def put(self, path, **kwargs):
+        r = requests.put(self.url(path), headers=self.__get_header(), **kwargs)
+        ret = json.loads(r.text)
+        if 'status' in ret and 'sub_status' in ret:
+            if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
+                self.refresh_access_token()
+                return self.put(path, **kwargs)
+        r.raise_for_status()
+        return ret
+
     def post(self, path, **kwargs):
         r = requests.post(self.url(path), headers=self.__get_header(), **kwargs)
         ret = json.loads(r.text)
