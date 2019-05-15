@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#
+# Get Calibration Data from the TART telescope
+#
 import argparse
 import numpy as np
 import time
