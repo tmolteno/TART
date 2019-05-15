@@ -33,16 +33,17 @@ Install docker on the raspberry pi. This is done by following commands.
     newgrp docker
     sudo pip install docker-compose
 
-### Step 1. Copy code to the Pi
+### Step 2. Copy code to the Pi
 
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
 
-    TARGET=pi@tart2-dev
+    TARGET=pi@tart2-dev.local
+    (cd ../software/containers/telescope_web_api && sh pre_build.sh);
+    rsync -rv --exclude=node_modules ../software ${TARGET}:.
+    
+There is a script, /scripts/install_pi.sh, which performs this task.
 
-    rsync -rv software ${TARGET}:.
-    rsync -rv hardware ${TARGET}:.
-
-### Step 2. Build on the Pi
+### Step 3. Build on the Pi
 
 SSH into the raspberry pi after completing step 1.
 
@@ -51,7 +52,16 @@ SSH into the raspberry pi after completing step 1.
 
 This will build all the necessary sofware on the Pi. To run all the software an services. Type
 
+    docker-compose up
+
+This will launch all the necessary processes in docker containers on the pi.
+
+### Step 4.
+
+To make the system start automatically at startup (and run in the background) modify the line in step 3 to
+
     docker-compose up -d
+
 
 ### Testing
 
