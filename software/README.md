@@ -67,7 +67,12 @@ To make the system start automatically at startup (and run in the background) mo
 
 Point your browser to the raspberry pi (http://tart2-dev.local). You should see the telescope web interface. 
 
-Further software installation information cab be found in [software/README.md](software/README.md).
+On a different computer, you should be able to download data from the command line using the web api.
+
+    sudo pip3 install tart_tools
+    tart_download_data --api http://tart2-dev.local --pw <passwd> --raw 
+    
+This should download some HDF files to your local machine. These can be checked using the HDFCompass programme (apt install hdf-compass)
 
 
 #### Documentation Server
