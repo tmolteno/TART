@@ -147,11 +147,13 @@ class EmpiricalAntenna(AntennaModel):
     def get_gain(self, el, az, n_pix=4, nside_exp_grid=10, nside_exp_syn=10, lmax=4, mmax=4, interpolate='default'):
         if (self.recalculate):
             self.recalculate = False
+            self.values = np.array(self.values)
+            self.distances = np.array(self.distances)
             self.i_map, self.pixel_dict = gen_interpolation_map(self.points, self.values, self.antenna_num, nside_exp_grid)
             if interpolate=='increasing_neighborhood':
                 self.interp_gain = lambda el, az: hp_interpolator(self.i_map, el, az, n_pix)
 
-                interp_gain()
+                #self.interp_gain(el, az)
                 np.power(2, nside_exp_syn)
                 self.norm_map = self.i_map
             else:
@@ -203,6 +205,30 @@ class EmpiricalAntenna(AntennaModel):
         return ret
 
     @classmethod
+    def from_data(self, antenna_num, el, az, gain, dates, svs):
+        ret = EmpiricalAntenna(antenna_num)
+        print("Ant # {}. Data has {} entries".format(antenna_num, len(el)))
+        
+        points = []
+        sv = []
+        values = []
+        times = []
+        for _el, _az, _gain, _date, _sv in zip(el, az, gain, dates, svs):
+            if ~np.isnan(_gain):
+                points.append((_el, _az))
+                values.append(_gain)
+                times.append(_date)
+                sv.append(_sv)
+        ret.times = times
+        ret.points = points
+        ret.values = values
+        ret.sv = sv
+        
+        ret.recalculate = True
+        return ret
+    
+    
+    @classmethod
     def from_db(self, antenna_num, db_file=None, table='gps_signals'):
         ret = EmpiricalAntenna(antenna_num)
         conn, sql = db_connect(db_file, table=table)
@@ -211,6 +237,7 @@ class EmpiricalAntenna(AntennaModel):
         #c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND el>15 AND correlation<6 AND date<%(ph)s"), (antenna_num, "2013-11-25"))
         # c.execute(sql("SELECT el, az, correlation, date FROM gps_signals WHERE (antenna=%(ph)s) AND date<%(ph)s"), (antenna_num, "2013-11-25"))
         pval = c.fetchall()
+        conn.close()
         print("Database has {} entries".format(len(pval)))
         points = []
         sv = []
@@ -230,5 +257,4 @@ class EmpiricalAntenna(AntennaModel):
         ret.sv = sv
         ret.distances = distances
         ret.recalculate = True
-        conn.close()
         return ret
