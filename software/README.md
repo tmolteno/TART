@@ -26,12 +26,12 @@ The following procedure will install all the necessary TART software on a Raspbe
 ### Step 1. Prepare the Pi
 
 Install docker on the raspberry pi. This is done by following commands.
-
+    sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev
+    
     curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
-    sudo groupadd docker
-    sudo gpasswd -a $USER docker
-    newgrp docker
-    sudo pip install docker-compose
+    sudo usermod -aG docker $USER
+    sudo pip3 install docker-compose
+    sudo reboot
 
 ### Step 2. Copy code to the Pi
 
@@ -49,6 +49,7 @@ SSH into the raspberry pi after completing step 1.
 
     cd software
     docker-compose build
+This last step can take ages (around 1 hour or so)
 
 This will build all the necessary sofware on the Pi. To run all the software an services. Type
 
