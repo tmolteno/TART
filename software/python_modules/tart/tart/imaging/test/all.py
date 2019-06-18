@@ -3,11 +3,9 @@ import unittest
 
 from tart.imaging.test.test_correlator import TestCorrelator
 from tart.imaging.test.test_correlator import TestHilbert
-from tart.imaging.test.test_correlator import TestFxCorrelator
 from tart.imaging.test.test_antenna_model import TestAntennaModel
 from tart.imaging.test.test_correlator import TestCorrelator
 from tart.imaging.test.test_correlator import TestHilbert
-from tart.imaging.test.test_correlator import TestFxCorrelator
 from tart.imaging.test.test_ephemerides_proxy import TestEphemeridesProxy
 from tart.imaging.test.test_ephemeris import TestEphemeris
 from tart.imaging.test.test_gps_satellite import TestGpsSatellite
