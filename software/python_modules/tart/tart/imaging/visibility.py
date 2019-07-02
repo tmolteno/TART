@@ -108,6 +108,9 @@ class Visibility:
             ret += " V(%s)=%g, I%g" % (str(b), np.abs(self.v[i]), np.angle(self.v[i]))
         return ret
 
+    def __repr__(self):
+        return "vis(ts={})".format(self.timestamp)
+
 
 
 def Visibility_Lsq(vis1, vis2):
@@ -155,7 +158,7 @@ def list_save(vis_list, filename):
     elif ('.vis' == file_extension):
         to_pkl(vis_list, filename)
     elif ('.hdf' == file_extension):
-        to_pkl(vis_list, filename)
+        to_hdf5(vis_list, filename)
     else:
         raise RuntimeError("Unknown visibility file extension {}".format(file_extension))
 
@@ -178,7 +181,7 @@ def list_load(filename):
         vis_list = from_pkl(filename)
         return vis_list
     elif ('.hdf' == file_extension):
-        vis_list = from_pkl(filename)
+        vis_list = from_hdf5(filename)
         return vis_list
     else:
         raise RuntimeError("Unknown file extension {}".format(file_extension))
@@ -204,40 +207,60 @@ def from_pkl(filename):
     Deal with HDF5 Files
 '''
 
-def to_hdf5(vis, filename):
+def to_hdf5(vis_list, filename):
     ''' Save the Observation object,
         to a portable HDF5 format
     '''
+    if not isinstance(vis_list, list):
+        raise RuntimeError("vis_list must be a list of visibility objects")
+    
+    vis0 = vis_list[0]
+    
+    vis_data = [vis.v for vis in vis_list]
+    vis_ts = [vis.timestamp.isoformat() for vis in vis_list]
+
+            
     with h5py.File(filename, "w") as h5f:
-        dt = h5py.special_dtype(vlen=bytes)
+        dt = h5py.special_dtype(vlen=str)
+        conftype = h5py.special_dtype(vlen=bytes)
         
-        conf_dset = h5f.create_dataset('config', (1,), dtype=dt)
-        conf_dset[0] = vis.config.to_json()
+        conf_dset = h5f.create_dataset('config', (1,), dtype=conftype)
+        conf_dset[0] = vis0.config.to_json()
+        h5f.create_dataset('phase_elaz', data=[vis0.phase_el.to_degrees(), vis0.phase_az.to_degrees()])
+        h5f.create_dataset('baselines', data=vis0.baselines)
+        
+        h5f.create_dataset('vis', data=np.array(vis_data))
+        h5f.create_dataset("timestamp", data=np.array(vis_ts, dtype=object), dtype=dt)
+        
+        #ts_dset = h5f.create_dataset('timestamp', (len(vis_ts),), dtype=dt)
+        #for i,ts in enumerate(vis_ts):
+            #print(ts)
+            #ts_dset[i] = ts
 
-        ts_dset = h5f.create_dataset('timestamp', (1,), dtype=dt)
-        ts_dset[0] = vis.timestamp.isoformat()
-
-        h5f.create_dataset('baselines', data=vis.baselines)
-        h5f.create_dataset('vis', data=vis.v)
-
-        h5f.create_dataset('phase_elaz', data=[vis.phase_el.to_degrees(), vis.phase_az.to_degrees()])
 
 def from_hdf5(filename):
     ''' Load the Visibility object,
         from a portable HDF5 format
     '''
+    
+    ret = []
+    
     with h5py.File(filename, "r") as h5f:
         config_json = np.string_(h5f['config'][0])
         config = settings.from_json(config_json)
-        timestamp = dateutil.parser.parse(h5f['timestamp'][0])
-        
-        hdf_vis = h5f['vis'][:]
         hdf_baselines = h5f['baselines'][:]
         hdf_phase_elaz = h5f['phase_elaz'][:]
 
-    ret = Visibility(config=config, timestamp=timestamp)
-    ret.set_visibilities(v=hdf_vis, b=hdf_baselines)
-    ret.phase_el = hdf_phase_elaz[0]
-    ret.phase_az = hdf_phase_elaz[1]
-    
+        hdf_timestamps = h5f['timestamp']
+        timestamps = [dateutil.parser.parse(x) for x in hdf_timestamps]
+        
+        hdf_vis = h5f['vis'][:]
+
+        for ts, v in zip(timestamps, hdf_vis):
+            vis = Visibility(config=config, timestamp=ts)
+            vis.set_visibilities(v=v, b=hdf_baselines)
+            vis.phase_el = hdf_phase_elaz[0]
+            vis.phase_az = hdf_phase_elaz[1]
+            ret.append(vis)
+
     return ret

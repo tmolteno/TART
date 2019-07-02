@@ -2,6 +2,7 @@ import unittest
 import datetime
 import h5py
 import numpy as np
+import time
 
 from tart.util import skyloc
 from tart.util import angle
@@ -27,7 +28,7 @@ def dummy_vis():
 
 def dummy_vis_list():
     ret = []
-    for i in range(10):
+    for i in range(2):
         ret.append(dummy_vis())
     return ret 
 
@@ -41,6 +42,7 @@ class TestVisibility(unittest.TestCase):
         delta = np.sum(np.abs(np.array(dut.v) - np.array(dut2.v)))
         self.assertTrue( delta <= 1.0e10 )
         self.assertTrue((np.array(dut.baselines) == np.array(dut2.baselines)).all())
+        self.assertEqual(dut.timestamp, dut2.timestamp)
         
         keys = dut.config.Dict.keys()
         for k in keys:
@@ -55,24 +57,24 @@ class TestVisibility(unittest.TestCase):
     def test_list_load_save_hdf(self):
         dut_list = dummy_vis_list()
         fname = 'test_vis_list_io.hdf'
-        visibility.list_save(self.v_array, fname)
+        visibility.list_save(dut_list, fname)
         dut2_list = visibility.list_load(fname)
-        for dut, dut2 in zip(dut_list, dut2_list):
-            self.check_vis(dut, dut2)
+        for x, y in zip(dut_list, dut2_list):
+            self.check_vis(x, y)
     
     def test_list_load_save_pkl(self):
         dut_list = dummy_vis_list()
         fname = 'test_vis_list_io.pkl'
-        visibility.list_save(self.v_array, fname)
+        visibility.list_save(dut_list, fname)
         dut2_list = visibility.list_load(fname)
         for dut, dut2 in zip(dut_list, dut2_list):
             self.check_vis(dut, dut2)
     
     def test_hdf5(self):
         dut = dummy_vis()
-        visibility.to_hdf5(dut, 'test_vis.hdf')
+        visibility.to_hdf5([dut], 'test_vis.hdf')
         dut2 = visibility.from_hdf5('test_vis.hdf')
-        self.check_vis(dut, dut2)
+        self.check_vis(dut, dut2[0])
     
     def test_pkl(self):
         dut = dummy_vis()

@@ -297,9 +297,11 @@ class TartControl():
                 if len(self.vislist) >= chunksize:
                     logging.info('reached chunksize of {}'.format(chunksize))
                     if self.config['vis']['save'] == 1:
-                        fname = "{}/vis_{}.vis".format(self.config['vis']['base_path'], 
+                        fname = "{}/vis_{}.hdf".format(self.config['vis']['base_path'], 
                                                    vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
-                        visibility.Visibility_Save(self.vislist, fname)
+                        # visibility.Visibility_Save(self.vislist, fname)
+                        visibility.list_save(self.vislist, fname)
+                        
                         logging.info("saved to {}".format(vis, fname))
                         ret['filename'] = fname
                         ret['sha256'] = sha256_checksum(fname)

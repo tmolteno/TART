@@ -14,7 +14,7 @@ def init_config(manager):
     runtime_config['verbose'] = False
     runtime_config['centre'] = True
     runtime_config['modes_available'] = ['off', 'diag', 'raw', 'vis', 'vis_save', 'cal', 'rt_syn_img']
-    runtime_config['mode'] = 'off'
+    runtime_config['mode'] = 'vis'
     runtime_config['loop_mode'] = 'loop'
     runtime_config['loop_mode_available'] = ['loop', 'single', 'loop_n']
     runtime_config['loop_n'] = 5
