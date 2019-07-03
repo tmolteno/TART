@@ -13,7 +13,7 @@ TARGET=pi@tart2-pear
 
 (cd ../software/containers/telescope_web_api && sh pre_build.sh);
 
-rsync -rv --exclude=node_modules ../software ${TARGET}:.
+rsync -rv --exclude=node_modules --exclude='*.hdf' ../software ${TARGET}:.
 
 # Then install docker and docker-compose on the target raspberry pi
 # 
