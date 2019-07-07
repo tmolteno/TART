@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Http, Response } from '@angular/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Rx';
 import { PlatformLocation } from '@angular/common';
 
@@ -16,7 +17,8 @@ export class ModeService {
     private modeObserver: any;
 
     constructor(
-        private http: Http,
+        private http: HttpClient,
+        private old_http: Http,
         private authService: AuthService,
         private platformLocation: PlatformLocation
     ) {
@@ -27,17 +29,11 @@ export class ModeService {
     }
 
     getModes() {
-        return this.http.get(`${this.apiUrl}/mode`)
-            .map((res: Response) => {
-                return res.json().modes;
-            });
+        return this.http.get(`${this.apiUrl}/mode`)['modes'];
     }
 
     getOperatingMode() {
-        return this.http.get(`${this.apiUrl}/mode/current`)
-            .map((res: Response) => {
-                return res.json().mode;
-            });
+        return this.http.get(`${this.apiUrl}/mode/current`)['mode'];
     }
 
     setOperatingMode(mode: string) {
@@ -49,7 +45,7 @@ export class ModeService {
             return Observable.throw(new TypeError('mode parameter is not an operating mode.'));
         }
         let options = this.authService.getAuthRequestOptions();
-        return this.http.post(`${this.apiUrl}/mode/${mode}`, {}, options)
+        return this.old_http.post(`${this.apiUrl}/mode/${mode}`, {}, options)
             .map((res: Response) => {
                 return res.json();
             })

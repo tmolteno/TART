@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 import { LoadingBarHttpModule } from '@ngx-loading-bar/http';
 import { PopoverModule } from 'ngx-popover';
 import { IsoTimestampDisplay } from './pipes/display-timestamp-pipe';
@@ -126,6 +127,7 @@ const appRoutes = [
     BrowserModule,
     FormsModule,
     HttpModule,
+    HttpClientModule,
     PopoverModule,
     NouisliderModule,
     ChartsModule
