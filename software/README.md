@@ -32,6 +32,13 @@ Install docker on the raspberry pi. This is done by following commands.
     sudo usermod -aG docker $USER
     sudo pip3 install docker-compose
     sudo reboot
+    
+Debian Buster:
+
+    sudo apt install docker.io docker-compose
+    sudo usermod -aG docker $USER
+    sudo reboot
+    
 
 ### Step 2. Copy code to the Pi
 

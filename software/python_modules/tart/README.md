@@ -30,3 +30,4 @@ Changelog:
 * Version 1.0.0. Rework database stuff for empirical antennas. New tests.
 * Version 1.1b.0 Add hdf5 IO
 * Version 1.1b.3 Rework empirical antenna model.
+* Version 1.1b.4 Fix hdf5 visibility output.
