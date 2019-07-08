@@ -52,6 +52,7 @@
     "karma-chrome-launcher": "^2.0.0",
     "karma-cli": "^2.0.0",
     "karma-jasmine": "^2.0.1",
+    "karma-remap-istanbul": "^0.6.0",
     "nyc": "^13.3.0",
     "protractor": "^5.4.2",
     "snyk": "^1.134.2",
