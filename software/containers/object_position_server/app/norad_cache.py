@@ -130,6 +130,19 @@ class GalileoCache(EphemerisFileCache):
     def create_object_from_file(self, local_path):
         return Sp4Ephemerides(local_path, 1.5e6)
 
+
+class BeidouCache(EphemerisFileCache):
+    
+    def __init__(self):
+        EphemerisFileCache.__init__(self, "norad_beidou")
+
+    def get_url(self, utc_date):
+        return "https://www.celestrak.com/NORAD/elements/beidou.txt"
+
+    def create_object_from_file(self, local_path):
+        return Sp4Ephemerides(local_path, 1.5e6)
+
+    
     
 if __name__=="__main__":
     cache = NORADCache()

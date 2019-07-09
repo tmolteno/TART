@@ -17,7 +17,7 @@ export class ModeService {
     private modeObserver: any;
 
     constructor(
-        private http: HttpClient,
+        private httpClient: HttpClient,
         private old_http: Http,
         private authService: AuthService,
         private platformLocation: PlatformLocation
@@ -29,11 +29,11 @@ export class ModeService {
     }
 
     getModes() {
-        return this.http.get(`${this.apiUrl}/mode`)['modes'];
+        this.httpClient.get(`${this.apiUrl}/mode`);
     }
 
     getOperatingMode() {
-        return this.http.get(`${this.apiUrl}/mode/current`)['mode'];
+        return this.httpClient.get(`${this.apiUrl}/mode/current`);
     }
 
     setOperatingMode(mode: string) {

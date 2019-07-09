@@ -36,7 +36,7 @@ export class ModeComponent implements OnInit {
     getActiveMode() {
         this.modeService.getOperatingMode()
             .subscribe(mode => {
-                this.currentMode = mode;
+                this.currentMode = mode['mode'];
                 this.ref.detectChanges();
             });
     }

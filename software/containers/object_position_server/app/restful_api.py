@@ -18,6 +18,8 @@ waas_cache = norad_cache.NORADCache()
 extra_cache = norad_cache.ExtraCache()
 gps_cache = norad_cache.GPSCache()
 galileo_cache = norad_cache.GalileoCache()
+beidou_cache = norad_cache.BeidouCache()
+
 sun = sun_object.SunObject()
 
 def parse_date(request):
@@ -86,6 +88,7 @@ def get_catalog():
     ret = waas_cache.get_az_el(date, lat, lon, alt)
     ret += gps_cache.get_az_el(date, lat, lon, alt)
     ret += galileo_cache.get_az_el(date, lat, lon, alt)
+    ret += beidou_cache.get_az_el(date, lat, lon, alt)
     ret += extra_cache.get_az_el(date, lat, lon, alt)
     ret += sun.get_az_el(date, lat, lon, alt)
     return jsonify(ret)
@@ -108,6 +111,7 @@ def get_pos():
         ret += gps_cache.get_positions(date)
         ret += extra_cache.get_positions(date)
         ret += galileo_cache.get_positions(date)
+        ret += beidou_cache.get_positions(date)
         return jsonify(ret)
     except Exception as err:
         tb = traceback.format_exc()

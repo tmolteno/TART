@@ -35,7 +35,7 @@ export class InfoComponent {
             this.numAntenna = info.num_antenna;
         });
         this.modeService.getOperatingMode().subscribe(currentMode => {
-            this.mode = currentMode;
+            this.mode = currentMode['mode'];
         })
     }
 }
