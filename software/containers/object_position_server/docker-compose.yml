@@ -8,6 +8,8 @@ services:
         ports:
             - 8876:8876
         restart: always
+        environment:
+            - FLASK_DEBUG=0
         volumes:
             - ~/catalog_cache:/object_position_server/orbit_data
         logging:
