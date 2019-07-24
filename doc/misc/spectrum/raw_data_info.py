@@ -156,7 +156,7 @@ if __name__ == '__main__':
         power, freq = ret[i]
         ax = axarr.ravel()[i]
         plot_spectrum(power, freq, ax=ax, fontsize=9)
-        plot_spectrum(power, freq, ax=axarr2, color=pp.colors[i%6], linestyle=pp.linestyles[i/6], linewidth=pp.linewidth, fontsize=9)
+        plot_spectrum(power, freq, ax=axarr2, color=pp.colors[i%6], linestyle=pp.linestyles[i//6], linewidth=pp.linewidth, fontsize=9)
         ax.legend([i,],fontsize=9, loc=3)
 
     else:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
         d_corrected = d - d.mean()
         power, freq = get_psd(d_corrected, fs, nfft=2**ARGS.exp)
         plot_spectrum(power, freq, ax=ax, fontsize=9)
-        plot_spectrum(power, freq, ax=axarr2, color=pp.colors[i%6], linestyle=pp.linestyles[i/6], linewidth=pp.linewidth, fontsize=9)
+        plot_spectrum(power, freq, ax=axarr2, color=pp.colors[i%6], linestyle=pp.linestyles[i//6], linewidth=pp.linewidth, fontsize=9)
         ax.legend([i,],fontsize=9, loc=3)
 
     axarr2.legend(np.arange(24), ncol=2)

@@ -11,6 +11,6 @@ log out of the web interface, and in the main screen a list of raw data files wi
 
 ## Usage:
 
-    python raw_data_info.py --file ~/data/23_36_51.819267_data.pkl --show --spectrum
+    python3 raw_data_info.py --file ~/data/23_36_51.819267_data.hdf --show --spectrum
 
     
