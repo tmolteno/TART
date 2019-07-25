@@ -127,4 +127,5 @@ if __name__ == '__main__':
     plt.xlim(-1, 1)
     plt.ylim(-1, 1)
     cb = plt.colorbar()
+    plt.savefig('raw_image.jpg')
     plt.show()

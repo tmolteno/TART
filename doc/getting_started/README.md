@@ -26,3 +26,8 @@ The script 'image_from_raw.py' create  a very basic image from visibilities down
 First download a data file from the telescope web front end (remember to set the telescope to 'raw' mode and check the 'save data' option) to get a recent file. Then execute the following file:
 
     python3 image_from_raw.py --file  ~/Downloads/data_2019-07-24_22_47_14.353231.hdf
+
+ ![Image generated from raw data][raw_image] 
+
+    
+[raw_image]: https://github.com/tmolteno/TART/blob/master/doc/getting_started/raw_image.jpg "TART Raw Data Image"
