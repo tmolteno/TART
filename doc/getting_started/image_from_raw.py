@@ -37,7 +37,6 @@ if __name__ == '__main__':
     #                                    Step 0. Use the API to get information 
     #
     #############################################################################################################
-
     API_SERVER = 'https://tart.elec.ac.nz/signal'
     api = api_handler.APIhandler(API_SERVER)
     
@@ -48,8 +47,6 @@ if __name__ == '__main__':
     phases = np.array(calibration_gains['phase_offset'])
 
 
-    
-    
     
     #############################################################################################################
     #
@@ -69,16 +66,16 @@ if __name__ == '__main__':
     baselines = np.asarray(vis.baselines)
     v_arr = np.asarray(vis.v)
 
+
     #############################################################################################################
     #
     #                                    Step 2. Apply the calibration gains and phases 
     #
     #############################################################################################################
-
-
     ## Multiply the visiblities by the complex gains
     bl = baselines
     vis_l = v_arr * gains[bl[:,0]] * gains[bl[:,1]] * np.exp(-1j*(phases[bl[:,0]]-phases[bl[:,1]]))
+
 
     #############################################################################################################
     #
@@ -88,14 +85,10 @@ if __name__ == '__main__':
     num_bin = 2**9  # Image resolution
     nw=num_bin/4
 
-    # Get antenna posititions in UV plane
-    #ant_pos = np.asarray(vis.config.get_antenna_positions())
-
     bl_pos = ant_pos[baselines]
     uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
 
-
-    # Bin the visibilities in the UV plane.
+    # Grid the visibilities in the UV plane.
     uu_edges = np.linspace(-nw, nw, num_bin+1)
     vv_edges = np.linspace(-nw, nw, num_bin+1)
 
@@ -113,17 +106,17 @@ if __name__ == '__main__':
 
     cal_ift = np.fft.fftshift(fft.ifft2(np.fft.ifftshift(uv_plane)))
 
-    # Take the absolute value 
+    # Take the absolute value to make an intensity image
     img = np.abs(cal_ift)
     # Scale it to multiples of the image standard deviation
     img /= np.std(img)
+
 
     #############################################################################################################
     #
     #                                    Step 4. Plot the image.
     #
     #############################################################################################################
-    
     plt.figure(figsize=(8, 6), dpi=num_bin/6)
     plt.title("Inverse FFT image")
 
