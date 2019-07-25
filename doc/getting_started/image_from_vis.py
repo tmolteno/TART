@@ -1,12 +1,12 @@
 '''
-    Simple TART imaging script
+    Simple TART imaging script from api visibilities.
 
-    Tim Molteno 2018.
+    Tim Molteno 2018-2019.
 
     This requires the TART api_imaging and api_handler packages to be installed on your system
     from the public repositories:
 
-    sudo pip install api_imaging api_handler
+    sudo pip3 install tart_tools
 '''
 
 import numpy as np
