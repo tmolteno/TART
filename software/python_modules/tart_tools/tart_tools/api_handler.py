@@ -10,6 +10,9 @@ import requests
 
 from tart.operation import settings
 
+# Default timeout
+TIMEOUT=15.0
+
 class APIhandler(object):
     def __init__(self, api_root):
         self.root = api_root
@@ -28,7 +31,7 @@ class APIhandler(object):
 
 
     def get_url(self, url):
-        r = requests.get(url)
+        r = requests.get(url, timeout=TIMEOUT)
         r.raise_for_status()
         return json.loads(r.text)
 
@@ -53,7 +56,8 @@ class AuthorizedAPIhandler(APIhandler):
 
     def refresh_access_token(self):
         r = requests.post(self.url('refresh'),
-                          headers=self.__get_refresh_header())
+                          headers=self.__get_refresh_header(),
+                          timeout=TIMEOUT)
         resp_json = json.loads(r.text)
         if 'access_token' in resp_json:
             self.token = resp_json['access_token']
@@ -61,7 +65,8 @@ class AuthorizedAPIhandler(APIhandler):
        
     def __post_payload(self, path, payload_dict):
         ''' Currently only used for login() '''
-        r = requests.post(self.url(path), json=payload_dict)
+        r = requests.post(self.url(path), 
+                          json=payload_dict, timeout=TIMEOUT)
         r.raise_for_status()
         return json.loads(r.text)
  
@@ -79,7 +84,9 @@ class AuthorizedAPIhandler(APIhandler):
     # and re-authorize automatically.
 
     def put(self, path, **kwargs):
-        r = requests.put(self.url(path), headers=self.__get_header(), **kwargs)
+        r = requests.put(self.url(path), 
+                         headers=self.__get_header(), 
+                         timeout=TIMEOUT, **kwargs)
         ret = json.loads(r.text)
         if 'status' in ret and 'sub_status' in ret:
             if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
@@ -89,7 +96,9 @@ class AuthorizedAPIhandler(APIhandler):
         return ret
 
     def post(self, path, **kwargs):
-        r = requests.post(self.url(path), headers=self.__get_header(), **kwargs)
+        r = requests.post(self.url(path), 
+                          headers=self.__get_header(),
+                          timeout=TIMEOUT, **kwargs)
         ret = json.loads(r.text)
         if 'status' in ret and 'sub_status' in ret:
             if ((ret['status'] == 401) and (ret['sub_status'] == 101)):

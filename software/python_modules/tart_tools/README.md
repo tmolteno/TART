@@ -41,7 +41,8 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
-* Version 0.1.5. Python3 compatability changes
-* Version 0.2.0. New tart_download_data function.
-* Version 0.2.0b7. Fix typo in tart_calibrate that stopped calibration working.
+* Version 0.2.0b9. Add a timeout to all HTTP requests.
 * Version 0.2.0b8. Add a put method to the authorized api handler.
+* Version 0.2.0b7. Fix typo in tart_calibrate that stopped calibration working.
+* Version 0.2.0. New tart_download_data function.
+* Version 0.1.5. Python3 compatability changes
