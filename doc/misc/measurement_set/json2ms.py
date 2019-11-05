@@ -12,13 +12,10 @@ from numpy.testing import assert_array_equal
 
 from daskms import Dataset, xds_to_table
 
-def test_ms_create(tmp_path, chunks, num_chans, corr_types, sources):
+def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
     # Set up
     rs = np.random.RandomState(42)
 
-    ms_path = os.path.join(tmp_path, "create.ms")
-
-    ms_table_name = str(ms_path)
     ant_table_name = "::".join((ms_table_name, "ANTENNA"))
     ddid_table_name = "::".join((ms_table_name, "DATA_DESCRIPTION"))
     pol_table_name = "::".join((ms_table_name, "POLARIZATION"))
@@ -238,7 +235,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Generate measurement set from a JSON file from the TART radio telescope.', 
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--json', required=True, default=None, help="Snapshot observation saved JSON file (visiblities, positions and more).")
-    parser.add_argument('--dir', required=False, default='.', help="Output directory.")
+    parser.add_argument('--ms', required=False, default='tart.ms', help="Output MS table.")
 
     ARGS = parser.parse_args()
 
@@ -251,4 +248,4 @@ if __name__=="__main__":
     sources = [("PKS-1934", [5.1461782, -1.11199629], [0.9*.856e9, 1.1*.856e9]),
                ("3C286",  [3.53925792, 0.53248541], [0.8*.856e9, .856e9, 1.2*.856e9])]
 
-    test_ms_create(tmp_path=ARGS.dir, chunks=chunks, num_chans = [16, 32], corr_types=corr_types, sources=sources)
+    test_ms_create(ms_table_name=ARGS.ms, chunks=chunks, num_chans = [16, 32], corr_types=corr_types, sources=sources)
