@@ -1,16 +1,26 @@
-import os
 import numpy as np
 
 import dask
 import dask.array as da
 from itertools import product
-# sudo aptitude install python3-casacore
-# sudo pip3 install dask-ms
+
+
+from tart.operation import settings
+
+from tart_tools import api_handler
+from tart_tools import api_imaging
+from tart.imaging import elaz
+
+import json
+import logging
 
 import pyrap.tables as pt
 from numpy.testing import assert_array_equal
 
 from daskms import Dataset, xds_to_table
+
+logger = logging.getLogger()
+
 
 def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
     # Set up
@@ -238,6 +248,24 @@ if __name__=="__main__":
     parser.add_argument('--ms', required=False, default='tart.ms', help="Output MS table.")
 
     ARGS = parser.parse_args()
+
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    
+
+    logger.info("Getting Data from file: {}".format(ARGS.json))
+    # Load data from a JSON file
+    with open(ARGS.json, 'r') as json_file:
+        calib_info = json.load(json_file)
+
+    info = calib_info['info']
+    ant_pos = calib_info['ant_pos']
+    config = settings.from_api_json(info['info'], ant_pos)
+
 
     chunks = {
         "row": (10,),
