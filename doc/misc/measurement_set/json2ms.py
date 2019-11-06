@@ -1,3 +1,12 @@
+'''
+    A quick attempt to get TART JSON data into a measurement set.
+    Author: Tim Molteno
+
+    Official Documentation is Here.
+        https://casa.nrao.edu/Memos/229.html#SECTION00044000000000000000
+
+    License. GPLv3.
+'''
 import numpy as np
 
 import dask
@@ -21,7 +30,62 @@ from daskms import Dataset, xds_to_table
 
 logger = logging.getLogger()
 
+'''
+The following from Oleg Smirnov.
 
+>
+> * We have a single circular polarization that I've labelled 1 (from FITS scheme I googled somewhere. Could use RR I guess).
+
+Ah, my favourite bit of the MS documentation! According to
+https://casa.nrao.edu/Memos/229.html#SECTION000613000000000000000, we
+have CORR_TYPE: An integer for each correlation product indicating the
+Stokes type as defined in the Stokes class enumeration.
+
+And where does a naive user find this mysterious "Stokes class
+enumeration"? Why, it's in the C++ source code itself! Voila:
+https://casa.nrao.edu/active/docs/doxygen/html/classcasa_1_1Stokes.html.
+And they don't even give you the numbers! You have to use your fingers
+to count them off, old school. And how were you supposed to know about
+this? I have no idea -- the only reason I know about this is because I
+worked with the AIPS++ codebase back in the day...
+
+Anyway, here's a Python list version of the enumeration, if it helps:
+'''
+MS_STOKES_ENUMS = {
+            "Undefined": 0, 
+            "I": 1, 
+            "Q": 2, 
+            "U": 3, 
+            "V": 4, 
+            "RR": 5, 
+            "RL": 6, 
+            "LR": 7, 
+            "LL": 8,
+            "XX": 9, 
+            "XY": 10, 
+            "YX": 11, 
+            "YY": 12, 
+            "RX": 13, 
+            "RY": 14, 
+            "LX": 15, 
+            "LY": 16, 
+            "XR": 17, 
+            "XL": 18, 
+            "YR": 19,
+            "YL": 20,
+            "PP": 21, 
+            "PQ": 22, 
+            "QP": 23, 
+            "QQ": 24, 
+            "RCircular": 25, 
+            "LCircular": 26, 
+            "Linear": 27,
+            "Ptotal": 28, 
+            "Plinear": 29, 
+            "PFtotal": 30, 
+            "PFlinear": 31, 
+            "Pangle": 32}
+ 
 def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sources):
     # Set up
     '''    "info": {
@@ -47,6 +111,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     rs = np.random.RandomState(42)
 
     ant_table_name = "::".join((ms_table_name, "ANTENNA"))
+    feed_table_name = "::".join((ms_table_name, "FEED"))
     ddid_table_name = "::".join((ms_table_name, "DATA_DESCRIPTION"))
     pol_table_name = "::".join((ms_table_name, "POLARIZATION"))
     spw_table_name = "::".join((ms_table_name, "SPECTRAL_WINDOW"))
@@ -55,6 +120,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
 
     ms_datasets = []
     ant_datasets = []
+    feed_datasets = []
     ddid_datasets = []
     pol_datasets = []
     spw_datasets = []
@@ -64,20 +130,38 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     all_data_desc_id = []
     all_data = []
 
-    # Create ANTENNA dataset of 64 antennas
+    # Create ANTENNA dataset
     # Each column in the ANTENNA has a fixed shape so we
     # can represent all rows with one dataset
     na = len(ant_pos)
-    position = da.asarray(ant_pos)
-    offset = da.zeros((na, 3))
+    position = da.zeros((na, 3))
+    diameter = da.ones(na) * 0.025
+    offset = da.asarray(ant_pos)
     names = np.array(['ANTENNA-%d' % i for i in range(na)], dtype=np.object)
+    stations = np.array([info['name'] for i in range(na)], dtype=np.object)
     
     ds = Dataset({
         'POSITION': (("row", "xyz"), position),
         'OFFSET': (("row", "xyz"), offset),
+        'DISH_DIAMETER': (("row",), diameter),
         'NAME': (("row",), da.from_array(names, chunks=na)),
+        'STATION': (("row",), da.from_array(stations, chunks=na)),
     })
     ant_datasets.append(ds)
+
+    # Create a FEED dataset. There is one feed per antenna, so this should be quite similar to the ANTENNA
+    antenna_ids = da.asarray(range(na))
+    feed_ids = da.zeros(na)
+    num_receptors = da.ones(na)
+    polarization_types = np.array([['RR'] for i in range(na)], dtype=np.object)
+
+    ds = Dataset({
+        'ANTENNA_ID': (("row",), antenna_ids),
+        'FEED_ID': (("row",), feed_ids),
+        'NUM_RECEPTORS': (("row",), num_receptors),
+        'POLARIZATION_TYPE': (("row", "chan",), da.from_array(polarization_types, chunks=na)),
+    })
+    feed_datasets.append(ds)
 
     # Create SOURCE datasets
     print(sources)
@@ -106,8 +190,11 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         dask_num_corr = da.full((1,), len(corr_type), dtype=np.int32)
         dask_corr_type = da.from_array(corr_type,
                                        chunks=len(corr_type))[None, :]
+        dask_corr_type = da.from_array(corr_type,
+                                       chunks=len(corr_type))[None, :]
         ds = Dataset({
             "NUM_CORR": (("row",), dask_num_corr),
+            #"CORR_PRODUCT": (("row",), dask_num_corr),
             "CORR_TYPE": (("row", "corr"), dask_corr_type),
         })
 
@@ -181,6 +268,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
 
     ms_writes = xds_to_table(ms_datasets, ms_table_name, columns="ALL")
     ant_writes = xds_to_table(ant_datasets, ant_table_name, columns="ALL")
+    feed_writes = xds_to_table(feed_datasets, feed_table_name, columns="ALL")
     pol_writes = xds_to_table(pol_datasets, pol_table_name, columns="ALL")
     spw_writes = xds_to_table(spw_datasets, spw_table_name, columns="ALL")
     ddid_writes = xds_to_table(ddid_datasets, ddid_table_name, columns="ALL")
@@ -188,6 +276,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
 
     dask.compute(ms_writes)
     dask.compute(ant_writes)
+    dask.compute(feed_writes)
     dask.compute(pol_writes)
     dask.compute(spw_writes)
     dask.compute(ddid_writes)
@@ -229,11 +318,8 @@ if __name__=="__main__":
         src_list = source_json
 
     # FIXME. These appear to be weird polarization codes (or ID's). WHY oh WHY are they called corr?
-    # We use LL, so this should be either LL or I?. I'm using FITS code 1 for this 'I'
-    corr_types = [ [1] ]
-    
-    sources = [("PKS-1934", [5.1461782, -1.11199629], [0.9*.856e9, 1.1*.856e9]),
-               ("3C286",  [3.53925792, 0.53248541], [0.8*.856e9, .856e9, 1.2*.856e9])]
+    # We use RR antennas, so this should be either RR or I?. I'm using FITS code 1 for this 'I'
+    corr_types = [ [MS_STOKES_ENUMS['RR']] ]
     
     ms_create(ms_table_name=ARGS.ms, info = info['info'], ant_pos = ant_pos, cal_vis=cv, timestamps=timestamp,
                    corr_types=corr_types, sources=src_list)
