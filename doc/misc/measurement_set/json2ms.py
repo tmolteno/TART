@@ -112,6 +112,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
 
     ant_table_name = "::".join((ms_table_name, "ANTENNA"))
     feed_table_name = "::".join((ms_table_name, "FEED"))
+    field_table_name = "::".join((ms_table_name, "FIELD"))
+    obs_table_name = "::".join((ms_table_name, "OBSERVATION"))
     ddid_table_name = "::".join((ms_table_name, "DATA_DESCRIPTION"))
     pol_table_name = "::".join((ms_table_name, "POLARIZATION"))
     spw_table_name = "::".join((ms_table_name, "SPECTRAL_WINDOW"))
@@ -121,6 +123,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     ms_datasets = []
     ant_datasets = []
     feed_datasets = []
+    field_datasets = []
+    obs_datasets = []
     ddid_datasets = []
     pol_datasets = []
     spw_datasets = []
@@ -149,7 +153,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     })
     ant_datasets.append(ds)
 
-    # Create a FEED dataset. There is one feed per antenna, so this should be quite similar to the ANTENNA
+    #########################################  Create a FEED dataset. #######################################
+    # There is one feed per antenna, so this should be quite similar to the ANTENNA
     antenna_ids = da.asarray(range(na))
     feed_ids = da.zeros(na)
     num_receptors = da.ones(na)
@@ -163,8 +168,34 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     })
     feed_datasets.append(ds)
 
-    # Create SOURCE datasets
-    print(sources)
+
+    ########################################### FIELD dataset ################################################
+    direction = [ [np.radians(0.0), np.radians(0.0)]]   ## Phase Center in J2000
+    field_direction = da.asarray(direction)[None, :]
+    field_name = da.asarray(np.asarray(['up'], dtype=np.object))
+    field_num_poly = da.zeros(1) # Zero order polynomial in time for phase center.
+    
+    dir_dims = ("row",'field-poly', 'field-dir',)
+
+    ds = Dataset({
+        'PHASE_DIR': (dir_dims, field_direction),
+        'DELAY_DIR': (dir_dims, field_direction),
+        'REFERENCE_DIR': (dir_dims, field_direction),
+        'NUM_POLY': (("row", ), field_num_poly),
+        'NAME': (("row", ), field_name),
+    })
+    field_datasets.append(ds)
+
+   ########################################### OBSERVATION dataset ################################################
+
+    ds = Dataset({
+        'TELESCOPE_NAME': (("row",), da.asarray(np.asarray(['TART'], dtype=np.object)) ),
+        'OBSERVER': (("row",), da.asarray(np.asarray(['Tim'], dtype=np.object)) ),
+    })
+    obs_datasets.append(ds)
+
+        
+    #################################### Create SOURCE datasets #############################################
     for s, src in enumerate(sources):
         name = src['name']
         rest_freq = [info['operating_frequency']]
@@ -201,7 +232,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
 
         pol_datasets.append(ds)
 
-    # Create multiple MeerKAT L-band SPECTRAL_WINDOW datasets
+    # Create multiple SPECTRAL_WINDOW datasets
     # Dataset per output row required because column shapes are variable
     
     for num_chan in num_chans:
@@ -270,6 +301,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     ms_writes = xds_to_table(ms_datasets, ms_table_name, columns="ALL")
     ant_writes = xds_to_table(ant_datasets, ant_table_name, columns="ALL")
     feed_writes = xds_to_table(feed_datasets, feed_table_name, columns="ALL")
+    field_writes = xds_to_table(field_datasets, field_table_name, columns="ALL")
+    obs_writes = xds_to_table(obs_datasets, obs_table_name, columns="ALL")
     pol_writes = xds_to_table(pol_datasets, pol_table_name, columns="ALL")
     spw_writes = xds_to_table(spw_datasets, spw_table_name, columns="ALL")
     ddid_writes = xds_to_table(ddid_datasets, ddid_table_name, columns="ALL")
@@ -278,6 +311,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     dask.compute(ms_writes)
     dask.compute(ant_writes)
     dask.compute(feed_writes)
+    dask.compute(field_writes)
+    dask.compute(obs_writes)
     dask.compute(pol_writes)
     dask.compute(spw_writes)
     dask.compute(ddid_writes)
