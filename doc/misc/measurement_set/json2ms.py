@@ -19,6 +19,7 @@ from tart.operation import settings
 from tart_tools import api_handler
 from tart_tools import api_imaging
 from tart.imaging import elaz
+from tart.util import constants
 
 import json
 import logging
@@ -266,12 +267,17 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     # FIXME We have only a single poloarzation 'LL'
     vis_data, baselines = cal_vis.get_all_visibility()
     vis_array = np.array(vis_data, dtype=np.complex64)
-    
+    logger.info("Baselines: {}".format(baselines))
     # FIXME. Following is arbitrary
     chunks = {
         "row": (vis_array.shape[0],),
     }
     
+    bl_pos = np.array(ant_pos)[baselines]
+    uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
+
+    uvw_array = np.array([uu_a, vv_a, ww_a]).T
+
     for ddid, (spw_id, pol_id) in enumerate(zip(spw_ids, pol_ids)):
         # Infer row, chan and correlation shape
         logger.info("ddid:{} ({}, {})".format(ddid, spw_id, pol_id))
@@ -283,15 +289,24 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         dims = ("row", "chan", "corr")
         logger.info("Data size {}".format((row, chan, corr)))
         
+        logger.info("vis_array {}".format(vis_array.shape))
+        logger.info("uvw_array {}".format(uvw_array.shape))
+        
         np_data = vis_array.reshape((row, chan, corr))
-
+        np_uvw = uvw_array.reshape((row, 3))
+        
         logger.info("np_data {}".format(np_data.shape))
+        logger.info("np_uvw {}".format(np_uvw.shape))
+        
         data_chunks = tuple((chunks['row'], chan, corr))
         dask_data = da.from_array(np_data, chunks=data_chunks)
+        
+        uvw_data = da.from_array(np_uvw)
         # Create dask ddid column
         dask_ddid = da.full(row, ddid, chunks=chunks['row'], dtype=np.int32)
         dataset = Dataset({
             'DATA': (dims, dask_data),
+            'UVW': (("row", "uvw",), uvw_data),
             'DATA_DESC_ID': (("row",), dask_ddid)
         })
         ms_datasets.append(dataset)
