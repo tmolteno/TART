@@ -4,10 +4,17 @@ test:
 	python3 json2ms.py --ms ${MS} --json data_2019_08_04_21_38_31_UTC.json
 
 NPIX=640
-PIXEL_SIZE_IN_DEG=0.01
+PIXEL_SIZE_IN_DEG=0.05
 IMAGENAME="test_image"
-WSCLEAN=/home/tim/github/wsclean-2.8/build/wsclean
+
 clean:
+	wsclean -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
+
+
+	
+WSCLEAN=/home/tim/github/wsclean-2.8/build/wsclean
+
+debug:
 	gdb --args ${WSCLEAN} -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
 
 
