@@ -266,7 +266,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     }
     baselines = np.array(baselines)
     bl_pos = np.array(ant_pos)[baselines]
-    uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
+    uu_a, vv_a, ww_a = (bl_pos[:,1] - bl_pos[:,0]).T/constants.L1_WAVELENGTH
 
     uvw_array = np.array([uu_a, vv_a, ww_a]).T
 
@@ -292,7 +292,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         dask_ddid = da.full(row, ddid, chunks=chunks['row'], dtype=np.int32)
         dataset = Dataset({
             'DATA': (dims, dask_data),
-            'WEIGHT_SPECTRUM': (dims, da.from_array(np.ones_like(np_data, dtype=np.float64))),
+            'WEIGHT_SPECTRUM': (dims, da.from_array(np.ones_like(0.95*np_data, dtype=np.float64))),
             'SIGMA_SPECTRUM': (dims, da.from_array(np.ones_like(np_data, dtype=np.float64)*0.05)),
             'UVW': (("row", "uvw",), uvw_data),
             'ANTENNA1': (("row",), da.from_array(baselines[:,0])),
