@@ -1,6 +1,7 @@
-# Run this with
-#    docker-compose exec casa /bin/bash
-# and you will find the measurement set in the /remote directory
+# On the docker host
+# type 'xhost +', and then you can run this with
+#    docker-compose run --rm casa
+# Type casabrowser at the prompt, and you will find the measurement set in the /remote directory. 
 version: '3.5'
 
 services:
