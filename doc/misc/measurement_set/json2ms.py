@@ -155,7 +155,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     antenna_ids = da.asarray(range(na))
     feed_ids = da.zeros(na)
     num_receptors = da.ones(na)
-    polarization_types = np.array([['R'] for i in range(na)], dtype=np.object)
+    polarization_types = np.array([['XX'] for i in range(na)], dtype=np.object)
     receptor_angles = np.array([[0.0] for i in range(na)])
     pol_response = np.array([[[0.0 + 1.0j, 1.0 - 1.0j]] for i in range(na)])
     
@@ -369,7 +369,7 @@ if __name__=="__main__":
 
     # FIXME. These appear to be weird polarization codes (or ID's). WHY oh WHY are they called corr?
     # We use RR antennas, so this should be either RR or I?. I'm using FITS code 1 for this 'I'
-    corr_types = [ [MS_STOKES_ENUMS['RR']] ]
+    corr_types = [ [MS_STOKES_ENUMS['I']] ]
     
     ms_create(ms_table_name=ARGS.ms, info = info['info'], ant_pos = ant_pos, cal_vis=cv, timestamps=timestamp,
                    corr_types=corr_types, sources=src_list)

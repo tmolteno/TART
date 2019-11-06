@@ -6,8 +6,9 @@ test:
 NPIX=640
 PIXEL_SIZE_IN_DEG=0.01
 IMAGENAME="test_image"
+WSCLEAN=/home/tim/github/wsclean-2.8/build/wsclean
 clean:
-	wsclean -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
+	gdb --args ${WSCLEAN} -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
 
 
 tar:
