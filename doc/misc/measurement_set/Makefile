@@ -8,5 +8,6 @@ install:
 	sudo pip3 install dask-ms tart tart-tools
 
 casa:
+	xhost +
 	docker-compose up -d
 	docker-compose run --rm casa
