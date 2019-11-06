@@ -22,8 +22,28 @@ from daskms import Dataset, xds_to_table
 logger = logging.getLogger()
 
 
-def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
+def test_ms_create(ms_table_name, info, ant_pos, vis_list, corr_types, sources):
     # Set up
+    '''    "info": {
+        "info": {
+            "L0_frequency": 1571328000.0,
+            "bandwidth": 2500000.0,
+            "baseband_frequency": 4092000.0,
+            "location": {
+                "alt": 270.0,
+                "lat": -45.85177,
+                "lon": 170.5456
+            },
+            "name": "Signal Hill - Dunedin",
+            "num_antenna": 24,
+            "operating_frequency": 1575420000.0,
+            "sampling_frequency": 16368000.0
+        }
+    },
+    '''
+    
+    num_chans = [1]
+
     rs = np.random.RandomState(42)
 
     ant_table_name = "::".join((ms_table_name, "ANTENNA"))
@@ -47,11 +67,10 @@ def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
     # Create ANTENNA dataset of 64 antennas
     # Each column in the ANTENNA has a fixed shape so we
     # can represent all rows with one dataset
-    na = 64
-    position = da.random.random((na, 3))*10000
-    offset = da.random.random((na, 3))
+    na = len(ant_pos)
+    position = da.asarray(ant_pos)
+    offset = da.zeros((na, 3))
     names = np.array(['ANTENNA-%d' % i for i in range(na)], dtype=np.object)
-    print(names)
     
     ds = Dataset({
         'POSITION': (("row", "xyz"), position),
@@ -89,10 +108,10 @@ def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
 
     # Create multiple MeerKAT L-band SPECTRAL_WINDOW datasets
     # Dataset per output row required because column shapes are variable
+    
     for num_chan in num_chans:
         dask_num_chan = da.full((1,), num_chan, dtype=np.int32)
-        dask_chan_freq = da.linspace(.856e9, 2*.856e9, num_chan,
-                                     chunks=num_chan)[None, :]
+        dask_chan_freq = da.asarray([[info['operating_frequency']]])
         dask_chan_width = da.full((1, num_chan), .856e9/num_chan)
 
         ds = Dataset({
@@ -116,17 +135,33 @@ def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
     }))
 
     # Now create the associated MS dataset
+    
+    # FIXME. There is some assumed association between row number and antenna pair.I am ignoring this here.
+    # FIXME We have only a single poloarzation 'LL'
+    vis_data = []
+    for v in vis_list:
+        vis_data.append(v['re']+1.0j*v['im'])
+    vis_array = np.array(vis_data, dtype=np.complex64)
+    
+    # FIXME. Following is arbitrary
+    chunks = {
+        "row": (len(vis_list),),
+    }
+    
     for ddid, (spw_id, pol_id) in enumerate(zip(spw_ids, pol_ids)):
         # Infer row, chan and correlation shape
+        logger.info("ddid:{} ({}, {})".format(ddid, spw_id, pol_id))
         row = sum(chunks['row'])
         chan = spw_datasets[spw_id].CHAN_FREQ.shape[1]
         corr = pol_datasets[pol_id].CORR_TYPE.shape[1]
 
         # Create some dask vis data
         dims = ("row", "chan", "corr")
-        np_data = (rs.normal(size=(row, chan, corr)) +
-                   1j*rs.normal(size=(row, chan, corr))).astype(np.complex64)
+        logger.info("Data size {}".format((row, chan, corr)))
+        
+        np_data = vis_array.reshape((row, chan, corr))
 
+        logger.info("np_data {}".format(np_data.shape))
         data_chunks = tuple((chunks['row'], chan, corr))
         dask_data = da.from_array(np_data, chunks=data_chunks)
         # Create dask ddid column
@@ -140,103 +175,18 @@ def test_ms_create(ms_table_name, chunks, num_chans, corr_types, sources):
         all_data_desc_id.append(dask_ddid)
 
     ms_writes = xds_to_table(ms_datasets, ms_table_name, columns="ALL")
+    ant_writes = xds_to_table(ant_datasets, ant_table_name, columns="ALL")
     pol_writes = xds_to_table(pol_datasets, pol_table_name, columns="ALL")
     spw_writes = xds_to_table(spw_datasets, spw_table_name, columns="ALL")
     ddid_writes = xds_to_table(ddid_datasets, ddid_table_name, columns="ALL")
-    ant_writes = xds_to_table(ant_datasets, ant_table_name, columns="ALL")
     source_writes = xds_to_table(src_datasets, src_table_name, columns="ALL")
-
-    #dask.compute(ms_writes, ant_writes, pol_writes,
-                 #spw_writes, ddid_writes, source_writes)
 
     dask.compute(ms_writes)
     dask.compute(ant_writes)
-    #dask.compute(pol_writes)
-    dask.compute(ddid_writes, source_writes)
-
-    # Check ANTENNA table correctly created
-    with pt.table(ant_table_name, ack=False) as A:
-        print(A)
-        assert_array_equal(A.getcol("NAME"), names)
-        assert_array_equal(A.getcol("POSITION"), position)
-        assert_array_equal(A.getcol("OFFSET"), offset)
-
-        required_desc = pt.required_ms_desc("ANTENNA")
-        required_columns = set(k for k in required_desc.keys()
-                               if not k.startswith("_"))
-
-        assert set(A.colnames()) == set(required_columns)
-
-    ## Check POLARIZATION table correctly created
-    #with pt.table(pol_table_name, ack=False) as P:
-        #for r, corr_type in enumerate(corr_types):
-            #assert_array_equal(P.getcol("CORR_TYPE", startrow=r, nrow=1),
-                               #[corr_type])
-            #assert_array_equal(P.getcol("NUM_CORR", startrow=r, nrow=1),
-                               #[len(corr_type)])
-
-        #required_desc = pt.required_ms_desc("POLARIZATION")
-        #required_columns = set(k for k in required_desc.keys()
-                               #if not k.startswith("_"))
-
-        #assert set(P.colnames()) == set(required_columns)
-
-    # Check SPECTRAL_WINDOW table correctly created
-    #with pt.table(spw_table_name, ack=False) as S:
-        #for r, num_chan in enumerate(num_chans):
-            #assert_array_equal(S.getcol("NUM_CHAN", startrow=r, nrow=1)[0],
-                               #num_chan)
-            #assert_array_equal(S.getcol("CHAN_FREQ", startrow=r, nrow=1)[0],
-                               #np.linspace(.856e9, 2*.856e9, num_chan))
-            #assert_array_equal(S.getcol("CHAN_WIDTH", startrow=r, nrow=1)[0],
-                               #np.full(num_chan, .856e9 / num_chan))
-
-        #required_desc = pt.required_ms_desc("SPECTRAL_WINDOW")
-        #required_columns = set(k for k in required_desc.keys()
-                               #if not k.startswith("_"))
-
-        #assert set(S.colnames()) == set(required_columns)
-
-    # We should get a cartesian product out
-    with pt.table(ddid_table_name, ack=False) as D:
-        spw_id, pol_id = zip(*product(range(len(num_chans)),
-                                      range(len(corr_types))))
-        assert_array_equal(pol_id, D.getcol("POLARIZATION_ID"))
-        assert_array_equal(spw_id, D.getcol("SPECTRAL_WINDOW_ID"))
-
-        required_desc = pt.required_ms_desc("DATA_DESCRIPTION")
-        required_columns = set(k for k in required_desc.keys()
-                               if not k.startswith("_"))
-
-        assert set(D.colnames()) == set(required_columns)
-
-    with pt.table(src_table_name, ack=False) as S:
-        for r, (name, direction, rest_freq) in enumerate(sources):
-            assert_array_equal(S.getcol("NAME", startrow=r, nrow=1)[0],
-                               [name])
-            assert_array_equal(S.getcol("REST_FREQUENCY", startrow=r, nrow=1),
-                               [rest_freq])
-            assert_array_equal(S.getcol("DIRECTION", startrow=r, nrow=1),
-                               [direction])
-
-    with pt.table(ms_table_name, ack=False) as T:
-        # DATA_DESC_ID's are all the same shape
-        assert_array_equal(T.getcol("DATA_DESC_ID"),
-                           da.concatenate(all_data_desc_id))
-
-        # DATA is variably shaped (on DATA_DESC_ID) so we
-        # compared each one separately.
-        for ddid, data in enumerate(all_data):
-            ms_data = T.getcol("DATA", startrow=ddid*row, nrow=row)
-            assert_array_equal(ms_data, data)
-
-        required_desc = pt.required_ms_desc()
-        required_columns = set(k for k in required_desc.keys()
-                               if not k.startswith("_"))
-
-        # Check we have the required columns
-        assert set(T.colnames()) == required_columns.union(["DATA",
-                                                            "DATA_DESC_ID"])
+    dask.compute(pol_writes)
+    dask.compute(spw_writes)
+    dask.compute(ddid_writes)
+    dask.compute(source_writes)
 
 import argparse
 
@@ -260,20 +210,23 @@ if __name__=="__main__":
     logger.info("Getting Data from file: {}".format(ARGS.json))
     # Load data from a JSON file
     with open(ARGS.json, 'r') as json_file:
-        calib_info = json.load(json_file)
+        json_data = json.load(json_file)
 
-    info = calib_info['info']
-    ant_pos = calib_info['ant_pos']
+    info = json_data['info']
+    ant_pos = json_data['ant_pos']
     config = settings.from_api_json(info['info'], ant_pos)
-
-
-    chunks = {
-        "row": (10,),
-    }
-    corr_types = [  [[9, 10, 11, 12], [5, 8]],
-                    [[5, 6, 7, 8], [9, 12]]]
+    gains = json_data['gains']['gain']
+    phases = json_data['gains']['phase_offset']
+    
+    vis = json_data['data'][0][0]['data']
+        
+    
+    # FIXME. These appear to be weird polarization codes (or ID's). WHY oh WHY are they called corr?
+    # We use LL, so this should be either LL or I?. I'm using FITS code 1 for this 'I'
+    corr_types = [ [1] ]
     
     sources = [("PKS-1934", [5.1461782, -1.11199629], [0.9*.856e9, 1.1*.856e9]),
                ("3C286",  [3.53925792, 0.53248541], [0.8*.856e9, .856e9, 1.2*.856e9])]
-
-    test_ms_create(ms_table_name=ARGS.ms, chunks=chunks, num_chans = [16, 32], corr_types=corr_types, sources=sources)
+    
+    test_ms_create(ms_table_name=ARGS.ms, info = info['info'], ant_pos = ant_pos, vis_list=vis,
+                   corr_types=corr_types, sources=sources)

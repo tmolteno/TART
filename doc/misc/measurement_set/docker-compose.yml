@@ -1,0 +1,19 @@
+# Run a CASA container. 
+version: '3'
+
+services:
+    kern:
+        build: 
+            context: .
+        ports:
+            - 8876:8876
+        restart: always
+        environment:
+            - FLASK_DEBUG=0
+        volumes:
+            - ~/catalog_cache:/object_position_server/orbit_data
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"

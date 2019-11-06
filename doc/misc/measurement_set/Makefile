@@ -1,3 +1,8 @@
+MS=tart.ms
 test:
-# 	rm -rf ${DIR}
-	python3 json2ms.py --ms tart.ms --json data_2019_08_04_21_38_31_UTC.json
+	rm -rf ${MS}
+	python3 json2ms.py --ms ${MS} --json data_2019_08_04_21_38_31_UTC.json
+
+casa:
+	docker-compose up -d
+	docker-compose exec casa /bin/bash
