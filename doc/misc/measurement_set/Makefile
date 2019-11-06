@@ -5,4 +5,4 @@ test:
 
 casa:
 	docker-compose up -d
-	docker-compose exec casa /bin/bash
+	docker-compose run --rm casa

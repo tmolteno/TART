@@ -1,19 +1,21 @@
-# Run a CASA container. 
-version: '3'
+# Run this with
+#    docker-compose exec casa /bin/bash
+# and you will find the measurement set in the /remote directory
+version: '3.5'
 
 services:
-    kern:
-        build: 
-            context: .
-        ports:
-            - 8876:8876
-        restart: always
-        environment:
-            - FLASK_DEBUG=0
-        volumes:
-            - ~/catalog_cache:/object_position_server/orbit_data
-        logging:
-            driver: "json-file"
-            options:
-                max-file: "5"
-                max-size: "10m"
+
+  casa:
+    container_name: casa
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - './:/remote'
+      - ${XAUTHORITY}:/tmp/.Xauthority
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY
+      - XAUTHORITY=/tmp/.Xauthority
+      - QT_X11_NO_MITSHM=1
+      - LIBOVERLAY_SCROLLBAR=0

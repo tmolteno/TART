@@ -3,7 +3,7 @@
 Install requires casacore and dask-ms
 
     sudo aptitude install python3-casacore
-    sudo pip3 install dask-ms
+    sudo pip3 install dask-ms tart tart-tools
 
 Then run using
 

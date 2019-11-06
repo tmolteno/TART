@@ -22,7 +22,7 @@ from daskms import Dataset, xds_to_table
 logger = logging.getLogger()
 
 
-def test_ms_create(ms_table_name, info, ant_pos, vis_list, corr_types, sources):
+def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sources):
     # Set up
     '''    "info": {
         "info": {
@@ -80,14 +80,21 @@ def test_ms_create(ms_table_name, info, ant_pos, vis_list, corr_types, sources):
     ant_datasets.append(ds)
 
     # Create SOURCE datasets
-    for s, (name, direction, rest_freq) in enumerate(sources):
+    print(sources)
+    for s, src in enumerate(sources):
+        name = src['name']
+        rest_freq = [info['operating_frequency']]
+        direction = [np.radians(src['el']), np.radians(src['az'])]
+        logger.info("SOURCE: {}, timestamp: {}".format(name, timestamps))
         dask_num_lines = da.full((1,), len(rest_freq), dtype=np.int32)
         dask_direction = da.asarray(direction)[None, :]
         dask_rest_freq = da.asarray(rest_freq)[None, :]
         dask_name = da.asarray(np.asarray([name], dtype=np.object))
+        dask_time = da.asarray(np.asarray([timestamps], dtype=np.object))
         ds = Dataset({
             "NUM_LINES": (("row",), dask_num_lines),
             "NAME": (("row",), dask_name),
+            #"TIME": (("row",), dask_time), # FIXME. Causes an error. Need to sort out TIME data fields
             "REST_FREQUENCY": (("row", "line"), dask_rest_freq),
             "DIRECTION": (("row", "dir"), dask_direction),
             })
@@ -112,7 +119,7 @@ def test_ms_create(ms_table_name, info, ant_pos, vis_list, corr_types, sources):
     for num_chan in num_chans:
         dask_num_chan = da.full((1,), num_chan, dtype=np.int32)
         dask_chan_freq = da.asarray([[info['operating_frequency']]])
-        dask_chan_width = da.full((1, num_chan), .856e9/num_chan)
+        dask_chan_width = da.full((1, num_chan), 2.5e6/num_chan)
 
         ds = Dataset({
             "NUM_CHAN": (("row",), dask_num_chan),
@@ -136,16 +143,14 @@ def test_ms_create(ms_table_name, info, ant_pos, vis_list, corr_types, sources):
 
     # Now create the associated MS dataset
     
-    # FIXME. There is some assumed association between row number and antenna pair.I am ignoring this here.
+    # FIXME. There is some assumed association between row number and baselines.I am ignoring this here.
     # FIXME We have only a single poloarzation 'LL'
-    vis_data = []
-    for v in vis_list:
-        vis_data.append(v['re']+1.0j*v['im'])
+    vis_data, baselines = cal_vis.get_all_visibility()
     vis_array = np.array(vis_data, dtype=np.complex64)
     
     # FIXME. Following is arbitrary
     chunks = {
-        "row": (len(vis_list),),
+        "row": (vis_array.shape[0],),
     }
     
     for ddid, (spw_id, pol_id) in enumerate(zip(spw_ids, pol_ids)):
@@ -218,9 +223,11 @@ if __name__=="__main__":
     gains = json_data['gains']['gain']
     phases = json_data['gains']['phase_offset']
     
-    vis = json_data['data'][0][0]['data']
-        
-    
+    for d in json_data['data']: # TODO deal with multiple observations in the JSON file later.
+        vis_json, source_json = d
+        cv, timestamp = api_imaging.vis_calibrated(vis_json, config, gains, phases, [])
+        src_list = source_json
+
     # FIXME. These appear to be weird polarization codes (or ID's). WHY oh WHY are they called corr?
     # We use LL, so this should be either LL or I?. I'm using FITS code 1 for this 'I'
     corr_types = [ [1] ]
@@ -228,5 +235,5 @@ if __name__=="__main__":
     sources = [("PKS-1934", [5.1461782, -1.11199629], [0.9*.856e9, 1.1*.856e9]),
                ("3C286",  [3.53925792, 0.53248541], [0.8*.856e9, .856e9, 1.2*.856e9])]
     
-    test_ms_create(ms_table_name=ARGS.ms, info = info['info'], ant_pos = ant_pos, vis_list=vis,
-                   corr_types=corr_types, sources=sources)
+    ms_create(ms_table_name=ARGS.ms, info = info['info'], ant_pos = ant_pos, cal_vis=cv, timestamps=timestamp,
+                   corr_types=corr_types, sources=src_list)
