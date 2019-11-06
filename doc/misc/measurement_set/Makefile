@@ -4,7 +4,7 @@ test:
 	python3 json2ms.py --ms ${MS} --json data_2019_08_04_21_38_31_UTC.json
 
 NPIX=720
-PIXEL_SIZE_IN_DEG=0.2
+PIXEL_SIZE_IN_DEG=0.1
 IMAGENAME="test_image"
 clean:
 	wsclean -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}

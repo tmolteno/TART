@@ -131,10 +131,6 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     spw_datasets = []
     src_datasets = []
 
-    # For comparison
-    all_data_desc_id = []
-    all_data = []
-
     # Create ANTENNA dataset
     # Each column in the ANTENNA has a fixed shape so we
     # can represent all rows with one dataset
@@ -263,16 +259,12 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
 
     # Now create the associated MS dataset
     
-    # FIXME. There is some assumed association between row number and baselines.I am ignoring this here.
-    # FIXME We have only a single poloarzation 'LL'
     vis_data, baselines = cal_vis.get_all_visibility()
     vis_array = np.array(vis_data, dtype=np.complex64)
-    logger.info("Baselines: {}".format(baselines))
-    # FIXME. Following is arbitrary
     chunks = {
         "row": (vis_array.shape[0],),
     }
-    
+    baselines = np.array(baselines)
     bl_pos = np.array(ant_pos)[baselines]
     uu_a, vv_a, ww_a = (bl_pos[:,0] - bl_pos[:,1]).T/constants.L1_WAVELENGTH
 
@@ -289,14 +281,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         dims = ("row", "chan", "corr")
         logger.info("Data size {}".format((row, chan, corr)))
         
-        logger.info("vis_array {}".format(vis_array.shape))
-        logger.info("uvw_array {}".format(uvw_array.shape))
-        
         np_data = vis_array.reshape((row, chan, corr))
         np_uvw = uvw_array.reshape((row, 3))
-        
-        logger.info("np_data {}".format(np_data.shape))
-        logger.info("np_uvw {}".format(np_uvw.shape))
         
         data_chunks = tuple((chunks['row'], chan, corr))
         dask_data = da.from_array(np_data, chunks=data_chunks)
@@ -306,12 +292,16 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         dask_ddid = da.full(row, ddid, chunks=chunks['row'], dtype=np.int32)
         dataset = Dataset({
             'DATA': (dims, dask_data),
+            'WEIGHT_SPECTRUM': (dims, da.from_array(np.ones_like(np_data, dtype=np.float64))),
+            'SIGMA_SPECTRUM': (dims, da.from_array(np.ones_like(np_data, dtype=np.float64)*0.05)),
             'UVW': (("row", "uvw",), uvw_data),
+            'ANTENNA1': (("row",), da.from_array(baselines[:,0])),
+            'ANTENNA2': (("row",), da.from_array(baselines[:,1])),
+            'FEED1': (("row",), da.from_array(baselines[:,0])),
+            'FEED2': (("row",), da.from_array(baselines[:,1])),
             'DATA_DESC_ID': (("row",), dask_ddid)
         })
         ms_datasets.append(dataset)
-        all_data.append(dask_data)
-        all_data_desc_id.append(dask_ddid)
 
     ms_writes = xds_to_table(ms_datasets, ms_table_name, columns="ALL")
     ant_writes = xds_to_table(ant_datasets, ant_table_name, columns="ALL")
