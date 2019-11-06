@@ -168,7 +168,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     for s, src in enumerate(sources):
         name = src['name']
         rest_freq = [info['operating_frequency']]
-        direction = [np.radians(src['el']), np.radians(src['az'])]
+        direction = [np.radians(src['el']), np.radians(src['az'])]   ## FIXME these are in elevation and azimuth. Not in J2000.
+        
         logger.info("SOURCE: {}, timestamp: {}".format(name, timestamps))
         dask_num_lines = da.full((1,), len(rest_freq), dtype=np.int32)
         dask_direction = da.asarray(direction)[None, :]
