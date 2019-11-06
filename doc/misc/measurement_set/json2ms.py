@@ -135,9 +135,9 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     # Each column in the ANTENNA has a fixed shape so we
     # can represent all rows with one dataset
     na = len(ant_pos)
-    position = da.zeros((na, 3))
+    position =  da.asarray(ant_pos) # da.zeros((na, 3))
     diameter = da.ones(na) * 0.025
-    offset = da.asarray(ant_pos)
+    offset = da.zeros((na, 3))
     names = np.array(['ANTENNA-%d' % i for i in range(na)], dtype=np.object)
     stations = np.array([info['name'] for i in range(na)], dtype=np.object)
     
@@ -155,19 +155,27 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     antenna_ids = da.asarray(range(na))
     feed_ids = da.zeros(na)
     num_receptors = da.ones(na)
-    polarization_types = np.array([['RR'] for i in range(na)], dtype=np.object)
-
+    polarization_types = np.array([['R'] for i in range(na)], dtype=np.object)
+    receptor_angles = np.array([[0.0] for i in range(na)])
+    pol_response = np.array([[[0.0 + 1.0j, 1.0 - 1.0j]] for i in range(na)])
+    
+    beam_offset = np.array([[[0.0, 0.0]] for i in range(na)])
+    
+    
     ds = Dataset({
         'ANTENNA_ID': (("row",), antenna_ids),
         'FEED_ID': (("row",), feed_ids),
         'NUM_RECEPTORS': (("row",), num_receptors),
-        'POLARIZATION_TYPE': (("row", "chan",), da.from_array(polarization_types, chunks=na)),
+        'POLARIZATION_TYPE': (("row", "receptors",), da.from_array(polarization_types, chunks=na)),
+        'RECEPTOR_ANGLE': (("row", "receptors",), da.from_array(receptor_angles, chunks=na)),
+        'POL_RESPONSE': (("row", "receptors", "receptors-2"), da.from_array(pol_response, chunks=na)),
+        'BEAM_OFFSET': (("row", "receptors", "radec"), da.from_array(beam_offset, chunks=na)),
     })
     feed_datasets.append(ds)
 
 
     ########################################### FIELD dataset ################################################
-    direction = [ [np.radians(0.0), np.radians(0.0)]]   ## Phase Center in J2000
+    direction = [ [np.radians(90.0), np.radians(0.0)]]   ## Phase Center in J2000
     field_direction = da.asarray(direction)[None, :]
     field_name = da.asarray(np.asarray(['up'], dtype=np.object))
     field_num_poly = da.zeros(1) # Zero order polynomial in time for phase center.
@@ -198,7 +206,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         rest_freq = [info['operating_frequency']]
         direction = [np.radians(src['el']), np.radians(src['az'])]   ## FIXME these are in elevation and azimuth. Not in J2000.
         
-        logger.info("SOURCE: {}, timestamp: {}".format(name, timestamps))
+        #logger.info("SOURCE: {}, timestamp: {}".format(name, timestamps))
         dask_num_lines = da.full((1,), len(rest_freq), dtype=np.int32)
         dask_direction = da.asarray(direction)[None, :]
         dask_rest_freq = da.asarray(rest_freq)[None, :]
@@ -208,7 +216,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
             "NUM_LINES": (("row",), dask_num_lines),
             "NAME": (("row",), dask_name),
             #"TIME": (("row",), dask_time), # FIXME. Causes an error. Need to sort out TIME data fields
-            "REST_FREQUENCY": (("row", "line"), dask_rest_freq),
+            #"REST_FREQUENCY": (("row", "line"), dask_rest_freq),
             "DIRECTION": (("row", "dir"), dask_direction),
             })
         src_datasets.append(ds)
@@ -292,7 +300,8 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
         dask_ddid = da.full(row, ddid, chunks=chunks['row'], dtype=np.int32)
         dataset = Dataset({
             'DATA': (dims, dask_data),
-            'WEIGHT_SPECTRUM': (dims, da.from_array(np.ones_like(0.95*np_data, dtype=np.float64))),
+            'WEIGHT': (("row", "corr"), da.from_array(0.95*np.ones((row, corr)))),
+            'WEIGHT_SPECTRUM': (dims, da.from_array(0.95*np.ones_like(np_data, dtype=np.float64))),
             'SIGMA_SPECTRUM': (dims, da.from_array(np.ones_like(np_data, dtype=np.float64)*0.05)),
             'UVW': (("row", "uvw",), uvw_data),
             'ANTENNA1': (("row",), da.from_array(baselines[:,0])),
