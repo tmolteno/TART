@@ -1,15 +1,20 @@
 '''
     A quick attempt to get TART JSON data into a measurement set.
-    Author: Tim Molteno
+    Author: Tim Molteno, tim@elec.ac.nz
+    Copyright (c) 2019.
 
     Official Documentation is Here.
         https://casa.nrao.edu/Memos/229.html#SECTION00044000000000000000
 
     License. GPLv3.
 '''
-import numpy as np
-
+import os
+import json
+import logging
 import dask
+import argparse
+
+import numpy as np
 import dask.array as da
 from itertools import product
 
@@ -21,8 +26,6 @@ from tart_tools import api_imaging
 from tart.imaging import elaz
 from tart.util import constants
 
-import json
-import logging
 
 import pyrap.tables as pt
 from numpy.testing import assert_array_equal
@@ -86,9 +89,10 @@ MS_STOKES_ENUMS = {
             "PFtotal": 30, 
             "PFlinear": 31, 
             "Pangle": 32}
- 
+
+
+
 def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sources):
-    # Set up
     '''    "info": {
         "info": {
             "L0_frequency": 1571328000.0,
@@ -274,7 +278,7 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     }
     baselines = np.array(baselines)
     bl_pos = np.array(ant_pos)[baselines]
-    uu_a, vv_a, ww_a = (bl_pos[:,1] - bl_pos[:,0]).T/constants.L1_WAVELENGTH
+    uu_a, vv_a, ww_a = -(bl_pos[:,1] - bl_pos[:,0]).T/constants.L1_WAVELENGTH  # Use the - sign to get the same orientation as our tart projections.
 
     uvw_array = np.array([uu_a, vv_a, ww_a]).T
 
@@ -332,14 +336,16 @@ def ms_create(ms_table_name, info, ant_pos, cal_vis, timestamps, corr_types, sou
     dask.compute(ddid_writes)
     dask.compute(source_writes)
 
-import argparse
 
 if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description='Generate measurement set from a JSON file from the TART radio telescope.', 
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--json', required=True, default=None, help="Snapshot observation saved JSON file (visiblities, positions and more).")
+    parser.add_argument('--json', required=False, default=None, help="Snapshot observation saved JSON file (visiblities, positions and more).")
     parser.add_argument('--ms', required=False, default='tart.ms', help="Output MS table.")
+    parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
+    parser.add_argument('--catalog', required=False, default='https://tart.elec.ac.nz/catalog', help="Catalog API URL.")
+    parser.add_argument('--vis', required=False, default=None, help="Use a local JSON file containing the visibilities to create the image.")
 
     ARGS = parser.parse_args()
 
@@ -350,12 +356,35 @@ if __name__=="__main__":
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     
+    if os.path.isdir(ARGS.ms):
+        raise RuntimeError("Measurement set '{}' exists. Please delete before continuing".format(ARGS.ms))
 
-    logger.info("Getting Data from file: {}".format(ARGS.json))
-    # Load data from a JSON file
-    with open(ARGS.json, 'r') as json_file:
-        json_data = json.load(json_file)
+    if ARGS.json:
+        logger.info("Getting Data from file: {}".format(ARGS.json))
+        # Load data from a JSON file
+        with open(ARGS.json, 'r') as json_file:
+            json_data = json.load(json_file)
+            
+    else:
+        logger.info("Getting Data from API: {}".format(ARGS.api))
+        api = api_handler.APIhandler(ARGS.api)
+        info = api.get('info')
+        ant_pos = api.get('imaging/antenna_positions')
+        config = settings.from_api_json(info['info'], ant_pos)
+        gains_json = api.get('calibration/gain')
+        vis_json = api.get('imaging/vis')
+        ts = api_imaging.vis_json_timestamp(vis_json)
 
+        logger.info("Download Complete")
+       
+        src_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
+
+        json_data = {'info':info,
+                'ant_pos':ant_pos,
+                'gains': gains_json,
+                'data': [[vis_json, src_json]]
+                }
+    
     info = json_data['info']
     ant_pos = json_data['ant_pos']
     config = settings.from_api_json(info['info'], ant_pos)

@@ -3,12 +3,12 @@ test:
 	rm -rf ${MS}
 	python3 json2ms.py --ms ${MS} --json data_2019_08_04_21_38_31_UTC.json
 
-NPIX=640
-PIXEL_SIZE_IN_DEG=0.05
+NPIX=1200
+PIXEL_SIZE_IN_DEG=0.0275
 IMAGENAME="test_image"
 
 clean:
-	wsclean -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
+	wsclean -verbose -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
 
 
 	
