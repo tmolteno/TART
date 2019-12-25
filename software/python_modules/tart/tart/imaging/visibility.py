@@ -39,7 +39,7 @@ class Visibility:
         self.baselines = b
         self.v = v
 
-    '''Rotated one, aimed at ra, decl
+    r'''Rotated one, aimed at ra, decl
 
     Justification:
 
