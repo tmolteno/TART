@@ -1,0 +1,90 @@
+### This set of services is for the TART telescope. It orchestrates the following services:
+#
+#   RESTful API (api_container)
+#   TART web front end app (web_app)
+#   RESTful API documentation (api_doc_server). Connect to this via http://localhost:5000.
+#   VPN connection to AWS
+#
+#   Author: Tim Molteno (c) 2019-2020.
+
+version: '3.4'
+
+services:
+    client_vpn:
+        image: dperson/openvpn-client:armhf
+            # cap_add, security_opt, and volume required for the image to function
+        cap_add:
+            - net_admin
+        environment:
+            TZ: 'EST5EDT'
+            ROUTE: '192.168.255.0/24'
+        networks:
+            - default
+        read_only: true
+        tmpfs:
+            - /run
+            - /tmp
+        restart: unless-stopped
+        security_opt:
+            - label:disable
+        stdin_open: true
+        tty: true
+        # we have to add the webserver ports here as the external_website is using the network stack of openvpn
+        ports:
+            - 80:80
+        volumes:
+            - /dev/net:/dev/net:z
+            - ./openvpn/vpn:/vpn
+
+    api_container:
+        build: 
+            context: ./software/containers/telescope_web_api
+        volumes:
+            -   data-volume:/telescope_data
+            -   ~/tart_web_api_store:/app
+        # Comment the following two lines to disable access to the TART hardware (this allows testing of software on a desktop)
+        devices:
+           - /dev/spidev0.0
+        environment:
+            # Change the following to be something secure. You will use this to login to your telescope from the web api.
+            - LOGIN_PW=sharkbait
+        ports:
+            - 5000:5000
+        restart: always
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
+
+    api_doc_server:
+        build:
+            context: ./software/containers/telescope_web_api
+            dockerfile: Dockerfile.apidoc 
+        ports: 
+            - 8080:80
+        restart: always
+
+    web_app:
+        depends_on:
+            - api_container
+            - api_doc_server
+        volumes:
+            -   data-volume:/telescope_data
+        build: 
+            context: ./software/containers/web_app
+            args:
+                # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
+                tart_name: tartza
+        network_mode: "service:client_vpn"
+        restart: always
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
+
+volumes:
+    # Mounted on each container as /telescope_data, used for raw data and vis data. This is a hardcoded path in each container.
+    data-volume:
+
