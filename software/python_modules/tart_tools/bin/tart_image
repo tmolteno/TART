@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Generate and Image from the RESTful the API on a TART radio telescope
-# Tim Molteno 2017 tim@elec.ac.nz
+# Tim Molteno 2017-2019 tim@elec.ac.nz
 #
 import matplotlib
 import os
@@ -42,6 +42,24 @@ def handle_image(args, img, n_bin, title, time_repr, source_json=None):
         print("Generating {}".format(fname))
     if args.display:
         plt.show()
+
+
+def image_stats(img):
+    rsky = np.real(img.flatten())
+    
+    npix = rsky.shape[0]
+    
+    max_p = np.max(rsky)
+    sdev_p = np.std(rsky)
+    min_p = np.min(rsky)
+    mean_p = np.mean(rsky)
+    med_p = np.median(rsky)
+    deviation = np.abs(med_p - rsky)
+    mad_p = np.median(deviation)
+    
+    logger.info("'N_s':{}, 'S/N': {}, 'min': {}, 'max': {}, 'mean': {}, 'sdev': {}, 'R_mad': {}, 'MAD': {}, 'median': {}".format(npix, (max_p/sdev_p), min_p, max_p, mean_p, sdev_p, (max_p/mad_p), mad_p, med_p))
+
+    return max_p, min_p, mad_p
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(description='Generate an image using the web api ofs a TART radio telescope.', 
@@ -164,9 +182,10 @@ if __name__ == '__main__':
     if ARGS.dirty or ARGS.moresane or ARGS.aipy:
         cal_ift, cal_extent, n_fft, bin_width = api_imaging.image_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin)
 
+        ## Scale to both abs and MAD 
         img = np.abs(cal_ift)
-        sd = np.std(img)
-        ift_scaled = img/sd
+        max_p, min_p, mad_p = image_stats(img)
+        ift_scaled = (img - min_p)/mad_p
 
     if ARGS.beam or ARGS.moresane or ARGS.aipy:
         beam = np.abs(api_imaging.beam_from_calibrated_vis(cv, nw=n_bin/4, num_bin=n_bin))

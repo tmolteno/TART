@@ -55,7 +55,6 @@ class Correlator(object):
 
         for i in range(0, num_antenna):
             for j in range(i+1, num_antenna):
-                print((len(baselines)))
                 v.append(self.V(data[i],data[j],data_hilb[j]))
                 baselines.append([i,j])
         return v, baselines

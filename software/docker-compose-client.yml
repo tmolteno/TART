@@ -11,13 +11,12 @@ version: '3.4'
 
 services:
     client_vpn:
-        image: dperson/openvpn-client:armhf
+        image: dperson/openvpn-client
             # cap_add, security_opt, and volume required for the image to function
         cap_add:
             - net_admin
         environment:
             TZ: 'EST5EDT'
-            ROUTE: '192.168.255.0/24'
         networks:
             - default
         read_only: true
@@ -29,12 +28,14 @@ services:
             - label:disable
         stdin_open: true
         tty: true
-        # we have to add the webserver ports here as the external_website is using the network stack of openvpn
-        ports:
-            - 80:80
         volumes:
             - /dev/net:/dev/net:z
-            - ./openvpn/vpn:/vpn
+            - ./vpn:/vpn
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"
 
     api_container:
         build: 
