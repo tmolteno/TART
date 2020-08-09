@@ -44,7 +44,7 @@ class Visibility:
     Justification:
 
     Let
-        s_1(t) = N(t) e^{j \omega t}
+        s_1(t) = N(t) e^{j omega t}
 
     t_g^{01) = t_g^1 - t_g^0 (arrival at a1 - arrival at a0)
     if t_g^{01} < 0, then s_0 arrives later than s_1 (defined by antennas.get_geo_delay_horizontal)
@@ -54,12 +54,12 @@ class Visibility:
 
     v(0,1) = <s_0(t) s_1^{*}(t)>
                  = <s_1(t - t_g^{01}) s_1^{*}(t)>
-                 = <N(t) e^{j \omega t} e^{-j \omega t_g^{01}} N^*(t) e^{-j \omega t}>
-                 = e^{-j \omega t_g^{01}} <N(t) N^*(t)>
+                 = <N(t) e^{j omega t} e^{-j omega t_g^{01}} N^*(t) e^{-j omega t}>
+                 = e^{-j omega t_g^{01}} <N(t) N^*(t)>
 
     So, after rotation
 
-     <N(t) N^*(t)> = v(0,1) e^{+j \omega t_g^{01}}
+     <N(t) N^*(t)> = v(0,1) e^{+j omega t_g^{01}}
     '''
     def rotate(self, sky_location):
         from tart.simulation import antennas

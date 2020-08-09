@@ -1,4 +1,8 @@
-#calibration.py
+#
+# A class the encapsulates a CalibratedVisibility object.
+#
+# Copyright (c) Tim Molteno 2013-2020. tim@elec.ac.nz
+#
 
 import json
 
