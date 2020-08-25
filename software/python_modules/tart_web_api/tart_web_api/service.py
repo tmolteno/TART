@@ -299,8 +299,14 @@ class TartControl():
                     if self.config['vis']['save'] == 1:
                         fname = "{}/vis_{}.hdf".format(self.config['vis']['base_path'], 
                                                    vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
-                        # visibility.Visibility_Save(self.vislist, fname)
-                        visibility.list_save(self.vislist, fname)
+                        
+                        # Get the gains and phases and save them with the visibilities
+                        
+                        rows_dict = db.get_gain()
+                        cal_gain = [rows_dict[i][2] for i in range(24)]
+                        cal_ph = [rows_dict[i][3] for i in range(24)]
+
+                        visibility.list_save(self.vislist, cal_gain, cal_ph, fname)
                         
                         logging.info("saved to {}".format(vis, fname))
                         ret['filename'] = fname
