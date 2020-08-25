@@ -4,7 +4,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='tart',
-    version='1.1.0b5',
+    version='1.1.0b6',
     description='Transient Array Radio Telescope Imaging and Operation Library',
     long_description=readme,
     long_description_content_type="text/markdown",

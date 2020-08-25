@@ -42,5 +42,6 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
+* Version 0.2b5. Add calibration gains and phases to HDF files.
 * Version 0.2b4. Default to 'vis' mode. Export vis files as hdf
 * Version 0.1.8 Python3 compatability

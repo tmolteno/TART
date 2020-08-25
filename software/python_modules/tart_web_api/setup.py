@@ -8,7 +8,7 @@ setup(
     description='Transient Array Radio Telescope High-level HTTP Interface',
     long_description=readme,
     long_description_content_type="text/markdown",
-    version='0.2.0b4',
+    version='0.2.0b5',
     packages=['tart_web_api'],
     include_package_data=True,
     install_requires=[
