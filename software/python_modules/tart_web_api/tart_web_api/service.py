@@ -306,7 +306,9 @@ class TartControl():
                         cal_gain = [rows_dict[i][2] for i in range(24)]
                         cal_ph = [rows_dict[i][3] for i in range(24)]
 
-                        visibility.list_save(self.vislist, cal_gain, cal_ph, fname)
+                        ant_pos = self.config['antenna_positions']
+
+                        visibility.list_save(self.vislist, ant_pos, cal_gain, cal_ph, fname)
                         
                         logging.info("saved to {}".format(vis, fname))
                         ret['filename'] = fname

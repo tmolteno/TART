@@ -150,7 +150,7 @@ def Visibility_Save_JSON(vis, filename):
     Load and save lists of visibilities. Use filename extensions to deal with the deprecated .pkl files (or .vis files)
 '''
 
-def list_save(vis_list, cal_gain, cal_ph, filename):
+def list_save(vis_list, ant_pos, cal_gain, cal_ph, filename):
     _, file_extension = os.path.splitext(filename)
 
     if ('.pkl' == file_extension):
@@ -158,7 +158,7 @@ def list_save(vis_list, cal_gain, cal_ph, filename):
     elif ('.vis' == file_extension):
         to_pkl(vis_list, filename)
     elif ('.hdf' == file_extension):
-        to_hdf5(vis_list, cal_gain, cal_ph, filename)
+        to_hdf5(vis_list, ant_pos, cal_gain, cal_ph, filename)
     else:
         raise RuntimeError("Unknown visibility file extension {}".format(file_extension))
 
@@ -207,7 +207,7 @@ def from_pkl(filename):
     Deal with HDF5 Files
 '''
 
-def to_hdf5(vis_list, cal_gain, cal_ph, filename):
+def to_hdf5(vis_list, ant_pos, cal_gain, cal_ph, filename):
     ''' Save the Observation object,
         to a portable HDF5 format
     '''
@@ -232,6 +232,9 @@ def to_hdf5(vis_list, cal_gain, cal_ph, filename):
         h5f.create_dataset('vis', data=np.array(vis_data))
         h5f.create_dataset('gains', data=np.array(cal_gain))
         h5f.create_dataset('phases', data=np.array(cal_ph))
+
+        h5f.create_dataset('antenna_positions', data=np.array(ant_pos))
+
         h5f.create_dataset("timestamp", data=np.array(vis_ts, dtype=object), dtype=dt)
         
         #ts_dset = h5f.create_dataset('timestamp', (len(vis_ts),), dtype=dt)
