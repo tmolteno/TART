@@ -1,5 +1,10 @@
 # Transient Array Radio Telescope
 
+
+
+[![DOI](https://zenodo.org/badge/20430511.svg)](https://zenodo.org/badge/latestdoi/20430511)
+
+
 The Transient Array Radio Telescope (TART) is a low-cost 24-element aperture synthesis array
 developed by the [Elec Research Group](http://elec.ac.nz) at the University of Otago
 

@@ -72,6 +72,8 @@ services:
             - api_doc_server
         volumes:
             -   data-volume:/telescope_data
+        environment:
+            - NODE_ENV=production
         build: 
             context: ./software/containers/web_app
             args:
