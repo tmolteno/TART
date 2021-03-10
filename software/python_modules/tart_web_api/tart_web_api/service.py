@@ -86,7 +86,7 @@ def likelihood_vis_dicts(msd_vis, sim_vis, debug=False):
         sim_v = sim_vis[key]
         bls_meas = meas_v.get_baselines() # flagging based on measured visibilities
         if debug:
-            logging.info( 'Number of baselines contributing: {}'.format(len(bls_meas)))
+            print( 'Number of baselines contributing: {}'.format(len(bls_meas)))
         for bln in bls_meas:
             [ant_i, ant_j] = bln
             ret += vis_diff(meas_v, sim_v, ant_i, ant_j)*np.abs(sim_v.get_visibility(ant_i, ant_j))
@@ -245,12 +245,12 @@ class TartControl():
 
             elif self.state == 'vis':
                 if self.queue_vis is None:
-                    logging.info("vis_stream_setup")
+                    print("vis_stream_setup")
                     self.vis_stream_setup()
                 else:
                     ret = self.vis_stream_acquire()
                     if 'filename' in ret:
-                        logging.info("vis_stream_acquire = {}".format(ret))
+                        print("vis_stream_acquire = {}".format(ret))
                         db.insert_vis_file_handle(ret['filename'], ret['sha256'])
                     time.sleep(0.005)
             elif self.state == 'off':
@@ -286,16 +286,16 @@ class TartControl():
 
         while self.queue_vis.qsize() > 0:
             vis, means = self.queue_vis.get()
-            #logging.info('vis = {}, means={}.'.format(vis, means))
+            #print('vis = {}, means={}.'.format(vis, means))
 
             if vis is not None:
                 self.config['vis_current'] = create_direct_vis_dict(vis)
                 self.vislist.append(vis)
-                logging.info('Updated visibilities N={}.'.format(len(self.vislist)))
+                print('Updated visibilities N={}.'.format(len(self.vislist)))
                 
                 chunksize = self.config['vis']['chunksize']
                 if len(self.vislist) >= chunksize:
-                    logging.info('reached chunksize of {}'.format(chunksize))
+                    print('reached chunksize of {}'.format(chunksize))
                     if self.config['vis']['save'] == 1:
                         fname = "{}/vis_{}.hdf".format(self.config['vis']['base_path'], 
                                                    vis.timestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))
@@ -310,7 +310,7 @@ class TartControl():
 
                         visibility.list_save(self.vislist, ant_pos, cal_gain, cal_ph, fname)
                         
-                        logging.info("saved to {}".format(vis, fname))
+                        print("saved to {}".format(vis, fname))
                         ret['filename'] = fname
                         ret['sha256'] = sha256_checksum(fname)
                     self.vislist = []
@@ -324,7 +324,7 @@ class TartControl():
         self.process_vis_calc.join()
         self.queue_vis = None
         self.vislist = []
-        logging.info('Stop visibility acquisition processes.')
+        print('Stop visibility acquisition processes.')
 
     def vis_stream_reconfigure(self):
         self.vis_stream_finish()

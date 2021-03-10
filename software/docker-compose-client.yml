@@ -11,7 +11,7 @@ version: '3.4'
 
 services:
     client_vpn:
-        image: dperson/openvpn-client
+        image: dperson/openvpn-client:armhf
             # cap_add, security_opt, and volume required for the image to function
         cap_add:
             - net_admin
@@ -71,14 +71,14 @@ services:
             - api_container
             - api_doc_server
         volumes:
-            -   data-volume:/telescope_data
+            - data-volume:/telescope_data
         environment:
             - NODE_ENV=production
         build: 
             context: ./software/containers/web_app
             args:
                 # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
-                tart_name: tartza
+                tart_name: signal
         network_mode: "service:client_vpn"
         restart: always
         logging:
