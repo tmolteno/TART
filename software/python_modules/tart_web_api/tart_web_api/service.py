@@ -3,7 +3,7 @@
     capture visibilities e.t.c.
     
     Author. Max Scheel 2017
-            Tim Molteno 2018-2019
+            Tim Molteno 2018-2021
 
 '''
 
