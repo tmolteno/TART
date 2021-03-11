@@ -3,7 +3,7 @@
 
 from flask import Flask, request, jsonify 
 from flask_jwt_extended import jwt_required, \
-    create_access_token, jwt_refresh_token_required, \
+    create_access_token, \
     create_refresh_token, get_jwt_identity
 
 from tart_web_api.main import app, jwt
