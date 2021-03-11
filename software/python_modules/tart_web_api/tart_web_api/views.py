@@ -168,7 +168,7 @@ def get_mode():
 
 
 @app.route('/mode/<mode>', methods=['POST',])
-@jwt_required
+@jwt_required()
 def set_mode(mode):
     """
     @api {post} /mode/<mode> Set telescope operating mode
@@ -198,7 +198,7 @@ def set_mode(mode):
 
 
 @app.route('/loop/<loop_mode>', methods=['POST',])
-@jwt_required
+@jwt_required()
 def set_loop_mode(loop_mode):
     """
     @api {post} /loop/<loop_mode> Set telescopes loop mode.
@@ -217,7 +217,7 @@ def set_loop_mode(loop_mode):
 
 
 @app.route('/loop/<int:loop_n>', methods=['POST',])
-@jwt_required
+@jwt_required()
 def set_loop_n(loop_n):
     """
     @api {post} /loop/<loop_n> Set telescopes loop mode.

@@ -36,7 +36,7 @@ def auth():
 # the refresh token, and use the create_access_token() function again
 # to make a new access token for this identity.
 @app.route('/refresh', methods=['POST'])
-@jwt_refresh_token_required
+@jwt_required(refresh=True)
 def refresh():
     current_user = get_jwt_identity()
     ret = {
@@ -45,7 +45,7 @@ def refresh():
     return jsonify(ret), 200
 
 @jwt.expired_token_loader
-def my_expired_token_callback():
+def my_expired_token_callback(jwt_header, jwt_payload):
     return jsonify({
         'status': 401,
         'sub_status': 101,

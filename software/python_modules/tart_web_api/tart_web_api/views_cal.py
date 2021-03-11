@@ -13,7 +13,7 @@ import tart_web_api.database as db
 
 minimize_process = None
 
-@jwt_required
+@jwt_required()
 @app.route('/calibration/gain', methods=['POST',])
 def set_gain():
     """
@@ -36,7 +36,7 @@ def set_gain():
 
 
 
-@jwt_required
+@jwt_required()
 @app.route('/calibration/antenna_positions', methods=['POST',])
 def set_calibration_antenna_positions():
     """
@@ -77,7 +77,7 @@ def get_gain():
                 "phase_offset": ret_ph}
     return jsonify(ret_dict)
 
-@jwt_required
+@jwt_required()
 @app.route('/calibrate', methods=['POST',])
 def post_calibration_from_vis():
     """

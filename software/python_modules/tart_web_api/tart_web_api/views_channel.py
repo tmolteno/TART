@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required
 from tart_web_api.main import app
 import tart_web_api.database as db
 
-@jwt_required
+@jwt_required()
 @app.route('/channel/<int:channel_idx>/<int:enable>', methods=['PUT',])
 def set_channel(channel_idx, enable):
     """
