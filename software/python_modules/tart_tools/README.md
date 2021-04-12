@@ -5,10 +5,13 @@ This module provides command line tools for operating Transient Array Radio Tele
 * tart_calibrate
 * tart_calibration_data
 * tart_download_antenna_positions
+* tart_upload_antenna_positions
 * tart_download_data
 * tart_download_gains
 * tart_image
 * tart_upload_gains
+* tart_set_mode
+* tart_vis2json
 
 
 To generate an image from a telescope, try the following command which should display the current view from a telescope
@@ -41,6 +44,7 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
+* Version 0.2.0b11. Add a tart_set_mode binary.
 * Version 0.2.0b9. Add a timeout to all HTTP requests.
 * Version 0.2.0b8. Add a put method to the authorized api handler.
 * Version 0.2.0b7. Fix typo in tart_calibrate that stopped calibration working.

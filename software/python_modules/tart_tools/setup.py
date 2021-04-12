@@ -4,7 +4,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='tart_tools',
-    version='0.2.0b10',
+    version='0.2.0b11',
     description='Transient Array Radio Telescope Command Line Tools',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -21,6 +21,7 @@ setup(name='tart_tools',
              'bin/tart_download_gains', 
              'bin/tart_upload_gains',
              'bin/tart_download_data',
+             'bin/tart_set_mode',
              'bin/tart_download_antenna_positions', 
              'bin/tart_upload_antenna_positions'],
     classifiers=[

@@ -38,6 +38,27 @@ class APIhandler(object):
 
 
 class AuthorizedAPIhandler(APIhandler):
+    '''
+        This object allows an authorized API call.
+        
+        Example:
+        
+            from tart_tools.api_handler import AuthorizedAPIhandler
+
+            if __name__ == '__main__':
+                parser = argparse.ArgumentParser(description='Change telescope mode', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                parser.add_argument('--api', required=False, default='https://tart.elec.ac.nz/signal', help="Telescope API server URL.")
+                parser.add_argument('--pw', default='password', type=str, help='API password')
+                parser.add_argument('--mode', type=str, required=True, help='New mode (vis/raw)')
+
+                ARGS = parser.parse_args()
+
+                api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
+                
+                resp = api.post_payload_with_token('mode', ARGS.mode)
+
+
+    '''
     def __init__(self, api_root, pw):
         APIhandler.__init__(self, api_root=api_root)
         self.pw = pw
