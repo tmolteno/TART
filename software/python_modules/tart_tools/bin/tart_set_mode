@@ -3,6 +3,7 @@
 # Change the telescope operating mode using the RESTful the API on a TART radio telescope
 # Tim Molteno 2021 tim@elec.ac.nz
 #
+import argparse
 
 from tart_tools.api_handler import AuthorizedAPIhandler
 
@@ -15,5 +16,5 @@ if __name__ == '__main__':
     ARGS = parser.parse_args()
 
     api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
-    
-    resp = api.post_payload_with_token('mode', ARGS.mode)
+
+    resp = api.post_payload_with_token(f"mode/{ARGS.mode}", {})

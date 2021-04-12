@@ -120,6 +120,7 @@ class AuthorizedAPIhandler(APIhandler):
         r = requests.post(self.url(path), 
                           headers=self.__get_header(),
                           timeout=TIMEOUT, **kwargs)
+        print(r)
         ret = json.loads(r.text)
         if 'status' in ret and 'sub_status' in ret:
             if ((ret['status'] == 401) and (ret['sub_status'] == 101)):
