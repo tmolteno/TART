@@ -248,7 +248,8 @@ def from_hdf5(filename):
         from a portable HDF5 format
     '''
     
-    ret = []
+    vis_list = []
+    ret = {}
     
     with h5py.File(filename, "r") as h5f:
         config_json = np.string_(h5f['config'][0])
@@ -266,6 +267,14 @@ def from_hdf5(filename):
             vis.set_visibilities(v=v, b=hdf_baselines)
             vis.phase_el = hdf_phase_elaz[0]
             vis.phase_az = hdf_phase_elaz[1]
-            ret.append(vis)
+            vis_list.append(vis)
 
+        ret['vis_list'] = vis_list
+        ret['config_json'] = config_json
+        ret['config'] = config
+        ret['timestamps'] = timestamps
+        ret['baselines'] = hdf_baselines
+        ret['gain'] = h5f['gains'][:]
+        ret['phase_offset'] = h5f['phases'][:]
+    
     return ret

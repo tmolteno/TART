@@ -33,3 +33,4 @@ Changelog:
 * Version 1.1b.4 Fix hdf5 visibility output.
 * Version 1.1b.5 Use raw docstrings for those that contain escape sequences.
 * Version 1.1b.6 Save calibration gains and phases.
+* Version 1.1b.7 Better dealing with h5 files, returning a dict with sufficient information to generate calibrated visibilities.
