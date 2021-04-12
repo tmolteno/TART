@@ -1,6 +1,6 @@
 
 develop:
-	sudo python setup.py develop
+	sudo python3 setup.py develop
 
 lint:
 	pylint tart
