@@ -38,6 +38,8 @@ log in or SSH into the Raspberry Pi.
 Set hostname, activate SPI & SSH with raspi-config ( SSH and SPI can be enabled under Interfacing Options) :
 
     sudo raspi-config
+    sudo apt update
+    sudo apt dist-upgrade
     
 Now run:
 
