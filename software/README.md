@@ -25,6 +25,12 @@ The following procedure will install all the necessary TART software on a Raspbe
 
 ### Step 1. Prepare the Pi
 
+Set hostname, activate SPI & SSH with raspi-config ( SSH and SPI can be enabled under Interfacing Options) :
+
+    sudo raspi-config
+    
+Now run:
+
     sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev
 
 Install docker on the raspberry pi. This is done by following commands.  
