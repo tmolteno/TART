@@ -25,6 +25,16 @@ The following procedure will install all the necessary TART software on a Raspbe
 
 ### Step 1. Prepare the Pi
 
+Download latest Raspberry Pi OS Lite image from https://www.raspberrypi.org/software/operating-systems/  
+Download Etcher from https://www.balena.io/etcher/ and flash the Image onto a SD Card.  
+This will take a couple of minutes... When done insert the sd card into raspberry pi and wait for it to boot up.  
+Create an empty file called ssh and copy it onto the sd card (Make sure that the ssh file has no file extention) 
+
+log in or SSH into the Raspberry Pi.
+
+    user: pi
+    pw: raspberry
+
 Set hostname, activate SPI & SSH with raspi-config ( SSH and SPI can be enabled under Interfacing Options) :
 
     sudo raspi-config
@@ -50,6 +60,14 @@ Debian Buster:
 
 ### Step 2. Copy code to the Pi
 
+clone the Github repository
+
+    git clone https://github.com/tmolteno/TART
+    cd TART
+    (cd software/containers/telescope_web_api && sh pre_build.sh);
+    rsync -rv --exclude=node_modules software
+    
+OR  
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
 
     TARGET=pi@tart2-dev.local
