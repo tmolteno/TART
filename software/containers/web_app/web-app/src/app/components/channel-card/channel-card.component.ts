@@ -55,7 +55,11 @@ export class ChannelCardComponent {
                 },
                 ticks: {
                     fontColor: '#000',
-                    autoSkip: false,
+                    autoSkip: true,
+                    min:0,
+                    max:8,
+                    stepSize:1,
+                    maxTicksLimit:15,
                     maxRotation: 0,
                     minRotation: 0
                 }
@@ -79,8 +83,8 @@ export class ChannelCardComponent {
 
     generateChannelChart() {
         this.lineChartLabels = this.channel.freq.map((value) => {
-            if (value % 2 === 0) {
-                return `${value}`;
+            if (Math.round(value*10) % 10 === 0) {
+                return `${Math.round(value)}`;
             }
             return '';
         });
