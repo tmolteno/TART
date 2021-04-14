@@ -254,7 +254,7 @@ def from_hdf5(filename):
     with h5py.File(filename, "r") as h5f:
         config_json = np.string_(h5f['config'][0])
         config = settings.from_json(config_json)
-        hdf_baselines = h5f['baselines'][:]
+        hdf_baselines = h5f['baselines'][:].tolist()
         ant_pos = h5f['antenna_positions'][:]
         hdf_phase_elaz = h5f['phase_elaz'][:]
 
@@ -262,7 +262,7 @@ def from_hdf5(filename):
         timestamps = [dateutil.parser.parse(x) for x in hdf_timestamps]
         
         hdf_vis = h5f['vis'][:]
-
+        config.set_antenna_positions(ant_pos)
         for ts, v in zip(timestamps, hdf_vis):
             vis = Visibility(config=config, timestamp=ts)
             vis.set_visibilities(v=v, b=hdf_baselines)
