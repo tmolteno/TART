@@ -36,6 +36,8 @@ class Visibility:
         self.timestamp = timestamp
 
     def set_visibilities(self, v, b):
+        if not isinstance(b, list):
+            raise RuntimeError(f"Baselines (type={type(b)}) must be passed as a list object")
         self.baselines = b
         self.v = v
 
