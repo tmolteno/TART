@@ -68,8 +68,8 @@ clone the Github repository
 
     git clone https://github.com/tmolteno/TART
     cd TART
-    (cd software/containers/telescope_web_api && sh pre_build.sh);
-    rsync -rv --exclude=node_modules software
+    (cd TART/software/containers/telescope_web_api && sh pre_build.sh);
+    cp -r TART/software software
     
 OR:  
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
