@@ -67,7 +67,6 @@ Debian Buster:
 clone the Github repository
 
     git clone https://github.com/tmolteno/TART
-    cd TART
     (cd TART/software/containers/telescope_web_api && sh pre_build.sh);
     cp -r TART/software software
     
