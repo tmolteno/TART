@@ -57,6 +57,11 @@ There is a script, /scripts/install_pi.sh, which performs this task.
 SSH into the raspberry pi after completing step 1.
 
     cd software
+    
+Edit docker-compose.yml and change LOGIN_PW= from passwd to your secure password. This password is used to log in to the TART web interface
+
+Now run  
+ 
     docker-compose build
 This last step can take ages (around 1 hour or so)
 
