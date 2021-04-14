@@ -12,7 +12,7 @@ services:
            - /dev/spidev0.0
         environment:
             # Change the following to be something secure. You will use this to login to your telescope from the web api.
-            - LOGIN_PW=passwd
+            - LOGIN_PW=tartza
         ports:
             - 5000:5000
         restart: always
