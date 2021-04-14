@@ -46,19 +46,21 @@ Now run:
     sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev git
 
 Install docker on the raspberry pi. This is done by following commands.  
-    
-    
-    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
-    sudo usermod -aG docker $USER
-    sudo pip3 install docker-compose
-    sudo reboot
-    
+
 Debian Buster:
 
     sudo apt install docker.io docker-compose
     sudo usermod -aG docker $USER
     sudo reboot
     
+ OR:
+    
+    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+    sudo usermod -aG docker $USER
+    sudo pip3 install docker-compose
+    sudo reboot
+    
+  
 
 ### Step 2. Copy code to the Pi
 
@@ -69,7 +71,7 @@ clone the Github repository
     (cd software/containers/telescope_web_api && sh pre_build.sh);
     rsync -rv --exclude=node_modules software
     
-OR  
+OR:  
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
 
     TARGET=pi@tart2-dev.local
