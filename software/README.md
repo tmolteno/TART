@@ -31,7 +31,7 @@ Set hostname, activate SPI & SSH with raspi-config ( SSH and SPI can be enabled 
     
 Now run:
 
-    sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev
+    sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev git
 
 Install docker on the raspberry pi. This is done by following commands.  
     
