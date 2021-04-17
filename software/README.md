@@ -25,23 +25,52 @@ The following procedure will install all the necessary TART software on a Raspbe
 
 ### Step 1. Prepare the Pi
 
-Install docker on the raspberry pi. This is done by following commands.
-    sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev
+Download latest Raspberry Pi OS Lite image from https://www.raspberrypi.org/software/operating-systems/  
+Download Etcher from https://www.balena.io/etcher/ and flash the Image onto a SD Card.  
+This will take a couple of minutes... When done insert the sd card into raspberry pi and wait for it to boot up.  
+Create an empty file called ssh and copy it onto the sd card (Make sure that the ssh file has no file extention) 
+
+log in or SSH into the Raspberry Pi.
+
+    user: pi
+    pw: raspberry
+
+Set hostname, activate SPI & SSH with raspi-config ( SSH and SPI can be enabled under Interfacing Options) :
+
+    sudo raspi-config
+    sudo apt update
+    sudo apt dist-upgrade
     
-    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
-    sudo usermod -aG docker $USER
-    sudo pip3 install docker-compose
-    sudo reboot
-    
+Now run:
+
+    sudo apt install python3-pip libffi-dev python3-cffi gcc libssl-dev python3-dev git
+
+Install docker on the raspberry pi. This is done by following commands.  
+
 Debian Buster:
 
     sudo apt install docker.io docker-compose
     sudo usermod -aG docker $USER
     sudo reboot
     
+ OR:
+    
+    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+    sudo usermod -aG docker $USER
+    sudo pip3 install docker-compose
+    sudo reboot
+    
+  
 
 ### Step 2. Copy code to the Pi
 
+clone the Github repository
+
+    git clone https://github.com/tmolteno/TART
+    (cd TART/software/containers/telescope_web_api && sh pre_build.sh);
+    cp -r TART/software software
+    
+OR:  
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
 
     TARGET=pi@tart2-dev.local
@@ -55,6 +84,11 @@ There is a script, /scripts/install_pi.sh, which performs this task.
 SSH into the raspberry pi after completing step 1.
 
     cd software
+    
+Edit docker-compose.yml and change LOGIN_PW= from passwd to your secure password. This password is used to log in to the TART web interface
+
+Now run  
+ 
     docker-compose build
 This last step can take ages (around 1 hour or so)
 
