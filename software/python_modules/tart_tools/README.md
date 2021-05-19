@@ -44,6 +44,7 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
+* Version 0.2.0b12. Fix bug in get-gains option.
 * Version 0.2.0b11. Add a tart_set_mode binary.
 * Version 0.2.0b9. Add a timeout to all HTTP requests.
 * Version 0.2.0b8. Add a put method to the authorized api handler.
