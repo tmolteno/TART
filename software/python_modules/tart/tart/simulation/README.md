@@ -1,9 +1,9 @@
-==Simulation Code
+# Simulation Code #
 
 Type python correlate_simulated_signal.py and see what happens!
 
 
-#Simulation of TART operation
+## Simulation of TART operation ##
 
 Files in this directory are designed to simulate the sampling of a point noise source by a MAX2769B.
 
