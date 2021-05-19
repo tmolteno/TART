@@ -1,8 +1,8 @@
-'''
+"""
 Solar Radio Source
 
 Calculate the position in horizontal coordinates for the sun.
-'''
+"""
 #
 # Copyright (c) Tim Molteno 2013. tim@elec.ac.nz
 #
@@ -17,6 +17,7 @@ from tart.imaging import radio_source
 from tart.util import utc
 
 from tart.imaging.sun import *
+
 
 class TestSun(unittest.TestCase):
     def setUp(self):
@@ -38,6 +39,7 @@ class TestSun(unittest.TestCase):
     def test_radec(self):
         Dunedin = location.Dunedin
         import ephem
+
         dnd = ephem.Observer()
         dnd.lon = str(Dunedin.lon.to_degrees())
         dnd.lat = str(Dunedin.lat.to_degrees())
@@ -45,15 +47,14 @@ class TestSun(unittest.TestCase):
         dnd.pressure = 0.0
         datee = datetime.datetime.utcnow()
         for delta in range(24):
-                timedelta = datetime.timedelta(hours=delta)
-                dnd.date = datee + timedelta
+            timedelta = datetime.timedelta(hours=delta)
+            dnd.date = datee + timedelta
 
-                j = ephem.Sun()
-                j.compute(dnd)
-                ra = angle.from_rad(j.ra.real)
-                dec= angle.from_rad(j.dec.real)
-                s = Sun()
-                sra, sdec = s.radec(datee + timedelta)
-                self.assertAlmostEqual(sra.to_degrees(), ra.to_degrees(), 2)
-                self.assertAlmostEqual(sdec.to_degrees(), dec.to_degrees(), 2)
-
+            j = ephem.Sun()
+            j.compute(dnd)
+            ra = angle.from_rad(j.ra.real)
+            dec = angle.from_rad(j.dec.real)
+            s = Sun()
+            sra, sdec = s.radec(datee + timedelta)
+            self.assertAlmostEqual(sra.to_degrees(), ra.to_degrees(), 2)
+            self.assertAlmostEqual(sdec.to_degrees(), dec.to_degrees(), 2)

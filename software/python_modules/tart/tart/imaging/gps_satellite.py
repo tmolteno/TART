@@ -1,6 +1,6 @@
-'''
+"""
 A class for GPS satellites.
-'''
+"""
 from tart.imaging import radio_source
 from tart.imaging.ephemerides_proxy import EphemeridesProxy
 from tart.util import constants
@@ -10,94 +10,96 @@ from tart.util import angle
 import datetime
 import numpy as np
 
+
 class GpsSatellite(radio_source.RadioSource):
-  '''This is a class describing a GPS satellite as observed from
-     a particular location on Earth.'''
-  def __init__(self, sv, location, jy=2.5e6):
-    radio_source.RadioSource.__init__(self, r=20.0e6, jy=jy)
-    self.sv = sv
-    self.location = location
-    self.ep = EphemeridesProxy.Instance()
+    """This is a class describing a GPS satellite as observed from
+    a particular location on Earth."""
 
-  def __repr__(self):
-    return 'PRN%02i' % self.sv
+    def __init__(self, sv, location, jy=2.5e6):
+        radio_source.RadioSource.__init__(self, r=20.0e6, jy=jy)
+        self.sv = sv
+        self.location = location
+        self.ep = EphemeridesProxy.Instance()
 
-  def sv_position(self, utc_date):
-    x, y, z = self.ep.get_sv_position(utc_date, self.sv)
-    # x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
-    return x, y, z
+    def __repr__(self):
+        return "PRN%02i" % self.sv
 
-  def to_horizontal(self, location, utc_date):
-    x, y, z = self.sv_position(utc_date)
-    r, el, az = location.ecef_to_horizontal(x, y, z)
-    return el, az
+    def sv_position(self, utc_date):
+        x, y, z = self.ep.get_sv_position(utc_date, self.sv)
+        # x, y, z = self.ep.get_sv_position_sp3(utc_date, self.sv)
+        return x, y, z
 
-  def jansky(self, utc_date):
-    x, y, z = self.sv_position(utc_date)
-    x0,y0,z0 = self.location.get_ecef()
+    def to_horizontal(self, location, utc_date):
+        x, y, z = self.sv_position(utc_date)
+        r, el, az = location.ecef_to_horizontal(x, y, z)
+        return el, az
 
-    r0 = np.array([x0,y0,z0]) - np.array([x,y,z])
-    rs = - np.array([x,y,z])
+    def jansky(self, utc_date):
+        x, y, z = self.sv_position(utc_date)
+        x0, y0, z0 = self.location.get_ecef()
 
-    # Calculate the off nadir angle (angle between rs
-    # and r0). This maxes out around 14 degrees
-    # An Improved Single Antenna Attitude System Based on GPS Signal Strength
-    # C. Wang1, R. A. Walker 2 and M. P. Moody3
-    # Cooperative Research Centre for Satellite Systems
-    # Queensland University of Technology, Brisbane, QLD, 4000, Australia
+        r0 = np.array([x0, y0, z0]) - np.array([x, y, z])
+        rs = -np.array([x, y, z])
 
-    angle_off_nadir = vector.angle_between(r0, rs) - angle.from_dms(10.0) # Maximum at 10 degrees
+        # Calculate the off nadir angle (angle between rs
+        # and r0). This maxes out around 14 degrees
+        # An Improved Single Antenna Attitude System Based on GPS Signal Strength
+        # C. Wang1, R. A. Walker 2 and M. P. Moody3
+        # Cooperative Research Centre for Satellite Systems
+        # Queensland University of Technology, Brisbane, QLD, 4000, Australia
 
-    # Transmit power
-    EIRP = 27.0 * angle_off_nadir.cos() # dbW
+        angle_off_nadir = vector.angle_between(r0, rs) - angle.from_dms(
+            10.0
+        )  # Maximum at 10 degrees
 
-    # Now estimate the flux, based on the distance r (in meters)
-    r, el, az = self.location.ecef_to_horizontal(x, y, z)
-    free_space_loss_db = 10.0 * np.log10(4.0*np.pi*r**2)
+        # Transmit power
+        EIRP = 27.0 * angle_off_nadir.cos()  # dbW
 
-    # Received power (over whole band)
-    rx_power_dbW = EIRP - free_space_loss_db
+        # Now estimate the flux, based on the distance r (in meters)
+        r, el, az = self.location.ecef_to_horizontal(x, y, z)
+        free_space_loss_db = 10.0 * np.log10(4.0 * np.pi * r ** 2)
 
-    # Received power (per Hz)
-    bandwidth = 2.0e6
-    rx_power_dbWHz = rx_power_dbW - 10.0*np.log10(bandwidth)
+        # Received power (over whole band)
+        rx_power_dbW = EIRP - free_space_loss_db
 
-    # Convert to Jansky
-    rx_jansky = 10.0**(rx_power_dbWHz / 10.0 + 26.0)
-    return rx_jansky
+        # Received power (per Hz)
+        bandwidth = 2.0e6
+        rx_power_dbWHz = rx_power_dbW - 10.0 * np.log10(bandwidth)
 
-  def radec(self, utc_date): # Get the RA and Declination
-    x, y, z = self.sv_position(utc_date)
-    r, el, az = self.location.ecef_to_horizontal(x, y, z)
-    ra, dec = self.location.horizontal_to_equatorial(utc_date, el, az)
-    return ra, dec
+        # Convert to Jansky
+        rx_jansky = 10.0 ** (rx_power_dbWHz / 10.0 + 26.0)
+        return rx_jansky
 
-  def velocity(self, utc_date):
-    return self.ep.get_sv_velocity(utc_date, self.sv)
+    def radec(self, utc_date):  # Get the RA and Declination
+        x, y, z = self.sv_position(utc_date)
+        r, el, az = self.location.ecef_to_horizontal(x, y, z)
+        ra, dec = self.location.horizontal_to_equatorial(utc_date, el, az)
+        return ra, dec
 
-  def doppler(self, utc_date):
-    dt = datetime.timedelta(seconds=0.5)
-    p0 = self.sv_position(utc_date - dt)
-    p1 = self.sv_position(utc_date + dt)
+    def velocity(self, utc_date):
+        return self.ep.get_sv_velocity(utc_date, self.sv)
 
-    range1 = np.linalg.norm(np.array(p0) - self.location.get_ecef())
-    range2 = np.linalg.norm(np.array(p1) - self.location.get_ecef())
+    def doppler(self, utc_date):
+        dt = datetime.timedelta(seconds=0.5)
+        p0 = self.sv_position(utc_date - dt)
+        p1 = self.sv_position(utc_date + dt)
 
-    assert isinstance(range1, np.float64), "range1 is not an float: %r" % range1
-    assert isinstance(range2, np.float64), "range2 is not an float: %r" % range2
+        range1 = np.linalg.norm(np.array(p0) - self.location.get_ecef())
+        range2 = np.linalg.norm(np.array(p1) - self.location.get_ecef())
 
-    velocity = (range1 - range2)
-    return velocity / constants.L1_WAVELENGTH
+        assert isinstance(range1, np.float64), "range1 is not an float: %r" % range1
+        assert isinstance(range2, np.float64), "range2 is not an float: %r" % range2
 
-  def get_distance(self, utc_date):
-    x, y, z = self.sv_position(utc_date)
-    r, el, az = self.location.ecef_to_horizontal(x, y, z)
-    return r
+        velocity = range1 - range2
+        return velocity / constants.L1_WAVELENGTH
+
+    def get_distance(self, utc_date):
+        x, y, z = self.sv_position(utc_date)
+        r, el, az = self.location.ecef_to_horizontal(x, y, z)
+        return r
 
 
-
-
-'''
+"""
 GPS BIIA-10 (PRN 32)
 1 20959U 90103A   13264.15200711 -.00000016  00000-0  00000+0 0  1080
 2 20959  54.3606 219.9575 0116774 342.4080  17.1544  2.00573447167127
@@ -194,4 +196,4 @@ GPS BIIF-3  (PRN 24)
 GPS BIIF-4  (PRN 27)
 1 39166U 13023A   13264.43514503 -.00000004  00000-0  10000-3 0  1097
 2 39166  55.0631  94.8384 0002691  25.5924 334.4770  2.00564685  2576
-'''
+"""
