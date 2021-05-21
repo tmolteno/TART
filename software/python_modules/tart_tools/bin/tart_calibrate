@@ -274,7 +274,7 @@ if __name__ == "__main__":
         "--method",
         required=False,
         default="LB",
-        help="Optimization Method [NM, LB, DE]",
+        help="Optimization Method [NM, LB, DE, BH]",
     )
     parser.add_argument(
         "--elevation", type=float, default=20.0, help="Elevation threshold for sources]"
