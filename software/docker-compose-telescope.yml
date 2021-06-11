@@ -11,6 +11,10 @@ version: '3.4'
 
 services:
     client_vpn:
+        #
+        # This makes the VPN connection to tart.elec.ac.nz. It requires a local directory called ./vpn that contains the necessary vpn keys
+        # those keys should have been created by an adminstrator on tart.elec.ac.nz
+        #
         image: dperson/openvpn-client:armhf
             # cap_add, security_opt, and volume required for the image to function
         cap_add:

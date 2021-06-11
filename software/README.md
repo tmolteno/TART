@@ -9,7 +9,7 @@ The folder are structured as follows
 
 The Software runs on three different computers. 
 
-* A Raspberry Pi (Model 3) which is plugged into the TART basestation board. This runs the telescope web API server.
+* A Raspberry Pi (Model 3 or 4) which is plugged into the TART basestation board. This runs the telescope web API server.
 * A calibration server which is a fast desktop that runs a calibration routine at regular intervals (every few hours)
 * An optional object position server. This is a server that provides a catalog of known objects and their elevation/azimuth for any point on earth. A public one is available so you'll only need to provide your own server if you're running a process that requires low-latency access to this information.
 
