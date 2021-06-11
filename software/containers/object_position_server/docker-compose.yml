@@ -16,4 +16,4 @@ services:
             driver: "json-file"
             options:
                 max-file: "5"
-                max-size: "10m"
+                max-size: "1m"
