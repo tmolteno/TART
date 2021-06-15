@@ -7,7 +7,7 @@ services:
             context: .
         ports:
             - 8876:8876
-        restart: always
+        restart: unless-stopped
         environment:
             - FLASK_DEBUG=0
         volumes:
@@ -17,3 +17,12 @@ services:
             options:
                 max-file: "5"
                 max-size: "1m"
+
+    api_doc_server:
+        build:
+            context: .
+            dockerfile: Dockerfile.apidoc 
+        ports: 
+            - 8877:80
+        restart: unless-stopped
+
