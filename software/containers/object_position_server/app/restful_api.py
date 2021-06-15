@@ -66,7 +66,7 @@ def handle_exception(e):
     return "Exception: {}".format(e)
 
 """
-    @api {get} /catalog/ Request Object Positions local horizontal (El Az) coordinates
+    @api {get} /catalog Request Object Positions local horizontal (El Az) coordinates
     @apiName catalog
     @apiGroup Catalog
 
@@ -94,7 +94,7 @@ def get_catalog():
     return jsonify(ret)
 
 """
-    @api {get} /position/ Request SV Positions in ECEF coordinates
+    @api {get} /position Request SV Positions in ECEF coordinates
     @apiName position
     @apiGroup Catalog
 
