@@ -2,5 +2,6 @@
 	"name": "Object Position Server REST API",
 	"version": "0.0.1",
 	"description": "API to provide a catalog of known objects",
-	"title": "Source Catalog API"
+	"title": "Source Catalog API",
+	"sampleUrl" : "http://tart.elec.ac.nz/catalog"
 }

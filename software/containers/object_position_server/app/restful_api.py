@@ -77,7 +77,7 @@ def handle_exception(e):
 
     @apiSuccess {List} ObjectList List of objects with local horizontal (El Az) coordinates
     
-    @apiSampleRequest /catalog/catalog?lat=-45.85&lon=170.54
+    @apiSampleRequest /catalog?lat=-45.85&lon=170.54
 """
 @app.route('/catalog', methods=['GET',])
 def get_catalog():
@@ -101,7 +101,7 @@ def get_catalog():
     @apiParam {String} [date=now] UTC date for the request
 
     @apiSuccess {List} ObjectList List of objects with coordinates in ECEF
-    @apiSampleRequest /catalog/position
+    @apiSampleRequest /position
 """
 @app.route('/position', methods=['GET',])
 def get_pos():
