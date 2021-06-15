@@ -2,7 +2,5 @@
 	"name": "Object Position Server REST API",
 	"version": "0.0.1",
 	"description": "API to provide a catalog of known objects",
-	"title": "Source Catalog API",
-	"url" : "http://localhost/api/v1",
-	"sampleUrl" : "http://localhost/api/v1"
+	"title": "Source Catalog API"
 }
