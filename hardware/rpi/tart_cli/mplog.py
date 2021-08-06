@@ -23,7 +23,7 @@ class MultiProcessingLog(logging.Handler):
             try:
                 record = self.queue.get()
                 self._handler.emit(record)
-                print('received on pid {}'.format(os.getpid()))
+                print(("received on pid {}".format(os.getpid())))
             except (KeyboardInterrupt, SystemExit):
                 raise
             except EOFError:

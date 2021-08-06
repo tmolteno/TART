@@ -28,7 +28,7 @@ def gen_calib_image(vislist, calibration_dir):
                       flagged_bl.append([i,j])
           cv.set_flagged_baselines(flagged_bl)
           if MIN:
-              print 'fmin'
+              print('fmin')
           else:
               for i in range(1,6):
                   a_i = np.abs(cv.get_visibility(0,i))
@@ -157,7 +157,7 @@ def result_loop(result_queue, chunk_size, mode='syn', plotQ=None, calibration_di
                         #for r,label in zip(res, labels):
                             #plt.plot(r,label=label)
                             #plt.legend()
-            except Exception, e:
+            except Exception as e:
                 logger.error( "Measurement Processing Error %s" % str(e))
                 logger.error(traceback.format_exc())
         else:
