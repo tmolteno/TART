@@ -1,0 +1,38 @@
+[package]
+name = "gridless"
+version = "0.2.0"
+authors = ["Tim Molteno <tim@elec.ac.nz>"]
+
+[dependencies]
+cdshealpix = { version = "*"}
+ndarray = "^0.12.1"
+num = "^0.2"
+
+# For data handling
+structopt = "^0.2" # CLI lib (based on clap)
+chrono = "^0.4.7"   # To parse Dates
+
+# For requests
+serde = { version = "^1.0", features = ["derive"] }
+serde_derive = "^1.0"
+serde_json = "^1.0"
+
+# reqwest="^0.9"
+
+[[bin]]
+name = "gridless"
+path = "src/main.rs"
+
+
+[features]
+nightly = []
+
+[dev-dependencies]
+rand="0.7.0"
+
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
