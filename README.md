@@ -1,5 +1,13 @@
 # Transient Array Radio Telescope
 
+## 'Next' branch
+
+Extensive rework of the TART code repository.
+ - Reimplementation of Flask telescope API in FastAPI
+ - Retention policy
+ - WASM in-browser imaging for TART vuer
+
+
 
 
 [![DOI](https://zenodo.org/badge/20430511.svg)](https://zenodo.org/badge/latestdoi/20430511)
