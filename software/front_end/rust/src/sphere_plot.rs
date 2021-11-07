@@ -1,6 +1,4 @@
 
-use std::fs::File;
-use std::io::BufWriter;
 use svg::SVG;
 
 use std::num;
@@ -63,10 +61,10 @@ impl Hemisphere {
         hash(self.nside, lonlat.lon, lonlat.lat)
     }
 
-    pub fn to_svg(&self, fname: &str,
+    pub fn to_svg(&self,
             pixels_only: bool,
             show_grid: bool,
-            sources: Option<&Vec<Source>>) {
+            sources: Option<&Vec<Source>>) ->SVG {
     
         
         let mut image = SVG::new(12, 12);
@@ -212,8 +210,9 @@ impl Hemisphere {
             None    => {/* nothing to do */}
         }
         
-        let mut output = BufWriter::new(File::create(fname).unwrap());
-        image.finalize(&mut output).expect("Writing SVG image failed");
+        //let mut output = BufWriter::new(File::create(fname).unwrap());
+       // image.finalize(&mut output).expect("Writing SVG image failed");
+        return image
     }
     
 }

@@ -1,5 +1,7 @@
+NSIDE=40
+
 all:
-	cargo run -- --nside 6 --sources --file data.json
+	cargo run -- --nside ${NSIDE} --sources --file data.json
 
 pixels:
 	cargo run -- --nside 3 --file data.json --pixels

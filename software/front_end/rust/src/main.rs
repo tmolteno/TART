@@ -23,6 +23,8 @@ mod svg;
 mod sphere_plot;
 
 use structopt::StructOpt;
+use std::io::BufWriter;
+use std::fs::File;
 
 use sphere::{Hemisphere};
 use std::time::{Instant};
@@ -59,7 +61,9 @@ fn main() {
 
     if show_pixels {
         let fname = format!("hemisphere_pixels_{}.svg", nside);
-        sky.to_svg(&fname, show_pixels, false, None);
+        let mut svg_data = sky.to_svg( show_pixels, false, None);
+        let mut output = BufWriter::new(File::create(fname).unwrap());
+        svg_data.finalize(&mut output).expect("Writing SVG image failed");
         return
     }
     
@@ -83,7 +87,9 @@ fn main() {
                                     true);
                                     
             let fname = format!("harmonics/harmonic_{}.svg", i);
-            sky.to_svg(&fname, false, false, None);
+            let mut svg_data =  sky.to_svg( false, false, None);
+            let mut output = BufWriter::new(File::create(fname).unwrap());
+            svg_data.finalize(&mut output).expect("Writing SVG image failed");
         }
         return
     }
@@ -100,11 +106,15 @@ fn main() {
     
     let fname = format!("gridless_{}.svg", dstring);
 
+    let mut output = BufWriter::new(File::create(fname).unwrap());
     if opt.show_sources {
         let sources = tart_obs::get_sources(&data);
-        sky.to_svg(&fname, show_pixels, true, Some(&sources));
-    } else {
-        sky.to_svg(&fname, show_pixels, true, None);
-    }
+        let mut svg_data = sky.to_svg( show_pixels, true, Some(&sources));
+        svg_data.finalize(&mut output).expect("Writing SVG image failed");
+   } else {
+        let mut svg_data = sky.to_svg( show_pixels, true, None);
+        svg_data.finalize(&mut output).expect("Writing SVG image failed");
+  }
+
 
 }
