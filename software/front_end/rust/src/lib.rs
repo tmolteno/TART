@@ -24,16 +24,17 @@ use sphere::{Hemisphere};
 
 use tart_obs::get_full;
 use tart_obs::get_sources;
+use tart_api::Source;
+
 use img::get_uvw;
 pub use gridless::image_visibilities;
 use utils::{VectorReal, VectorComplex, C64};
 use tart_obs::Observation;
 
-pub fn make_svg(data: &FullDataset,  nside: u32, show_sources: bool) -> SVG{
+pub fn make_svg(obs: &Observation,  nside: u32, sources: Option<&Vec<Source>>) -> SVG {
 
 
     // let data = tart_api::full_calibration_data(&fname);
-    let obs = tart_obs::get_full(&data);                        
     let (u,v,w) = img::get_uvw(
                             &obs.baselines,
                             &obs.ant_x,
@@ -46,31 +47,32 @@ pub fn make_svg(data: &FullDataset,  nside: u32, show_sources: bool) -> SVG{
                             &obs.vis_arr, 
                             &u, &v, &w, &mut sky,
                             false);
-    
-    let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
-
-    if show_sources {
-        let sources = tart_obs::get_sources(&data);
-        return sky.to_svg(true, Some(&sources));
-    } else {
-        return sky.to_svg(true, None);
-    }
+    return sky.to_svg(true, sources);
+//     if show_sources {
+//         let sources = tart_obs::get_sources(&data);
+//         return sky.to_svg(true, Some(&sources));
+//     } else {
+//         return sky.to_svg(true, None);
+//     }
 }
 
-pub fn parse_file(fname: &str) -> FullDataset
-{
+pub fn parse_file(fname: &str) -> FullDataset {
     let data = tart_api::full_calibration_data(&fname);
     return data;
 }
 
-pub fn get_obs_from_data(data: &FullDataset) -> Observation
-{
+pub fn get_obs_from_data(data: &FullDataset) -> Observation {
     let obs = tart_obs::get_full(&data);
     return obs;
 }
 
-pub fn get_uvw_from_obs(obs: &Observation) -> (VectorReal, VectorReal, VectorReal)
-{
+pub fn get_sources_from_data(data: &FullDataset) -> &Vec<Source> {
+    let sources = tart_obs::get_sources(&data);
+    return sources;
+}
+
+
+pub fn get_uvw_from_obs(obs: &Observation) -> (VectorReal, VectorReal, VectorReal) {
     let (u,v,w) = img::get_uvw(
                             &obs.baselines,
                             &obs.ant_x,
@@ -79,3 +81,4 @@ pub fn get_uvw_from_obs(obs: &Observation) -> (VectorReal, VectorReal, VectorRea
                             
     return (u, v, w);
 }
+

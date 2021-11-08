@@ -14,18 +14,10 @@ extern crate gridlesslib;
 #[cfg(test)]
 extern crate rand;
 
-// mod sphere;
-// mod gridless;
-// mod tart_obs;
-// mod utils;
-// mod svg;
-// mod sphere_plot;
 use structopt::StructOpt;
 use std::io::BufWriter;
 use std::fs::File;
 
-use gridlesslib::sphere::{Hemisphere};
-use gridlesslib::tart_api::FullDataset;
 use std::time::{Instant};
 
 
@@ -52,34 +44,23 @@ fn main() {
         
     let start = Instant::now();
     let data = gridlesslib::parse_file(&opt.file);
-    let obs = gridlesslib::get_obs_from_data(&data);                        
-    let (u,v,w) = gridlesslib::get_uvw_from_obs(&obs);
-
-    let mut svg_data = gridlesslib::make_svg(&data,  nside, opt.show_sources);
+    let obs = gridlesslib::get_obs_from_data(&data);
+    
+    let sources = if opt.show_sources {
+        Some(gridlesslib::get_sources_from_data(&data))
+    } else {
+        None
+    };
+        
+    let mut svg_data = gridlesslib::make_svg(&obs,  nside, sources);
+    
     let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
     let fname = format!("gridless_{}.svg", dstring);
 
     let mut output = BufWriter::new(File::create(fname).unwrap());
     svg_data.finalize(&mut output).expect("Writing SVG image failed");
 
-//     gridless::image_visibilities(
-//                             &obs.vis_arr, 
-//                             &u, &v, &w, &mut sky,
-//                             false);
     println!("Gridless took {} ms", start.elapsed().as_millis()); 
-//     
-// 
-//   
-//     
-// 
-//     if opt.show_sources {
-//         let sources = tart_obs::get_sources(&data);
-//         let mut svg_data = sky.to_svg( show_pixels, true, Some(&sources));
-//         svg_data.finalize(&mut output).expect("Writing SVG image failed");
-//    } else {
-//         let mut svg_data = sky.to_svg( show_pixels, true, None);
-//         svg_data.finalize(&mut output).expect("Writing SVG image failed");
-//   }
 
 
 }
