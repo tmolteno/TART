@@ -33,8 +33,6 @@ use tart_obs::Observation;
 
 pub fn make_svg(obs: &Observation,  nside: u32, sources: Option<&Vec<Source>>) -> SVG {
 
-
-    // let data = tart_api::full_calibration_data(&fname);
     let (u,v,w) = img::get_uvw(
                             &obs.baselines,
                             &obs.ant_x,
@@ -48,12 +46,6 @@ pub fn make_svg(obs: &Observation,  nside: u32, sources: Option<&Vec<Source>>) -
                             &u, &v, &w, &mut sky,
                             false);
     return sky.to_svg(true, sources);
-//     if show_sources {
-//         let sources = tart_obs::get_sources(&data);
-//         return sky.to_svg(true, Some(&sources));
-//     } else {
-//         return sky.to_svg(true, None);
-//     }
 }
 
 pub fn parse_file(fname: &str) -> FullDataset {
