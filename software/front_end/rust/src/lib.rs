@@ -22,6 +22,8 @@ mod utils;
 mod svg;
 mod sphere_plot;
 
+use chrono::{DateTime, Utc};
+
 use tart_api::FullDataset;
 use sphere::{Hemisphere};
 
@@ -42,8 +44,29 @@ pub fn make_svg(vis: &VectorComplex,
     return sky.to_svg(true, sources).to_string();
 }
 
-pub fn json_to_dataset(fname: &str) -> FullDataset {
-    let data = tart_api::full_calibration_data(&fname);
+
+pub fn json_to_svg(json: &String, nside: u32, show_sources: bool) -> (String, DateTime<Utc>) {
+    let data = tart_api::json_to_dataset(&json);
+    let obs = get_obs_from_dataset(&data);
+    
+    let (u,v,w) = img::get_uvw(
+                            &obs.baselines,
+                            &obs.ant_x,
+                            &obs.ant_y,
+                            &obs.ant_z);
+
+    let sources = if show_sources {
+        Some(get_sources_from_dataset(&data))
+    } else {
+        None
+    };
+
+    return (make_svg(&obs.vis_arr, &u, &v, &w,  nside, sources), obs.timestamp);
+}
+
+
+pub fn file_to_dataset(fname: &str) -> FullDataset {
+    let data = tart_api::file_to_dataset(&fname);
     return data;
 }
 

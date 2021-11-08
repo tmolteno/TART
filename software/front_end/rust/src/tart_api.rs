@@ -2,20 +2,24 @@
 // Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
 //
 
-// use reqwest::Error;
 use serde::de::DeserializeOwned;
 
+// use reqwest::Error;
 // fn api_get<T: DeserializeOwned>(route: &str) -> T {
 //     let request_url = format!("https://tart.elec.ac.nz/signal/api/v1/{route}",
-//                               route = route);
+//                                 route = route);
 //     println!("URL: {}", request_url);
 //     let mut response = reqwest::get(&request_url).unwrap();
 //     response.json().expect(&format!("Failed to get data from route {}", route))
 // }
-// 
+
 
 use std::fs::File;
 use std::io::prelude::*;
+
+fn api_parse_json<T: DeserializeOwned>(contents: &String) -> T {
+    serde_json::from_str(&contents).expect(&format!("Failed to get data from string {}", contents))
+}
 
 fn api_parse<T: DeserializeOwned>(fname: &str) -> T {
 
@@ -23,8 +27,9 @@ fn api_parse<T: DeserializeOwned>(fname: &str) -> T {
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    serde_json::from_str(&contents).expect(&format!("Failed to get data from file {}", fname))
+    api_parse_json(&contents)
 }
+
 
 /************************************* Gains and Phases ***************************************/
 
@@ -139,6 +144,12 @@ pub struct FullDataset {
     pub gains: Gains,
     pub data: Vec<VisSource>
 }
-pub fn full_calibration_data(fname: &str) -> FullDataset  {
+
+
+pub fn file_to_dataset(fname: &str) -> FullDataset  {
     api_parse::<FullDataset>(&fname)
+}
+
+pub fn json_to_dataset(json: &String) -> FullDataset  {
+    api_parse_json::<FullDataset>(&json)
 }

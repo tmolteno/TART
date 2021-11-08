@@ -10,6 +10,7 @@ extern crate rand;
 use structopt::StructOpt;
 use std::io::BufWriter;
 use std::io::Write;
+use std::io::Read;
 use std::fs::File;
 
 use std::time::{Instant};
@@ -36,25 +37,15 @@ fn main() {
     let nside = opt.nside;
         
     let start = Instant::now();
-    let data = gridlesslib::json_to_dataset(&opt.file);
-    let obs = gridlesslib::get_obs_from_dataset(&data);
     
-    let (u,v,w) = gridlesslib::img::get_uvw(
-                            &obs.baselines,
-                            &obs.ant_x,
-                            &obs.ant_y,
-                            &obs.ant_z);
+    let mut file = File::open(&opt.file).unwrap();
+    let mut json = String::new();
+    file.read_to_string(&mut json).unwrap();
 
-    let sources = if opt.show_sources {
-        Some(gridlesslib::get_sources_from_dataset(&data))
-    } else {
-        None
-    };
-
-    // Main library call. Returns some SVG data
-    let svg_data = gridlesslib::make_svg(&obs.vis_arr, &u, &v, &w,  nside, sources);
+   // Main library call. Returns some SVG data
+    let (svg_data, timestamp) = gridlesslib::json_to_svg(&json,  nside, opt.show_sources);
     
-    let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
+    let dstring = timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
     let fname = format!("gridless_{}.svg", dstring);
 
     let mut output = BufWriter::new(File::create(fname).unwrap());
