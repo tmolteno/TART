@@ -301,7 +301,7 @@ impl SVG {
         self.content.push_str("</g>\n");
     }
 
-    pub fn finalize(&mut self, output: &mut dyn std::io::Write) -> std::result::Result<(), std::io::Error> {
+    pub fn to_string(&mut self) -> String {
         let mut o = String::new();
         // Head
         match self.head.standalone {
@@ -330,6 +330,11 @@ impl SVG {
         o.push_str(self.content.clone().as_str());
         // Close
         o.push_str("</svg>\n");
+        return o;
+    }
+    
+    pub fn finalize(&mut self, output: &mut dyn std::io::Write) -> std::result::Result<(), std::io::Error> {
+        let o = self.to_string();
         output.write_all(o.as_bytes())
     }
 }

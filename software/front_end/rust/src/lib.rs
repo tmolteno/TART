@@ -22,7 +22,6 @@ mod utils;
 mod svg;
 mod sphere_plot;
 
-use svg::SVG;
 use tart_api::FullDataset;
 use sphere::{Hemisphere};
 
@@ -32,7 +31,7 @@ use tart_obs::Observation;
 
 pub fn make_svg(vis: &VectorComplex, 
             u: &VectorReal, v: &VectorReal, w: &VectorReal,  
-            nside: u32, sources: Option<&Vec<Source>>) -> SVG {
+            nside: u32, sources: Option<&Vec<Source>>) -> String {
 
     let mut sky = Hemisphere::new(nside);
 
@@ -40,7 +39,7 @@ pub fn make_svg(vis: &VectorComplex,
                             &vis, 
                             &u, &v, &w, &mut sky,
                             false);
-    return sky.to_svg(true, sources);
+    return sky.to_svg(true, sources).to_string();
 }
 
 pub fn json_to_dataset(fname: &str) -> FullDataset {

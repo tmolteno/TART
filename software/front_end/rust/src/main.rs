@@ -9,6 +9,7 @@ extern crate rand;
 
 use structopt::StructOpt;
 use std::io::BufWriter;
+use std::io::Write;
 use std::fs::File;
 
 use std::time::{Instant};
@@ -51,13 +52,14 @@ fn main() {
     };
 
     // Main library call. Returns some SVG data
-    let mut svg_data = gridlesslib::make_svg(&obs.vis_arr, &u, &v, &w,  nside, sources);
+    let svg_data = gridlesslib::make_svg(&obs.vis_arr, &u, &v, &w,  nside, sources);
     
     let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
     let fname = format!("gridless_{}.svg", dstring);
 
     let mut output = BufWriter::new(File::create(fname).unwrap());
-    svg_data.finalize(&mut output).expect("Writing SVG image failed");
+    //svg_data.finalize(&mut output).expect("Writing SVG image failed");
+    (&mut output).write_all(svg_data.as_bytes()).expect("Writing SVG image failed");
 
     println!("Gridless took {} ms", start.elapsed().as_millis()); 
 }
