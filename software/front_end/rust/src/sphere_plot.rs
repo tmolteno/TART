@@ -62,7 +62,6 @@ impl Hemisphere {
     }
 
     pub fn to_svg(&self,
-            pixels_only: bool,
             show_grid: bool,
             sources: Option<&Vec<Source>>) ->SVG {
     
@@ -109,7 +108,7 @@ impl Hemisphere {
 
         println!(", 'R_mad': {}, 'MAD': {}, 'median': {}", (max_p/mad_p), mad_p, med);
 
-        if !pixels_only {
+        {
             let base_poly_attrib = "stroke-width=2 stroke-linejoin=round stroke-opacity=1.0";
             image.g_attribs(&base_poly_attrib);
         }
@@ -146,33 +145,17 @@ impl Hemisphere {
             x_mean = x_mean/4.0;
             y_mean = y_mean/4.0;
 
-            if pixels_only {
-                let dlat = max_lat - min_lat;
-                
-                let font_size = pc.from_d(dlat*max_lat.sin())/5;
 
-                
-                let attrib_txt = format!("font-size={}px text-anchor=middle", font_size);
-                let attrib_txt_poly = format!("fill=none stroke=black stroke-width={} stroke-linejoin=round", font_size/10);
+            let (r, g, b) = cmap((value - min_p) / ( max_p - min_p));
+            let color = format!("rgb({:.1},{:.1},{:.1})", r, g, b);
 
-                image.polygon(&poly, &attrib_txt_poly);
-                let label = format!("{}", i);
-                
-                image.text(pc.from_x(x_mean), pc.from_y(y_mean) + (font_size/2) as i32, &label, &attrib_txt);
-                
-            } else {
-                let (r, g, b) = cmap((value - min_p) / ( max_p - min_p));
-                let color = format!("rgb({:.1},{:.1},{:.1})", r, g, b);
-
-                let attrib = format!("fill={} stroke={}",color, color);
-                if max_lat > 0.07 {
-                    image.polygon(&poly, &attrib);
-                }
+            let attrib = format!("fill={} stroke={}",color, color);
+            if max_lat > 0.07 {
+                image.polygon(&poly, &attrib);
             }
         }
-        if !pixels_only {
-            image.g_end(); // end the attribute group for polygons
-        }
+        image.g_end(); // end the attribute group for polygons
+
         if show_grid {
             let attrib_grid = format!("fill=none stroke=white stroke-width={} stroke-linejoin=round stroke-dasharray={},{}", line_size, 5*line_size, 10*line_size);
             for angle in &[30, 60, 90] {

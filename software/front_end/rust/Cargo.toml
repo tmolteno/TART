@@ -23,6 +23,10 @@ serde_json = "^1.0"
 name = "gridless"
 path = "src/main.rs"
 
+[lib]
+name = "gridlesslib"
+path = "src/lib.rs"
+
 
 [features]
 nightly = []

@@ -1,19 +1,17 @@
-extern crate structopt;
 extern crate ndarray;
 extern crate serde;
-#[macro_use] extern crate serde_derive;
 extern crate serde_json;
+#[macro_use] extern crate serde_derive;
 extern crate chrono;
-
 extern crate cdshealpix;
 extern crate num;
+// 
+// #[cfg(test)]
+// extern crate rand;
 
-#[cfg(test)]
-extern crate rand;
-
-mod sphere;
-mod gridless;
-mod tart_api;
+pub mod sphere;
+pub mod gridless;
+pub mod tart_api;
 mod tart_obs;
 mod utils;
 mod img;
@@ -21,16 +19,20 @@ mod svg;
 mod sphere_plot;
 
 use svg::SVG;
-
+use tart_api::FullDataset;
 use sphere::{Hemisphere};
-use std::time::{Instant};
+
+use tart_obs::get_full;
+use tart_obs::get_sources;
+use img::get_uvw;
+pub use gridless::image_visibilities;
+use utils::{VectorReal, VectorComplex, C64};
+use tart_obs::Observation;
+
+pub fn make_svg(data: &FullDataset,  nside: u32, show_sources: bool) -> SVG{
 
 
-fn make_svg(fname: &str,  nside: u32, show_pixels: bool, show_sources: bool) -> SVG{
-
-    let mut sky = Hemisphere::new(nside);
-
-    let data = tart_api::full_calibration_data(&fname);
+    // let data = tart_api::full_calibration_data(&fname);
     let obs = tart_obs::get_full(&data);                        
     let (u,v,w) = img::get_uvw(
                             &obs.baselines,
@@ -38,20 +40,42 @@ fn make_svg(fname: &str,  nside: u32, show_pixels: bool, show_sources: bool) -> 
                             &obs.ant_y,
                             &obs.ant_z);
 
-    let start = Instant::now();
+    let mut sky = Hemisphere::new(nside);
+
     gridless::image_visibilities(
                             &obs.vis_arr, 
                             &u, &v, &w, &mut sky,
                             false);
-    println!("Gridless took {} ms", start.elapsed().as_millis()); 
     
     let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
 
     if show_sources {
         let sources = tart_obs::get_sources(&data);
-        return sky.to_svg( show_pixels, true, Some(&sources));
+        return sky.to_svg(true, Some(&sources));
     } else {
-        return sky.to_svg( show_pixels, true, None);
+        return sky.to_svg(true, None);
     }
+}
 
+pub fn parse_file(fname: &str) -> FullDataset
+{
+    let data = tart_api::full_calibration_data(&fname);
+    return data;
+}
+
+pub fn get_obs_from_data(data: &FullDataset) -> Observation
+{
+    let obs = tart_obs::get_full(&data);
+    return obs;
+}
+
+pub fn get_uvw_from_obs(obs: &Observation) -> (VectorReal, VectorReal, VectorReal)
+{
+    let (u,v,w) = img::get_uvw(
+                            &obs.baselines,
+                            &obs.ant_x,
+                            &obs.ant_y,
+                            &obs.ant_z);
+                            
+    return (u, v, w);
 }
