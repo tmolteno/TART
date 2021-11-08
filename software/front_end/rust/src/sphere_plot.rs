@@ -1,10 +1,9 @@
 
 use svg::SVG;
 
-use std::num;
 
 use cdshealpix::ring::{vertices, hash};
-use utils::{PI_OVER_2, VectorReal, median, mean};
+use utils::{PI_OVER_2, VectorReal, median};
 
 use sphere::{Hemisphere, LonLat, HpAngle, ElAz};
 

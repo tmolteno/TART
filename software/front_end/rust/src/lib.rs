@@ -22,11 +22,7 @@ use svg::SVG;
 use tart_api::FullDataset;
 use sphere::{Hemisphere};
 
-use tart_obs::get_full;
-use tart_obs::get_sources;
 use tart_api::Source;
-
-use img::get_uvw;
 pub use gridless::image_visibilities;
 use utils::{VectorReal, VectorComplex, C64};
 use tart_obs::Observation;

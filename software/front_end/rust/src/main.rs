@@ -41,6 +41,7 @@ fn main() {
         None
     };
 
+    // Main library call. Returns some SVG data
     let mut svg_data = gridlesslib::make_svg(&obs,  nside, sources);
     
     let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
