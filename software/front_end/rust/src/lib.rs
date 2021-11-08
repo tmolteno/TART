@@ -10,6 +10,9 @@ extern crate num;
 // extern crate rand;
 
 pub mod sphere;
+//
+// Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
+//
 pub mod gridless;
 pub mod tart_api;
 mod tart_obs;

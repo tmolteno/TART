@@ -1,3 +1,6 @@
+//
+// Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
+//
 use utils::{VectorReal, VectorComplex, C64, PI};
 use sphere::Hemisphere;
 

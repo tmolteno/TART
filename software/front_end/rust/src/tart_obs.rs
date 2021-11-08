@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
+//
+
 use tart_api;
 use tart_api::{Gains, VisData, Source, TARTinfo, AntPosition, FullDataset};
 use utils::{VectorReal, VectorComplex, C64};

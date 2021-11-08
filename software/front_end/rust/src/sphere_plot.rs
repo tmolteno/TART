@@ -1,6 +1,8 @@
+//
+// Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
+//
 
 use svg::SVG;
-
 
 use cdshealpix::ring::{vertices, hash};
 use utils::{PI_OVER_2, VectorReal, median};

@@ -1,7 +1,7 @@
 /*
     Classes to hold pixelated spheres
 
-    Tim Molteno tim@elec.ac.nz 2019
+    Tim Molteno tim@elec.ac.nz 2019-2021
 */
 
 

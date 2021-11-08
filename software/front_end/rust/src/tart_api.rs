@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
+//
+
 // use reqwest::Error;
 use serde::de::DeserializeOwned;
 

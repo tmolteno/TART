@@ -1,3 +1,6 @@
+//
+// Copyright (c) 2019-2021 Tim Molteno tim@elec.ac.nz
+//
 use utils::{VectorReal, L1_WAVELENGTH};
 
 fn spatial_frequency(a: f64, b: f64) -> f64 {
