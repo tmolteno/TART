@@ -35,17 +35,23 @@ fn main() {
     let nside = opt.nside;
         
     let start = Instant::now();
-    let data = gridlesslib::parse_file(&opt.file);
-    let obs = gridlesslib::get_obs_from_data(&data);
+    let data = gridlesslib::json_to_dataset(&opt.file);
+    let obs = gridlesslib::get_obs_from_dataset(&data);
     
+    let (u,v,w) = gridlesslib::img::get_uvw(
+                            &obs.baselines,
+                            &obs.ant_x,
+                            &obs.ant_y,
+                            &obs.ant_z);
+
     let sources = if opt.show_sources {
-        Some(gridlesslib::get_sources_from_data(&data))
+        Some(gridlesslib::get_sources_from_dataset(&data))
     } else {
         None
     };
 
     // Main library call. Returns some SVG data
-    let mut svg_data = gridlesslib::make_svg(&obs,  nside, sources);
+    let mut svg_data = gridlesslib::make_svg(&obs.vis_arr, &u, &v, &w,  nside, sources);
     
     let dstring = obs.timestamp.format("%Y_%m_%d_%H_%M_%S_%Z");
     let fname = format!("gridless_{}.svg", dstring);
