@@ -51,7 +51,7 @@ impl LonLat {
             lat: lat
         }
     }
-
+    #[allow(dead_code)]
     pub fn from_hp(hp: &HpAngle) -> LonLat {
         LonLat::new(hp.phi, PI_OVER_2 - hp.theta)
     }
@@ -124,6 +124,7 @@ pub struct Hemisphere {
     pub npix: usize,
     pub visible_pix: VectorReal,
     pub visible_indices: Vec::<u64>,
+    #[allow(dead_code)]
     elaz: Vec::<ElAz>,
     pub l: VectorReal,
     pub m: VectorReal,

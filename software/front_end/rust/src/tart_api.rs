@@ -34,6 +34,7 @@ pub struct Gains {
     pub phase_offset: Vec<f64>,
 }
 
+#[allow(dead_code)]
 pub fn gains() -> Gains  {
 //     api_get::<Gains>("calibration/gain")
     api_parse::<Gains>("gains.json")
@@ -55,6 +56,7 @@ pub struct VisEntry {
     pub re: f64
 }
 
+#[allow(dead_code)]
 pub fn visibilities() -> VisData  {
 //     api_get::<VisData>("imaging/vis")
     api_parse::<VisData>("vis.json")
@@ -64,9 +66,11 @@ pub fn visibilities() -> VisData  {
 /************************************* Info ***************************************/
 #[derive(Deserialize, Debug)]
 pub struct TARTinfo {
+    #[allow(dead_code)]
     info: TARTdetail
-    
 }
+
+#[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
 pub struct TARTdetail {
     pub L0_frequency: f64,
@@ -85,6 +89,7 @@ pub struct Location {
     pub lon: f64,
 }
 
+#[allow(dead_code)]
 pub fn info() -> TARTinfo  {
 //     api_get::<TARTinfo>("info")
     api_parse::<TARTinfo>("info.json")
@@ -99,6 +104,7 @@ pub struct AntPosition {
     pub z: f64
 }
 
+#[allow(dead_code)]
 pub fn ant_positions() -> Vec<AntPosition>  {
     api_parse::<Vec<AntPosition>>("antenna_positions.json")
 //     api_get::<Vec<AntPosition>>("imaging/antenna_positions")

@@ -12,6 +12,7 @@ use sphere::{Hemisphere, LonLat, HpAngle, ElAz};
 use tart_api::{Source};
 
 struct PlotCoords {
+    #[allow(dead_code)]
     w: i32,
     center: i32,
     scale: f64,
@@ -57,6 +58,7 @@ impl Hemisphere {
         vertices(self.nside, pixel)
     }
     
+    #[allow(dead_code)]
     fn get_pix(&self, hp: &HpAngle) -> u64 {
         let lonlat = LonLat::from_hp(&hp);
         hash(self.nside, lonlat.lon, lonlat.lat)
@@ -120,9 +122,6 @@ impl Hemisphere {
             
             let mut poly = Vec::new();
             
-            let mut x_mean = 0.0;
-            let mut y_mean = 0.0;
-            
             let mut max_lat = 0.0;
             let mut min_lat = PI_OVER_2;
 
@@ -140,11 +139,7 @@ impl Hemisphere {
             
                 poly.push((pc.from_x(x), pc.from_y(y)));
                 
-                x_mean = x_mean + x;
-                y_mean = y_mean + y;
             }
-            x_mean = x_mean/4.0;
-            y_mean = y_mean/4.0;
 
 
             let (r, g, b) = cmap((value - min_p) / ( max_p - min_p));

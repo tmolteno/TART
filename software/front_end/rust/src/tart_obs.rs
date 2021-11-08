@@ -111,6 +111,7 @@ pub fn get_full(data: &FullDataset) -> Observation {
 }
 
 
+#[allow(dead_code)]
 pub fn get() -> Observation {
     let cal_data = tart_api::gains();
     let vis = tart_api::visibilities();

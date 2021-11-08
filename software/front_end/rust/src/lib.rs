@@ -9,16 +9,16 @@ extern crate serde_json;
 extern crate chrono;
 extern crate cdshealpix;
 extern crate num;
-// 
-// #[cfg(test)]
-// extern crate rand;
 
-pub mod sphere;
+
 pub mod gridless;
-pub mod tart_api;
+pub mod img;
+
+mod sphere;
+
+mod tart_api;
 mod tart_obs;
 mod utils;
-pub mod img;
 mod svg;
 mod sphere_plot;
 
@@ -27,8 +27,7 @@ use tart_api::FullDataset;
 use sphere::{Hemisphere};
 
 use tart_api::Source;
-use gridless::image_visibilities;
-use utils::{VectorReal, VectorComplex, C64};
+use utils::{VectorReal, VectorComplex};
 use tart_obs::Observation;
 
 pub fn make_svg(vis: &VectorComplex, 

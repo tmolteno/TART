@@ -21,6 +21,7 @@ pub const PI_OVER_2: f64 = PI/2.0;
 
 
 
+#[allow(dead_code)]
 pub fn mean(data: &[f64]) -> Option<f64> {
 
     let sum = data.iter().sum::<f64>() as f64;
