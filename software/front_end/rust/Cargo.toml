@@ -19,6 +19,18 @@ serde_json = "^1.0"
 
 # reqwest="^0.9"
 
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+
+
+cfg-if = "0.1"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+]
+
+
+
 [[bin]]
 name = "gridless"
 path = "src/main.rs"
@@ -27,6 +39,7 @@ path = "src/main.rs"
 name = "gridlesslib"
 path = "src/lib.rs"
 
+crate-type = ["cdylib", "rlib"]
 
 [features]
 nightly = []
