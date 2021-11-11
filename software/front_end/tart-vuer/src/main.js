@@ -7,20 +7,14 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 
 import vuetify from '@/plugins/vuetify';
+
 Vue.use(VueAxios, axios)
-
-
-// import syn from '@/plugins/api_synthesis.js';
-
-// const wasm = import ("@/wasmimport.js")
 
 
 Vue.config.productionTip = false
 
 new Vue({
     router,
-    // syn,
-    // wasm,
     store,
     vuetify,
     render: h => h(App)

@@ -75,15 +75,16 @@ export default {
           gains: this.gain,
           data: [[this.vis, this.sat_list]],
         };
-        console.time("TIMAGING");
+        // console.time("TIMAGING");
         let ret = this.json_to_svg_ext(
           JSON.stringify(newJ),
           this.nside,
           this.show_sat
         );
         var container = document.getElementById("container");
+        // make svg scaleable
         container.innerHTML = ret.replace('width="12cm" height="12cm"','');
-        console.timeEnd("TIMAGING");
+        // console.timeEnd("TIMAGING");
       }
     },
   },
