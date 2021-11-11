@@ -10,6 +10,6 @@ build:	prereq
 
 gridlessLib:
 	cd ../rust/ && wasm-pack build --release --out-dir ../tart-vuer/pkg
-
+	cp pkg/* node_modules/wasm-tart-imaging
 
 

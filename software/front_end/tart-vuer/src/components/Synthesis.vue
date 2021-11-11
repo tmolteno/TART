@@ -13,14 +13,13 @@
         <v-spacer />
         <slot name="enlarge"></slot>
       </v-card-title>
-      <v-card-text>
-          <div id="container" class="chart">
-              Getting ready... Loading...
-          </div>
-      </v-card-text>
+      <div id="container" class="chart">
+        Getting ready... Loading...
+      </div>
       <v-card-actions class="py-0 my-0">
         <v-slider
-          v-model="nside"
+          @change="nside = $event"
+          :value="10"
           thumb-label="always"
           label="NSide"
           min="2"
@@ -31,6 +30,8 @@
       <v-card-actions class="py-0 my-0">
         <v-spacer />
         <v-switch v-model="show_sat" label="Satellites" />
+        <v-switch v-model="show_names" label="Names" />
+
         <v-spacer />
       </v-card-actions>
     </v-card>
@@ -43,7 +44,7 @@ export default {
   components: {},
   async beforeCreate() {
     const wasm = await import("wasm-tart-imaging");
-    this.json_to_svg_ext = wasm.json_to_svg_ext
+    this.json_to_svg_ext = wasm.json_to_svg_ext;
   },
   data: function() {
     return {
@@ -65,15 +66,27 @@ export default {
     show_sat: function() {
       this.redraw();
     },
+    show_names: function() {
+      this.redraw();
+    },
   },
   methods: {
     redraw: async function() {
-      if (this.vis && this.antennas && this.gain) {
+      if (this.vis && this.antennas && this.gain && this.json_to_svg_ext) {
         let newJ = {
           info: { info: this.info },
           ant_pos: this.antennas,
           gains: this.gain,
-          data: [[this.vis, this.sat_list]],
+          data: [
+            [
+              this.vis,
+              this.sat_list.map((s) => {
+                let a = Object.assign({}, s)
+                a.name = this.show_names ? s.name.split(" (")[0] : "";
+                return a;
+              }),
+            ],
+          ],
         };
         // console.time("TIMAGING");
         let ret = this.json_to_svg_ext(
@@ -83,7 +96,8 @@ export default {
         );
         var container = document.getElementById("container");
         // make svg scaleable
-        container.innerHTML = ret.replace('width="12cm" height="12cm"','');
+        container.innerHTML = ret.replace('width="12cm" height="12cm"', "");
+        // console.log(ret)
         // console.timeEnd("TIMAGING");
       }
     },
@@ -131,9 +145,10 @@ export default {
   z-index: 2;
 }
 
-
 .chart svg {
-    width: 100%;    
+  width: 100%;
 }
-
+svg {
+  visibility: hidden;
+}
 </style>
