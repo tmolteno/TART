@@ -1,0 +1,51 @@
+image: node:12
+
+stages:
+  - setup
+  - build
+  - pages
+
+setup:
+  stage: setup
+  script:
+    - yarn
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  only:
+    changes:
+      - yarn.lock
+      - .gitlab-ci.yml
+
+build:
+  stage: build
+  script:
+    - yarn build
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+    policy: pull
+  artifacts:
+    paths:
+      - dist
+  only:
+    - master
+
+
+pages: # the job must be named pages
+  stage: pages
+  script:
+    - rm -rf public
+    - mkdir public
+    - cp -r dist/* public
+    - find public -type f -regex '.*\.\(htm\|html\|txt\|text\|js\|css\)$' -exec gzip -f -k {} \;
+  dependencies:
+    - build
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - public
+  only:
+    - master

@@ -1,0 +1,138 @@
+<template>
+  <div>
+    <v-alert dense v-if="mode != 'vis'" type="warning" prominent outlined>
+      <div class="title">Operating Mode: {{ mode }}</div>
+      <div>
+        Visibilities most likely outdated because the telescope is currently not
+        operating in visibility mode.
+      </div>
+    </v-alert>
+    <v-card class="mx-auto">
+      <v-card-title class="my-0 py-1 pr-0">
+        <h4 class="teal--text text--lighten-2 text-uppercase">Realtime View</h4>
+        <v-spacer />
+        <slot name="enlarge"></slot>
+      </v-card-title>
+      <v-card-text>
+          <div id="container" class="chart">
+              Getting ready... Loading...
+          </div>
+      </v-card-text>
+      <v-card-actions class="py-0 my-0">
+        <v-slider
+          v-model="nside"
+          thumb-label="always"
+          label="NSide"
+          min="2"
+          max="48"
+        >
+        </v-slider>
+      </v-card-actions>
+      <v-card-actions class="py-0 my-0">
+        <v-spacer />
+        <v-switch v-model="show_sat" label="Satellites" />
+        <v-spacer />
+      </v-card-actions>
+    </v-card>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "SynthesisComponent",
+  components: {},
+  async beforeCreate() {
+    const wasm = await import("wasm-tart-imaging");
+    this.json_to_svg_ext = wasm.json_to_svg_ext
+  },
+  data: function() {
+    return {
+      // show_grid: true,
+      show_sat: true,
+      show_names: true,
+      retrieving: false,
+      curl: null,
+      nside: 16,
+    };
+  },
+  watch: {
+    vis: function() {
+      this.redraw();
+    },
+    nside: function() {
+      this.redraw();
+    },
+    show_sat: function() {
+      this.redraw();
+    },
+  },
+  methods: {
+    redraw: async function() {
+      if (this.vis && this.antennas && this.gain) {
+        let newJ = {
+          info: { info: this.info },
+          ant_pos: this.antennas,
+          gains: this.gain,
+          data: [[this.vis, this.sat_list]],
+        };
+        console.time("TIMAGING");
+        let ret = this.json_to_svg_ext(
+          JSON.stringify(newJ),
+          this.nside,
+          this.show_sat
+        );
+        var container = document.getElementById("container");
+        container.innerHTML = ret.replace('width="12cm" height="12cm"','');
+        console.timeEnd("TIMAGING");
+      }
+    },
+  },
+  computed: {
+    mode() {
+      return this.$store.state.telescope_mode;
+    },
+    num_bin() {
+      return this.$store.state.num_bin;
+    },
+    nw() {
+      return this.$store.state.nw;
+    },
+    info() {
+      return this.$store.state.info;
+    },
+    vis() {
+      return this.$store.state.vis;
+    },
+    gain() {
+      return this.$store.state.gain;
+    },
+    antennas() {
+      return this.$store.state.antennas;
+    },
+    sat_list() {
+      return this.$store.state.sat_list;
+    },
+    ant_sel_i() {
+      return this.sel_baseline[0];
+    },
+    ant_sel_j() {
+      return this.sel_baseline[1];
+    },
+  },
+};
+</script>
+
+<style scoped>
+#overlaySVG {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 2;
+}
+
+
+.chart svg {
+    width: 100%;    
+}
+
+</style>

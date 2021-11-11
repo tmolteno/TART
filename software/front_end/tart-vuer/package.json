@@ -1,0 +1,45 @@
+{
+  "name": "tart-vuer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "deploy": "npm run build && now --target production --public"
+  },
+  "dependencies": {
+    "apexcharts": "^3.8.3",
+    "axios": "^0.19.0",
+    "colormap": "^2.3.1",
+    "core-js": "^2.6.5",
+    "cwise": "^1.0.10",
+    "linspace": "^1.0.0",
+    "ndarray": "^1.0.18",
+    "ndarray-fft": "^1.0.3",
+    "static-eval": "^2.0.2",
+    "vue": "^2.6.10",
+    "vue-apexcharts": "^1.4.0",
+    "vue-axios": "^2.1.4",
+    "vue-router": "^3.0.3",
+    "vuetify": "^2.0.0",
+    "vuex": "^3.0.1",
+    "zeros": "^1.0.0",
+    "wasm-tart-imaging": "file:./pkg"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.9.0",
+    "@vue/cli-plugin-eslint": "^3.9.0",
+    "@vue/cli-service": "^3.9.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "favicons-webpack-plugin": "^1.0.1",
+    "sass": "^1.17.4",
+    "sass-loader": "^7.1.0",
+    "vue-cli-plugin-vuetify": "^0.6.1",
+    "vue-template-compiler": "^2.6.10",
+    "vuetify-loader": "^1.2.2",
+    "yarn-audit-fix": "^3.0.1"
+  }
+}
