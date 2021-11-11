@@ -8,6 +8,9 @@ pixels:
 
 build_wasm_pkg:
 	RUST_LOG=info wasm-pack build --release
+
+build_wasm_tart:
+	RUST_LOG=info wasm-pack build --release --out-dir ../tart-vuer/pkg
 	
 HOST=https://tart.elec.ac.nz
 API=${HOST}/signal/api/v1/
