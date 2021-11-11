@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  </head>
+
+  <body>
+    <!-- Note the usage of `type=module` here as this is an ES6 module -->
+    <script type="module">
+      import init, { json_to_svg_ext } from "../rust/pkg/gridlesslib.js";
+      async function run() {
+        console.time("init");
+        await init();
+        console.timeEnd("init");
+        var data = [];
+        fetch("../rust/data.json")
+          .then((res) => res.text())
+          .then((data) => {
+            console.time("gen svg");
+            let ret = json_to_svg_ext(data, 45, true);
+            console.timeEnd("gen svg");
+            var container = document.getElementById("container");
+            container.innerHTML = ret;
+          });
+      }
+      run();
+    </script>
+    <div id="container"></div>
+  </body>
+</html>
