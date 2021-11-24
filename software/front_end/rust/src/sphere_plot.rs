@@ -171,8 +171,7 @@ impl Hemisphere {
         match sources {
             Some(src) => {
                 let angular_size = (2.0 as f64).to_radians();
-                let attrib_source = format!("fill=none stroke=red stroke-width={}", line_size);
-                let text_attrib_source = format!("font-size={} fill=rgb(255,20,50) stroke=rgb(200,200,200) stroke-width={}", 150, 5);
+                // let text_attrib_source = format!("font-size={} fill=rgb(255,20,50) stroke=rgb(200,200,200) stroke-width={}", 150, 5);
                         
                 for s in src {
                     if s.el > 20.0 {
@@ -182,14 +181,13 @@ impl Hemisphere {
                         let elaz = ElAz::new(el, az);
                         
                         let (x,y) = pc.from_elaz(&elaz);
-                        
+
+                        let attrib_source = format!("fill=none stroke=red stroke-width={} el={} az={} name={}", line_size, el, az, s.name);
+
                         let radius = pc.from_d(angular_size);
                         //    let minor_axis = major_axis*el.sin();
                         //    let transform = image.transform();
                         image.circle(x, y, radius, &attrib_source );
-
-                        
-                        image.text(x, y, &s.name, &text_attrib_source);
                     }
                 }
             },

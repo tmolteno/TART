@@ -13,27 +13,33 @@
         <v-spacer />
         <slot name="enlarge"></slot>
       </v-card-title>
-      <div id="container" class="chart">
-        Getting ready... Loading...
-      </div>
-      <v-card-actions class="py-0 my-0">
-        <v-slider
-          @change="nside = $event"
-          :value="10"
-          thumb-label="always"
-          label="NSide"
-          min="2"
-          max="48"
-        >
-        </v-slider>
-      </v-card-actions>
-      <v-card-actions class="py-0 my-0">
-        <v-spacer />
-        <v-switch v-model="show_sat" label="Satellites" />
-        <v-switch v-model="show_names" label="Names" />
+      <div id="container" class="mx-2">Getting ready... Loading...</div>
+      <v-card elevation="0">
+        <v-card-actions class="py-0 my-0">
+          <v-slider
+            @change="nside = $event"
+            :value="10"
+            thumb-label="always"
+            label="NSide"
+            min="2"
+            max="48"
+          >
+          </v-slider>
+        </v-card-actions>
+        <v-card-actions class="py-0 my-0">
+          <v-spacer />
+          <v-switch v-model="show_sat" label="Satellites" />
+          <v-spacer />
 
-        <v-spacer />
-      </v-card-actions>
+          <v-overlay absolute v-if="srcLoc[0] > 0">
+            <v-spacer />
+            <v-btn small tile> {{ srcLoc[2] }} </v-btn>
+            <br />
+            <v-btn small tile> Elevation {{ srcLoc[0].toFixed(3) }} </v-btn>
+            <v-btn small tile> Azimuth {{ srcLoc[1].toFixed(3) }} </v-btn>
+          </v-overlay>
+        </v-card-actions>
+      </v-card>
     </v-card>
   </div>
 </template>
@@ -46,32 +52,28 @@ export default {
     const wasm = await import("wasm-tart-imaging");
     this.json_to_svg_ext = wasm.json_to_svg_ext;
   },
-  data: function() {
+  data: function () {
     return {
-      // show_grid: true,
       show_sat: true,
-      show_names: true,
       retrieving: false,
       curl: null,
       nside: 16,
+      srcLoc: [0, 0, ""],
     };
   },
   watch: {
-    vis: function() {
+    vis: function () {
       this.redraw();
     },
-    nside: function() {
+    nside: function () {
       this.redraw();
     },
-    show_sat: function() {
-      this.redraw();
-    },
-    show_names: function() {
+    show_sat: function () {
       this.redraw();
     },
   },
   methods: {
-    redraw: async function() {
+    redraw: async function () {
       if (this.vis && this.antennas && this.gain && this.json_to_svg_ext) {
         let newJ = {
           info: { info: this.info },
@@ -81,13 +83,20 @@ export default {
             [
               this.vis,
               this.sat_list.map((s) => {
-                let a = Object.assign({}, s)
-                a.name = this.show_names ? s.name.split(" (")[0] : "";
+                let a = Object.assign({}, s);
+                let newName = s.name
+                  .split(" (")[0]
+                  .replace(" ", "")
+                  .replace(" ", "")
+                  .replace(" ", "");
+                // Remove spaces as svg attributes does not like them!
+                a.name = newName;
                 return a;
               }),
             ],
           ],
         };
+        // console.log(newJ)
         // console.time("TIMAGING");
         let ret = this.json_to_svg_ext(
           JSON.stringify(newJ),
@@ -96,9 +105,40 @@ export default {
         );
         var container = document.getElementById("container");
         // make svg scaleable
+
         container.innerHTML = ret.replace('width="12cm" height="12cm"', "");
-        // console.log(ret)
-        // console.timeEnd("TIMAGING");
+        let vm = this;
+
+        // Add listeners to SVG
+        [].forEach.call(document.getElementsByTagName("circle"), function (el) {
+          if (el.getAttribute("name")) {
+            el.setAttribute("stroke-width", 50);
+
+            el.addEventListener("click", function (e) {
+              vm.srcLoc = [
+                (parseFloat(e.target.getAttribute("el")) * 180) / 3.141592,
+                (parseFloat(e.target.getAttribute("az")) * 180) / 3.141592,
+                e.target.getAttribute("name"),
+              ];
+
+              e.target.setAttribute("stroke", "white");
+            });
+            el.addEventListener("mouseenter", function (e) {
+              vm.srcLoc = [
+                (parseFloat(e.target.getAttribute("el")) * 180) / 3.141592,
+                (parseFloat(e.target.getAttribute("az")) * 180) / 3.141592,
+                e.target.getAttribute("name"),
+              ];
+
+              e.target.setAttribute("stroke", "white");
+            });
+            el.addEventListener("mouseleave", function (e) {
+              vm.srcLoc = [0, 0, ""];
+
+              e.target.setAttribute("stroke", "red");
+            });
+          }
+        });
       }
     },
   },
@@ -136,19 +176,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-#overlaySVG {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  z-index: 2;
-}
-
-.chart svg {
-  width: 100%;
-}
-svg {
-  visibility: hidden;
-}
-</style>
