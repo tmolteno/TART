@@ -71,7 +71,7 @@ impl Hemisphere {
         
         let mut image = SVG::new(12, 12);
 
-        let w = 4000;
+        let w = 8000;
         image.view_box(0, 0, w, w);
         
         let pc = PlotCoords::new(w);
@@ -112,7 +112,7 @@ impl Hemisphere {
         println!(", 'R_mad': {}, 'MAD': {}, 'median': {}", (max_p/mad_p), mad_p, med);
 
         {
-            let base_poly_attrib = "stroke-width=2 stroke-linejoin=round stroke-opacity=1.0";
+            let base_poly_attrib = "stroke-width=2 stroke-linejoin=round stroke-opacity=0.0";
             image.g_attribs(&base_poly_attrib);
         }
         for i in 0..self.npix {
@@ -155,16 +155,22 @@ impl Hemisphere {
 
         if show_grid {
             let attrib_grid = format!("fill=none stroke=white stroke-width={} stroke-linejoin=round stroke-dasharray={},{}", line_size, 5*line_size, 10*line_size);
-            for angle in &[30, 60, 90] {
+            for angle in &[10, 30, 60, 90] {
                 let rad = (*angle as f64).to_radians();
                 let radius = pc.from_d(rad.sin());
                 image.circle(pc.from_x(0.0), pc.from_y(0.0), radius, &attrib_grid );
             }
+            
+            let rad0 = 10_f64.to_radians();
+            let radius0 = rad0.sin();
+
             for angle in (0..360).step_by(30) {
                 let rad = (angle as f64).to_radians();
                 let x = rad.sin();
                 let y = rad.cos();
-                image.line(pc.from_x(0.0), pc.from_y(0.0), pc.from_x(x), pc.from_y(y), &attrib_grid );
+                let x0 = radius0*x;
+                let y0 = radius0*y;
+                image.line(pc.from_x(x0), pc.from_y(y0), pc.from_x(x), pc.from_y(y), &attrib_grid );
             }
         }
 
