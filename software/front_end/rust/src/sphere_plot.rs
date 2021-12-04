@@ -112,7 +112,7 @@ impl Hemisphere {
         println!(", 'R_mad': {}, 'MAD': {}, 'median': {}", (max_p/mad_p), mad_p, med);
 
         {
-            let base_poly_attrib = "stroke-width=2 stroke-linejoin=round stroke-opacity=0.0";
+            let base_poly_attrib = "stroke-width=2 stroke-linejoin=round stroke-opacity=1.0";
             image.g_attribs(&base_poly_attrib);
         }
         for i in 0..self.npix {
@@ -145,8 +145,8 @@ impl Hemisphere {
             let (r, g, b) = cmap((value - min_p) / ( max_p - min_p));
             let color = format!("rgb({:.1},{:.1},{:.1})", r, g, b);
 
-            // let attrib = format!("fill={} stroke={}",color, color);
-            let attrib = format!("fill={}",color);
+            let attrib = format!("fill={} stroke={}",color, color);
+            //let attrib = format!("fill={}",color);
             if max_lat > 0.07 {
                 image.polygon(&poly, &attrib);
             }
