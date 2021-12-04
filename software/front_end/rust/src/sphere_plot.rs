@@ -35,14 +35,14 @@ impl PlotCoords {
         }
     }
     fn from_d(&self, d: f64) -> u32 {
-        (d*self.scale) as u32
+        (d*self.scale).round() as u32
     }
     
     fn from_x(&self, x: f64) -> i32 {
-        (x*self.scale) as i32 + self.center
+        (x*self.scale).round() as i32 + self.center
     }
     fn from_y(&self, y: f64) -> i32 {
-        (y*self.scale) as i32 + self.center
+        (y*self.scale).round() as i32 + self.center
     }
     
     fn from_elaz(&self, elaz: &ElAz) -> (i32, i32) {
@@ -71,7 +71,7 @@ impl Hemisphere {
         
         let mut image = SVG::new(12, 12);
 
-        let w = 8000;
+        let w = 4000;
         image.view_box(0, 0, w, w);
         
         let pc = PlotCoords::new(w);
@@ -188,11 +188,13 @@ impl Hemisphere {
                         
                         let (x,y) = pc.from_elaz(&elaz);
 
-                        let attrib_source = format!("fill=none stroke=red stroke-width={} el={} az={} name={}", line_size, el, az, s.name);
+                        let attrib_source = format!("fill=none stroke=red stroke-width={} el={} az={} name={}", line_size, s.el, s.az, s.name.replace(" ", ""));
 
                         let radius = pc.from_d(angular_size);
                         //    let minor_axis = major_axis*el.sin();
                         //    let transform = image.transform();
+                        //println!("circle({}, {}, {} {})", x,y,radius, &attrib_source);
+
                         image.circle(x, y, radius, &attrib_source );
                     }
                 }
