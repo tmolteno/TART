@@ -114,7 +114,8 @@ class GPSCache(EphemerisFileCache):
         EphemerisFileCache.__init__(self, "norad_gps")
 
     def get_url(self, utc_date):
-        return "http://www.celestrak.com/NORAD/elements/gps-ops.txt"
+        #return "http://www.celestrak.com/NORAD/elements/gps-ops.txt"
+        return "http://celestrak.com/NORAD/elements/supplemental/gps.txt"
 
     def create_object_from_file(self, local_path):
         return Sp4Ephemerides(local_path, 1.5e6)
