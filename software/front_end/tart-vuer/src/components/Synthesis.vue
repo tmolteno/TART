@@ -18,11 +18,11 @@
         <v-card-actions class="py-0 my-0">
           <v-slider
             @change="nside = $event"
-            :value="10"
+            :value="20"
             thumb-label="always"
             label="NSide"
             min="2"
-            max="48"
+            max="64"
           >
           </v-slider>
         </v-card-actions>
@@ -116,8 +116,8 @@ export default {
 
             el.addEventListener("click", function (e) {
               vm.srcLoc = [
-                (parseFloat(e.target.getAttribute("el")) * 180) / 3.141592,
-                (parseFloat(e.target.getAttribute("az")) * 180) / 3.141592,
+                (parseFloat(e.target.getAttribute("el"))),
+                (parseFloat(e.target.getAttribute("az"))),
                 e.target.getAttribute("name"),
               ];
 
@@ -125,8 +125,8 @@ export default {
             });
             el.addEventListener("mouseenter", function (e) {
               vm.srcLoc = [
-                (parseFloat(e.target.getAttribute("el")) * 180) / 3.141592,
-                (parseFloat(e.target.getAttribute("az")) * 180) / 3.141592,
+                (parseFloat(e.target.getAttribute("el"))),
+                (parseFloat(e.target.getAttribute("az"))),
                 e.target.getAttribute("name"),
               ];
 
