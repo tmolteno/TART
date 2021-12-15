@@ -9,9 +9,9 @@ test:
 	python3 setup.py test --test-suite=tart.imaging.test.test_visibility.TestVisibility
 
 test_upload:
-	python setup.py sdist
+	python3 setup.py sdist
 	twine upload --repository testpypi dist/*
 
 upload:
-	python setup.py sdist
+	python3 setup.py sdist
 	twine upload --repository pypi dist/*
