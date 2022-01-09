@@ -83,12 +83,12 @@ There is a script, /scripts/install_pi.sh, which performs this task.
 
 SSH into the raspberry pi after completing step 1.
 
-    
-Edit software/docker-compose-telescope.yml and change LOGIN_PW= from passwd to your secure password. This password is used to log in to the TART web interface
+    cd software
+Edit docker-compose-telescope.yml and change LOGIN_PW= from passwd to your secure password. This password is used to log in to the TART web interface
 
 Now run  
  
-    docker-compose -f ./software/docker-compose-telescope.yml up --build
+    docker-compose -f docker-compose-telescope.yml up --build
 This last step can take ages (around 1 hour or so)
 
 This will build all the necessary sofware on the Pi. To run all the software an services. Type
