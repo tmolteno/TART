@@ -20,7 +20,7 @@ services:
         cap_add:
             - net_admin
         environment:
-            TZ: 'EST5EDT'
+            TZ: 'Africa/Johannesburg'
         networks:
             - default
         read_only: true
@@ -43,7 +43,7 @@ services:
 
     api_container:
         build: 
-            context: ./software/containers/telescope_web_api
+            context: ./containers/telescope_web_api
         volumes:
             -   data-volume:/telescope_data
             -   ~/tart_web_api_store:/app
@@ -64,7 +64,7 @@ services:
 
     api_doc_server:
         build:
-            context: ./software/containers/telescope_web_api
+            context: ./containers/telescope_web_api
             dockerfile: Dockerfile.apidoc 
         ports: 
             - 8080:80
@@ -79,7 +79,7 @@ services:
         environment:
             - NODE_ENV=production
         build: 
-            context: ./software/containers/web_app
+            context: ./containers/web_app
             args:
                 # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
                 tart_name: signal
