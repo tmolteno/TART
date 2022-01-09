@@ -89,7 +89,7 @@ Edit docker-compose.yml and change LOGIN_PW= from passwd to your secure password
 
 Now run  
  
-    docker-compose build
+    docker-compose -f docker-compose-telescope.yml up --build
 This last step can take ages (around 1 hour or so)
 
 This will build all the necessary sofware on the Pi. To run all the software an services. Type
