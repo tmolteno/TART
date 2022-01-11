@@ -2,7 +2,7 @@
 FROM node:10 as build-stage
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
-RUN npm install apidoc -g
+RUN npm install apidoc@0.29.0 -g
 
 COPY ./python_code/tart_web_api /code
 
