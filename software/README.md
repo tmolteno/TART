@@ -93,7 +93,7 @@ This last step can take ages (around 1 hour or so)
 
 This will build all the necessary sofware on the Pi. To run all the software an services. Type
 
-    docker-compose up
+    docker-compose -f docker-compose-telescope.yml up
 
 This will launch all the necessary processes in docker containers on the pi.
 
@@ -101,7 +101,7 @@ This will launch all the necessary processes in docker containers on the pi.
 
 To make the system start automatically at startup (and run in the background) modify the line in step 3 to
 
-    docker-compose up -d
+    docker-compose -f docker-compose-telescope.yml up -d
 
 
 ### Testing
