@@ -2,7 +2,8 @@
 FROM node:10 as build-stage
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
-RUN npm install apidoc@0.29.0 -g
+RUN apt-get update -y && apt-get install -y tzdata
+RUN npm install -g apidoc@0.29.0 
 
 COPY ./python_code/tart_web_api /code
 

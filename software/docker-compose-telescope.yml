@@ -15,12 +15,12 @@ services:
         # This makes the VPN connection to tart.elec.ac.nz. It requires a local directory called ./vpn that contains the necessary vpn keys
         # those keys should have been created by an adminstrator on tart.elec.ac.nz
         #
-        image: dperson/openvpn-client:armhf
+        image: dperson-openvpn-client:alpine3.12.3
             # cap_add, security_opt, and volume required for the image to function
         cap_add:
             - net_admin
         environment:
-            TZ: 'Africa/Johannesburg'
+           TZ: 'EST5EDT'
         networks:
             - default
         read_only: true
@@ -43,7 +43,7 @@ services:
 
     api_container:
         build: 
-            context: ./containers/telescope_web_api
+            context: ./software/containers/telescope_web_api
         volumes:
             -   data-volume:/telescope_data
             -   ~/tart_web_api_store:/app
@@ -52,7 +52,7 @@ services:
            - /dev/spidev0.0
         environment:
             # Change the following to be something secure. You will use this to login to your telescope from the web api.
-            - LOGIN_PW=passwd
+            - LOGIN_PW=password
         ports:
             - 5000:5000
         restart: always
@@ -64,7 +64,7 @@ services:
 
     api_doc_server:
         build:
-            context: ./containers/telescope_web_api
+            context: ./software/containers/telescope_web_api
             dockerfile: Dockerfile.apidoc 
         ports: 
             - 8080:80
@@ -79,7 +79,7 @@ services:
         environment:
             - NODE_ENV=production
         build: 
-            context: ./containers/web_app
+            context: ./software/containers/web_app
             args:
                 # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
                 tart_name: signal
