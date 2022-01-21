@@ -80,28 +80,47 @@ This step assumes that the raspberry pi is accessible as the host name 'tart2-de
 There is a script, /scripts/install_pi.sh, which performs this task.
 
 ### Step 3. Build on the Pi
-
 SSH into the raspberry pi after completing step 1.
 
-    cd software
-Edit docker-compose-telescope.yml and change LOGIN_PW= from passwd to your secure password. This password is used to log in to the TART web interface
+Install openvpn-client (Reference https://github.com/dperson/openvpn-client/issues/365#issuecomment-761976040)
 
-Now run  
- 
-    docker-compose -f docker-compose-telescope.yml up --build
-This last step can take ages (around 1 hour or so)
+    git clone https://github.com/dperson/openvpn-client.git
+    cd openvpn-client
+    
+Git hooks
 
-This will build all the necessary sofware on the Pi. To run all the software an services. Type
+    export DOCKER_TAG=armhf
+    ./hooks/post_checkout
+    
+Edit the Dockerfile.armhf file:
 
-    docker-compose -f docker-compose-telescope.yml up
+    nano Dockerfile.armhf
+    
+Change the following line from
+    
+    FROM arm32v6/alpine
+    
+to 
 
-This will launch all the necessary processes in docker containers on the pi.
+    FROM arm32v6/alpine:3.12.3
 
-### Step 4.
+build a local image of the openvpn-client
 
-To make the system start automatically at startup (and run in the background) modify the line in step 3 to
+    docker build -t dperson-openvpn-client:alpine3.12.3 -f Dockerfile.armhf .
 
-    docker-compose -f docker-compose-telescope.yml up -d
+    
+Edit docker-compose-telescope.yml and change LOGIN_PW= from passwd to your secure password (This password is used to log in to the TART web interface) with: 
+
+    nano ./software/docker-compose-telescope.yml
+
+run:
+
+    cp ./software/docker-compose-telescope.yml ./docker-compose.yml
+    cd ./
+    docker-compose up -d --build
+    
+This will build all the necessary sofware on the Pi and run launch all the docker containers
+
 
 
 ### Testing
