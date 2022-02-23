@@ -15,7 +15,7 @@ services:
         # This makes the VPN connection to tart.elec.ac.nz. It requires a local directory called ./vpn that contains the necessary vpn keys
         # those keys should have been created by an adminstrator on tart.elec.ac.nz
         #
-        image: dperson-openvpn-client:alpine3.12.3
+        image: dperson/openvpn-client
             # cap_add, security_opt, and volume required for the image to function
         cap_add:
             - net_admin
@@ -82,7 +82,7 @@ services:
             context: ./software/containers/web_app
             args:
                 # Change this if you desire. Really only needed for running multiple TART telescopes and reverse proxying.
-                tart_name: signal
+                tart_name: rhodes
         network_mode: "service:client_vpn"
         restart: always
         logging:
