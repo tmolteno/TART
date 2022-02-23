@@ -1,9 +1,9 @@
 # Stage 0, "build-stage", build the documentation
-FROM node:10 as build-stage
+FROM node:12 as build-stage
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 
 RUN apt-get update -y && apt-get install -y tzdata
-RUN npm install -g apidoc@0.29.0 
+RUN npm install -g apidoc 
 
 COPY ./python_code/tart_web_api /code
 
