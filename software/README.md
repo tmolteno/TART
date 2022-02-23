@@ -69,6 +69,7 @@ clone the Github repository
     git clone https://github.com/tmolteno/TART
     (cd TART/software/containers/telescope_web_api && sh pre_build.sh);
     cp -r TART/software software
+    mkdir ./vpn
     
 OR:  
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
