@@ -25,4 +25,4 @@ WORKDIR /app
 # Add the calibrate script.
 ADD tart_calibrate.sh /tart_calibrate.sh
 
-CMD sh /tart_calibrate.sh
+# CMD sh /tart_calibrate.sh
