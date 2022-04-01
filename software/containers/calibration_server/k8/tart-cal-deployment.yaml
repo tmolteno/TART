@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: tart-cal
+  name: tart-cal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: tart-cal
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: tart-cal
+    spec:
+      containers:
+        - env:
+            - name: TART_API
+              value: https://tart.elec.ac.nz/signal/
+            - name: TART_CAL_INT
+              value: "30"
+            - name: TART_LOGIN_PW
+              value: sharkbait
+            - name: TART_NCAL
+              value: "6"
+          image: tart/cal:latest
+          imagePullPolicy: Never
+          name: tart-cal
+          resources: {}
+          volumeMounts:
+            - mountPath: /app
+              name: data-volume
+      restartPolicy: Always
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: data-volume
+status: {}

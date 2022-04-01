@@ -7,19 +7,19 @@
 # Reference: Molteno et al. Continuous Calibration of the TART using GPS satellites. EnzCon 2017.
 #
 WORKING_DIR=/app
-METHOD=DE
+TART_CAL_METHOD=DE
 DATESTR=`date "+%Y_%m_%d_%H_%M_%S"`
 DIR=${WORKING_DIR}/calibration_${DATESTR}
 mkdir -p ${DIR}
 
 CALIB_INPUT=${DIR}/calib_data.json
-CALIB_OUTPUT=${DIR}/${METHOD}_opt_json.json
+CALIB_OUTPUT=${DIR}/${TART_CAL_METHOD}_opt_json.json
 
 # Get calibration data
-/usr/local/bin/tart_calibration_data --api ${TART_API} --n 3 --i 25 --file ${CALIB_INPUT}
+/usr/local/bin/tart_calibration_data --api ${TART_API} --n ${TART_NCAL} --i ${TART_CAL_INT} --file ${CALIB_INPUT}
 
 # Perform optimization
-/usr/local/bin/tart_calibrate --api ${TART_API} --file ${CALIB_INPUT} --method ${METHOD} --dir ${DIR}
+/usr/local/bin/tart_calibrate --api ${TART_API} --file ${CALIB_INPUT} --get-gains --method ${TART_CAL_METHOD} --dir ${DIR}
 
 # Log outputs
 CAL_OUTPUT_FILE=${WORKING_DIR}/cal_${DATESTR}.json
