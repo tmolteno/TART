@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "0 */2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - env:
+            - name: TART_API
+              value: https://tart.elec.ac.nz/signal/
+            - name: TART_CAL_INT
+              value: "30"
+            - name: TART_LOGIN_PW
+              value: sharkbait
+            - name: TART_NCAL
+              value: "6"
+            image: tart/cal:latest
+            imagePullPolicy: Never
+            name: tart-cal
+            command: ["/bin/sh"]
+            args: ["/tart_calibrate.sh"]
+            volumeMounts:
+            - mountPath: /app
+              name: data-volume
+          restartPolicy: OnFailure
+
+          volumes:
+          - name: data-volume
+            persistentVolumeClaim:
+              claimName: data-volume

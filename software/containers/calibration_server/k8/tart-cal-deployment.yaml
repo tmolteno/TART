@@ -37,8 +37,8 @@ spec:
           image: tart/cal:latest
           imagePullPolicy: Never
           name: tart-cal
-          command: ["/bin/sh"]
-          args: ["/tart_calibrate.sh"]
+          #command: ["/bin/sh"]
+          #args: ["/tart_calibrate.sh"]
           volumeMounts:
             - mountPath: /app
               name: data-volume
