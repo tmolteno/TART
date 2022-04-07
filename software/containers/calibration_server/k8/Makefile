@@ -11,6 +11,7 @@ create:
 	${KUBECTL} get pods
 	
 cron:
+	-${KUBECTL} delete -f cronjob.yaml
 	${KUBECTL} create -f cronjob.yaml
 	${KUBECTL} get pods
 	

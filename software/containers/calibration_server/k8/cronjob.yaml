@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: hello
+  name: regular-cal
 spec:
   schedule: "0 */2 * * *"
   jobTemplate:
