@@ -9,8 +9,15 @@
 # Make sure the output directory exists.
 mkdir -p ~/calibration_results
 # Now run the container
-docker run --rm -d \
+
+# For production use:
+# TART_NCAL = 6 # number of measurements for calibration
+# TART_CAL_INT = 30 # minutes between measurements
+
+docker run --rm \
     -e TART_LOGIN_PW=$1 \
     -e TART_API=https://tart.elec.ac.nz/signal/ \
+    -e TART_NCAL=1 \
+    -e TART_CAL_INT=30 \
     -v ~/calibration_results:/app \
-    --name=cal -it  tart_calibration_server
+    --name=cal tart_calibration_server /tart_calibrate.sh
