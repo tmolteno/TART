@@ -23,10 +23,6 @@ impl Observation {
                 vis: &VisData,
                 _info: &TARTinfo, 
                 ant_positions: &Vec<AntPosition>) -> Observation {
-//         let cal_data = tart_api::gains();
-//         let vis = tart_api::visibilities();
-//         let info = tart_api::info();
-//         let ant_positions = tart_api::ant_positions();
         
         let rfc3339 = DateTime::parse_from_rfc3339(&vis.timestamp).expect("Couldn't parse timestamp");
         println!("{}", rfc3339);
@@ -43,23 +39,13 @@ impl Observation {
             ant_x.push(ant_positions[i].x);
             ant_y.push(ant_positions[i].y);
             ant_z.push(ant_positions[i].z);
-            
-            for j in i+1..num_antenna {
-                let mut found = false;
-                for v in &vis.data {
-                    if (v.i == i as u32) && (v.j == j as u32) {
-                        vis_vec.push(C64::new(v.re, v.im));
-                        found = true;
-                        break;
-                    }
-                }
-                if !found {
-                    panic!("No vis found for baseline {}{}", i, j);
-                }
-                baselines.push((i as u32,j as u32));
-            }
         }
-        
+
+        for v in &vis.data {
+            vis_vec.push(C64::new(v.re, v.im));
+            baselines.push((v.i as u32,v.j as u32));
+        }
+
         let cal_vis = apply_gains(&baselines, &vis_vec, &cal_data);
         
         Observation {

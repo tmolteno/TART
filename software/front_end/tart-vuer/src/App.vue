@@ -1,45 +1,56 @@
 <template>
-<v-app>
-    <v-app-bar app dense dark>
-        <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-        <v-toolbar-title class="headline text-uppercase pa-0">
-            <span class="cyan--text font-weight-bold">TART</span>
-            <span class="font-weight-light">VIEWER</span>
-        </v-toolbar-title>
-        <v-spacer />
-        <v-btn icon color='cyan' href="https://github.com/tmolteno/TART">
-            <v-icon>mdi-github</v-icon>
-        </v-btn>
-    </v-app-bar>
+    <v-app>
+        <v-app-bar app dense dark>
+            <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+            <v-toolbar-title class="headline text-uppercase pa-0">
+                <span class="cyan--text font-weight-bold">TART</span>
+                <span class="font-weight-light">VIEWER</span>
+            </v-toolbar-title>
+            <v-spacer />
+            <v-btn icon color='cyan' href="https://github.com/tmolteno/TART">
+                <v-icon>mdi-github</v-icon>
+            </v-btn>
+        </v-app-bar>
 
-    <v-navigation-drawer v-model="drawer" app temporary dark>
-        <v-list-item class="pt-5">
-            <v-select label="Refresh Interval (seconds)" v-model="refreshInterval" :items="refreshIntervals" outlined />
-        </v-list-item>
-
-        <TelescopeModeChange />
-        <LoginField />
-
-        <template v-slot:append>
-            <v-list-item>
-                <v-alert outlined>
-                    <div>
-                        <v-checkbox v-model="enabled" class="shrink mr-2 mt-0" label="I know what I am doing"></v-checkbox>
-                        <v-text-field :disabled="!enabled" v-model="TART_URL" label="Telescope API Endpoint"></v-text-field>
-                    </div>
-                </v-alert>
+        <v-navigation-drawer v-model="drawer" app temporary dark>
+            <v-list-item class="pt-5">
+                <v-select label="Refresh Interval (seconds)" v-model="refreshInterval" :items="refreshIntervals"
+                    outlined />
             </v-list-item>
 
-        </template>
+            <TelescopeModeChange />
+            <LoginField />
 
-    </v-navigation-drawer>
+            <template v-slot:append>
+                <v-list-item>
+                    <v-text-field :disabled="selected != 'custom'" v-model="TART_URL" label="Telescope API Endpoint" />
+                </v-list-item>
+                <v-list-item-group v-model="selected" active-class="primary--text" mandatory>
+                    <v-list-item value="signal">
+                        Dunedin
+                    </v-list-item>
+                    <v-list-item value="rhodes">
+                        Rhodes
+                    </v-list-item>
+                    <v-list-item value="stellenbosch">
+                        Stellenbosh
+                    </v-list-item>
+                    <v-list-item value="custom">
+                        Custom
+                    </v-list-item>
+                </v-list-item-group>
 
-    <v-main>
-        <v-container fluid>
-            <router-view />
-        </v-container>
-    </v-main>
-</v-app>
+
+            </template>
+
+        </v-navigation-drawer>
+
+        <v-main>
+            <v-container fluid>
+                <router-view />
+            </v-container>
+        </v-main>
+    </v-app>
 </template>
 
 <script>
@@ -54,6 +65,7 @@ export default {
     name: "App",
     data: () => ({
         drawer: false,
+        selected: 'signal',
         enabled: false,
         refresher: null,
         longTermRefresher: null,
@@ -90,6 +102,14 @@ export default {
 
         },
     },
+    watch: {
+        selected: function (newPostfix) {
+            if (newPostfix != 'custom') {
+                this.$store.dispatch("setTART_URL", 'https://tart.elec.ac.nz/' + newPostfix);
+
+            }
+        }
+    },
     created: function () {
         this.$store.dispatch("renewVis");
         this.$store.dispatch("renewGain");
@@ -106,6 +126,7 @@ export default {
         window.clearTimeout(this.longTermRefresher);
     },
     computed: {
+
         TART_URL: {
             get: function () {
                 return this.$store.state.TART_URL;

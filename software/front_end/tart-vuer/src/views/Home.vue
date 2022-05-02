@@ -24,10 +24,10 @@
         <v-col cols="12" sm="6" md="6" lg="4" v-if="telescopeMode=='vis'">
             <ArrayLayout />
         </v-col>
-        <v-col cols="12" sm="6" md="6" lg="6" v-if="telescopeMode=='diag'">
+        <v-col cols="12" sm="6" md="6" lg="4" v-if="telescopeMode=='diag'">
             <RadioSpectrum />
         </v-col>
-        <v-col cols="12" sm="6" md="6" lg="6">
+        <v-col cols="12" sm="6" md="6" lg="4">
             <RecentData />
         </v-col>
 
