@@ -33,7 +33,7 @@
                         Rhodes
                     </v-list-item>
                     <v-list-item value="stellenbosch">
-                        Stellenbosh
+                        Stellenbosch
                     </v-list-item>
                     <v-list-item value="custom">
                         Custom
