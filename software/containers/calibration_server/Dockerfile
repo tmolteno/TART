@@ -17,7 +17,7 @@ RUN apt-get clean -y
 RUN rm -rf /var/lib/apt/lists/*
 
 # Install tart python packages
-RUN pip3 install tart tart-tools requests 
+RUN pip3 install --no-cache-dir tart tart-tools requests
 
 # setup working directory
 WORKDIR /app

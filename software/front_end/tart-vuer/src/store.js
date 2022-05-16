@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import syn from '@/plugins/api_synthesis.js';
 
 Vue.use(Vuex)
 
@@ -186,9 +185,7 @@ export default new Vuex.Store({
             }
 
             Vue.axios.get(api_call).then((response) => {
-                let sats = response.data
-                let d = sats.map(sat => { sat.pxpos = syn.horizontal_2_px(sat.el, sat.az, context.state.nw, context.state.num_bin); return sat })
-                context.commit('newSatellite', d)
+                context.commit('newSatellite', Object.freeze(response.data))
             })
         },
         newBaseline(context, val) {

@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  calibration:
+    image: ghcr.io/tmolteno/tart_calibration_server:latest
+    build: .                                # Path to Dockerfile
+    environment:
+      TART_LOGIN_PW: replaceme                    # used for pushing new gains to API. Match to set in the telescope API.
+      TART_API: https://tart.elec.ac.nz/signal/   # telescope API endpoint
+      TART_NCAL: 3                                # use 1 for debugging only
+      TART_CAL_INT: 30                            # Interval between measurements
+    volumes:
+      - ./calibration_results:/app
+    command: /tart_calibrate.sh
+

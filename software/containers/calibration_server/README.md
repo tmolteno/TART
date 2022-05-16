@@ -8,6 +8,29 @@ This instance requires a lot of processing power (approx 1 hour of CPU time on a
 
 The process spends the first hour capturing 3 sets of observations at 25 minute intervals. After this, it uses these observations and the positions of the known radio sources at the time of observation. The entire process will take approximately two hours to complete (with only the second hour being very CPU intensive).
 
+## run via docker-compose.yml
+
+#### Configuration
+Configure environment variables in docker-compose.yml
+
+#### Build and run
+```bash
+docker-compose build && docker-compose up -d
+```
+
+#### Follow progress
+```bash
+docker-compose logs --follow
+```
+
+####
+```bash
+docker-compose ps  # status is calibration still running?
+docker-compose stop  # stop calibration run?
+```
+
+
+
 ## Docker Usage
 
 The easiest way to build this is to use docker. To build the container type:

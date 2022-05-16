@@ -7,40 +7,66 @@
         operating in visibility mode.
       </div>
     </v-alert>
-    <v-card class="mx-auto">
+    <v-card class="mx-auto" elevation="3">
       <v-card-title class="my-0 py-1 pr-0">
         <h4 class="teal--text text--lighten-2 text-uppercase">Realtime View</h4>
         <v-spacer />
         <slot name="enlarge"></slot>
       </v-card-title>
       <div id="container" class="mx-2">Getting ready... Loading...</div>
-      <v-card elevation="0">
-        <v-card-actions class="py-0 my-0">
-          <v-slider
-            @change="nside = $event"
-            :value="20"
-            thumb-label="always"
-            label="NSide"
-            min="2"
-            max="64"
-          >
-          </v-slider>
-        </v-card-actions>
-        <v-card-actions class="py-0 my-0">
-          <v-spacer />
-          <v-switch v-model="show_sat" label="Satellites" />
-          <v-spacer />
 
-          <v-overlay absolute v-if="srcLoc[0] > 0">
-            <v-spacer />
-            <v-btn small tile> {{ srcLoc[2] }} </v-btn>
-            <br />
-            <v-btn small tile> Elevation {{ srcLoc[0].toFixed(3) }} </v-btn>
-            <v-btn small tile> Azimuth {{ srcLoc[1].toFixed(3) }} </v-btn>
-          </v-overlay>
-        </v-card-actions>
-      </v-card>
+      <v-card-actions class="py-0 my-0">
+        <v-slider @change="nside = $event" :value="20" thumb-label="always" label="NSide" min="2" max="64">
+        </v-slider>
+      </v-card-actions>
+      <v-card tile elevation="0"> 
+        <!-- limit absolute v-overlay by introducing another v-card here -->
+      <v-card-actions class="py-0 my-0">
+        <v-spacer />
+        <v-switch v-model="show_sat" label="Overlay Satellites" />
+        <v-spacer />
+        <v-switch v-model="show_antennas" label="Toggle Antennas" />
+        <v-spacer />
+        
+        <v-overlay absolute v-if="srcLoc[0] > 0">
+          <v-spacer />
+          <v-btn small tile> {{ srcLoc[2] }} </v-btn>
+          <br />
+          <v-btn small tile> Elevation {{ srcLoc[0].toFixed(3) }} </v-btn>
+          <v-btn small tile> Azimuth {{ srcLoc[1].toFixed(3) }} </v-btn>
+        </v-overlay>
+      </v-card-actions>
+
+        </v-card>
+
+
+      <v-expand-transition>
+        <div v-show="show_antennas">
+          <v-divider></v-divider>
+
+          <v-card-title class="my-0 py-1 pr-0">
+            <h4 class="teal--text text--lighten-2 text-uppercase">Antennas used for imaging</h4>
+          </v-card-title>
+          <v-card-actions class="py-0 my-0">
+            <v-row class="ma-0 pa-0">
+              <v-col v-for="ant in antennasIdx" :key="'ant' + ant" cols="2" class="ma-0 pa-0 mx-auto">
+                <v-checkbox v-model="antennasUsed" :label="ant.toString()" :value="ant" class="mx-auto"></v-checkbox>
+              </v-col>
+            </v-row>
+          </v-card-actions>
+          <v-card-actions class="py-0 my-0">
+
+            <div v-if="reducedVis">
+              Number of contributing baselines: {{ reducedVis.data.length }}
+            </div>
+          </v-card-actions>
+
+
+        </div>
+      </v-expand-transition>
     </v-card>
+
+
   </div>
 </template>
 
@@ -55,14 +81,15 @@ export default {
   data: function () {
     return {
       show_sat: true,
-      retrieving: false,
-      curl: null,
+      show_antennas: false,
       nside: 16,
       srcLoc: [0, 0, ""],
+      antennasIdx: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+      antennasUsed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
     };
   },
   watch: {
-    vis: function () {
+    reducedVis: function () {
       this.redraw();
     },
     nside: function () {
@@ -74,30 +101,20 @@ export default {
   },
   methods: {
     redraw: async function () {
-      if (this.vis && this.antennas && this.gain && this.json_to_svg_ext) {
+      if (this.reducedVis && this.antennas && this.gain && this.json_to_svg_ext) {
+
         let newJ = {
           info: { info: this.info },
           ant_pos: this.antennas,
           gains: this.gain,
           data: [
             [
-              this.vis,
-              this.sat_list.map((s) => {
-                let a = Object.assign({}, s);
-                let newName = s.name
-                  .split(" (")[0]
-                  .replace(" ", "")
-                  .replace(" ", "")
-                  .replace(" ", "");
-                // Remove spaces as svg attributes does not like them!
-                a.name = newName;
-                return a;
-              }),
+              this.reducedVis,
+              this.sat_list
             ],
           ],
         };
-        // console.log(newJ)
-        // console.time("TIMAGING");
+
         let ret = this.json_to_svg_ext(
           JSON.stringify(newJ),
           this.nside,
@@ -108,7 +125,7 @@ export default {
 
         container.innerHTML = ret.replace('width="12cm" height="12cm"', "");
         let vm = this;
-
+        console.log(container);
         // Add listeners to SVG
         [].forEach.call(document.getElementsByTagName("circle"), function (el) {
           if (el.getAttribute("name")) {
@@ -157,6 +174,20 @@ export default {
     },
     vis() {
       return this.$store.state.vis;
+    },
+    reducedVis() {
+      if (this.$store.state.vis) {
+        let data = this.$store.state.vis.data.filter(v => (this.antennasUsed.includes(v.i) && this.antennasUsed.includes(v.j)))
+        let ts = this.$store.state.vis.timestamp
+        var reduced_vis = {
+          'data': data,
+          'timestamp': ts
+        }
+        return reduced_vis
+      }
+      else {
+        return null
+      }
     },
     gain() {
       return this.$store.state.gain;

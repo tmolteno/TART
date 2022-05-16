@@ -7,7 +7,7 @@
 # Reference: Molteno et al. Continuous Calibration of the TART using GPS satellites. EnzCon 2017.
 #
 WORKING_DIR=/app
-TART_CAL_METHOD=BH
+TART_CAL_METHOD=BH # DE is really quick but does not produce good results.
 DATESTR=`date "+%Y_%m_%d_%H_%M_%S"`
 DIR=${WORKING_DIR}/calibration_${DATESTR}
 mkdir -p ${DIR}
