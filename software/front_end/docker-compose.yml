@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+    frontend:
+        image: ghcr.io/tmolteno/tart/frontend:latest
+        build:
+          context: .
+          dockerfile: Dockerfile
+          args:
+            CI_PROJECT_NAME: viewer  # needed if exposed as /viewer
+

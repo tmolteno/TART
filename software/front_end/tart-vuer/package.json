@@ -6,6 +6,8 @@
         "serve": "vue-cli-service serve",
         "build": "vue-cli-service build",
         "lint": "vue-cli-service lint",
+	"serve17": "export NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service serve",
+        "build17": "export NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service build",
         "deploy": "npm run build && now --target production --public"
     },
     "dependencies": {
@@ -22,7 +24,7 @@
         "vue-apexcharts": "^1.4.0",
         "vue-axios": "^3.4.0",
         "vue-router": "^3.0.3",
-        "vuetify": "^2.0.0",
+        "vuetify": "^2.6.5",
         "vuex": "^3.0.1",
         "wasm-tart-imaging": "file:./pkg",
         "zeros": "^1.0.0"
@@ -31,7 +33,7 @@
         "@vue/cli-plugin-babel": "~4.5.15",
         "@vue/cli-service": "~4.5.15",
         "babel-eslint": "^10.1.0",
-        "sass": "^1.17.4",
+        "sass": "~1.32.12",
         "sass-loader": "^10",
         "vue-cli-plugin-vuetify": "~2.4.3",
         "vue-template-compiler": "^2.6.10",

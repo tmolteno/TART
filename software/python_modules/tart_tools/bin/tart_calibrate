@@ -277,6 +277,13 @@ if __name__ == "__main__":
         help="Optimization Method [NM, LB, DE, BH]",
     )
     parser.add_argument(
+        "--iterations",
+        required=False,
+        type=int,
+        default=300,
+        help="Number of iterations for basinhopping",
+    )
+    parser.add_argument(
         "--elevation", type=float, default=20.0, help="Elevation threshold for sources]"
     )
 
@@ -359,7 +366,7 @@ if __name__ == "__main__":
         show=False,
     )
 
-    bounds = [(-6, 6)]  # Bounds for the rotation parameter
+    bounds = [(-2, 2)]  # Bounds for the rotation parameter
     for i in range(46):
         bounds.append(
             (-2, 2)
@@ -385,7 +392,7 @@ if __name__ == "__main__":
         ret = optimize.basinhopping(
             f,
             init_parameters,
-            niter=300,
+            niter=ARGS.iterations,
             T=0.5,
             stepsize=2.0,
             disp=True,
