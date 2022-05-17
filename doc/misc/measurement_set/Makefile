@@ -12,8 +12,6 @@ clean:
 
 
 	
-WSCLEAN=/home/tim/github/wsclean-2.8/build/wsclean
-
 debug:
 	gdb --args ${WSCLEAN} -name ${IMAGENAME} -size ${NPIX} ${NPIX} -scale ${PIXEL_SIZE_IN_DEG} -niter 0 ${MS}
 

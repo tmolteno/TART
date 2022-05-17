@@ -1,14 +1,18 @@
 # Create a Measurement Set from a TART JSON file
 
-Install requires casacore and dask-ms
+Install requires casacore and some tart tools tart, tart-tools and tart2ms
 
     sudo aptitude install python3-casacore
-    sudo pip3 install dask-ms tart tart-tools
+    sudo pip3 install tart2ms tart tart-tools wsclean
 
-Then run using
 
-    python3 json2ms.py --ms ${MS} --json data_2019_08_04_21_38_31_UTC.json
+## Getting a measurement set
 
-## TODO:
+    tart_calibration_data --file tart_data.json --n 1
+    tart2ms --json tart_data.json --ms tart_data.ms
 
-This is a cludge based on the dask-ms code. THe correct mapping for the polarizations and whatever else CASA requires is still to be done.
+## Imaging Using WsClean
+
+    export OPENBLAS_NUM_THREADS=1; wsclean -v -scale 0.1 -size 1700 1700  \
+                -make-psf -pol RR  -use-wgridder \
+                -auto-threshold 3 -mgain 0.05 -gain 0.05 -niter 2000 tart_data.ms
