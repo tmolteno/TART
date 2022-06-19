@@ -29,12 +29,16 @@ class ElAz(object):
         return dS * np.sqrt(1.0 - self.l * self.l - self.m * self.m)
 
     def get_px(self, num_bins):
+        ''' Get source location in pixels '''
         n2 = num_bins / 2
         x_px = int(np.round(self.l * n2 + n2))
         y_px = int(-np.round(self.m * n2 + n2))
         return x_px, y_px
 
     def get_px_window(self, num_bins, window_deg):
+        ''' Get a pixel window around a source with width window_deg
+            This is assumed to be an inverse FFT image with num_bins x num_bins
+        '''
         x_i, y_i = self.get_px(num_bins)
         pix_per_rad = num_bins / np.pi
         d = np.radians(window_deg) * pix_per_rad / 2

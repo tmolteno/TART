@@ -1,0 +1,24 @@
+# Run the object position server container. 
+version: '2'
+
+services:
+    tart-cal:
+        build: 
+            context: .
+        restart: unless-stopped
+        environment:
+            - TART_NCAL=6
+            - TART_CAL_INT=30
+            - TART_LOGIN_PW=sharkbait
+            - TART_API=https://tart.elec.ac.nz/signal/ 
+        volumes:
+            - data-volume:/app
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "1m"
+
+volumes:
+    # Contains the output files from the calibration run
+    data-volume:
