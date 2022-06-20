@@ -2,7 +2,7 @@
 """
     Calibrate the Telescope from the RESTful API
 
-    Copyright (c) Tim Molteno 2017-2021.
+    Copyright (c) Tim Molteno 2017-2022.
     
     This tool uses  high-dimensional optimisation to calculate the gains and phases of the 24 antennas
     of the telescope.
@@ -106,19 +106,19 @@ def calc_score_aux(opt_parameters, measurements, window_deg, original_positions)
             # Get a pixel window around each source...
             x_min, x_max, y_min, y_max, area = s.get_px_window(n_fft, window_deg)
             
-            # Integrate the brightness in a wondow around that source
+            # Integrate the brightness in a window around that source
             s_px = ift_scaled[y_min:y_max, x_min:x_max]
 
             zones.append(np.sum(s_px) / area)
             
         zones = np.array(zones)
         
-        zone_score = -np.mean(zones)/np.std(zones)
+        zone_score = -np.mean(zones)
 
-        ret_zone += 2 * zone_score
+        ret_zone += 4 * zone_score
 
     if N_IT % 100 == 0:
-        print(f"S/N {ret_std}, ZONE: {ret_zone}")
+        print(f"S/N {ret_std:04.2f}, ZONE: {ret_zone:04.2f}")
 
     return (
         (ret_std + ret_zone) / len(measurements),
@@ -298,8 +298,12 @@ if __name__ == "__main__":
         help="Number of iterations for basinhopping",
     )
     parser.add_argument(
-        "--elevation", type=float, default=20.0, help="Elevation threshold for sources]"
+        "--elevation", type=float, default=30.0, help="Elevation threshold for sources]"
     )
+
+    parser.add_argument(
+        '--ignore', nargs='+', type=int, help="Specify the list of antennas to zero out.")
+
 
     ARGS = parser.parse_args()
 
@@ -358,7 +362,7 @@ if __name__ == "__main__":
         measurements.append([cv, ts, src_list])
 
     N_IT = 0
-    window_deg = 3.0
+    window_deg = 4.0
 
     s = calc_score(
         init_parameters,
@@ -380,11 +384,17 @@ if __name__ == "__main__":
         show=False,
     )
 
-    bounds = [(-2, 2)]  # Bounds for the rotation parameter
+    bounds = [(-5, 5)]  # Bounds for the rotation parameter
     for i in range(46):
-        bounds.append(
-            (-2, 2)
-        )  # Bounds for all other parameters (real and imaginary components)
+        bounds.append((-1.2, 1.2)) # Bounds for all other parameters (real and imaginary components)
+
+    zero_list = ARGS.ignore
+    if zero_list is not None:
+        print(f"Ignoring antennas {zero_list}")
+        for i in range(24):
+            if i in zero_list:
+                bounds[i] = (-0.01, 0.01)
+                bounds[i+23] = (-0.01, 0.01)
 
     np.random.seed(555)  # Seeded to allow replication.
 
