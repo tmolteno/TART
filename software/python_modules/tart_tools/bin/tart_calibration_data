@@ -31,6 +31,7 @@ def load_data(api, config):
     print("Loading new data from {}...".format(api.root))
     vis_json = api.get("imaging/vis")
     ts = api_imaging.vis_json_timestamp(vis_json)
+    print(f"Getting catalog from {api.catalog_url(config, datestr=ts.isoformat())}")
     src_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
     print("Loading Complete")
     return vis_json, src_json

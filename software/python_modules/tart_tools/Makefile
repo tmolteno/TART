@@ -4,7 +4,7 @@
 #     make develop
 # in this directory.
 develop:
-	sudo python3 setup.py develop
+	pip3 install -e .
 
 lint:
 	pylint --extension-pkg-whitelist=numpy --ignored-modules=numpy --extension-pkg-whitelist=astropy tart_tools

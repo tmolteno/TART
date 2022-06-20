@@ -100,19 +100,25 @@ def calc_score_aux(opt_parameters, measurements, window_deg, original_positions)
 
         ret_std += -np.sqrt(ift_scaled.max())  # Peak signal to noise.
 
-        zone_score = 0.0
 
+        zones = []
         for s in src_list:
+            # Get a pixel window around each source...
             x_min, x_max, y_min, y_max, area = s.get_px_window(n_fft, window_deg)
+            
+            # Integrate the brightness in a wondow around that source
             s_px = ift_scaled[y_min:y_max, x_min:x_max]
 
-            zone_score += np.sum(s_px) / area
+            zones.append(np.sum(s_px) / area)
+            
+        zones = np.array(zones)
+        
+        zone_score = -np.mean(zones)/np.std(zones)
 
-        zone_score = -zone_score / len(src_list)
         ret_zone += 2 * zone_score
 
     if N_IT % 100 == 0:
-        print("{}, {}".format(ret_std, ret_zone))
+        print(f"S/N {ret_std}, ZONE: {ret_zone}")
 
     return (
         (ret_std + ret_zone) / len(measurements),
@@ -156,7 +162,7 @@ def calc_score(
     )
 
     if N_IT % 100 == 0:
-        print(N_IT, ret)
+        print(f"Iteration {N_IT}, score={ret}")
         f_vs_iteration.append(ret)
 
     if N_IT % 1000 == 0:
@@ -260,6 +266,14 @@ if __name__ == "__main__":
         default="calibration_data.json",
         help="Calibration Output JSON file.",
     )
+    
+    #parser.add_argument(
+        #"--influx",
+        #required=False,
+        #default=None,
+        #help="Use an influxdb  (https://tartinflux.max.ac.nz/) for cal data.",
+    #)
+    
     parser.add_argument("--show", action="store_true", help="show instead of save.")
     parser.add_argument(
         "--cold-start", action="store_true", help="Start from zero knowledge of gains."
