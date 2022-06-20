@@ -29,7 +29,9 @@ class ElAz(object):
         return dS * np.sqrt(1.0 - self.l * self.l - self.m * self.m)
 
     def get_px(self, num_bins):
-        ''' Get source location in pixels '''
+        ''' Get source location in pixels from it's direction
+            cosines
+        '''
         n2 = num_bins / 2
         x_px = int(np.round(self.l * n2 + n2))
         y_px = int(-np.round(self.m * n2 + n2))
