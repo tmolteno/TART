@@ -7,7 +7,8 @@
 # Reference: Molteno et al. Continuous Calibration of the TART using GPS satellites. EnzCon 2017.
 #
 TART_LOGIN_PW=$1 \
-TART_API=https://tart.elec.ac.nz/rhodes/
+#TART_API=https://tart.elec.ac.nz/rhodes/
+TART_API=https://tart.elec.ac.nz/signal/
 WORKING_DIR=~/calibration_test
 METHOD=BH
 DATESTR=`date "+%Y_%m_%d_%H_%M_%S"`
