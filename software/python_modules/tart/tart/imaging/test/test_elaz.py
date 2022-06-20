@@ -72,7 +72,7 @@ class TestElaz(unittest.TestCase):
 
         x,y = elaz.get_px(num_bins=128)
         self.assertAlmostEqual(x, 64)
-        self.assertAlmostEqual(y, 128)
+        self.assertAlmostEqual(y, 0)
 
         x,y = elaz2.get_px(num_bins=128)
         self.assertAlmostEqual(x, 0)

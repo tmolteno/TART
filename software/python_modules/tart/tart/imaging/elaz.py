@@ -36,7 +36,7 @@ class ElAz(object):
         '''
         n2 = num_bins / 2
         x_px = int(np.round(self.l * n2 + n2))
-        y_px = int(np.round(self.m * n2 + n2))
+        y_px = num_bins - int(np.round(self.m * n2 + n2))
         return x_px, y_px
 
     def get_px_window(self, num_bins, window_deg):
