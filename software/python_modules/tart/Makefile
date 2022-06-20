@@ -1,6 +1,6 @@
 
 develop:
-	sudo python3 setup.py develop
+	pip3 install -e .
 
 lint:
 	pylint tart
