@@ -30,11 +30,13 @@ class ElAz(object):
 
     def get_px(self, num_bins):
         ''' Get source location in pixels from it's direction
-            cosines
+            cosines. These should be image coordinates in an
+            image num_bins x num_bins essentially used as array
+            indices.
         '''
         n2 = num_bins / 2
         x_px = int(np.round(self.l * n2 + n2))
-        y_px = int(-np.round(self.m * n2 + n2))
+        y_px = int(np.round(self.m * n2 + n2))
         return x_px, y_px
 
     def get_px_window(self, num_bins, window_deg):

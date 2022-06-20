@@ -51,11 +51,29 @@ class TestElaz(unittest.TestCase):
         self.assertAlmostEqual(y_min, 62)
         self.assertAlmostEqual(y_max, 66)
 
-    def test_elaz_px(self):
+    def test_elaz_px_vertical(self):
         
         elaz = ElAz(90,0)
         elaz2 = ElAz(90,90)
 
         x,y = elaz.get_px(num_bins=128)
         self.assertAlmostEqual(x, 64)
-        self.assertAlmostEqual(y, -64)
+        self.assertAlmostEqual(y, 64)
+
+        x,y = elaz2.get_px(num_bins=128)
+        self.assertAlmostEqual(x, 64)
+        self.assertAlmostEqual(y, 64)
+
+
+    def test_elaz_px_horizontal(self):
+        
+        elaz = ElAz(0,0)    # Due north (straight up, center) 0, 1
+        elaz2 = ElAz(0,90)  # Due west (-1,0)
+
+        x,y = elaz.get_px(num_bins=128)
+        self.assertAlmostEqual(x, 64)
+        self.assertAlmostEqual(y, 128)
+
+        x,y = elaz2.get_px(num_bins=128)
+        self.assertAlmostEqual(x, 0)
+        self.assertAlmostEqual(y, 64)
