@@ -62,6 +62,9 @@ if __name__ == "__main__":
         "--dir", type=str, default=".", help="local directory to download"
     )
     parser.add_argument(
+        "--n", type=int, default=-1, help="Stop after downloading this many files."
+    )
+    parser.add_argument(
         "--raw", action="store_true", help="Download Raw Data in HDF format"
     )
     parser.add_argument(
@@ -102,7 +105,7 @@ if __name__ == "__main__":
             resp_raw = api.get("raw/data")
 
         try:
-            for entry in resp_raw + resp_vis:
+            for entry in (resp_raw + resp_vis)[0:ARGS.n]:
                 if "filename" in entry:
 
                     data_url = urllib.parse.urljoin(tart_endpoint, entry["filename"])
@@ -123,5 +126,7 @@ if __name__ == "__main__":
         except Exception as e:
             logger.exception(e)
         finally:
+            if ARGS.n > 0:
+                break
             logger.info("Pausing.")
             time.sleep(2)
