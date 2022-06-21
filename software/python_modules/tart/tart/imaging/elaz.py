@@ -39,13 +39,18 @@ class ElAz(object):
         y_px = num_bins - int(np.round(self.m * n2 + n2))
         return x_px, y_px
 
+    def deg_to_pix(self, num_bins, deg):
+        pix_per_rad = num_bins / np.pi
+        d = np.radians(deg) * pix_per_rad / 2
+        return d
+
     def get_px_window(self, num_bins, window_deg):
         ''' Get a pixel window around a source with width window_deg
             This is assumed to be an inverse FFT image with num_bins x num_bins
         '''
         x_i, y_i = self.get_px(num_bins)
-        pix_per_rad = num_bins / np.pi
-        d = np.radians(window_deg) * pix_per_rad / 2
+
+        d = self.deg_to_pix(num_bins, window_deg)
 
         x_min = int(np.floor(x_i - d))
         x_max = int(np.ceil(x_i + d))
