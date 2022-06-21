@@ -1,5 +1,5 @@
 #
-# Tim Molteno (2018-2019)
+# Tim Molteno (2018-2022)
 # tim@elec.ac.nz
 #
 # About:
@@ -26,8 +26,20 @@ from tart.util import constants
 
 from tart_tools import api_handler
 
+'''
+    Create an image from raw (hdf5) data downloaded from the TART telescope
+    
+    Step 1: Download raw data (
+        tart_set_mode --raw --pw <password>
+        tart_download_data --raw --n 1 --pw <password>
+        tart_set_mode --vis --pw <password>
+        
+    Step 2: Run this file
+        python3 image_from_raw.py --file ./data_2022-06-21_01_57_06.161084.hdf
+
+'''
 if __name__ == '__main__':
-    PARSER = argparse.ArgumentParser(description='Acquire data from the TART telescope.')
+    PARSER = argparse.ArgumentParser(description='Create an image from raw (hdf5) data downloaded from the TART telescope.')
     PARSER.add_argument('--file', required=True, help="The raw data data file ")
 
     ARGS = PARSER.parse_args()
