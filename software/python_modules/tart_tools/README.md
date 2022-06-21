@@ -45,6 +45,8 @@ in which case changes to the source-code will be immediately available to projec
 ## NEWS
 
 * Version 0.2.0b13. Clean up code to use other API endpoints.
+                    Add CLI to --ignore some antennas
+                    Add --n option to tart_download_data to stop after n downloads (used to grab the latest raw file)
                     Add CLI to use the influxdb
 * Version 0.2.0b12. Fix bug in get-gains option.
 * Version 0.2.0b11. Add a tart_set_mode binary.
