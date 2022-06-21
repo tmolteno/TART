@@ -41,3 +41,4 @@ if __name__ == "__main__":
 
     api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
     resp = api.post_payload_with_token(f"mode/{mode}", {})
+    print(f"New mode: {resp}")
