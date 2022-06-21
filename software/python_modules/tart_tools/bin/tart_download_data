@@ -13,7 +13,7 @@ import shutil
 import urllib.request, urllib.error, urllib.parse
 import time
 
-from tart_tools.api_handler import AuthorizedAPIhandler
+from tart_tools.api_handler import APIhandler
 
 logger = logging.getLogger()
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         help="Telescope API server URL.",
     )
     parser.add_argument(
-        "--pw", default="password", required=True, type=str, help="API password"
+        "--pw", default="password", required=False, type=str, help="API password"
     )
     parser.add_argument(
         "--dir", type=str, default=".", help="local directory to download"
@@ -86,9 +86,10 @@ if __name__ == "__main__":
     # add ch to logger
     logger.addHandler(ch)
 
-    api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
+    #api = AuthorizedAPIhandler(ARGS.api, ARGS.pw)
+    api = APIhandler(ARGS.api)
 
-    logger.info("Downloading Raw Data from {}".format(ARGS.api))
+    logger.info(f"Downloading Raw Data from {ARGS.api}")
     os.makedirs(ARGS.dir, exist_ok=True)
 
     tart_endpoint = ARGS.api + "/"
