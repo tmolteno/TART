@@ -169,7 +169,7 @@ def calc_score(
 ):
     global N_IT, method, output_directory, f_vs_iteration
 
-    ret, ift_scaled, src_list, n_fft, bin_width,mask = calc_score_aux(
+    ret, ift_scaled, src_list, n_fft, bin_width, mask = calc_score_aux(
         opt_parameters, measurements, window_deg, original_positions
     )
 
@@ -179,11 +179,11 @@ def calc_score(
 
     if N_IT % 1000 == 0:
 
-        ift_sel = np.zeros_like(ift_scaled)
+        #ift_sel = np.zeros_like(ift_scaled)
 
-        for s in src_list:
-            x_min, x_max, y_min, y_max, area = s.get_px_window(n_fft, window_deg)
-            ift_sel[y_min:y_max, x_min:x_max] = ift_scaled[y_min:y_max, x_min:x_max]
+        #for s in src_list:
+            #x_min, x_max, y_min, y_max, area = s.get_px_window(n_fft, window_deg)
+            #ift_sel[y_min:y_max, x_min:x_max] = ift_scaled[y_min:y_max, x_min:x_max]
 
         ift_sel = ift_scaled*mask
         x_list, y_list = elaz.get_source_coordinates(src_list)

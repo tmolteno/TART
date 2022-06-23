@@ -6,13 +6,45 @@
 
 import datetime
 import json
+import os
 import requests
+import logging
+import shutil
+import hashlib
+
+import urllib.request, urllib.error, urllib.parse
 
 from tart.operation import settings
 
 # Default timeout
 TIMEOUT = 15.0
 
+logger = logging.getLogger()
+
+def sha256_checksum(filename, block_size=65536):
+    sha256 = hashlib.sha256()
+    with open(filename, "rb") as f:
+        for block in iter(lambda: f.read(block_size), b""):
+            sha256.update(block)
+    return sha256.hexdigest()
+
+
+def download_file(url, checksum=0, file_path=None):
+    logger.info("Download_file({}, {}) -> {}".format(url, checksum, file_path))
+
+    # Download the file from `url` and save it locally under `file_path`:
+    with urllib.request.urlopen(url) as response, open(file_path, "wb") as out_file:
+        shutil.copyfileobj(response, out_file)
+
+    if checksum:
+        downloaded_checksum = sha256_checksum(file_path)
+        if downloaded_checksum != checksum:
+            logger.info(
+                "Removing file: Checksum failed\n{}\n{}".format(
+                    checksum, downloaded_checksum
+                )
+            )
+            os.remove(file_path)
 
 class APIhandler(object):
     def __init__(self, api_root):
@@ -87,7 +119,7 @@ class AuthorizedAPIhandler(APIhandler):
         resp_json = json.loads(r.text)
         if "access_token" in resp_json:
             self.token = resp_json["access_token"]
-            print("refreshed token")
+            logger.info("refreshed token")
 
     def __post_payload(self, path, payload_dict):
         """ Currently only used for login() """
@@ -124,7 +156,7 @@ class AuthorizedAPIhandler(APIhandler):
         r = requests.post(
             self.url(path), headers=self.__get_header(), timeout=TIMEOUT, **kwargs
         )
-        print(r)
+        #logger.info(r)
         ret = json.loads(r.text)
         if "status" in ret and "sub_status" in ret:
             if (ret["status"] == 401) and (ret["sub_status"] == 101):
@@ -152,7 +184,7 @@ def download_current_gain(api):
 
 def upload_gain(api, gain_dict):
     resp = api.post_payload_with_token("calibration/gain", gain_dict)
-    print("SUCCESS")
+    logger.info("SUCCESS")
     return resp
 
 
@@ -161,18 +193,3 @@ def get_config(api):
     ant_pos = api.get("imaging/antenna_positions")
     return settings.from_api_json(info["info"], ant_pos)
 
-
-# if __name__ == '__main__':
-# import argparse
-# import time
-# parser = argparse.ArgumentParser(description='')
-# parser.add_argument('--host', default='http://tart2-raspberry', type=str, help='api host')
-# parser.add_argument('--pw', default='password', type=str, help='API password')
-# ARGS = parser.parse_args()
-# api = AuthorizedAPIhandler(ARGS.host, ARGS.pw)
-# print(api.token)
-# api.refresh_access_token()
-# print(api.token)
-# while 1:
-# time.sleep(100)
-# set_mode(api,'vis')

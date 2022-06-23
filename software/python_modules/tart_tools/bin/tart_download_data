@@ -8,40 +8,13 @@ import argparse
 import json
 import logging
 import os
-import hashlib
-import shutil
 import urllib.request, urllib.error, urllib.parse
 import time
 
-from tart_tools.api_handler import APIhandler
+from tart_tools.api_handler import APIhandler, download_file
 
 logger = logging.getLogger()
 
-
-def sha256_checksum(filename, block_size=65536):
-    sha256 = hashlib.sha256()
-    with open(filename, "rb") as f:
-        for block in iter(lambda: f.read(block_size), b""):
-            sha256.update(block)
-    return sha256.hexdigest()
-
-
-def download_file(url, checksum=0, file_path=None):
-    logger.info("Download_file({}, {}) -> {}".format(url, checksum, file_path))
-
-    # Download the file from `url` and save it locally under `file_path`:
-    with urllib.request.urlopen(url) as response, open(file_path, "wb") as out_file:
-        shutil.copyfileobj(response, out_file)
-
-    if checksum:
-        downloaded_checksum = sha256_checksum(file_path)
-        if downloaded_checksum != checksum:
-            logger.info(
-                "Removing file: Checksum failed\n{}\n{}".format(
-                    checksum, downloaded_checksum
-                )
-            )
-            os.remove(file_path)
 
 
 if __name__ == "__main__":
