@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    kompose.cmd: ./kompose convert
+    kompose.cmd: ./kompose -f docker-compose.k8.yml convert
     kompose.version: 1.26.0 (40646f47)
   creationTimestamp: null
   labels:
@@ -18,7 +18,7 @@ spec:
   template:
     metadata:
       annotations:
-        kompose.cmd: ./kompose convert
+        kompose.cmd: ./kompose -f docker-compose.k8.yml convert
         kompose.version: 1.26.0 (40646f47)
       creationTimestamp: null
       labels:
@@ -34,11 +34,9 @@ spec:
               value: sharkbait
             - name: TART_NCAL
               value: "6"
-          image: tart/cal:latest
-          imagePullPolicy: Never
+          image: ghcr.io/tmolteno/tart_cal:main
           name: tart-cal
-          #command: ["/bin/sh"]
-          #args: ["/tart_calibrate.sh"]
+          resources: {}
           volumeMounts:
             - mountPath: /app
               name: data-volume
