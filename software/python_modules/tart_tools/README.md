@@ -44,6 +44,7 @@ in which case changes to the source-code will be immediately available to projec
     
 ## NEWS
 
+* Version 0.2.0b14. Improve API handler code.
 * Version 0.2.0b13. Clean up code to use other API endpoints.
                     Add CLI to --ignore some antennas
                     Add --n option to tart_download_data to stop after n downloads (used to grab the latest raw file)
