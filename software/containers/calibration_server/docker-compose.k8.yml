@@ -3,8 +3,7 @@ version: '2'
 
 services:
     tart-cal:
-        build: 
-            context: .
+        image: ghcr.io/tmolteno/tart_cal:main 
         restart: unless-stopped
         environment:
             - TART_NCAL=6

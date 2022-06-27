@@ -1,28 +1,9 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  annotations:
-    kompose.cmd: ./kompose -f docker-compose.k8.yml convert
-    kompose.version: 1.26.0 (40646f47)
-  creationTimestamp: null
-  labels:
-    io.kompose.service: tart-cal
   name: tart-cal
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      io.kompose.service: tart-cal
-  strategy:
-    type: Recreate
   template:
-    metadata:
-      annotations:
-        kompose.cmd: ./kompose -f docker-compose.k8.yml convert
-        kompose.version: 1.26.0 (40646f47)
-      creationTimestamp: null
-      labels:
-        io.kompose.service: tart-cal
     spec:
       containers:
         - env:
@@ -40,7 +21,7 @@ spec:
           volumeMounts:
             - mountPath: /app
               name: data-volume
-      restartPolicy: Always
+      restartPolicy: OnFailure
       volumes:
         - name: data-volume
           persistentVolumeClaim:

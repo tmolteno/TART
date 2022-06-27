@@ -18,8 +18,7 @@ spec:
               value: sharkbait
             - name: TART_NCAL
               value: "6"
-            image: tart/cal:latest
-            imagePullPolicy: Never
+            image: ghcr.io/tmolteno/tart_cal:main
             name: tart-cal
             command: ["/bin/sh"]
             args: ["/tart_calibrate.sh"]
