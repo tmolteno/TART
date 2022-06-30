@@ -1,11 +1,12 @@
-import utc
 import file_cache
 # sudo pip install sgp4
 
 from sgp4.earth_gravity import wgs84
 from sgp4.io import twoline2rv
 
-import location
+from tart.imaging import location
+import utc
+
 import numpy as np
 
 class Sp4Ephemeris:

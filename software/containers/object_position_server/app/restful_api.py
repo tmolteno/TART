@@ -6,8 +6,9 @@
 from flask import Flask
 from flask import jsonify, request
 from flask_cors import CORS, cross_origin
+
 import utc
-import angle
+from tart.util import angle
 import traceback
 
 import norad_cache
@@ -82,8 +83,8 @@ def handle_exception(e):
 @app.route('/catalog', methods=['GET',])
 def get_catalog():
     date = parse_date(request)
-    lat = angle.from_decimal_degrees(float(get_required_parameter(request, 'lat')))
-    lon = angle.from_decimal_degrees(float(get_required_parameter(request, 'lon')))
+    lat = angle.from_dms(float(get_required_parameter(request, 'lat')))
+    lon = angle.from_dms(float(get_required_parameter(request, 'lon')))
     alt = 0.0
     ret = waas_cache.get_az_el(date, lat, lon, alt)
     ret += gps_cache.get_az_el(date, lat, lon, alt)

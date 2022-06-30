@@ -1,10 +1,11 @@
 import datetime
 import urllib
 import os
-import utc
 import traceback
 import logging
+
 import sky_object
+import utc
 
 class FileCache(sky_object.SkyObject):
     def __init__(self, name):

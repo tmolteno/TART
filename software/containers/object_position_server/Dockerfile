@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM debian:bullseye
 MAINTAINER Tim Molteno "tim@elec.ac.nz"
 ARG DEBIAN_FRONTEND=noninteractive
 
