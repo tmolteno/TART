@@ -7,9 +7,11 @@ RUN apt-get update && apt-get install -y \
     python3-numpy python3-dateutil \
     python3-flask python3-flask-cors \
     python3-sgp4 python3-requests python3-tz \
-    python3-waitress
+    python3-waitress python3-pip
 
 RUN rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install tart
 
 # setup working directory
 ADD ./app/ /object_position_server
