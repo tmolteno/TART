@@ -1,7 +1,6 @@
 
 from tart.imaging import location, sun
 import sky_object
-import angle
 import numpy as np
 
 class SunObject(sky_object.SkyObject):
@@ -21,5 +20,7 @@ class SunObject(sky_object.SkyObject):
 
 if __name__=="__main__":
     import tart.util.utc as utc
+    import tart.util.angle as angle
+
     cache = SunObject()
     print(cache.get_az_el(utc.now(), lat=angle.from_dms(-45.86391200), lon=angle.from_dms(170.51348452), alt=46.5))
