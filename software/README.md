@@ -66,9 +66,10 @@ Debian Buster:
 
 clone the Github repository
 
-    git clone https://github.com/tmolteno/TART
+    git clone https://github.com/19173296/TART
     (cd TART/software/containers/telescope_web_api && sh pre_build.sh);
     cp -r TART/software software
+    mkdir ./vpn
     
 OR:  
 This step assumes that the raspberry pi is accessible as the host name 'tart2-dev.local' on your local network.
@@ -80,29 +81,47 @@ This step assumes that the raspberry pi is accessible as the host name 'tart2-de
 There is a script, /scripts/install_pi.sh, which performs this task.
 
 ### Step 3. Build on the Pi
-
 SSH into the raspberry pi after completing step 1.
 
-    cd software
+Install openvpn-client (Reference https://github.com/dperson/openvpn-client/issues/365#issuecomment-761976040)
+
+    git clone https://github.com/dperson/openvpn-client.git
+    cd openvpn-client
     
-Edit docker-compose.yml and change LOGIN_PW= from passwd to your secure password. This password is used to log in to the TART web interface
+Git hooks
 
-Now run  
- 
-    docker-compose build
-This last step can take ages (around 1 hour or so)
+    export DOCKER_TAG=armhf
+    ./hooks/post_checkout
+    
+Edit the Dockerfile.armhf file:
 
-This will build all the necessary sofware on the Pi. To run all the software an services. Type
+    nano Dockerfile.armhf
+    
+Change the following line from
+    
+    FROM arm32v6/alpine
+    
+to 
 
-    docker-compose up
+    FROM arm32v6/alpine:3.12.3
 
-This will launch all the necessary processes in docker containers on the pi.
+build a local image of the openvpn-client
 
-### Step 4.
+    docker build -t dperson-openvpn-client:alpine3.12.3 -f Dockerfile.armhf .
 
-To make the system start automatically at startup (and run in the background) modify the line in step 3 to
+    
+Edit docker-compose-telescope.yml and change LOGIN_PW= from passwd to your secure password (This password is used to log in to the TART web interface) with: 
 
-    docker-compose up -d
+    nano ./software/docker-compose-telescope.yml
+
+run:
+
+    cp ./software/docker-compose-telescope.yml ./docker-compose.yml
+    cd ./
+    docker-compose up -d --build
+    
+This will build all the necessary sofware on the Pi and run launch all the docker containers
+
 
 
 ### Testing
