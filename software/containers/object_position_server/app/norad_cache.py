@@ -5,7 +5,6 @@ from sgp4.earth_gravity import wgs84
 from sgp4.io import twoline2rv
 
 from tart.imaging import location
-import utc
 
 import numpy as np
 
@@ -147,5 +146,6 @@ class BeidouCache(EphemerisFileCache):
     
     
 if __name__=="__main__":
+    import tart.util.utc as utc
     cache = NORADCache()
     print(cache.get_positions(utc.now()))

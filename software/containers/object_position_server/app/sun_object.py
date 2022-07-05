@@ -20,6 +20,6 @@ class SunObject(sky_object.SkyObject):
         return ret
 
 if __name__=="__main__":
-    import utc
+    import tart.util.utc as utc
     cache = SunObject()
     print(cache.get_az_el(utc.now(), lat=angle.from_dms(-45.86391200), lon=angle.from_dms(170.51348452), alt=46.5))
