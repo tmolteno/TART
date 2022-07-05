@@ -39,7 +39,7 @@ class TestCatalog(unittest.TestCase):
         t = datetime.datetime.utcnow() # utc.utc_datetime(2002, 10, 31, 2, 2, 2)
 
         dt = datetime.timedelta(minutes=1)
-        for i in range(100):
+        for i in range(10):
             ans = self.request(t)
             t += dt
         

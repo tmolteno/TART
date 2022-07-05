@@ -1,11 +1,11 @@
 import datetime
-import urllib
+import urllib.request
 import os
 import traceback
 import logging
 
 import sky_object
-import utc
+import tart.util.utc as utc
 
 class FileCache(sky_object.SkyObject):
     def __init__(self, name):
@@ -38,12 +38,12 @@ class FileCache(sky_object.SkyObject):
             pass
         try:
             if (url in self.last_download_attempt):
-                print("Download Attempt {}".format(self.last_download_attempt))
+                print(f"Download Attempt: {self.last_download_attempt}")
                 last_try = self.last_download_attempt[url]
-                print("last_try {}".format(last_try))
+                print(f"last_try: {last_try}")
                 delta_seconds = (datetime.datetime.now() - last_try).total_seconds()
                 if last_try and (delta_seconds < 3600):
-                    raise "Error ({} -> {}: Already attempted ({last_try})".format(url, local_file, last_try)
+                    raise RuntimeError(f"Error ({url} -> {local_file}: Already attempted ({last_try} {delta_seconds}")
 
             logging.info("starting download ({} -> {}".format(url, local_file))
             self.last_download_attempt[url] = datetime.datetime.now()
@@ -52,11 +52,10 @@ class FileCache(sky_object.SkyObject):
                 w.write(dat.read())
                 w.close()
             logging.info("download complete")
-        except Exception as error:
-            tb = traceback.format_exc()
-            logging.error(tb)
+        except Exception as err:
+            logging.exception(err)
             self.last_download_attempt[url] = datetime.datetime.now()
-            raise(error)
+            raise(err)
             
 
     def get_object(self, date):

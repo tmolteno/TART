@@ -7,7 +7,7 @@ from flask import Flask
 from flask import jsonify, request
 from flask_cors import CORS, cross_origin
 
-import utc
+import tart.util.utc as utc
 from tart.util import angle
 import traceback
 
@@ -30,6 +30,7 @@ def parse_date(request):
             # Deal with a URL that has a + sign replaced by a space
             dt = parser.parse(date_string.replace(' ', '+'))
             d = utc.to_utc(dt)
+            #print(f"Parsing date: {date_string} -> {dt} -> {d}")
         except Exception as err:
             raise Exception("Invalid Date '{}' {}".format(date_string, err))
     else:
@@ -37,7 +38,7 @@ def parse_date(request):
 
     current_date = utc.now()
     if ((d -  current_date).total_seconds() > 86400.0):
-        raise Exception("Date '{}' more than 24 hours in future.".format(date_string))
+        raise Exception(f"Date '{date_string}' more than 24 hours in future. {current_date} {d}")
 
     return d
 
