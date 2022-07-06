@@ -1,2 +1,0 @@
-# Imaging Software for TART
-
