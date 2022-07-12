@@ -9,17 +9,19 @@ spec:
         - env:
             - name: TART_API
               value: https://tart.elec.ac.nz/signal/
+            - name: TARGET
+              value: signal
             - name: TART_CAL_INT
               value: "30"
             - name: TART_LOGIN_PW
               value: sharkbait
             - name: TART_NCAL
-              value: "6"
-          image: ghcr.io/tmolteno/tart_cal:main
+              value: "3"
+          image: ghcr.io/tmolteno/tart_cal:latest
           name: tart-cal
           resources: {}
           volumeMounts:
-            - mountPath: /app
+            - mountPath: /work
               name: data-volume
       restartPolicy: OnFailure
       volumes:
