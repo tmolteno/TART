@@ -15,7 +15,8 @@ class SunObject(sky_object.SkyObject):
         _el, _az = loc.equatorial_to_horizontal(utc_date, ra,decl)
         el, az = np.round([_el.to_degrees(), _az.to_degrees()], decimals=6)
         ret = []
-        ret.append({'name': 'sun', 'r': 1e10, 'el':el, 'az':az, 'jy':10000.0})
+        if (el > 0.0):
+            ret.append({'name': 'sun', 'r': 1e10, 'el':el, 'az':az, 'jy':10000.0})
         return ret
 
 if __name__=="__main__":
