@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: regular-cal
+  name: signal-cal
 spec:
   schedule: "0 */2 * * *"
   jobTemplate:
@@ -15,14 +15,18 @@ spec:
             - name: TARGET
               value: signal
             - name: TART_CAL_INT
-              value: "30"
+              value: "20"
+            - name: TART_CAL_ARGS
+              value: "--phases"
             - name: TART_LOGIN_PW
               value: sharkbait
             - name: TART_NCAL
               value: "3"
+            - name: TART_UPLOAD
+              value: "1"
             image: ghcr.io/tmolteno/tart_cal:latest
             name: tart-cal
-            command: ["/bin/sh"]
+            command: ["/bin/bash"]
             args: ["/raw_calibrate.sh"]
             volumeMounts:
             - mountPath: /work

@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rhodes-cal
+spec:
+  schedule: "0 */3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - env:
+            - name: TART_API
+              value: https://tart.elec.ac.nz/rhodes/
+            - name: TARGET
+              value: rhodes
+            - name: TART_CAL_INT
+              value: "20"
+            - name: TART_CAL_ARGS
+              value: ""
+            - name: TART_CAL_ITERATIONS
+              value: "1000"
+            - name: TART_CAL_ELEVATION
+              value: "50"
+            - name: TART_LOGIN_PW
+              value: sharkbait
+            - name: TART_NCAL
+              value: "3"
+            - name: TART_UPLOAD
+              value: "1"
+            image: ghcr.io/tmolteno/tart_cal:latest
+            name: tart-cal
+            command: ["/bin/bash"]
+            args: ["/raw_calibrate.sh"]
+            volumeMounts:
+            - mountPath: /work
+              name: rhodes-data-volume
+          restartPolicy: OnFailure
+
+          volumes:
+          - name: rhodes-data-volume
+            persistentVolumeClaim:
+              claimName: data-volume

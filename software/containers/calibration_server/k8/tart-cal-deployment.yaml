@@ -12,11 +12,17 @@ spec:
             - name: TARGET
               value: signal
             - name: TART_CAL_INT
-              value: "30"
-            - name: TART_LOGIN_PW
-              value: sharkbait
+              value: "20"
             - name: TART_NCAL
               value: "3"
+            - name: TART_CAL_ARGS
+              value: ""
+            - name: TART_CAL_ITERATIONS
+              value: "1000"
+            - name: TART_LOGIN_PW
+              value: sharkbait
+            - name: TART_UPLOAD
+              value: "1`"
           image: ghcr.io/tmolteno/tart_cal:latest
           name: tart-cal
           resources: {}
