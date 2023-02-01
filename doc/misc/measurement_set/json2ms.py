@@ -377,7 +377,9 @@ if __name__=="__main__":
 
         logger.info("Download Complete")
        
-        src_json = api.get_url(api.catalog_url(config, datestr=ts.isoformat()))
+        src_json = api.get_url(api.catalog_url(lon=config.get_lon(),
+                                               lat=config.get_lat(),
+                                               datestr=ts.isoformat()))
 
         json_data = {'info':info,
                 'ant_pos':ant_pos,
