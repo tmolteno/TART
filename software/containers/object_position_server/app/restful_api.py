@@ -16,7 +16,7 @@ from dateutil import parser
 import sun_object
 
 waas_cache = norad_cache.NORADCache()
-extra_cache = norad_cache.ExtraCache()
+# extra_cache = norad_cache.ExtraCache()
 gps_cache = norad_cache.GPSCache()
 galileo_cache = norad_cache.GalileoCache()
 beidou_cache = norad_cache.BeidouCache()
@@ -110,7 +110,7 @@ def get_catalog():
     ret += gps_cache.get_az_el(date, lat, lon, alt, elevation)
     ret += galileo_cache.get_az_el(date, lat, lon, alt, elevation)
     ret += beidou_cache.get_az_el(date, lat, lon, alt, elevation)
-    ret += extra_cache.get_az_el(date, lat, lon, alt, elevation)
+    # ret += extra_cache.get_az_el(date, lat, lon, alt, elevation)
     ret += sun.get_az_el(date, lat, lon, alt, elevation)
     return jsonify(ret)
 
@@ -133,7 +133,7 @@ def get_pos():
         date = parse_date(request)
         ret = waas_cache.get_positions(date)
         ret += gps_cache.get_positions(date)
-        ret += extra_cache.get_positions(date)
+        # ret += extra_cache.get_positions(date)
         ret += galileo_cache.get_positions(date)
         ret += beidou_cache.get_positions(date)
         return jsonify(ret)

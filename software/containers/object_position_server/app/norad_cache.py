@@ -97,23 +97,24 @@ class NORADCache(EphemerisFileCache):
         EphemerisFileCache.__init__(self, "norad_sbas")
 
     def get_url(self, utc_date):
-        return "http://www.celestrak.com/NORAD/elements/sbas.txt"
+        return "https://celestrak.org/NORAD/elements/gp.php?GROUP=SBAS&FORMAT=TLE"
+        # return "http://www.celestrak.com/NORAD/elements/sbas.txt"
 
     def create_object_from_file(self, local_path):
         return Sp4Ephemerides(local_path, 1.5e6)
 
 
-class ExtraCache(EphemerisFileCache):
-
-    def __init__(self):
-        EphemerisFileCache.__init__(self, "norad_active")
-
-    def get_url(self, utc_date):
-        return "http://www.celestrak.com/NORAD/elements/active.txt"
-
-    def create_object_from_file(self, local_path):
-        return Sp4Ephemerides(local_path, 1.5e6, name_list=["QZS-4", "QZS-3"])
-
+# class ExtraCache(EphemerisFileCache):
+# 
+#     def __init__(self):
+#         EphemerisFileCache.__init__(self, "norad_active")
+# 
+#     def get_url(self, utc_date):
+#         return "http://www.celestrak.com/NORAD/elements/active.txt"
+# 
+#     def create_object_from_file(self, local_path):
+#         return Sp4Ephemerides(local_path, 1.5e6, name_list=["QZS-4", "QZS-3"])
+# 
 
 class GPSCache(EphemerisFileCache):
 
@@ -122,7 +123,7 @@ class GPSCache(EphemerisFileCache):
 
     def get_url(self, utc_date):
         # return "http://www.celestrak.com/NORAD/elements/gps-ops.txt"
-        return "http://celestrak.com/NORAD/elements/supplemental/gps.txt"
+        return "https://celestrak.org/NORAD/elements/gp.php?GROUP=GPS-OPS&FORMAT=TLE"
 
     def create_object_from_file(self, local_path):
         return Sp4Ephemerides(local_path, 1.5e6)
@@ -134,7 +135,8 @@ class GalileoCache(EphemerisFileCache):
         EphemerisFileCache.__init__(self, "norad_galileo")
 
     def get_url(self, utc_date):
-        return "http://www.celestrak.com/NORAD/elements/galileo.txt"
+        return "https://celestrak.org/NORAD/elements/gp.php?GROUP=GALILEO&FORMAT=TLE"
+        # return "http://www.celestrak.com/NORAD/elements/galileo.txt"
 
     def create_object_from_file(self, local_path):
         return Sp4Ephemerides(local_path, 1.5e6)
@@ -146,7 +148,8 @@ class BeidouCache(EphemerisFileCache):
         EphemerisFileCache.__init__(self, "norad_beidou")
 
     def get_url(self, utc_date):
-        return "https://www.celestrak.com/NORAD/elements/beidou.txt"
+        return "https://celestrak.org/NORAD/elements/gp.php?GROUP=BEIDOU&FORMAT=TLE"
+#        return "https://www.celestrak.com/NORAD/elements/beidou.txt"
 
     def create_object_from_file(self, local_path):
         return Sp4Ephemerides(local_path, 1.5e6)
