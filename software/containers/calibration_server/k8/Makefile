@@ -18,3 +18,11 @@ cron:
 	
 test:
 	( eval $(minikube -p minikube docker-env) ${KUBECTL} run -i --tty --rm debug --image=tart/cal --restart=Never --imagePullPolicy=Never -- )
+
+
+install:
+	curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+	sudo dpkg -i minikube_latest_amd64.deb
+
+start:
+	minikube start
