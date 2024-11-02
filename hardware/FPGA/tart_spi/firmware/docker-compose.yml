@@ -1,0 +1,17 @@
+# Run the papilio programmer container. 
+version: '2'
+
+services:
+    pappy-programmer:
+        build: 
+            context: .
+        volumes:
+            - ./:/data
+        devices:
+           - /dev/bus/usb
+    
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "5"
+                max-size: "10m"

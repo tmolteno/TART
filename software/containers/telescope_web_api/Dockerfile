@@ -21,8 +21,7 @@ RUN rm -rf /var/lib/apt/lists/*
 
 COPY ./python_code /python_code
 
-WORKDIR /python_code/tart
-RUN python3 setup.py install
+RUN pip3 install tart tart_tools
 
 WORKDIR /python_code/tart_hardware_interface
 RUN python3 setup.py install
