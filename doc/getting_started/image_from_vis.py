@@ -15,9 +15,10 @@ import matplotlib.pyplot as plt
 from tart_tools import api_imaging
 from tart_tools import api_handler
 
+#
 # The API server URL identifies which TART telescope to use.
 # 
-API_SERVER = 'https://tart.elec.ac.nz/signal'
+API_SERVER = 'https://api.elec.ac.nz/tart/mu-udm'
 
 
 '''
@@ -25,7 +26,7 @@ API_SERVER = 'https://tart.elec.ac.nz/signal'
 
     Get telescope configuration (config), visibility data, and calibration data (gains) from the server
 '''
-print("Downloading data from {}".format(API_SERVER))
+print(f"Downloading data from {API_SERVER}")
 api = api_handler.APIhandler(API_SERVER)
 
 config = api_handler.get_config(api)
@@ -36,7 +37,6 @@ if mode['mode'] != 'vis':
 
 gains = api.get('calibration/gain')
 visibility_data = api.get('imaging/vis')
-
 
 '''
     STEP 2: Apply Calibration to the visiblilties

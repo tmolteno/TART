@@ -41,6 +41,7 @@ from tart_tools import api_handler
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(description='Create an image from raw (hdf5) data downloaded from the TART telescope.')
     PARSER.add_argument('--file', required=True, help="The raw data data file ")
+    PARSER.add_argument('--api', required=True, help="The api endpoint (e.g. https://api.elec.ac.nz/tart/mu-udm) ")
 
     ARGS = PARSER.parse_args()
     
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     #                                    Step 0. Use the API to get information 
     #
     #############################################################################################################
-    API_SERVER = 'https://tart.elec.ac.nz/signal'
+    API_SERVER = ARGS.api
     api = api_handler.APIhandler(API_SERVER)
     
     ant_pos = np.array(api.get('imaging/antenna_positions'))
