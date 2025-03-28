@@ -46,31 +46,38 @@ ant_pos = np.array(ant_pos)
 
 
 
-'''
-    STEP 2: Calibration of the visiblilties
-'''
-print("Apply Calibration Data")
+#############################################################################################################
+#
+#                                    Step 1. Apply the calibration to the visibilities.
+#
+#############################################################################################################
 
 gains_complex = np.array(gains['gain']) * np.exp(1.0j*np.array(gains['phase_offset']))
 uv_max = 0
+wavelength = 0.2
+
 for v in visibility_data['data']:
     v_complex = v['re'] + v['im']*1.0j
     i = v['i']
     j = v['j']
     v_calib = v_complex * gains_complex[i] * np.conj(gains_complex[j])
     v['cal'] = v_calib
+
+    # Work out the baseline
     bl = ant_pos[i] - ant_pos[j]
     if np.linalg.norm(bl) > uv_max:
         uv_max = np.linalg.norm(bl)
-    v['bl'] = bl
+    v['bl'] = bl / wavelength
 
-print(visibility_data['data'][0])
-print(f"uvmax: {uv_max}")
-# Image resolution
+print(f"Max baseline: {uv_max} m")
 
 num_bin = 256
 
-
+#############################################################################################################
+#
+#                                    Step 2. Grid the visibilities.
+#
+#############################################################################################################
 '''
     Grid the visibilities in the UV plane.
 
@@ -81,37 +88,60 @@ num_bin = 256
         * m = sin(theta)cos(phi)
 
     we want l and m to go between -1 and 1 as we're doing all sky imaging
+    This means that the uv_plane has to have a dimension of n_bin
+
+    pixel_resolution = num_bin / np.pi   (pixels_per_radian)
+
+    uv_resolution = radians_per_pixel = np.pi / num_bin
+
+    2*np.pi*uv_max / wavelength = radians in the longest baseline
+
+    2*np.pi*uv_max / wavelength = rad_max
+
+    uv_max = num_bins / (2*np.pi)
+
+(u * 4 / num_bin) * (num_bin / 2) = u*2
 '''
 
-wavelength = 0.2
-uv_max = uv_max / wavelength
+u_scale = num_bin / 4
+middle = num_bin // 2
 
 def uv_index(u):
-    # u = -nw -> 0
-    # u = nw  -> num_bin-1
-    du = (u + uv_max)
-    scaled = du*(num_bin - 1)
-    return int(scaled / (2*uv_max))
+
+    # pixels = (u / u_scale)*(num_bin/2)
+    pixels = u * 2
+    u_pix = middle + pixels
+    return int(u_pix)
 
 uv_plane = np.zeros((num_bin, num_bin), dtype=np.complex64)
 
 for v in visibility_data['data']:
-    uu = v['bl'][0]
-    vv = v['bl'][1]
+    uu, vv, ww = v['bl']
     u_idx = uv_index(uu)
     v_idx = uv_index(vv)
     uv_plane[u_idx, v_idx] += v['cal']
+
+    u_idx = uv_index(-uu)
+    v_idx = uv_index(-vv)
+    uv_plane[u_idx, v_idx] += np.conj(v['cal'])
 
 plt.figure(figsize=(8, 6), dpi=num_bin/6)
 plt.title("U-V plane image")
 
 plt.imshow(np.abs(uv_plane), extent=[-uv_max, uv_max, -uv_max, uv_max])
 
-plt.xlim(-1, 1)
-plt.ylim(-1, 1)
+# plt.xlim(-1, 1)
+# plt.ylim(-1, 1)
 cb = plt.colorbar()
 plt.savefig('uv_plane.jpg')
 plt.show()
+
+#############################################################################################################
+#
+#                                    Step 3. Do the inverse fourier transform.
+#
+#############################################################################################################
+
 
 cal_ift = np.fft.fftshift(fft.ifft2(np.fft.ifftshift(uv_plane)))
 
