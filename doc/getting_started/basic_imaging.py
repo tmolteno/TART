@@ -1,12 +1,10 @@
 '''
     Simple TART imaging script from api visibilities.
 
-    Tim Molteno 2018-2019.
+    Tim Molteno 2018-2025.
 
     This requires the TART api_imaging and api_handler packages to be installed on your system
     from the public repositories:
-
-    sudo pip3 install tart_tools
 '''
 
 import numpy as np
@@ -18,18 +16,22 @@ import numpy.fft as fft
 # The API server URL identifies which TART telescope to use.
 #
 # Documentation URL. https://api.elec.ac.nz/tart/mu-udm/doc/
-
 API_SERVER = 'https://api.elec.ac.nz/tart/mu-udm'
+
 
 def get_api(api):
     response = requests.get(f"{API_SERVER}/api/v1/{api}")
     return response.json()
 
-'''
-    STEP 1:
 
-    Get telescope configuration (config), visibility data, and calibration data (gains) from the server
-'''
+#############################################################################################################
+#
+#                                             Step 1.
+#
+#   Get visibility data, and calibration data (gains) from the TART telescope web interface
+#
+#############################################################################################################
+
 print(f"Downloading data from {API_SERVER}")
 mode = get_api('mode/current')
 
@@ -39,16 +41,16 @@ if mode['mode'] != 'vis':
 gains = get_api('calibration/gain')
 visibility_data = get_api('imaging/vis')
 ant_pos = get_api('imaging/antenna_positions')
+ant_pos = np.array(ant_pos)
 
 print(f"Visibilities time: {visibility_data['timestamp']}")
 
-ant_pos = np.array(ant_pos)
 
 
 
 #############################################################################################################
 #
-#                                    Step 1. Apply the calibration to the visibilities.
+#                                    Step 2. Apply the calibration to the visibilities.
 #
 #############################################################################################################
 
@@ -63,57 +65,55 @@ for v in visibility_data['data']:
     v_calib = v_complex * gains_complex[i] * np.conj(gains_complex[j])
     v['cal'] = v_calib
 
-    # Work out the baseline
-    bl = ant_pos[i] - ant_pos[j]
-    if np.linalg.norm(bl) > uv_max:
-        uv_max = np.linalg.norm(bl)
+    # Work out the baselines
+    bl = ant_pos[j] - ant_pos[i]
     v['bl'] = bl / wavelength
 
-print(f"Max baseline: {uv_max} m")
-
-num_bin = 256
 
 #############################################################################################################
 #
-#                                    Step 2. Grid the visibilities.
+#                                    Step 3. Grid the visibilities.
 #
 #############################################################################################################
 '''
     Grid the visibilities in the UV plane.
 
-    I = FT(V*exp(2*pi*j(u*l + v*m)))
+    I(l,m) = IFFT(V*exp(2*pi*j(u*l + v*m)))
 
     where l, m are the direction cosines
         * l = sin(theta)sin(phi)
         * m = sin(theta)cos(phi)
 
     we want l and m to go between -1 and 1 as we're doing all sky imaging
-    This means that the uv_plane has to have a dimension of n_bin
+    This means that the uv_plane has to have a dimension per pixel
 
-    pixel_resolution = num_bin / np.pi   (pixels_per_radian)
+    Step1.  Choose pixel resolution (radians per pixel) to be full sky
+            180 degrees in N_FFT. res = pi / N_FFT
 
-    uv_resolution = radians_per_pixel = np.pi / num_bin
+    Step2.  The uv distances are in meters. This can be changed to wavelenths, and
+            then to radians (2.pi*u / wavelength). Maximum u,v values should then be
+            corresponding to the highest resolution in the image. I.e. radians_per_pixel
 
-    2*np.pi*uv_max / wavelength = radians in the longest baseline
+    The resolution for a baseline is given by the rayleigh criterion
 
-    2*np.pi*uv_max / wavelength = rad_max
+            resolution =  1.2 lambda / uv_max
 
-    uv_max = num_bins / (2*np.pi)
+    So: 1.2 lambda / uv_max  = pi / N_FFT. ==> N_FFT / pi = uv_max / 1.2 lambda
 
-(u * 4 / num_bin) * (num_bin / 2) = u*2
+    uv_max(in lambdas) = N_FFT / 1.2 np.pi
 '''
+N_FFT = 512
+uv_plane = np.zeros((N_FFT, N_FFT), dtype=np.complex64)
 
-u_scale = num_bin / 4
-middle = num_bin // 2
+uv_max = N_FFT / (1.2 * np.pi)
+middle = N_FFT // 2
+
 
 def uv_index(u):
-
-    # pixels = (u / u_scale)*(num_bin/2)
-    pixels = u * 2
+    pixels = (u / uv_max)*(N_FFT/2)
     u_pix = middle + pixels
     return int(u_pix)
 
-uv_plane = np.zeros((num_bin, num_bin), dtype=np.complex64)
 
 for v in visibility_data['data']:
     uu, vv, ww = v['bl']
@@ -125,20 +125,20 @@ for v in visibility_data['data']:
     v_idx = uv_index(-vv)
     uv_plane[u_idx, v_idx] += np.conj(v['cal'])
 
-plt.figure(figsize=(8, 6), dpi=num_bin/6)
+
+plt.figure(figsize=(4, 3), dpi=N_FFT/6)
 plt.title("U-V plane image")
 
 plt.imshow(np.abs(uv_plane), extent=[-uv_max, uv_max, -uv_max, uv_max])
 
-# plt.xlim(-1, 1)
-# plt.ylim(-1, 1)
-cb = plt.colorbar()
+plt.xlim(-uv_max, uv_max)
+plt.ylim(-uv_max, uv_max)
 plt.savefig('uv_plane.jpg')
 plt.show()
 
 #############################################################################################################
 #
-#                                    Step 3. Do the inverse fourier transform.
+#                                    Step 4. Do the inverse fourier transform.
 #
 #############################################################################################################
 
@@ -153,10 +153,10 @@ img /= np.std(img)
 
 #############################################################################################################
 #
-#                                    Step 4. Plot the image.
+#                                    Step 5. Plot the image.
 #
 #############################################################################################################
-plt.figure(figsize=(8, 6), dpi=num_bin/6)
+plt.figure(figsize=(4, 3), dpi=N_FFT/4)
 plt.title("Inverse FFT image")
 
 print("Dynamic Range: {}".format(np.max(img)))
@@ -168,3 +168,4 @@ plt.ylim(-1, 1)
 cb = plt.colorbar()
 plt.savefig('basic_image.jpg')
 plt.show()
+#
