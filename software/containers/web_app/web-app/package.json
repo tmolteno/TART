@@ -28,7 +28,7 @@
     "@ngx-loading-bar/http": "^4.1.1",
     "core-js": "^2.6.5",
     "gifshot": "^0.4.5",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "ng2-charts": "^1.6.0",
     "ng2-nouislider": "^1.7.13",
     "ngx-popover": "0.0.16",
