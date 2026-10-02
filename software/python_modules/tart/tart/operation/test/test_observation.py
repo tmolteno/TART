@@ -1,9 +1,41 @@
 import unittest
 import datetime
+import gzip
+import os
+import pickle
+import pickletools
+import tempfile
+
 import numpy as np
 
 from tart.operation.observation import Observation, Observation_Load
 from tart.operation import settings
+
+
+def _dumps_like_python2(obj):
+    """Serialize obj the way a Python 2 writer would: a protocol 2 stream
+    holding raw 8-bit byte strings (BINSTRING opcodes) instead of Python 3's
+    byte-string opcodes.
+
+    Python 3 never emits BINSTRING: at protocol >= 3 bytes become BINBYTES,
+    at protocol 2 they are hidden behind ``_codecs.encode(str, 'latin1')``.
+    Neither trips Python 3's default ASCII decoding, so we build the stream
+    from a protocol-3 dump, rewrite BINBYTES to the py2 BINSTRING opcodes
+    (identical framing) and downgrade PROTO to 2. Unpickling the result under
+    Python 3 decodes the byte strings with pickle.load's `encoding` argument
+    (ASCII unless overridden), which is what broke loading historic *.pkl
+    files (issue #48).
+    """
+    blob = pickle.dumps(obj, protocol=3)
+    buf = bytearray(blob)
+    for opcode, _arg, pos in pickletools.genops(blob):
+        if opcode.name == 'PROTO':
+            buf[pos + 1] = 2                    # a py2 writer maxes out at protocol 2
+        elif opcode.name == 'BINBYTES':         # py3-only: 4-byte length + payload
+            buf[pos] = ord('T')                 # py2 BINSTRING, identical framing
+        elif opcode.name == 'SHORT_BINBYTES':   # py3-only: 1-byte length + payload
+            buf[pos] = ord('U')                 # py2 SHORT_BINSTRING, identical framing
+    return bytes(buf)
 
 
 class TestObservation(unittest.TestCase):
@@ -36,6 +68,48 @@ class TestObservation(unittest.TestCase):
         self.assertTrue((self.obs.get_antenna(1) == nobs.get_antenna(1)).all())
         self.assertEqual(self.obs.get_julian_date(), nobs.get_julian_date())
         self.assertTrue((self.data == nobs.data).all())
+
+
+    def test_load_py2_pickle_with_non_ascii(self):
+        # Regression test for issue #48: *.pkl files written by Python 2
+        # contain raw 8-bit byte strings. Observation_Load must decode them
+        # with encoding="latin1" instead of raising
+        # UnicodeDecodeError: 'ascii' codec can't decode byte 0xe4 ...
+        config_dict = dict(self.config.Dict)
+        # A Python-2 `str` holding non-ASCII (latin-1) bytes; 0xe4 sits at
+        # position 1, exactly as in the traceback reported in issue #48.
+        config_dict['site_name'] = 'M\xe4nchen-S\xfcd'.encode('latin1')
+
+        payload = {
+            'config': config_dict,
+            'timestamp': self.obs.timestamp,
+            'data': [np.packbits(np.asarray(row, dtype=np.uint8))
+                     for row in self.data],
+        }
+        blob = _dumps_like_python2(payload)
+
+        # Exercise both branches of Observation_Load: a plain (non-gzipped)
+        # pickle and a gzipped one (what Observation.save produces).
+        for gzipped in (False, True):
+            with self.subTest(gzipped=gzipped):
+                fd, path = tempfile.mkstemp(suffix='.pkl')
+                os.close(fd)
+                try:
+                    if gzipped:
+                        with gzip.open(path, 'wb') as save_ptr:
+                            save_ptr.write(blob)
+                    else:
+                        with open(path, 'wb') as save_ptr:
+                            save_ptr.write(blob)
+
+                    nobs = Observation_Load(path)
+
+                    self.assertEqual(nobs.config.Dict['site_name'],
+                                     'M\xe4nchen-S\xfcd')
+                    self.assertEqual(nobs.timestamp, self.obs.timestamp)
+                    self.assertTrue((self.data == nobs.data).all())
+                finally:
+                    os.remove(path)
 
 
     #def test_str2bits(self):

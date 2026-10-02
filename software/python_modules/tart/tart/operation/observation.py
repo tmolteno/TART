@@ -9,6 +9,7 @@ except:
    import pickle
 import math
 import gzip
+import zlib
 import h5py
 import dateutil.parser
 
@@ -134,11 +135,17 @@ def Observation_Load(filename):
     if ('.pkl' == file_extension):
         try:
             load_data = gzip.open(filename, 'rb')
-            d = pickle.load(load_data)
-        except:
-            print('not gzipped')
+            # encoding="latin1": historic *.pkl files were written by
+            # Python 2, whose raw byte strings need a 1:1 (latin1) decoding
+            # here instead of the Python 3 default of ASCII (issue #48).
+            d = pickle.load(load_data, encoding="latin1")
+        except (OSError, EOFError, zlib.error) as exc:
+            # The file could not be read as gzip (e.g. it is a plain
+            # pickle): retry it as such, reporting the real cause.
+            print('Could not read as gzip ({}: {}); retrying as plain pickle'.format(
+                type(exc).__name__, exc))
             load_data = open(filename, 'rb')
-            d = pickle.load(load_data)
+            d = pickle.load(load_data, encoding="latin1")
         finally:
             load_data.close()
 
