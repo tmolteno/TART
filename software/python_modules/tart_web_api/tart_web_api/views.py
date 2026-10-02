@@ -8,11 +8,13 @@ from tart_web_api.main import app
 import tart_web_api.database as db
 
 @app.route('/status/fpga', methods=['GET',])
+@jwt_required()
 def get_status_fpga():
     """
       @api {get} /status/fpga Request fpga information
       @apiName get_status_fpga
       @apiGroup Status
+      @apiHeader (Authorization) {String} Authorization JWT authorization value.
       @apiSuccess {String} hostname Hostname of the RPI
       @apiSuccess {String} timestamp UTC Timestamp
       @apiSuccess {Object} AQ_STREAM AQ_STREAM
@@ -67,6 +69,11 @@ def get_status_fpga():
       @apiSuccess {Number} VX_SYSTEM.blocksize VX_SYSTEM
       @apiSuccess {Number} VX_SYSTEM.enabled VX_SYSTEM
       @apiSuccess {Number} VX_SYSTEM.overwrite VX_SYSTEM
+
+      @apiSuccess (401) {Object} message Error Information
+      @apiSuccess (401) {String} message.description Request does not contain an access token
+      @apiSuccess (401) {String} message.error Authorization Required
+      @apiSuccess (401) {Number} message.status_code Status Code
     """
     runtime_config = app.config['CONFIG']
     if "status" in runtime_config:

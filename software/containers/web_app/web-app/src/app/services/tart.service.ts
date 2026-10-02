@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, Response } from '@angular/http';
+import { Http, Response, RequestOptions } from '@angular/http';
 import { PlatformLocation } from '@angular/common';
 import { Observable } from 'rxjs/Rx';
 
@@ -63,9 +63,22 @@ export class TartService {
     }
 
     getFpgaStatus() {
-        return this.http.get(`${this.apiUrl}/status/fpga`)
+        // Issue #27: /status/fpga now requires a JWT, so attach one when
+        // the user is logged in (same pattern as setChannelEnabled above).
+        let options = new RequestOptions();
+        if (this.authService.isTokenValid()) {
+            options = this.authService.getAuthRequestOptions();
+        }
+        return this.http.get(`${this.apiUrl}/status/fpga`, options)
             .map((res: Response) => {
                 return this.createFpgaStatus(res.json());
+            })
+            .catch(e => {
+                if (e.status === 401) {
+                    return Observable.throw(Utils.createUnauthorizedError());
+                } else {
+                    return Observable.throw(e);
+                }
             });
     }
 
