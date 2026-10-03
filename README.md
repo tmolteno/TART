@@ -1,6 +1,7 @@
 # Transient Array Radio Telescope
 
-
+This repository has been ARCHIVED. It has been split into many smaller repositories under the tart-telescope organization.
+see (https://github.com/tart-telescope) for details
 
 [![DOI](https://zenodo.org/badge/20430511.svg)](https://zenodo.org/badge/latestdoi/20430511)
 
